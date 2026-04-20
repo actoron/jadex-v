@@ -43,8 +43,8 @@ dependencies
     // llm blocksworld
     implementation 'org.activecomponents.jadex:application-bdi:'+v
     implementation 'org.activecomponents.jadex:application-micro:'+v
-    implementation 'dev.langchain4j:langchain4j:1.12.2'
-    //implementation 'dev.langchain4j:langchain4j-ollama:1.12.2'
+    implementation 'dev.langchain4j:langchain4j:1.13.0'
+    //implementation 'dev.langchain4j:langchain4j-ollama:1.13.0'
     
     // libgdx for game ui
 	implementation 'com.badlogicgames.gdx:gdx:1.12.1'

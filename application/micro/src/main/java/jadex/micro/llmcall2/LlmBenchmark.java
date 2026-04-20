@@ -216,7 +216,8 @@ public class LlmBenchmark
 				{
 				}
 				
-				if(e instanceof RateLimitException || e instanceof InternalServerException)
+				if(e instanceof RateLimitException
+					|| e instanceof InternalServerException && (e.getMessage()==null || !e.getMessage().toLowerCase().contains("syntax")))
 				{
 					// Some mistral models have rate limits below 1/s
 					// Try to wait for a while and retry once, otherwise skip the model.
