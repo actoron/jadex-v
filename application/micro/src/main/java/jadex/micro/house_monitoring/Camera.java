@@ -12,7 +12,8 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 
-import dev.langchain4j.model.googleai.GoogleAiGeminiImageModel;
+import dev.langchain4j.model.image.ImageModel;
+import dev.langchain4j.model.openai.OpenAiImageModel;
 
 public class Camera
 {
@@ -50,14 +51,31 @@ public class Camera
 		}
 		else
 		{
-			GoogleAiGeminiImageModel	imagemodel	= GoogleAiGeminiImageModel.builder()
-				.apiKey(System.getenv("GOOGLE_API_KEY"))
-				.modelName("gemini-2.5-flash-image")	// its nano-banana
+			ImageModel	imagemodel
+
+			// its nano-banana
+//				= GoogleAiGeminiImageModel.builder()
+//				.apiKey(System.getenv("GOOGLE_API_KEY"))
+//				.modelName("gemini-2.5-flash-image")
+//				.build();
+			
+			// Local model using https://github.com/mudler/LocalAI
+				= OpenAiImageModel.builder()
+				.baseUrl("http://localhost:8080/v1")
+				.modelName("flux.2-klein-9b")
 				.build();
 			
-			String image	= imagemodel.generate("security camera image of "+prompt).content().base64Data();
-			byte[] originalBytes = java.util.Base64.getDecoder().decode(image);
-			bufferedImage = ImageIO.read(new ByteArrayInputStream(originalBytes));
+			dev.langchain4j.data.image.Image	image	= imagemodel.generate("security camera image of "+prompt).content();
+			byte[]	bytes;
+			if(image.base64Data()!=null)
+			{
+				bytes = java.util.Base64.getDecoder().decode(image.base64Data());
+			}
+			else
+			{
+				bytes = image.url().toURL().openStream().readAllBytes();
+			}
+			bufferedImage = ImageIO.read(new ByteArrayInputStream(bytes));
 			
 			// Reduce JPEG quality to 80% to reduce file size
 			ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
