@@ -97,13 +97,16 @@ public class LlmBenchmark
 //		}
 		
 		// Run benchmarks for local Ollama models
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.OLLAMA_LOCAL, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.OLLAMA_LOCAL, true);
 		
-		// Run benchmarks for available Google Gemini models
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.GOOGLE_GEMINI, true);
+		// Run benchmarks for Local Ai models
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.LOCAL_AI, true);
 		
-		// Run benchmarks for available Mistral AI models
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.MISTRAL_AI, true);
+//		// Run benchmarks for available Google Gemini models
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.GOOGLE_GEMINI, true);
+//		
+//		// Run benchmarks for available Mistral AI models
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.MISTRAL_AI, true);
 	}
 
 	/**

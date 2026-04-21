@@ -58,10 +58,10 @@ public class LlmHelper
 			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", model, think),
 			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true),
 			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", model)),
-		OLLAMA_OPENAI("Ollama (local, via OpenAI API)",
-			(model, think) -> createOpenAiChatModel("http://localhost:11434/v1", model, think),
-			() -> fetchOpenAiModels("http://localhost:11434/v1", false),
-			(model) -> fetchOpenAiContextSize("http://localhost:11434/v1", model));
+		LOCAL_AI("Local AI",
+			(model, think) -> createOpenAiChatModel("http://localhost:8080/v1", model, think),
+			() -> fetchOpenAiModels("http://localhost:8080/v1", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", model));
 		
 		private final String name;
 		private final BiFunction<String, Boolean, StreamingChatModel> creator;
@@ -229,20 +229,15 @@ public class LlmHelper
 			.baseUrl(baseurl)
 			.apiKey(System.getenv("OPENAI_API_KEY"))
 			.modelName(model)
+			// cf. https://developers.openai.com/api/docs/guides/reasoning
+			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
 			// If there is thinking -> always use it.
-			.returnThinking(think!=null? think: true)
-			.sendThinking(think!=null? think: true)
-//			.logRequests(true)
+			.returnThinking(true)
+			.sendThinking(true)
+			.logRequests(true)
 //			.logResponses(true)
 			;
-		
-		if(think!=null)
-		{
-			// cf. https://developers.openai.com/api/docs/guides/reasoning
-			// TODO: support other levels?
-			oscmb.reasoningEffort(think ? "high" : "none");
-		}
-		
+				
 		return oscmb.build();
 	}
 	
