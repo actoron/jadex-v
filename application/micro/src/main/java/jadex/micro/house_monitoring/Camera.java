@@ -20,17 +20,20 @@ public class Camera
 	public static void main(String[] args) throws Exception
 	{
 		String	prompt	= "a burglar breaking into a house at night";
+//		String	prompt	= "a cat outside with a mouse in its mouth";
+//		String	prompt	= "a clown with a ballon animal";
+//		String	prompt	= "a dog peeing on a tree";
 		
-		BufferedImage bufferedImage = getSecurityCameraImage(prompt);
+		BufferedImage image = getSecurityCameraImage(prompt);
 		
 		// Show the image in a window
-		Image img	= bufferedImage;
+		Image img	= image;
 		javax.swing.SwingUtilities.invokeLater(() -> {
 			javax.swing.JFrame frame = new javax.swing.JFrame("Generated Image");
 			frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-			frame.setSize(400, 400);
 			javax.swing.JLabel label = new javax.swing.JLabel(new javax.swing.ImageIcon(img));
 			frame.getContentPane().add(label);
+			frame.pack();
 			frame.setVisible(true);
 		});
 	}
@@ -53,7 +56,7 @@ public class Camera
 		{
 			ImageModel	imagemodel
 
-			// its nano-banana
+//			// Nano-banana
 //				= GoogleAiGeminiImageModel.builder()
 //				.apiKey(System.getenv("GOOGLE_API_KEY"))
 //				.modelName("gemini-2.5-flash-image")
@@ -62,6 +65,7 @@ public class Camera
 			// Local model using https://github.com/mudler/LocalAI
 				= OpenAiImageModel.builder()
 				.baseUrl("http://localhost:8080/v1")
+//				.modelName("flux.2-klein-4b")
 				.modelName("flux.2-klein-9b")
 				.build();
 			
