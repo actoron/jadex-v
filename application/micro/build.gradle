@@ -47,7 +47,7 @@ dependencies
 	implementation 'dev.langchain4j:langchain4j-mistral-ai:1.13.0'
     implementation 'dev.langchain4j:langchain4j-open-ai:1.13.0'
     //implementation 'dev.langchain4j:langchain4j-open-ai-official:1.13.0-beta23'
-    //implementation 'dev.langchain4j:langchain4j-local-ai:1.13.0-beta23'
+    implementation 'dev.langchain4j:langchain4j-local-ai:1.13.0-beta23'
 	runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

@@ -23,6 +23,7 @@ import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.localai.LocalAiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
@@ -324,6 +325,15 @@ public class LlmHelper
 			.sendThinking(true)
 //			.logRequests(true)
 //			.logResponses(true)
+			.build();
+	}
+	
+	protected static StreamingChatModel createLocalAiChatModel(String model, Boolean think)
+	{
+		return LocalAiStreamingChatModel.builder()
+			.baseUrl("http://localhost:8080/v1")
+			.modelName(model)
+			.logRequests(true)
 			.build();
 	}
 	
