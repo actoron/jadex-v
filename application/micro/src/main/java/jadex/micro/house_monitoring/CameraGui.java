@@ -3,6 +3,8 @@ package jadex.micro.house_monitoring;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.RenderedImage;
 
 import javax.swing.BorderFactory;
@@ -39,16 +41,20 @@ public class CameraGui extends JFrame
 	/** Status label. */
 	protected JLabel	statusLabel;
 
+	/** The owning component handle to terminate on close. */
+	protected IComponentHandle	component;
+
 	//-------- constructors --------
 
 	/**
 	 *  Create a new camera GUI.
 	 */
-	public CameraGui(ICameraService camera)
+	public CameraGui(ICameraService camera, IComponentHandle component)
 	{
 		// TODO: camera name in title
 		super("Security Camera");
 		this.camera = camera;
+		this.component = component;
 
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout(4, 4));
@@ -98,6 +104,15 @@ public class CameraGui extends JFrame
 			}
 		});
 
+		addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowClosed(WindowEvent e)
+			{
+				terminateComponent();
+			}
+		});
+
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);
@@ -137,6 +152,18 @@ public class CameraGui extends JFrame
 	protected void setStatus(String text)
 	{
 		statusLabel.setText(text);
+	}
+
+	/**
+	 *  Terminate the backing component once when the GUI is closed.
+	 */
+	protected void terminateComponent()
+	{
+		component.terminate().catchEx(ex ->
+		{
+			// GUI is already closed; keep this non-fatal.
+			System.err.println("Failed to terminate camera component: " + ex);
+		});
 	}
 
 	//-------- inner classes --------
@@ -190,7 +217,7 @@ public class CameraGui extends JFrame
 		ICameraService	camserv	= cam.scheduleStep((INoCopyStep<ICameraService>) comp ->
 			comp.getFeature(IRequiredServiceFeature.class).getLocalService(ICameraService.class)).get();
 		
-		SwingUtilities.invokeLater(() -> new CameraGui(camserv));
+		SwingUtilities.invokeLater(() -> new CameraGui(camserv, cam));
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
