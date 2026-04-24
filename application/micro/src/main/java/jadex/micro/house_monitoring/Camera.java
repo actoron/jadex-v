@@ -1,7 +1,7 @@
 package jadex.micro.house_monitoring;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,32 +14,50 @@ import javax.imageio.stream.ImageOutputStream;
 
 import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
+import jadex.future.Future;
+import jadex.future.IFuture;
 
-public class Camera
+/**
+ *  Camera implementation that generates images based on prompts using an image generation model.
+ */
+public class Camera	implements ICameraService
 {
-	public static void main(String[] args) throws Exception
+	/** The current prompt. */
+	protected String	prompt;
+	
+	
+	@Override
+	public IFuture<RenderedImage> getCurrentImage()
 	{
-		String	prompt	= "a burglar breaking into a house at night";
-//		String	prompt	= "a cat outside with a mouse in its mouth";
-//		String	prompt	= "a clown with a ballon animal";
-//		String	prompt	= "a dog peeing on a tree";
-		
-		BufferedImage image = getSecurityCameraImage(prompt);
-		
-		// Show the image in a window
-		Image img	= image;
-		javax.swing.SwingUtilities.invokeLater(() -> {
-			javax.swing.JFrame frame = new javax.swing.JFrame("Generated Image");
-			frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-			javax.swing.JLabel label = new javax.swing.JLabel(new javax.swing.ImageIcon(img));
-			frame.getContentPane().add(label);
-			frame.pack();
-			frame.setVisible(true);
-		});
+		if(prompt==null)
+		{
+			return new Future<>((RenderedImage)null);
+		}
+		else
+		{
+			try
+			{
+				BufferedImage image = getSecurityCameraImage(prompt);
+				return new Future<>(image);
+			}
+			catch(Exception e)
+			{
+				return new Future<>(e);
+			}
+		}
 	}
+	
+	@Override
+	public IFuture<Void> setCurrentImage(String prompt)
+	{
+		this.prompt = prompt;
+		return IFuture.DONE;
+	}
+	
+	//-------- helper methods --------	
 
 	/**
-	 *  Get the image for the given prompt, either from cache or by generating it using the Gemini Image Model.
+	 *  Get the image for the given prompt, either from cache or by generating it.
 	 */
 	protected static BufferedImage getSecurityCameraImage(String prompt) throws Exception
 	{
@@ -100,5 +118,23 @@ public class Camera
 			}
 		}
 		return bufferedImage;
+	}
+	
+	/**
+	 *  Get the cached prompts.
+	 */
+	public static String[] getCachedPrompts()
+	{
+		File	basedir	= new File("./generated_images");
+		if(basedir.exists() && basedir.isDirectory())
+		{
+			return java.util.Arrays.stream(basedir.listFiles((dir, name) -> name.endsWith(".jpg")))
+					.map(file -> file.getName().substring(0, file.getName().length()-4))
+					.toArray(String[]::new);
+		}
+		else
+		{
+			return new String[0];
+		}
 	}
 }
