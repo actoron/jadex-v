@@ -124,6 +124,8 @@ public class ServiceIdentifier implements IServiceIdentifier
 	public static IServiceIdentifier createServiceIdentifier(IComponent provider, String servicename, 
 		Class<?> servicetype, ServiceScope scope, Collection<String> tags)
 	{
+//		System.out.println("Creating service identifier for service type: "+servicetype.getName()+", tags: "+tags);
+		
 //		if(servicetype.getName().indexOf("IServicePool")!=-1)
 //			System.out.println("sdjhvkl");
 		Security security = getSecurityLevel(provider, null, null);//info, serviceimpl, servicetype, null, null);

@@ -16,10 +16,12 @@ import dev.langchain4j.model.image.ImageModel;
 import dev.langchain4j.model.openai.OpenAiImageModel;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.providedservice.annotation.ProvideService;
 
 /**
  *  Camera implementation that generates images based on prompts using an image generation model.
  */
+@ProvideService(tags = "%{\"name=\"+$component.getId().getLocalName()}")
 public class Camera	implements ICameraService
 {
 	/** The current prompt. */

@@ -18,6 +18,7 @@ import jadex.core.impl.ComponentManager;
 import jadex.core.impl.ILifecycle;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.impl.InjectionFeature;
+import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IMethodInvocationListener;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
@@ -246,6 +247,14 @@ public class ProvidedServiceFeature implements IProvidedServiceFeature, ILifecyc
 	 */
 	protected IService	createProvidedServiceProxy(Object service, String name, Class<?> type, String[] tags, ServiceScope scope)
 	{
+		if(tags!=null)
+		{
+			for(int i=0; i<tags.length; i++)
+			{
+				tags[i]	= SJavaParser.evaluateExpressionPotentially(tags[i], null, self.getValueProvider(), getClass().getClassLoader()).toString();
+			}
+		}
+		
 		// Create proxy with handler
 		IServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(self, name, type, scope, tags==null? null: Set.of(tags));
 		

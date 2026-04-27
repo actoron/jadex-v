@@ -329,6 +329,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		{
 //			System.out.println("Found service: " + service);
 			Class<?>	type	= ((IService)service).getServiceId().getServiceType().getType0();
+			Collection<String>	tags = ((IService)service).getServiceId().getTags();
 			for(Method m: type.getMethods())
 			{
 				if(m.isAnnotationPresent(Tool.class))
@@ -361,9 +362,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						name = name+"_"+suffix;
 					}
 					
+					String	description	= tool.description()==null ? "" : tool.description();
+					description += (tags==null || tags.isEmpty() ? ""
+						: (description.isBlank() ? "" : "\n")+	"Tags: "+String.join(", ", tags));
+					
 					tool	= ToolSpecification.builder()
 						.name(name)
-						.description(tool.description())
+						.description(description)
 						.parameters(tool.parameters())
 						.metadata(tool.metadata())
 						.build();

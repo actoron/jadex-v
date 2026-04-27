@@ -14,7 +14,10 @@ public class Main
 		// Create smart home components
 		IComponentManager.get().create(new RuleSystem(){}).get();
 		IComponentManager.get().create(new Camera(), "Kamera 1").get();
+		IComponentManager.get().create(new Camera(), "Kamera 2").get();
+		IComponentManager.get().create(new Camera(), "Kamera 3").get();
 		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get();
+		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder B").get();
 		IComponentManager.get().create(new Alarm(), "Alarm").get();
 		
 		IComponentManager.get().create(new MainGui()).get();
