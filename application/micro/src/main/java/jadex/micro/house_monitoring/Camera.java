@@ -23,8 +23,7 @@ import jadex.future.IFuture;
 public class Camera	implements ICameraService
 {
 	/** The current prompt. */
-	protected String	prompt;
-	
+	protected String	prompt	= "a house at night";
 	
 	@Override
 	public IFuture<RenderedImage> getCurrentImage()
