@@ -42,11 +42,14 @@ public class MotionSensorGui extends JPanel
 		triggerBtn.addActionListener(e ->
 		{
 			setStatus("Triggering motion event...");
+			triggerBtn.setEnabled(false);
 			motionSensor.motionDetected().then(v ->
 			{
+				triggerBtn.setEnabled(true);
 				setStatus("Motion event sent.");
 			}).catchEx(ex ->
 			{
+				triggerBtn.setEnabled(true);
 				setStatus("Error triggering motion: " + ex);
 			});
 		});
