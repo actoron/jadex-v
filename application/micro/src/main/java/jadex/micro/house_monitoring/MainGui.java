@@ -47,6 +47,19 @@ public class MainGui
 	}
 
 	/**
+	 * Discover alarm services and add corresponding panels to the UI.
+	 */
+	@Inject
+	void alarmAdded(IAlarmService alarmserv)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			AlarmGui alarmGui = new AlarmGui(alarmserv);
+			tabs.addTab(((IService)alarmserv).getServiceId().getProviderId().getLocalName(), alarmGui);
+		});
+	}
+
+	/**
 	 * Show the GUI frame.
 	 */
 	@OnStart

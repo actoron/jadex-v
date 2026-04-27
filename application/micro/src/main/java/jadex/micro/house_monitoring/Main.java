@@ -15,6 +15,7 @@ public class Main
 		IComponentManager.get().create(new IRuleSystemService(){}).get();
 		IComponentManager.get().create(new Camera(), "Kamera 1").get();
 		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get();
+		IComponentManager.get().create(new Alarm(), "Alarm").get();
 		
 		IComponentManager.get().create(new MainGui()).get();
 		
