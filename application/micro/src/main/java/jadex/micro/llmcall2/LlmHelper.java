@@ -111,10 +111,11 @@ public class LlmHelper
 //				"ministral-3:3b"	// fast and efficient, but no thinking
 //				"devstral-small-2:24b"
 //				"gpt-oss:20b"	// no image input
-//				"qwen3.5:9b"
+				"qwen3.5:9b"
+//				"qwen3.6:27b"
 //				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
 //				"nemotron-cascade-2:30b"	// slow
-				"gemma4:31b"
+//				"gemma4:31b"
 				
 				// Succeeds sometimes on breakfast
 //				.modelName("nemotron-3-nano:30b")
