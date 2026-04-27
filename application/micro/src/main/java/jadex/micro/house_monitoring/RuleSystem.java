@@ -74,6 +74,7 @@ public class RuleSystem	implements IRuleSystemService
 				for(String prompt : prompts)
 				{
 					String	fprompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"+prompt;
+					System.out.println("User: "+fprompt);
 					
 					ret = ret.thenCompose(v ->
 					{
