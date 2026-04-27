@@ -25,7 +25,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
  *  Shows the current camera image and allows changing the scene via a prompt.
  */
 @SuppressWarnings("serial")
-public class CameraGui extends JFrame
+public class CameraGui extends JPanel
 {
 	//-------- attributes --------
 
@@ -41,22 +41,15 @@ public class CameraGui extends JFrame
 	/** Status label. */
 	protected JLabel	statusLabel;
 
-	/** The owning component handle to terminate on close. */
-	protected IComponentHandle	component;
-
 	//-------- constructors --------
 
 	/**
 	 *  Create a new camera GUI.
 	 */
-	public CameraGui(ICameraService camera, IComponentHandle component)
+	public CameraGui(ICameraService camera)
 	{
-		// TODO: camera name in title
-		super("Security Camera");
 		this.camera = camera;
-		this.component = component;
 
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setLayout(new BorderLayout(4, 4));
 
 		// Image area
@@ -104,19 +97,6 @@ public class CameraGui extends JFrame
 			}
 		});
 
-		addWindowListener(new WindowAdapter()
-		{
-			@Override
-			public void windowClosed(WindowEvent e)
-			{
-				terminateComponent();
-			}
-		});
-
-		pack();
-		setLocationRelativeTo(null);
-		setVisible(true);
-
 		refreshImage();
 	}
 
@@ -153,19 +133,7 @@ public class CameraGui extends JFrame
 	{
 		statusLabel.setText(text);
 	}
-
-	/**
-	 *  Terminate the backing component once when the GUI is closed.
-	 */
-	protected void terminateComponent()
-	{
-		component.terminate().catchEx(ex ->
-		{
-			// GUI is already closed; keep this non-fatal.
-			System.err.println("Failed to terminate camera component: " + ex);
-		});
-	}
-
+	
 	//-------- inner classes --------
 
 	/**
@@ -217,7 +185,28 @@ public class CameraGui extends JFrame
 		ICameraService	camserv	= cam.scheduleStep((INoCopyStep<ICameraService>) comp ->
 			comp.getFeature(IRequiredServiceFeature.class).getLocalService(ICameraService.class)).get();
 		
-		SwingUtilities.invokeLater(() -> new CameraGui(camserv, cam));
+		SwingUtilities.invokeLater(() ->
+		{
+			CameraGui gui = new CameraGui(camserv);
+			JFrame frame = new JFrame("Security Camera");
+			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+			frame.setContentPane(gui);
+			frame.addWindowListener(new WindowAdapter()
+			{
+				@Override
+				public void windowClosed(WindowEvent e)
+				{
+					cam.terminate().catchEx(ex ->
+					{
+						// GUI is already closed; keep this non-fatal.
+						System.err.println("Failed to terminate camera component: " + ex);
+					});
+				}
+			});
+			frame.pack();
+			frame.setLocationRelativeTo(null);
+			frame.setVisible(true);
+		});
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
