@@ -12,7 +12,7 @@ public class Main
 	public static void main(String[] args)
 	{
 		// Create smart home components
-		IComponentManager.get().create(new IRuleSystemService(){}).get();
+		IComponentManager.get().create(new RuleSystem(){}).get();
 		IComponentManager.get().create(new Camera(), "Kamera 1").get();
 		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get();
 		IComponentManager.get().create(new Alarm(), "Alarm").get();
