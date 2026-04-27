@@ -9,6 +9,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
+import java.awt.image.RenderedImage;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -24,7 +25,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
-import dev.langchain4j.data.image.Image;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
@@ -284,8 +284,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 				// Generate base64 encoded image of current world state and add to prompt
 				Container	worlds	= (Container)gui.getContentPane().getComponent(0);
 				Component	world	= 	((Container) ((Container) ((Container) worlds.getComponent(1)).getComponent(0)).getComponent(0)).getComponent(0);
-				String image = LlmHelper.createPngFromComponent(world);
-				Image	png	= Image.builder().base64Data(image).mimeType("image/png").build();
+				RenderedImage image = LlmHelper.createImageFromComponent(world);
 				
 				prompt.setEnabled(false);
 				send.setEnabled(false);
@@ -294,7 +293,7 @@ public class LlmBlocksworldAgent	extends BlocksworldAgent	implements IBlocksworl
 					((Provider)provider.getSelectedItem()).getContextSize((String) model.getSelectedItem()));
 				
 				IIntermediateFuture<ChatFragment> chat	= llmagentpojo[0].chat((String)prompt.getSelectedItem(),
-					sendimage.isSelected() ? new Image[]{png} : new Image[0]);
+					sendimage.isSelected() ? new RenderedImage[]{image} : new RenderedImage[0]);
 				
 				chat.next(fragment ->
 				{

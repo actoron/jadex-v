@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
@@ -16,6 +17,7 @@ import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
+import dev.langchain4j.data.image.Image;
 import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -354,9 +356,9 @@ public class LlmHelper
 	}
 	
 	/**
-	 *  Creates a PNG image from the given component and returns it as a base64-encoded string.
+	 *  Creates an AWT image from the given component.
 	 */
-	public static String createPngFromComponent(Component world)
+	public static RenderedImage	createImageFromComponent(Component world)
 	{
 		if(world==null)
 			throw new NullPointerException("Component must not be null.");
@@ -371,7 +373,7 @@ public class LlmHelper
 		if(size.width<=0 || size.height<=0)
 			throw new IllegalArgumentException("Component has invalid size: "+size.width+"x"+size.height);
 
-		BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = image.createGraphics();
 		try
 		{
@@ -383,25 +385,31 @@ public class LlmHelper
 		{
 			g2.dispose();
 		}
-
+		
+		return image;
+	}
+	
+	/**
+	 *  Create a langchain4j Image object from an AWT image.
+	 */
+	public static Image	createLangchainImage(RenderedImage image)
+	{
 		try(ByteArrayOutputStream baos = new ByteArrayOutputStream())
 		{
-			boolean written = ImageIO.write(image, "png", baos);
+			boolean written = ImageIO.write(image, "jpg", baos);
 			if(!written)
-				throw new IllegalStateException("No PNG writer available.");
-			return Base64.getEncoder().encodeToString(baos.toByteArray());
+				throw new IllegalStateException("No JPEG writer available.");
+			String	base64	= Base64.getEncoder().encodeToString(baos.toByteArray());
+			
+			return Image.builder()
+				.base64Data(base64)
+				.mimeType("image/jpeg")
+				.build();
 		}
 		catch(IOException e)
 		{
-			throw new RuntimeException("Failed to encode component image as PNG.", e);
+			throw new RuntimeException("Failed to encode component image as JPEG.", e);
 		}
-	}
 
-	/**
-	 *  Creates a PNG data URI from the given component.
-	 */
-	public static String createPngDataUriFromComponent(Component world)
-	{
-		return "data:image/png;base64," + createPngFromComponent(world);
 	}
 }

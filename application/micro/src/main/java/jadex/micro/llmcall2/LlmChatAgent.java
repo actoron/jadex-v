@@ -1,5 +1,6 @@
 package jadex.micro.llmcall2;
 
+import java.awt.image.RenderedImage;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -12,7 +13,6 @@ import java.util.concurrent.Callable;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
-import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.Content;
@@ -38,7 +38,6 @@ import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
-import jadex.core.annotation.NoCopy;
 import jadex.execution.ComponentMethod;
 import jadex.future.Future;
 import jadex.future.FutureBarrier;
@@ -55,7 +54,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
  *  The agent motivates the LLM to autonomously plan and execute tool calls for completing given tasks.
  *  Tools are found by looking for services / service methods annotated with {@link Tool}. 
  */
-public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>
+public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>, ILlmChatService
 {
 	/** Helper record for lookup through simple service naming. */
 	static record ToolRef(Object service, Method method) {}
@@ -73,7 +72,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	String	prompt;
 	
 	/** Initial images for the agent, if any. */
-	Image[]	images;
+	RenderedImage[]	images;
 	
 	/** Outer future for current user chat() call. */
 	TerminableIntermediateFuture<ChatFragment> current_loop;
@@ -127,7 +126,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	 *  When prompt is not null, the agent will terminate when the task is complete.
 	 *  Useful for executing one-shot tasks with {@link IComponentManager#runAsync}.
 	 */
-	public LlmChatAgent(StreamingChatModel llm, String prompt, Image... images)
+	public LlmChatAgent(StreamingChatModel llm, String prompt, RenderedImage... images)
 	{
 		this(llm);
 		this.prompt = prompt;
@@ -163,15 +162,15 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	 *  This can be used to send an initial prompt at the start or follow-up prompts later on.
 	 */
 	@ComponentMethod
-	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, @NoCopy Image... images)
+	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, RenderedImage... images)
 	{
 		List<Content> content = new ArrayList<>();
 		content.add(TextContent.from(prompt));
 		if(images!=null)
 		{
-			for(Image img: images)
+			for(RenderedImage img: images)
 			{
-				content.add(ImageContent.from(img));
+				content.add(ImageContent.from(LlmHelper.createLangchainImage(img)));
 			}
 		}
 		messages.add(UserMessage.from(content));
@@ -443,13 +442,41 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		current_call.then(v ->
 			resfut.then(result -> 
 			{
-				ToolExecutionResultMessage	msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
-					isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
+				ToolExecutionResultMessage	msg;
+				if(result instanceof RenderedImage)
+				{
+					msg	= ToolExecutionResultMessage.builder()
+						.id(call.toolExecutionRequest().id())
+						.toolName(call.toolExecutionRequest().name())
+						.contents(ImageContent.from(LlmHelper.createLangchainImage((RenderedImage) result)))
+						.build();
+				}
+				else
+				{
+					msg	= ToolExecutionResultMessage.from(call.toolExecutionRequest(),
+							isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
+				}
+				
 				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				if(llm instanceof OllamaStreamingChatModel)
 				{
-					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+					if(msg.hasSingleText())
+					{
+						messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+					}
+					// Handle complex content as user message, because Ollama only supports text content in tool results.
+					else
+					{
+						List<Content> contents = new ArrayList<>();
+						contents.add(TextContent.from(ToolExecutionResultMessage.builder()
+							.id(call.toolExecutionRequest().id())
+							.toolName(call.toolExecutionRequest().name())
+							.text("")
+							.build().toString()));
+						contents.addAll(msg.contents());
+						messages.add(UserMessage.from(contents));
+					}
 				}
 				else
 				{

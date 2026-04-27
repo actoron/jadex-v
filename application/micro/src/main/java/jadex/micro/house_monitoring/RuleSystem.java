@@ -1,11 +1,16 @@
 package jadex.micro.house_monitoring;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import jadex.core.IComponent;
 import jadex.future.IFuture;
+import jadex.future.ITerminableIntermediateFuture;
 import jadex.injection.annotation.Inject;
+import jadex.micro.llmcall2.ChatFragment;
+import jadex.micro.llmcall2.ILlmChatService;
+import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -56,14 +61,33 @@ public class RuleSystem	implements IRuleSystemService
 	public IFuture<Void> notifyEvent(EventType type, String data)
 	{
 		String	source	= ServiceCall.getCurrentInvocation().getCaller().getLocalName();
-		rules.getOrDefault(type, Map.of()).entrySet().stream()
+		List<String>	prompts	= rules.getOrDefault(type, Map.of()).entrySet().stream()
 			.filter(entry -> source.matches(entry.getKey()))
-			.map(Map.Entry::getValue)
-			.forEach(prompt ->
+			.map(Map.Entry::getValue).toList();
+		
+		if(!prompts.isEmpty())
+		{
+			return comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
+				.thenCompose(llmChat -> 
 			{
-				// In a real implementation, the prompt would be sent to an LLM for processing.
-				System.out.println("Executing rule for event "+type+" from source "+source+": "+prompt);
+				IFuture<Void>	ret = IFuture.DONE;
+				for(String prompt : prompts)
+				{
+					String	fprompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"+prompt;
+					
+					ret = ret.thenCompose(v ->
+					{
+						ITerminableIntermediateFuture<ChatFragment>	fut	= llmChat.chat(fprompt);
+						LlmChatAgent.printResults(fut);
+						return fut.thenApply(fragments -> null);
+					});
+				}
+				return ret;
 			});
-		return IFuture.DONE;
+		}
+		else
+		{
+			return IFuture.DONE; // No rules to trigger, just return.
+		}
 	}
 }
