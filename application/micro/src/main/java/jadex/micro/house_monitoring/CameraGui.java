@@ -3,22 +3,13 @@ package jadex.micro.house_monitoring;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.RenderedImage;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
-import jadex.core.IComponentHandle;
-import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
-import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
  *  Simple UI for a camera service.
@@ -175,39 +166,5 @@ public class CameraGui extends JPanel
 				g.drawImage(bi, 0, 0, getWidth(), getHeight(), null);
 			}
 		}
-	}
-
-	
-	
-	public static void main(String[] args) throws Exception
-	{
-		IComponentHandle	cam	= IComponentManager.get().create(new Camera()).get();
-		ICameraService	camserv	= cam.scheduleStep((INoCopyStep<ICameraService>) comp ->
-			comp.getFeature(IRequiredServiceFeature.class).getLocalService(ICameraService.class)).get();
-		
-		SwingUtilities.invokeLater(() ->
-		{
-			CameraGui gui = new CameraGui(camserv);
-			JFrame frame = new JFrame("Security Camera");
-			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-			frame.setContentPane(gui);
-			frame.addWindowListener(new WindowAdapter()
-			{
-				@Override
-				public void windowClosed(WindowEvent e)
-				{
-					cam.terminate().catchEx(ex ->
-					{
-						// GUI is already closed; keep this non-fatal.
-						System.err.println("Failed to terminate camera component: " + ex);
-					});
-				}
-			});
-			frame.pack();
-			frame.setLocationRelativeTo(null);
-			frame.setVisible(true);
-		});
-		
-		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

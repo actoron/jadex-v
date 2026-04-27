@@ -13,7 +13,10 @@ public class Main
 	{
 		// Create smart home components
 		IComponentManager.get().create(new IRuleSystemService(){}).get();
-		IComponentManager.get().create(new Camera()).get();
+		IComponentManager.get().create(new Camera(), "Kamera 1").get();
+		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get();
+		
+		IComponentManager.get().create(new MainGui()).get();
 		
 		// Create the LLM agent that will control the smart home
 		IComponentHandle	llmagent	= IComponentManager.get()
