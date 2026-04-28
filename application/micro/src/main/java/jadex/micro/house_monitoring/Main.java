@@ -23,6 +23,7 @@ public class Main
 		
 		// Create the LLM agent that will control the smart home
 		StreamingChatModel	model	= LlmHelper.createChatModel();	// Default Ollama model
+//		StreamingChatModel	model	= LlmHelper.Provider.OLLAMA_REMOTE.createChatModel("gemma4:26b-a4b-it-q4_K_M", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-2.5-flash", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-3-flash-preview", true);
 		IComponentManager.get().create(new LlmChatAgent(model)).get();
