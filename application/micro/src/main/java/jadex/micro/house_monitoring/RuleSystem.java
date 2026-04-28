@@ -118,6 +118,8 @@ public class RuleSystem	implements IRuleSystemService
 			}
 			
 			// Schedule the rule execution according to the cron expression.
+			String	fprompt	= "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
+					+ rule.prompt();
 			@SuppressWarnings("unchecked")
 			Consumer<Void>[]	execute	= new Consumer[1];
 			execute[0]	= v ->
@@ -126,7 +128,7 @@ public class RuleSystem	implements IRuleSystemService
 				long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
 				System.out.println("Scheduling "+rule.id()+" to run in "+(next_time-current_time)+" ms");
 				comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
-					.then(v1 -> executePrompt(rule.prompt())
+					.then(v1 -> executePrompt(fprompt)
 						.then(v2 -> execute[0].accept(null)));
 			};
 			execute[0].accept(null);
@@ -188,7 +190,7 @@ public class RuleSystem	implements IRuleSystemService
 			for(Rule rule : matches)
 			{
 				String	prompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
-					+ "Triggering "+rule.id()+":\n"
+					+ "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
 					+ rule.prompt();
 				ret	= executePrompt(prompt);
 			}
@@ -211,12 +213,20 @@ public class RuleSystem	implements IRuleSystemService
 			IFuture<Void>	fut	= comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
 				.thenCompose(llmChat -> 
 			{
-				System.out.println("================\nUser: "+prompt);
+				System.out.println("User: "+prompt);
 				ITerminableIntermediateFuture<ChatFragment>	ifut	= llmChat.chat(prompt);
 				LlmChatAgent.printResults(ifut);
-				return ifut.printOnEx().thenApply(fragments -> null);
+				return ifut
+					.then(v1 -> System.out.println("================"))
+					.catchEx(ex -> 
+					{
+						System.err.println("================");
+						ex.printStackTrace();
+					})
+					.thenApply(fragments -> null);
 			});
-			fut.delegateTo(next_call);
+			fut.then(next_call::setResult)
+				.catchEx(ex -> next_call.setResult(null));
 		};
 		current_call.catchEx(execute).then(execute);
 		current_call	= next_call;

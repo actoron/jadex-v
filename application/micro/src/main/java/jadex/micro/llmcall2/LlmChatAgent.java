@@ -478,7 +478,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						contents.add(TextContent.from(ToolExecutionResultMessage.builder()
 							.id(call.toolExecutionRequest().id())
 							.toolName(call.toolExecutionRequest().name())
-							.text("")
+							.text("see attached contents")
 							.build().toString()));
 						contents.addAll(msg.contents());
 						messages.add(UserMessage.from(contents));
