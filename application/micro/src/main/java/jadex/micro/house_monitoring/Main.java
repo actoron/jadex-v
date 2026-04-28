@@ -26,11 +26,20 @@ public class Main
 		IComponentHandle	llmagent	= IComponentManager.get()
 			.create(new LlmChatAgent(LlmHelper.createChatModel())).get();
 		LlmChatAgent llmpojo = (LlmChatAgent) llmagent.getPojoHandle(LlmChatAgent.class);
-		ITerminableIntermediateFuture<ChatFragment>	fut	= llmpojo.chat(
-			"Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1"
-			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.");
+		String	prompt	= 
+			"Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1 "
+			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.";
+		System.out.println("User: "+prompt);
+		ITerminableIntermediateFuture<ChatFragment>	fut	= llmpojo.chat(prompt);
 		LlmChatAgent.printResults(fut);
+		fut.get();
 		
+		prompt	= 
+			"Immer wenn Bewegungsmelder B auslöst, analysiere die aktuellen Bilder von Kamera 2 und 3 "
+			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.";
+		System.out.println("User: "+prompt);
+		fut	= llmpojo.chat(prompt);
+		LlmChatAgent.printResults(fut);
 		fut.get();
 	}
 }
