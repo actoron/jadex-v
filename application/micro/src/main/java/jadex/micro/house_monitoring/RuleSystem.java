@@ -112,6 +112,12 @@ public class RuleSystem	implements IRuleSystemService
 		return new Future<>(new IllegalArgumentException("No rule found with ID: "+id));
 	}
 	
+	@Override
+	public IFuture<List<Rule>> listRules()
+	{
+		return new Future<>(rules.values().stream().flatMap(List::stream).toList());
+	}
+	
 	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	@Override

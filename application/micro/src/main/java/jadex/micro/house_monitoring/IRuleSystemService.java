@@ -1,5 +1,7 @@
 package jadex.micro.house_monitoring;
 
+import java.util.List;
+
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jadex.core.ChangeEvent;
@@ -41,6 +43,12 @@ public interface IRuleSystemService
 	 */
 	@Tool("Delete a rule by its ID.")
 	public IFuture<Void>	deleteRule(String id);
+	
+	/**
+	 *  List all registered rules.
+	 */
+	@Tool("List all registered rules.")
+	public IFuture<List<Rule>>	listRules();
 	
 	//-------- non-tool methods, i.e. for inter-service calls --------
 	
