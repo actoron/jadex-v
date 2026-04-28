@@ -19,12 +19,11 @@ public interface IRuleSystemService
 	public enum EventType
 	{
 		DOORBELL_PRESSED,
-		MOTION_DETECTED,
-		TIMER_EXPIRED
+		MOTION_DETECTED
 	}
 	
 	/** Record to hold rule information. */
-	public record Rule(String id, EventType type, String source, String prompt) {}
+	public record Rule(String id, String cron_expression, EventType type, String source, String prompt) {}
 	
 	//-------- tool methods, i.e. visible to the LLM --------
 	
@@ -38,6 +37,16 @@ public interface IRuleSystemService
 		@P("The event source, i.e. the name of the component.") String source,
 		@P("The LLM prompt to be executed") String prompt);
 	
+	/**
+	 *  Register an LLM prompt that is scheduled using a cron expression.
+	 */
+	@Tool("Register a rule for an LLM prompt to be executed repeatedly according to the Quartz cron expression.\n"
+		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
+	public IFuture<String>	createRule(
+		@P("The Quartz cron expression") String cron_expression,
+		@P("The LLM prompt to be executed") String prompt);
+	
+
 	/**
 	 *  Delete a rule by its ID.
 	 */
@@ -58,6 +67,13 @@ public interface IRuleSystemService
 	 *  @param data	Optional event data, e.g. for a doorbell event the name of the doorbell.
 	 */
 	public IFuture<Void>	notifyEvent(EventType type, String data);
+	
+	/**
+	 *  Execute a prompt.
+	 *  If a prompt is currently being executed, the new execution will wait until the current execution is finished,
+	 *  to avoid concurrent executions of prompts.
+	 */
+	public IFuture<Void>	executePrompt(String prompt);
 	
 	//-------- UI only methods --------
 	

@@ -390,9 +390,10 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	{
 		try
 		{
-			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service;
-			if(service==null)
+			if(!current_tools.containsKey(call.toolExecutionRequest().name()))
 				throw new RuntimeException("Tool not found: " + call.toolExecutionRequest().name());
+			
+			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service;
 			Method	m	= current_tools.get(call.toolExecutionRequest().name()).method;
 			
 			@SuppressWarnings("unchecked")

@@ -41,6 +41,9 @@ dependencies
     //implementation 'org.activecomponents.jadex:simulation:'+v
     implementation 'org.activecomponents.jadex:llm:'+v
     
+    // for house_monitoring rule system scheduler
+    implementation 'org.quartz-scheduler:quartz:2.5.2'
+    
     implementation 'dev.langchain4j:langchain4j:1.13.0'
     implementation 'dev.langchain4j:langchain4j-ollama:1.13.0'
 	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.13.0'

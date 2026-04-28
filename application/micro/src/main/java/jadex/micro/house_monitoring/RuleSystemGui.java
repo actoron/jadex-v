@@ -3,6 +3,7 @@ package jadex.micro.house_monitoring;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
@@ -49,7 +51,7 @@ public class RuleSystemGui extends JPanel
 			setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
 			setFont(table.getFont());
 
-			// Adjust column width for wrapping, then measure preferred height
+			// Adjust column width for wrapping, then measure preferred height.
 			setSize(table.getColumnModel().getColumn(column).getWidth(), Short.MAX_VALUE);
 			int preferred = getPreferredSize().height;
 			if(table.getRowHeight(row) != preferred)
@@ -61,7 +63,7 @@ public class RuleSystemGui extends JPanel
 
 	// -------- constants --------
 
-	private static final String[] COLUMNS = {"ID", "Event Type", "Source", "Prompt"};
+	private static final String[] COLUMNS = {"ID", "Event Type", "Source", "Cron Expression", "Prompt"};
 
 	// -------- inner table model --------
 
@@ -110,9 +112,10 @@ public class RuleSystemGui extends JPanel
 			return switch(col)
 			{
 				case 0 -> r.id();
-				case 1 -> r.type().name();
+				case 1 -> r.type()!=null ? r.type().name() : null;
 				case 2 -> r.source();
-				case 3 -> r.prompt();
+				case 3 -> r.cron_expression();
+				case 4 -> r.prompt();
 				default -> null;
 			};
 		}
@@ -144,8 +147,14 @@ public class RuleSystemGui extends JPanel
 		table.getColumnModel().getColumn(0).setPreferredWidth(80);
 		table.getColumnModel().getColumn(1).setPreferredWidth(130);
 		table.getColumnModel().getColumn(2).setPreferredWidth(130);
-		table.getColumnModel().getColumn(3).setPreferredWidth(300);
-		table.getColumnModel().getColumn(3).setCellRenderer(new MultiLineCellRenderer());
+		table.getColumnModel().getColumn(3).setPreferredWidth(180); // cron
+		table.getColumnModel().getColumn(4).setPreferredWidth(300); // prompt
+		table.getColumnModel().getColumn(4).setCellRenderer(new MultiLineCellRenderer());
+
+		DefaultTableCellRenderer cronRenderer = new DefaultTableCellRenderer();
+		cronRenderer.setFont(new Font(Font.MONOSPACED, Font.PLAIN, table.getFont().getSize()));
+		table.getColumnModel().getColumn(3).setCellRenderer(cronRenderer);
+
 		table.setFillsViewportHeight(true);
 
 		// Make all columns sortable

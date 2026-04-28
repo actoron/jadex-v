@@ -1,13 +1,19 @@
 package jadex.micro.house_monitoring;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+
+import org.quartz.CronExpression;
 
 import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
@@ -41,6 +47,9 @@ public class RuleSystem	implements IRuleSystemService
 	/** The subscribers to the registered rules. */
 	protected List<SubscriptionIntermediateFuture<ChangeEvent>>	subscribers = new ArrayList<>();
 	
+	/** The current LLM call, if any.*/
+	protected IFuture<Void>	current_call = IFuture.DONE;
+	
 	//-------- tool methods --------
 	
 	@Override
@@ -55,7 +64,7 @@ public class RuleSystem	implements IRuleSystemService
 					((IService)service).getServiceId().getProviderId().getLocalName().matches(source));
 				if(found)
 				{
-					Rule rule = new Rule("rule_"+(++rule_cnt), type, source, prompt);
+					Rule rule = new Rule("rule_"+(++rule_cnt), null, type, source, prompt);
 					rules.computeIfAbsent(type, v -> new ArrayList<>()).add(rule);
 					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
 					{
@@ -82,6 +91,51 @@ public class RuleSystem	implements IRuleSystemService
 		{
 			// For simplicity, we only allow rules for motion sensors in this example.
 			throw new UnsupportedOperationException("Only motion sensor rules are supported in this example.");
+		}
+	}
+	
+	@Override
+	public IFuture<String> createRule(String cron_expression, String prompt)
+	{
+		try
+		{
+			// Create cron expression to validate it.
+			CronExpression cron	= new CronExpression(cron_expression);
+			
+			// Add the rule to the list of rules. 
+			Rule rule = new Rule("rule_"+(++rule_cnt), cron_expression, null, null, prompt);
+			rules.computeIfAbsent(null, v -> new ArrayList<>()).add(rule);
+			for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+			{
+				try
+				{
+					subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.ADDED, "rules", rule, null, null));
+				}
+				catch(Exception e)
+				{
+					System.err.println("Failed to notify subscriber: "+e);
+				}
+			}
+			
+			// Schedule the rule execution according to the cron expression.
+			@SuppressWarnings("unchecked")
+			Consumer<Void>[]	execute	= new Consumer[1];
+			execute[0]	= v ->
+			{
+				long	current_time	= comp.getFeature(IExecutionFeature.class).getTime();
+				long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
+				System.out.println("Scheduling "+rule.id()+" to run in "+(next_time-current_time)+" ms");
+				comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
+					.then(v1 -> executePrompt(rule.prompt())
+						.then(v2 -> execute[0].accept(null)));
+			};
+			execute[0].accept(null);
+			
+			return new Future<>(rule.id());
+		}
+		catch(ParseException e)
+		{
+			return new Future<>(e);
 		}
 	}
 	
@@ -130,31 +184,38 @@ public class RuleSystem	implements IRuleSystemService
 		
 		if(!matches.isEmpty())
 		{
-			return comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
-				.thenCompose(llmChat -> 
+			IFuture<Void>	ret	= IFuture.DONE;
+			for(Rule rule : matches)
 			{
-				IFuture<Void>	ret = IFuture.DONE;
-				for(Rule rule : matches)
-				{
-					String	fprompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
-							+ "Triggering "+rule.id()+":\n"
-							+ rule.prompt();
-					System.out.println("User: "+fprompt);
-					
-					ret = ret.thenCompose(v ->
-					{
-						ITerminableIntermediateFuture<ChatFragment>	fut	= llmChat.chat(fprompt);
-						LlmChatAgent.printResults(fut);
-						return fut.thenApply(fragments -> null);
-					});
-				}
-				return ret;
-			});
+				String	prompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
+					+ "Triggering "+rule.id()+":\n"
+					+ rule.prompt();
+				ret	= executePrompt(prompt);
+			}
+			return ret;
 		}
 		else
 		{
 			return IFuture.DONE; // No rules to trigger, just return.
 		}
+	}
+	
+	@Override
+	public IFuture<Void> executePrompt(String prompt)
+	{
+		System.out.println("User: "+prompt);
+		
+		// If there is an ongoing call, we chain the new calls to it, otherwise we start a new chain.
+		current_call = current_call!=null ? current_call : IFuture.DONE;
+		current_call = current_call.thenCompose(v ->
+			comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
+				.thenCompose(llmChat -> 
+			{
+				ITerminableIntermediateFuture<ChatFragment>	fut	= llmChat.chat(prompt);
+				LlmChatAgent.printResults(fut);
+				return fut.thenApply(fragments -> null);
+			}));
+		return current_call;
 	}
 	
 	//-------- UI only methods --------

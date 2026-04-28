@@ -56,14 +56,14 @@ public interface ISubscriptionIntermediateFuture<E> extends ITerminableIntermedi
 	}
 	
 	@Override
-	default <T> IFuture<T> thenCompose(Function<? super Collection<E>, IFuture<T>> function)
+	default <U, T extends IFuture<U>> T thenCompose(Function<? super Collection<E>, T> function)
 	{
 		// then makes no sense as results are not stored and most futures will never complete.
 		throw new UnsupportedOperationException("then() is not supported for subscription futures.");
 	}
 	
 	@Override
-	default <T> IFuture<T> thenCompose(Function<? super Collection<E>, IFuture<T>> function, Class<?> futuretype)
+	default <U, T extends IFuture<U>> T thenCompose(Function<? super Collection<E>, T> function, Class<?> futuretype)
 	{
 		// then makes no sense as results are not stored and most futures will never complete.
 		throw new UnsupportedOperationException("then() is not supported for subscription futures.");

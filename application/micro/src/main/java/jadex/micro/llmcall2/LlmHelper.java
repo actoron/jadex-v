@@ -115,6 +115,7 @@ public class LlmHelper
 //				"gpt-oss:20b"	// no image input
 //				"qwen3.5:9b"
 //				"qwen3.6:27b"
+//				"qwen3.6:35b"
 //				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
 //				"nemotron-cascade-2:30b"	// slow
 //				"gemma4:31b"
