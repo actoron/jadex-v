@@ -1,5 +1,6 @@
 package jadex.micro.house_monitoring;
 
+import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.core.IComponentManager;
 import jadex.core.INoCopyStep;
 import jadex.future.IFuture;
@@ -21,7 +22,10 @@ public class Main
 		IComponentManager.get().create(new Alarm(), "Alarm").get();
 		
 		// Create the LLM agent that will control the smart home
-		IComponentManager.get().create(new LlmChatAgent(LlmHelper.createChatModel())).get();
+		StreamingChatModel	model	= LlmHelper.createChatModel();	// Default Ollama model
+//		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-2.5-flash", true);
+//		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-3-flash-preview", true);
+		IComponentManager.get().create(new LlmChatAgent(model)).get();
 		
 		// Create the GUI to visualize the smart home
 		IComponentManager.get().create(new MainGui()).get();
@@ -32,7 +36,8 @@ public class Main
 				comp -> comp.getFeature(IRequiredServiceFeature.class)
 					.searchService(IRuleSystemService.class)).get();
 		
-		String	prompt	= 
+		String	prompt;
+		prompt	= 
 			"Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1 "
 			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.";
 		rulesystem.executePrompt(prompt).get();
