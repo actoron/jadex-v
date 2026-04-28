@@ -1,5 +1,7 @@
 package jadex.micro.house_monitoring;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +22,25 @@ import jadex.requiredservice.IRequiredServiceFeature;
  */
 public class RuleSystem	implements IRuleSystemService
 {
+	/** Record to hold rule information. */
+	public record Rule(String id, EventType type, String source, String prompt) {}
+	
+	//-------- attributes --------
+	
+	/** The rule counter for ID generation. */
+	protected int rule_cnt = 0;
+	
 	/** The component. */
 	@Inject
 	protected IComponent	comp;
 	
 	/** The registered rules, mapped by event type and source. */
-	protected Map<EventType, Map<String, String>>	rules = new LinkedHashMap<>();
+	protected Map<EventType, List<Rule>>	rules = new LinkedHashMap<>();
+	
+	//-------- tool methods --------
 	
 	@Override
-	public IFuture<Void> createRule(EventType type, String source, String prompt)
+	public IFuture<String> createRule(EventType type, String source, String prompt)
 	{
 		if(type==EventType.MOTION_DETECTED)
 		{
@@ -39,8 +51,9 @@ public class RuleSystem	implements IRuleSystemService
 					((IService)service).getServiceId().getProviderId().getLocalName().matches(source));
 				if(found)
 				{
-					rules.computeIfAbsent(type, t -> new LinkedHashMap<>()).put(source, prompt);
-					return null;
+					Rule rule = new Rule("rule_"+(++rule_cnt), type, source, prompt);
+					rules.computeIfAbsent(type, v -> new ArrayList<>()).add(rule);
+					return rule.id();
 				}
 				else
 				{
@@ -57,23 +70,27 @@ public class RuleSystem	implements IRuleSystemService
 		}
 	}
 	
+	//-------- UI only methods --------
+	
 	@Override
 	public IFuture<Void> notifyEvent(EventType type, String data)
 	{
 		String	source	= ServiceCall.getCurrentInvocation().getCaller().getLocalName();
-		List<String>	prompts	= rules.getOrDefault(type, Map.of()).entrySet().stream()
-			.filter(entry -> source.matches(entry.getKey()))
-			.map(Map.Entry::getValue).toList();
+		List<Rule>	matches	= rules.getOrDefault(type, Collections.emptyList()).stream()
+			.filter(rule -> source.matches(rule.source()))
+			.toList();
 		
-		if(!prompts.isEmpty())
+		if(!matches.isEmpty())
 		{
 			return comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
 				.thenCompose(llmChat -> 
 			{
 				IFuture<Void>	ret = IFuture.DONE;
-				for(String prompt : prompts)
+				for(Rule rule : matches)
 				{
-					String	fprompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"+prompt;
+					String	fprompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
+							+ "Triggering "+rule.id()+":\n"
+							+ rule.prompt();
 					System.out.println("User: "+fprompt);
 					
 					ret = ret.thenCompose(v ->

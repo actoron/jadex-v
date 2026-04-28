@@ -24,8 +24,9 @@ public interface IRuleSystemService
 	/**
 	 *  Register an LLM prompt that is triggered by the given event type.
 	 */
-	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.")
-	public IFuture<Void>	createRule(
+	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
+		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
+	public IFuture<String>	createRule(
 		@P("The event type") EventType type,
 		@P("The event source, i.e. the name of the component.") String source,
 		@P("The LLM prompt to be executed") String prompt);

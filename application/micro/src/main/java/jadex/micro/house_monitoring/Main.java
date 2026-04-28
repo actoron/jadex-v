@@ -27,7 +27,7 @@ public class Main
 			.create(new LlmChatAgent(LlmHelper.createChatModel())).get();
 		LlmChatAgent llmpojo = (LlmChatAgent) llmagent.getPojoHandle(LlmChatAgent.class);
 		ITerminableIntermediateFuture<ChatFragment>	fut	= llmpojo.chat(
-			"Wenn Bewegungsmelder A auslöst, analysiere das Bild von Kamera 1"
+			"Wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1"
 			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.");
 		LlmChatAgent.printResults(fut);
 		

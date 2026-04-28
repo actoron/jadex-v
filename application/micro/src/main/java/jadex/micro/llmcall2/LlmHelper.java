@@ -123,8 +123,9 @@ public class LlmHelper
 				// Succeeds sometimes on breakfast
 //				.modelName("nemotron-3-nano:30b")
 //				.modelName("mistral-small3.2:24b")
-//				.modelName("nemotron-3-nano:4b")
-//				.modelName("granite4:3b")
+//				"nemotron-3-nano:4b"
+//				"granite4:3b"
+//				"granite3.2-vision:2b"
 //				.modelName("freakycoder123/phi4-fc:latest")
 							
 				// Fails on breakfast

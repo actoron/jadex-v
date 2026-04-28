@@ -19,6 +19,6 @@ public class MotionSensor	implements IMotionSensorService
 	public IFuture<Void> motionDetected()
 	{
 		return comp.getFeature(IRequiredServiceFeature.class).searchService(IRuleSystemService.class)
-			.thenCompose(rulesystem -> rulesystem.notifyEvent(EventType.MOTION_DETECTED, comp.getId().getLocalName()));
+			.thenCompose(rulesystem -> rulesystem.notifyEvent(EventType.MOTION_DETECTED, ""));
 	}
 }
