@@ -12,7 +12,7 @@ public class Main
 	public static void main(String[] args)
 	{
 		// Create smart home components
-		IComponentManager.get().create(new RuleSystem(){}).get();
+		IComponentManager.get().create(new RuleSystem(), "Rule System").get();
 		IComponentManager.get().create(new Camera(), "Kamera 1").get();
 		IComponentManager.get().create(new Camera(), "Kamera 2").get();
 		IComponentManager.get().create(new Camera(), "Kamera 3").get();
@@ -27,7 +27,7 @@ public class Main
 			.create(new LlmChatAgent(LlmHelper.createChatModel())).get();
 		LlmChatAgent llmpojo = (LlmChatAgent) llmagent.getPojoHandle(LlmChatAgent.class);
 		ITerminableIntermediateFuture<ChatFragment>	fut	= llmpojo.chat(
-			"Wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1"
+			"Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1"
 			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.");
 		LlmChatAgent.printResults(fut);
 		

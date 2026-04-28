@@ -2,7 +2,9 @@ package jadex.micro.house_monitoring;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jadex.core.ChangeEvent;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.annotation.Service;
 
 /**
@@ -19,6 +21,9 @@ public interface IRuleSystemService
 		TIMER_EXPIRED
 	}
 	
+	/** Record to hold rule information. */
+	public record Rule(String id, EventType type, String source, String prompt) {}
+	
 	//-------- tool methods, i.e. visible to the LLM --------
 	
 	/**
@@ -31,7 +36,13 @@ public interface IRuleSystemService
 		@P("The event source, i.e. the name of the component.") String source,
 		@P("The LLM prompt to be executed") String prompt);
 	
-	//-------- UI only methods --------
+	/**
+	 *  Delete a rule by its ID.
+	 */
+	@Tool("Delete a rule by its ID.")
+	public IFuture<Void>	deleteRule(String id);
+	
+	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	/**
 	 *  Notify the rule system of an event.
@@ -39,4 +50,13 @@ public interface IRuleSystemService
 	 *  @param data	Optional event data, e.g. for a doorbell event the name of the doorbell.
 	 */
 	public IFuture<Void>	notifyEvent(EventType type, String data);
+	
+	//-------- UI only methods --------
+	
+	/**
+	 *  Subscribe to the registered rules, e.g. to display them in the UI.
+	 *  Values emitted by the subscription are of type {@link Rule},
+	 *  but wrapped in a {@link ChangeEvent} to indicate whether they are new rules or deleted rules.
+	 */
+	public ISubscriptionIntermediateFuture<ChangeEvent>	subscribeToRules();
 }

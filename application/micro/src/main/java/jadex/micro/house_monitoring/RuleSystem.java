@@ -6,9 +6,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
+import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.micro.llmcall2.ChatFragment;
 import jadex.micro.llmcall2.ILlmChatService;
@@ -22,9 +26,6 @@ import jadex.requiredservice.IRequiredServiceFeature;
  */
 public class RuleSystem	implements IRuleSystemService
 {
-	/** Record to hold rule information. */
-	public record Rule(String id, EventType type, String source, String prompt) {}
-	
 	//-------- attributes --------
 	
 	/** The rule counter for ID generation. */
@@ -36,6 +37,9 @@ public class RuleSystem	implements IRuleSystemService
 	
 	/** The registered rules, mapped by event type and source. */
 	protected Map<EventType, List<Rule>>	rules = new LinkedHashMap<>();
+	
+	/** The subscribers to the registered rules. */
+	protected List<SubscriptionIntermediateFuture<ChangeEvent>>	subscribers = new ArrayList<>();
 	
 	//-------- tool methods --------
 	
@@ -53,6 +57,17 @@ public class RuleSystem	implements IRuleSystemService
 				{
 					Rule rule = new Rule("rule_"+(++rule_cnt), type, source, prompt);
 					rules.computeIfAbsent(type, v -> new ArrayList<>()).add(rule);
+					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+					{
+						try
+						{
+							subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.ADDED, "rules", rule, null, null));
+						}
+						catch(Exception e)
+						{
+							System.err.println("Failed to notify subscriber: "+e);
+						}
+					}
 					return rule.id();
 				}
 				else
@@ -70,7 +85,34 @@ public class RuleSystem	implements IRuleSystemService
 		}
 	}
 	
-	//-------- UI only methods --------
+	@Override
+	public IFuture<Void> deleteRule(String id)
+	{
+		for(List<Rule> lrules : rules.values())
+		{
+			for(Rule rule : lrules)
+			{
+				if(rule.id().equals(id))
+				{
+					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+					{
+						try
+						{
+							subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.REMOVED, "rules", rule, null, null));
+						}
+						catch(Exception e)
+						{
+							System.err.println("Failed to notify subscriber: "+e);
+						}
+					}
+					return IFuture.DONE;
+				}
+			}
+		}
+		return new Future<>(new IllegalArgumentException("No rule found with ID: "+id));
+	}
+	
+	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	@Override
 	public IFuture<Void> notifyEvent(EventType type, String data)
@@ -107,5 +149,21 @@ public class RuleSystem	implements IRuleSystemService
 		{
 			return IFuture.DONE; // No rules to trigger, just return.
 		}
+	}
+	
+	//-------- UI only methods --------
+	
+	@Override
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToRules()
+	{
+		SubscriptionIntermediateFuture<ChangeEvent> subscriber = new SubscriptionIntermediateFuture<>();
+		subscriber.setTerminationCommand(ex -> subscribers.remove(subscriber));
+		subscribers.add(subscriber);
+		
+		// Emit all existing rules as "new" rules to the new subscriber.
+		rules.values().stream().flatMap(List::stream).forEach(rule ->
+			subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.INITIAL, "rules", rule, null, null)));
+		
+		return subscriber;
 	}
 }

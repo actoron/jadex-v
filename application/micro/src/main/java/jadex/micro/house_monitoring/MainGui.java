@@ -47,6 +47,19 @@ public class MainGui
 	}
 
 	/**
+	 * Discover rule system services and add corresponding panels to the UI.
+	 */
+	@Inject
+	void ruleSystemAdded(IRuleSystemService ruleserv)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			RuleSystemGui ruleGui = new RuleSystemGui(ruleserv);
+			tabs.addTab(((IService)ruleserv).getServiceId().getProviderId().getLocalName(), ruleGui);
+		});
+	}
+
+	/**
 	 * Discover alarm services and add corresponding panels to the UI.
 	 */
 	@Inject
