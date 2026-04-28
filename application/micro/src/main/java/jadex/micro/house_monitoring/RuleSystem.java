@@ -203,18 +203,23 @@ public class RuleSystem	implements IRuleSystemService
 	@Override
 	public IFuture<Void> executePrompt(String prompt)
 	{
-		System.out.println("User: "+prompt);
-		
 		// If there is an ongoing call, we chain the new calls to it, otherwise we start a new chain.
 		current_call = current_call!=null ? current_call : IFuture.DONE;
-		current_call = current_call.thenCompose(v ->
-			comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
+		Future<Void>	next_call	= new Future<>();
+		Consumer<Object>	execute	= v ->
+		{
+			IFuture<Void>	fut	= comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
 				.thenCompose(llmChat -> 
 			{
-				ITerminableIntermediateFuture<ChatFragment>	fut	= llmChat.chat(prompt);
-				LlmChatAgent.printResults(fut);
-				return fut.thenApply(fragments -> null);
-			}));
+				System.out.println("================\nUser: "+prompt);
+				ITerminableIntermediateFuture<ChatFragment>	ifut	= llmChat.chat(prompt);
+				LlmChatAgent.printResults(ifut);
+				return ifut.printOnEx().thenApply(fragments -> null);
+			});
+			fut.delegateTo(next_call);
+		};
+		current_call.catchEx(execute).then(execute);
+		current_call	= next_call;
 		return current_call;
 	}
 	
