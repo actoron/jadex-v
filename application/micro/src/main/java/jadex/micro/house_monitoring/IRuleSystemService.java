@@ -32,7 +32,7 @@ public interface IRuleSystemService
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
 		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
-	public IFuture<String>	createRule(
+	public IFuture<String>	createEventRule(
 		@P("The event type") EventType type,
 		@P("The event source, i.e. the name of the component.") String source,
 		@P("The LLM prompt to be executed") String prompt);
@@ -42,7 +42,7 @@ public interface IRuleSystemService
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed repeatedly according to the Quartz cron expression.\n"
 		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
-	public IFuture<String>	createRule(
+	public IFuture<String>	createCronRule(
 		@P("The Quartz cron expression") String cron_expression,
 		@P("The LLM prompt to be executed") String prompt);
 	

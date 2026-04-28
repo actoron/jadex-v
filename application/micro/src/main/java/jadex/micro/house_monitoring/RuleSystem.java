@@ -53,7 +53,7 @@ public class RuleSystem	implements IRuleSystemService
 	//-------- tool methods --------
 	
 	@Override
-	public IFuture<String> createRule(EventType type, String source, String prompt)
+	public IFuture<String> createEventRule(EventType type, String source, String prompt)
 	{
 		if(type==EventType.MOTION_DETECTED)
 		{
@@ -95,7 +95,7 @@ public class RuleSystem	implements IRuleSystemService
 	}
 	
 	@Override
-	public IFuture<String> createRule(String cron_expression, String prompt)
+	public IFuture<String> createCronRule(String cron_expression, String prompt)
 	{
 		try
 		{

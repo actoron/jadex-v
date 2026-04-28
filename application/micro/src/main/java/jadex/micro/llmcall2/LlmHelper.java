@@ -121,7 +121,7 @@ public class LlmHelper
 //				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
 //				"nemotron-cascade-2:30b"	// slow
 //				"gemma4:31b"
-//				"gemma4:e4b"
+//				"gemma4:26b"
 				
 				// Succeeds sometimes on breakfast
 //				.modelName("nemotron-3-nano:30b")
@@ -132,7 +132,11 @@ public class LlmHelper
 //				.modelName("freakycoder123/phi4-fc:latest")
 							
 				// Fails on breakfast
-//				.modelName("qwen3.5:0.8b")
+//				"qwen3.5:4b"
+//				"qwen3.5:2b"
+//				"qwen3.5:0.8b"
+//				"gemma4:e4b"
+//				"gemma4:e2b"
 //				.modelName("mistral:7b-instruct")
 //				.modelName("qwen3:0.6b")
 //				.modelName("60MPH/astral3-tools:12b")
