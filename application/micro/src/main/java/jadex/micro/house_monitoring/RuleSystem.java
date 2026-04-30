@@ -1,15 +1,19 @@
 package jadex.micro.house_monitoring;
 
-import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.quartz.CronExpression;
+import com.cronutils.model.Cron;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.model.time.ExecutionTime;
+import com.cronutils.parser.CronParser;
 
 import jadex.core.ChangeEvent;
 import jadex.core.IComponent;
@@ -32,6 +36,22 @@ import jadex.requiredservice.IRequiredServiceFeature;
  */
 public class RuleSystem	implements IRuleSystemService
 {
+	//-------- static part --------
+	
+	// Quartz cron expression parser, cf. https://stackoverflow.com/a/64942294
+	// Some models try to use * for both day-of-month and day-of-week, which is not supported by org.quartz-scheduler:quartz.
+	// So we use cron-utils to validate the cron expressions.
+	public static CronParser	CRON_PARSER = new CronParser(
+		CronDefinitionBuilder.defineCron()
+	        .withSeconds().withValidRange(0, 59).and()
+	        .withMinutes().withValidRange(0, 59).and()
+	        .withHours().withValidRange(0, 23).and()
+	        .withDayOfMonth().withValidRange(1, 31).supportsL().supportsW().supportsLW().supportsQuestionMark().and()
+	        .withMonth().withValidRange(1, 12).and()
+	        .withDayOfWeek().withValidRange(1, 7).withMondayDoWValue(2).supportsHash().supportsL().supportsQuestionMark().and()
+	        .withYear().withValidRange(1970, 2099).withStrictRange().optional().and()
+	        .instance());
+	
 	//-------- attributes --------
 	
 	/** The rule counter for ID generation. */
@@ -77,7 +97,7 @@ public class RuleSystem	implements IRuleSystemService
 							System.err.println("Failed to notify subscriber: "+e);
 						}
 					}
-					return rule.id();
+					return rule.rule_id();
 				}
 				else
 				{
@@ -97,10 +117,11 @@ public class RuleSystem	implements IRuleSystemService
 	@Override
 	public IFuture<String> createCronRule(String cron_expression, String prompt)
 	{
-		try
-		{
+//		try
+//		{
 			// Create cron expression to validate it.
-			CronExpression cron	= new CronExpression(cron_expression);
+//			CronExpression cron	= new CronExpression(cron_expression);
+			Cron cron	= CRON_PARSER.parse(cron_expression); // Will throw an exception if the expression is invalid.
 			
 			// Add the rule to the list of rules. 
 			Rule rule = new Rule("rule_"+(++rule_cnt), cron_expression, null, null, prompt);
@@ -119,43 +140,59 @@ public class RuleSystem	implements IRuleSystemService
 			
 			scheduleCronRule(cron, rule);
 			
-			return new Future<>(rule.id());
-		}
-		catch(ParseException e)
-		{
-			return new Future<>(e);
-		}
+			return new Future<>(rule.rule_id());
+//		}
+//		catch(ParseException e)
+//		{
+//			return new Future<>(e);
+//		}
 	}
 
 	/**
 	 *  Schedule next execution of the given cron rule.
 	 */
-	protected void scheduleCronRule(CronExpression cron, Rule rule)
+//	protected void scheduleCronRule(CronExpression cron, Rule rule)
+	protected void scheduleCronRule(Cron cron, Rule rule)
 	{
-		String	fprompt	= "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
+		String	fprompt	= "The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
 				+ rule.prompt();
 		@SuppressWarnings("unchecked")
 		Consumer<Void>[]	execute	= new Consumer[1];
 		execute[0]	= v ->
 		{
 			long	current_time	= comp.getFeature(IExecutionFeature.class).getTime();
-			long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
-			System.out.println("Scheduling "+rule.id()+" to run in "+(next_time-current_time)+" ms");
+//			long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
+		    long next_time = getNextExecutionTime(cron, current_time, rule);
+			
+			System.out.println("Scheduling "+rule.rule_id()+" to run in "+(next_time-current_time)+" ms");
 			comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
 				.then(v1 -> executePrompt(fprompt)
 					.then(v2 -> execute[0].accept(null)));
 		};
 		execute[0].accept(null);
 	}
+
+	/**
+	 *  Get the next execution time after the current time.
+	 */
+	public static long getNextExecutionTime(Cron cron, long current_time, Rule rule)
+	{
+		ExecutionTime executionTime = ExecutionTime.forCron(cron);
+		ZonedDateTime current_datetime	= Instant.ofEpochMilli(current_time).atZone(ZoneId.systemDefault());
+		long next_time = executionTime.nextExecution(current_datetime)
+		    .orElseThrow(() -> new IllegalStateException("No next execution time found for cron expression: " + rule.cron_expression()))
+		    .toInstant().toEpochMilli();
+		return next_time;
+	}
 	
 	@Override
-	public IFuture<Void> deleteRule(String id)
+	public IFuture<Void> deleteRule(String rule_id)
 	{
 		for(List<Rule> lrules : rules.values())
 		{
 			for(Rule rule : lrules)
 			{
-				if(rule.id().equals(id))
+				if(rule.rule_id().equals(rule_id))
 				{
 					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
 					{
@@ -172,7 +209,7 @@ public class RuleSystem	implements IRuleSystemService
 				}
 			}
 		}
-		return new Future<>(new IllegalArgumentException("No rule found with ID: "+id));
+		return new Future<>(new IllegalArgumentException("No rule found with ID: "+rule_id));
 	}
 	
 	@Override
@@ -197,7 +234,7 @@ public class RuleSystem	implements IRuleSystemService
 			for(Rule rule : matches)
 			{
 				String	prompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
-					+ "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
+					+"The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
 					+ rule.prompt();
 				ret	= executePrompt(prompt);
 			}

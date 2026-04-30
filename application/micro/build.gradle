@@ -42,7 +42,8 @@ dependencies
     implementation 'org.activecomponents.jadex:llm:'+v
     
     // for house_monitoring rule system scheduler
-    implementation 'org.quartz-scheduler:quartz:2.5.2'
+    //implementation 'org.quartz-scheduler:quartz:2.5.2'
+    implementation 'com.cronutils:cron-utils:9.2.1'
     
     implementation 'dev.langchain4j:langchain4j:1.13.0'
     implementation 'dev.langchain4j:langchain4j-ollama:1.13.0'

@@ -104,10 +104,11 @@ public class LlmBenchmark
 		// Run benchmarks for local Ollama models
 		List<String>	include_models	= Arrays.asList(
 			"gemma4:e2b", "gemma4:e4b", "gemma4:26b",// "gemma4:31b",
-			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b",
+			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b", //"mistral-small3.2:24b", "devstral-small-2:24b",
 			"qwen3.5:9b", "qwen3.5:4b", "qwen3.5:2b", "qwen3.5:0.8b",
 			"qwen3.6:35b", "qwen3.6:27b",
-			"nemotron3:33b");
+			"nemotron3:33b"
+			);
 //		List<String>	include_models	= null;
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.OLLAMA_LOCAL, true);
 		

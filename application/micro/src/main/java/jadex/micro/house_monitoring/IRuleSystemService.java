@@ -23,7 +23,7 @@ public interface IRuleSystemService
 	}
 	
 	/** Record to hold rule information. */
-	public record Rule(String id, String cron_expression, EventType type, String source, String prompt) {}
+	public record Rule(String rule_id, String cron_expression, EventType type, String source, String prompt) {}
 	
 	//-------- tool methods, i.e. visible to the LLM --------
 	
@@ -31,7 +31,7 @@ public interface IRuleSystemService
 	 *  Register an LLM prompt that is triggered by the given event type.
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
-		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
+		+ "The tool returns the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createEventRule(
 		@P("The event type") EventType type,
 		@P("The event source, i.e. the name of the component.") String source,
@@ -41,17 +41,20 @@ public interface IRuleSystemService
 	 *  Register an LLM prompt that is scheduled using a cron expression.
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed repeatedly according to the Quartz cron expression.\n"
-		+ "The tool returns the ID of the created rule, which can be used to delete the rule later.")
+		+ "The tool returns the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createCronRule(
-		@P("The Quartz cron expression") String cron_expression,
+		@P("The Quartz cron expression (seconds minutes hours day_of_month month day_of_week [year])."
+		// qwen3.5:4b performs better without the example expression (!?)
+//			+ ", e.g. '0 0/5 * ? * * *' for every full 5 minutes."
+		) String cron_expression,
 		@P("The LLM prompt to be executed") String prompt);
 	
 
 	/**
 	 *  Delete a rule by its ID.
 	 */
-	@Tool("Delete a rule by its ID.")
-	public IFuture<Void>	deleteRule(String id);
+	@Tool("Delete a rule by its rule_id.")
+	public IFuture<Void>	deleteRule(String rule_id);
 	
 	/**
 	 *  List all registered rules.

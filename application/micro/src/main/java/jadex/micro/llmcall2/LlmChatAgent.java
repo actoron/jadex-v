@@ -200,121 +200,130 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 //		System.out.println("Request: " + request);
 		current_call = new Future<>();
 		
-		llm.chat(request, new StreamingChatResponseHandler()
+		try
 		{
-			@Override
-			public void onPartialToolCall(PartialToolCall partialToolCall, PartialToolCallContext ctx)
+			llm.chat(request, new StreamingChatResponseHandler()
 			{
-				agent.getComponentHandle().scheduleStep(() ->
+				@Override
+				public void onPartialToolCall(PartialToolCall partialToolCall, PartialToolCallContext ctx)
 				{
-					if(current_loop.isDone())
+					agent.getComponentHandle().scheduleStep(() ->
+					{
+						if(current_loop.isDone())
+						{
+							ctx.streamingHandle().cancel();
+						}
+					}).catchEx(es -> 
 					{
 						ctx.streamingHandle().cancel();
-					}
-				}).catchEx(es -> 
+					});
+				}
+				
+				@Override
+				public void onCompleteToolCall(CompleteToolCall completeToolCall)
 				{
-					ctx.streamingHandle().cancel();
-				});
-			}
-			
-			@Override
-			public void onCompleteToolCall(CompleteToolCall completeToolCall)
-			{
-				agent.getComponentHandle().scheduleStep(() ->
-				{
-					addChatFragment(ChatFragment.Type.TOOL_CALL, completeToolCall.toolExecutionRequest().toString(), null);
-					callfutures.add(callTool(agent, completeToolCall));
-				});
-			}
-			
-		    @Override
-		    public void onPartialResponse(PartialResponse partialResponse, PartialResponseContext ctx)
-		    {
-		    	agent.getComponentHandle().scheduleStep(() -> 
+					agent.getComponentHandle().scheduleStep(() ->
+					{
+						addChatFragment(ChatFragment.Type.TOOL_CALL, completeToolCall.toolExecutionRequest().toString(), null);
+						callfutures.add(callTool(agent, completeToolCall));
+					});
+				}
+				
+			    @Override
+			    public void onPartialResponse(PartialResponse partialResponse, PartialResponseContext ctx)
 			    {
-			    	ChatFragment.Type	type = ChatFragment.Type.RESPONSE;
-			    	String	text	= partialResponse.text();
-					StreamingHandle handle = ctx.streamingHandle();
-					addChatFragment(type, text, handle);
-			    }).catchEx(es -> 
-				{
-					ctx.streamingHandle().cancel();
-				});
-		    }
-
-		    @Override
-		    public void onPartialThinking(PartialThinking partialThinking, PartialThinkingContext ctx)
-		    {
-		    	agent.getComponentHandle().scheduleStep(() -> 
+			    	agent.getComponentHandle().scheduleStep(() -> 
+				    {
+				    	ChatFragment.Type	type = ChatFragment.Type.RESPONSE;
+				    	String	text	= partialResponse.text();
+						StreamingHandle handle = ctx.streamingHandle();
+						addChatFragment(type, text, handle);
+				    }).catchEx(es -> 
+					{
+						ctx.streamingHandle().cancel();
+					});
+			    }
+	
+			    @Override
+			    public void onPartialThinking(PartialThinking partialThinking, PartialThinkingContext ctx)
 			    {
-			    	ChatFragment.Type	type = ChatFragment.Type.THINKING;
-			    	String	text	= partialThinking.text();
-					StreamingHandle handle = ctx.streamingHandle();
-					addChatFragment(type, text, handle);
-			    }).catchEx(es -> 
-				{
-					ctx.streamingHandle().cancel();
-				});
-		    }
-		    
-		    @Override
-		    public void onCompleteResponse(ChatResponse completeResponse)
-		    {
-//		    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
-	    		agent.getComponentHandle().scheduleStep(() ->
-	    		{
-	    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
-	    			if(llm instanceof OllamaStreamingChatModel)
-	    			{
-		    			messages.add(AiMessage.builder()
-		    				.text(
-		    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
-		    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
-		    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
-		    				.attributes(completeResponse.aiMessage().attributes())
-		    				.build());
-	    			}
-	    			else
-	    			{
-		    			messages.add(completeResponse.aiMessage());
-	    			}
-
-	    			current_call.setResult(null);
-			    	// When done, i.e. LLM doesn't request more tool calls -> end current loop
-			    	if(callfutures.isEmpty())
-			    	{
-		    			// Add line break after last fragment
-			    		List<ChatFragment>	fragments	= current_loop.getIntermediateResults();
-			    		if(!fragments.isEmpty())
-			    		{
-			    			ChatFragment	last	= fragments.get(fragments.size()-1);
-		    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
-			    		}
-			    		current_loop.setFinishedIfUndone();
-			    	}
-			    	
-			    	// Otherwise, wait for all tool calls to complete before sending next request to LLM with all tool results.
-			    	else
-			    	{
-			    		@SuppressWarnings("unchecked")
-						IFuture<Object>[]	calls	= callfutures.toArray(new IFuture[0]);
-			    		callfutures.clear();
-			    		new FutureBarrier<>(calls)
-						   	.waitFor().then(v -> sendRequestToLLM())
-						   	.printOnEx();
-			    	}
-	    		});
-		    }
-
-		    @Override
-		    public void onError(Throwable error)
-		    {
-		    	agent.getComponentHandle().scheduleStep(() ->
-	    		{
-	    			current_loop.setException(SUtil.convertToRuntimeException(error));
-	    		});
-		    }
-		});
+			    	agent.getComponentHandle().scheduleStep(() -> 
+				    {
+				    	ChatFragment.Type	type = ChatFragment.Type.THINKING;
+				    	String	text	= partialThinking.text();
+						StreamingHandle handle = ctx.streamingHandle();
+						addChatFragment(type, text, handle);
+				    }).catchEx(es -> 
+					{
+						ctx.streamingHandle().cancel();
+					});
+			    }
+			    
+			    @Override
+			    public void onCompleteResponse(ChatResponse completeResponse)
+			    {
+			    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
+		    		agent.getComponentHandle().scheduleStep(() ->
+		    		{
+		    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
+		    			if(llm instanceof OllamaStreamingChatModel)
+		    			{
+			    			messages.add(AiMessage.builder()
+			    				.text(
+			    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
+			    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
+			    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
+			    				.attributes(completeResponse.aiMessage().attributes())
+			    				.build());
+		    			}
+		    			else
+		    			{
+			    			messages.add(completeResponse.aiMessage());
+		    			}
+	
+		    			current_call.setResult(null);
+				    	// When done, i.e. LLM doesn't request more tool calls -> end current loop
+				    	if(callfutures.isEmpty())
+				    	{
+			    			// Add line break after last fragment
+				    		List<ChatFragment>	fragments	= current_loop.getIntermediateResults();
+				    		if(!fragments.isEmpty())
+				    		{
+				    			ChatFragment	last	= fragments.get(fragments.size()-1);
+			    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
+				    		}
+				    		current_loop.setFinishedIfUndone();
+				    	}
+				    	
+				    	// Otherwise, wait for all tool calls to complete before sending next request to LLM with all tool results.
+				    	else
+				    	{
+				    		@SuppressWarnings("unchecked")
+							IFuture<Object>[]	calls	= callfutures.toArray(new IFuture[0]);
+				    		callfutures.clear();
+				    		new FutureBarrier<>(calls)
+							   	.waitFor().then(v -> sendRequestToLLM())
+							   	.printOnEx();
+				    	}
+		    		});
+			    }
+	
+			    @Override
+			    public void onError(Throwable error)
+			    {
+			    	System.err.println("Error in LLM response handler: "+error);
+			    	agent.getComponentHandle().scheduleStep(() ->
+		    		{
+		    			current_loop.setException(SUtil.convertToRuntimeException(error));
+		    		});
+			    }
+			});
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			current_loop.setException(e);
+		}
 	}
 	
 	/**

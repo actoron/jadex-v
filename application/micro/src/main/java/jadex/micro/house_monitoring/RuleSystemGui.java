@@ -82,7 +82,7 @@ public class RuleSystemGui extends JPanel
 		{
 			for(int i = 0; i < rules.size(); i++)
 			{
-				if(rules.get(i).id().equals(id))
+				if(rules.get(i).rule_id().equals(id))
 				{
 					rules.remove(i);
 					fireTableRowsDeleted(i, i);
@@ -111,7 +111,7 @@ public class RuleSystemGui extends JPanel
 			Rule r = rules.get(row);
 			return switch(col)
 			{
-				case 0 -> r.id();
+				case 0 -> r.rule_id();
 				case 1 -> r.type()!=null ? r.type().name() : null;
 				case 2 -> r.source();
 				case 3 -> r.cron_expression();
@@ -185,7 +185,7 @@ public class RuleSystemGui extends JPanel
 		if(ev.value() instanceof Rule rule)
 		{
 			if(ev.type() == ChangeEvent.Type.REMOVED)
-				model.removeRule(rule.id());
+				model.removeRule(rule.rule_id());
 			else // ADDED or INITIAL
 				model.addRule(rule);
 		}
@@ -203,14 +203,14 @@ public class RuleSystemGui extends JPanel
 		Rule rule = model.getRuleAt(modelRow);
 
 		int confirm = JOptionPane.showConfirmDialog(this,
-			"Delete rule \"" + rule.id() + "\"?", "Confirm delete",
+			"Delete rule \"" + rule.rule_id() + "\"?", "Confirm delete",
 			JOptionPane.YES_NO_OPTION);
 		if(confirm != JOptionPane.YES_OPTION) return;
 
-		setStatus("Deleting " + rule.id() + "...");
-		ruleService.deleteRule(rule.id()).then(v ->
+		setStatus("Deleting " + rule.rule_id() + "...");
+		ruleService.deleteRule(rule.rule_id()).then(v ->
 		{
-			SwingUtilities.invokeLater(() -> setStatus("Deleted " + rule.id() + "."));
+			SwingUtilities.invokeLater(() -> setStatus("Deleted " + rule.rule_id() + "."));
 		}).catchEx(ex ->
 		{
 			SwingUtilities.invokeLater(() -> setStatus("Error: " + ex.getMessage()));
