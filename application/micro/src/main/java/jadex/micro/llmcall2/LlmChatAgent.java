@@ -6,8 +6,11 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import dev.langchain4j.agent.tool.Tool;
@@ -57,7 +60,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>, ILlmChatService
 {
 	/** Helper record for lookup through simple service naming. */
-	static record ToolRef(Object service, Method method) {}
+	static record ToolRef(ToolSpecification spec, Object service, Method method) {}
 	
 	//-------- attributes --------
 	
@@ -81,7 +84,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	Future<Void> current_call;
 	
 	/** Map for looking up discovered tools by name. */
-	Map<String, ToolRef>	current_tools;
+	Map<String, ToolRef>	current_tools	= new LinkedHashMap<>();
 	
 	/** 
 	 *  List of currently executing tool calls.
@@ -320,14 +323,21 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	 */
 	protected List<ToolSpecification>	findTools()
 	{
-		List<ToolSpecification> tool_specs = new ArrayList<>();
-		current_tools	= new LinkedHashMap<>();
+		Set<Object>	found_services = new LinkedHashSet<>();
 		
 		Collection<?>	services	= agent.getFeature(IRequiredServiceFeature.class)
 			.getLocalServices(new ServiceQuery<>((Class<?>)null).setServiceAnnotations(Tool.class));
 		for(Object service : services)
 		{
 //			System.out.println("Found service: " + service);
+			found_services.add(service);
+			
+			// Skip services that are already added as tools, to avoid creating new names when duplicate names exist.
+			if(current_tools.values().stream().anyMatch(tool -> tool!=null && tool.service.equals(service)))
+			{
+				continue;
+			}
+			
 			Class<?>	type	= ((IService)service).getServiceId().getServiceType().getType0();
 			Collection<String>	tags = ((IService)service).getServiceId().getTags();
 			for(Method m: type.getMethods())
@@ -335,50 +345,78 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				if(m.isAnnotationPresent(Tool.class))
 				{
 					ToolSpecification	tool	= ToolSpecifications.toolSpecificationFrom(m);
-					String	name	= tool.name();
+					
 					// Convert name to snake case if not explicitly set in annotation, as this is more common for tools (e.g. python function calls)
+					String	name	= tool.name();
 					if(m.getAnnotation(Tool.class).name().isEmpty())
 					{
 						name = SUtil.toSnakeCase(name);
 					}
-					// append number to ensure unique name.
-					while(current_tools.containsKey(name))
-					{
-						// get current number suffix if exists
-						int suffix = 1;
-						int index = name.lastIndexOf("_");
-						if(index!=-1)
-						{
-							try
-							{
-								suffix = Integer.parseInt(name.substring(index+1))+1;
-								name = name.substring(0, index);
-							}
-							catch(NumberFormatException e)
-							{
-								// no number suffix
-							}
-						}
-						name = name+"_"+suffix;
-					}
 					
+					// Append tags to description.
 					String	description	= tool.description()==null ? "" : tool.description();
 					description += (tags==null || tags.isEmpty() ? ""
 						: (description.isBlank() ? "" : "\n")+	"Tags: "+String.join(", ", tags));
 					
+					// Create new tool specification with adjusted name and description.
 					tool	= ToolSpecification.builder()
 						.name(name)
 						.description(description)
 						.parameters(tool.parameters())
 						.metadata(tool.metadata())
 						.build();
+
+					// If tool with name already exists -> append suffix to existing, too.
+					ToolRef existing = current_tools.get(name);
+					if(existing!=null)
+					{
+						// Set to null to rename subsequent tools too.
+						current_tools.put(name, null);
+						
+						ToolRef	new_tool	= appendSuffix(existing);
+						current_tools.put(new_tool.spec.name(), new_tool);
+					}
 					
-					tool_specs.add(tool);
-					current_tools.put(name, new ToolRef(service, m));
+					// Append suffix to new tool if name already exists.
+					ToolRef	tool_ref	= new ToolRef(tool, service, m);
+					if(current_tools.containsKey(name))
+					{
+						tool_ref	= appendSuffix(tool_ref);
+					}
+						
+					current_tools.put(tool_ref.spec().name(), tool_ref);
 				}
 			}
 		}
-		return tool_specs;
+		
+		for(ToolRef tool: new ArrayList<>(current_tools.values()))
+		{
+			// Remove tools that don't exist anymore
+			if(tool!=null && !found_services.contains(tool.service))
+			{
+				current_tools.remove(tool.spec.name());
+			}
+		}
+		
+		return current_tools.values().stream().filter(tool -> tool!=null).map(tool -> tool.spec).toList();
+	}
+
+	/**
+	 * 	Append unique suffix to tool name to avoid duplicate tool names.
+	 */
+	protected ToolRef	appendSuffix(ToolRef existing)
+	{
+		String	name = existing.spec.name();
+		while(current_tools.containsKey(name))
+		{
+			name = existing.spec.name()+"_"+UUID.randomUUID().toString().substring(0, 3);
+		}
+		return new ToolRef(ToolSpecification.builder()
+			.name(name)
+			.description(existing.spec.description())
+			.parameters(existing.spec.parameters())
+			.metadata(existing.spec.metadata())
+			.build(), existing.service, existing.method);
 	}
 
 	/**
@@ -390,7 +428,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	{
 		try
 		{
-			if(!current_tools.containsKey(call.toolExecutionRequest().name()))
+			if(current_tools.get(call.toolExecutionRequest().name())==null)
 				throw new RuntimeException("Tool not found: " + call.toolExecutionRequest().name());
 			
 			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service;
