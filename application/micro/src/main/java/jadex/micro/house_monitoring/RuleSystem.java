@@ -117,21 +117,7 @@ public class RuleSystem	implements IRuleSystemService
 				}
 			}
 			
-			// Schedule the rule execution according to the cron expression.
-			String	fprompt	= "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
-					+ rule.prompt();
-			@SuppressWarnings("unchecked")
-			Consumer<Void>[]	execute	= new Consumer[1];
-			execute[0]	= v ->
-			{
-				long	current_time	= comp.getFeature(IExecutionFeature.class).getTime();
-				long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
-				System.out.println("Scheduling "+rule.id()+" to run in "+(next_time-current_time)+" ms");
-				comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
-					.then(v1 -> executePrompt(fprompt)
-						.then(v2 -> execute[0].accept(null)));
-			};
-			execute[0].accept(null);
+			scheduleCronRule(cron, rule);
 			
 			return new Future<>(rule.id());
 		}
@@ -139,6 +125,27 @@ public class RuleSystem	implements IRuleSystemService
 		{
 			return new Future<>(e);
 		}
+	}
+
+	/**
+	 *  Schedule next execution of the given cron rule.
+	 */
+	protected void scheduleCronRule(CronExpression cron, Rule rule)
+	{
+		String	fprompt	= "The rule "+rule.id()+" has been triggered. Thus perform the following action(s):\n"
+				+ rule.prompt();
+		@SuppressWarnings("unchecked")
+		Consumer<Void>[]	execute	= new Consumer[1];
+		execute[0]	= v ->
+		{
+			long	current_time	= comp.getFeature(IExecutionFeature.class).getTime();
+			long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
+			System.out.println("Scheduling "+rule.id()+" to run in "+(next_time-current_time)+" ms");
+			comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
+				.then(v1 -> executePrompt(fprompt)
+					.then(v2 -> execute[0].accept(null)));
+		};
+		execute[0].accept(null);
 	}
 	
 	@Override

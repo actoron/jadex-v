@@ -13,10 +13,15 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentTerminatedException;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.core.INoCopyStep;
 import jadex.errorhandling.IErrorHandlingFeature;
+import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.micro.llmcall2.LlmHelper.Provider;
+import jadex.providedservice.IService;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmBenchmark
 {
@@ -97,27 +102,35 @@ public class LlmBenchmark
 //		}
 		
 		// Run benchmarks for local Ollama models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.OLLAMA_LOCAL, true);
+		List<String>	include_models	= Arrays.asList(
+			"gemma4:e2b", "gemma4:e4b", "gemma4:26b",// "gemma4:31b",
+			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b",
+			"qwen3.5:9b", "qwen3.5:4b", "qwen3.5:2b", "qwen3.5:0.8b",
+			"qwen3.6:35b", "qwen3.6:27b",
+			"nemotron3:33b");
+//		List<String>	include_models	= null;
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.OLLAMA_LOCAL, true);
 		
-		// Run benchmarks for Local Ai models
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.LOCAL_AI, true);
+//		// Run benchmarks for Local Ai models
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.LOCAL_AI, true);
 		
 //		// Run benchmarks for available Google Gemini models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.GOOGLE_GEMINI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.GOOGLE_GEMINI, true);
 //		
 //		// Run benchmarks for available Mistral AI models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, Provider.MISTRAL_AI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.MISTRAL_AI, true);
 	}
 
 	/**
 	 *  Run benchmarks for all models of the given provider.
 	 */
 	protected static void runProviderBenchmarks(String benchmark_name, String prompt, Runnable setup,
-			Function<String, Boolean> success, Runnable teardown, List<String> skip_models, Provider provider, boolean skip_latest)
+			Function<String, Boolean> success, Runnable teardown, List<String> skip_models, List<String> include_models, Provider provider, boolean skip_latest)
 	{
 		for(String model_name: provider.getModels())
 		{
-			if(!skip_models.contains(model_name) && !(skip_latest && model_name.endsWith("latest")))
+			if(!skip_models.contains(model_name) && !(skip_latest && model_name.endsWith("latest"))
+				&& (include_models==null || include_models.contains(model_name)))
 			{
 				// non-thinking
 				try
@@ -182,9 +195,11 @@ public class LlmBenchmark
 			if(setup!=null)
 				setup.run();
 			
+			IComponentHandle	agent	= IComponentManager.get().create(new LlmChatAgent(llm)).get();
+			ILlmChatService	chat	= getService(ILlmChatService.class, "");
+			
 			long	start	= System.currentTimeMillis();
-			ITerminableIntermediateFuture<ChatFragment>	results	= IComponentManager.get()
-				.runAsync(new LlmChatAgent(llm, prompt));
+			ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
 			LlmChatAgent.printResults(results);
 			try
 			{
@@ -198,13 +213,13 @@ public class LlmBenchmark
 				{
 					results.get(60000);
 				}
+				
+				successes[i]	= success.apply(LlmChatAgent.getResponse(results));
 				long	end	= System.currentTimeMillis();
 				if(i>0)
 				{
-					times[i-1]	= end-start;
+					times[i-1]	= successes[i] ? end-start : -1;
 				}
-				
-				successes[i]	= success.apply(LlmChatAgent.getResponse(results));
 				
 				System.out.println((successes[i] ? "Success" : "Failure")+" ("+(end-start)/1000+" s)");
 			}
@@ -236,11 +251,11 @@ public class LlmBenchmark
 				}
 				else
 				{
+					successes[i]	= false;
 					if(i>0)
 					{
-						times[i-1]	= end-start;
+						times[i-1]	= -1;
 					}
-					successes[i]	= false;
 					System.out.println(e+" ("+(end-start)/1000+" s)");
 				}				
 			}
@@ -248,12 +263,13 @@ public class LlmBenchmark
 			{
 				if(teardown!=null)
 					teardown.run();
+				agent.terminate().get();
 			}
 		}
 		
-		long	min	= Arrays.stream(times).min().getAsLong()/1000;
-		long	max	= Arrays.stream(times).max().getAsLong()/1000;
-		long	avg	= Arrays.stream(times).sum()/times.length/1000;
+		long	min	= Arrays.stream(times).filter(time -> time>=0).min().orElse(-1000)/1000;
+		long	max	= Arrays.stream(times).filter(time -> time>=0).max().orElse(-1000)/1000;
+		long	avg	= (long) (Arrays.stream(times).filter(time -> time>=0).average().orElse(-1000)/1000);
 		long	rate	= Arrays.stream(successes).filter(s -> s).count()*100/successes.length;
 		System.out.println(model_name+" results: Success rate "+rate+"%, min "+min+" s, max "+max+" s, avg "+avg+" s");
 		
@@ -266,6 +282,20 @@ public class LlmBenchmark
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 *  Get a service with name contained in service ID.
+	 */
+	public static <T> T getService(Class<? extends T> servicetype, String name)
+	{
+		return IComponentManager.get()
+			.runAsync((INoCopyStep<IFuture<T>>)
+				comp -> comp.getFeature(IRequiredServiceFeature.class)
+					.searchServices(servicetype)
+					.thenApply(sensors -> sensors.stream()
+						.filter(s -> ((IService)s).getServiceId().toString().contains(name))
+						.findFirst().get())).get();
 	}
 	
 	/**
