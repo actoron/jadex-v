@@ -233,7 +233,7 @@ public class RuleSystem	implements IRuleSystemService
 			IFuture<Void>	ret	= IFuture.DONE;
 			for(Rule rule : matches)
 			{
-				String	prompt = "Event "+type+" from source "+source+" occurred with data "+data+".\n"
+				String	prompt = "Event "+type+" from source "+source+" occurred"+(data!=null && ! data.isBlank() ? " with data '"+data+"'" : "")+".\n"
 					+"The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
 					+ rule.prompt();
 				ret	= executePrompt(prompt);
