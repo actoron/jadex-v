@@ -129,8 +129,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									})
 										.catchEx(ex ->
 									{
-										fself.handleException(ex);
-										// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+										// Just terminate -> exception should be handled by caller 
 										fself.doTerminate();									
 									});
 								}
@@ -142,8 +141,7 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									})
 										.catchEx(ex ->
 									{
-										fself.handleException(ex);
-										// Terminate, if not terminated by exception handler (default terminate -> StepAborted)
+										// Just terminate -> exception should be handled by caller 
 										fself.doTerminate();									
 									});
 								}
