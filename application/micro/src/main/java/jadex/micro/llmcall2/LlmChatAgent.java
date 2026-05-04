@@ -86,6 +86,9 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	/** Map for looking up discovered tools by name. */
 	Map<String, ToolRef>	current_tools	= new LinkedHashMap<>();
 	
+	/** Total token count of the last completed chat interaction. */
+	int last_token_count	= 0;
+	
 	/** 
 	 *  List of currently executing tool calls.
 	 *  Reply to LLM is only sent after all tools are done.
@@ -160,11 +163,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	
 	//-------- component (i.e. user-facing) methods --------
 	
-	/**
-	 *  Send a prompt to the agent.
-	 *  This can be used to send an initial prompt at the start or follow-up prompts later on.
-	 */
 	@ComponentMethod
+	@Override
 	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, RenderedImage... images)
 	{
 		List<Content> content = new ArrayList<>();
@@ -181,6 +181,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		current_loop = new TerminableIntermediateFuture<>();
 		sendRequestToLLM();
 		return current_loop;
+	}
+	
+	@Override
+	@ComponentMethod
+	public IFuture<Integer> getTotalTokenCount()
+	{
+		return new Future<>(last_token_count);
 	}
 	
 	//-------- internal methods --------
@@ -262,7 +269,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    @Override
 			    public void onCompleteResponse(ChatResponse completeResponse)
 			    {
-			    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
+//			    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
+			    	last_token_count = completeResponse.tokenUsage().totalTokenCount();
 		    		agent.getComponentHandle().scheduleStep(() ->
 		    		{
 		    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
@@ -516,17 +524,15 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				{
 					if(msg.hasSingleText())
 					{
-						messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+						String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=" + msg.text();
+						messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
 					}
 					// Handle complex content as user message, because Ollama only supports text content in tool results.
 					else
 					{
 						List<Content> contents = new ArrayList<>();
-						contents.add(TextContent.from(ToolExecutionResultMessage.builder()
-							.id(call.toolExecutionRequest().id())
-							.toolName(call.toolExecutionRequest().name())
-							.text("see attached contents")
-							.build().toString()));
+						String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=see attached contents";
+						contents.add(TextContent.from(text));
 						contents.addAll(msg.contents());
 						messages.add(UserMessage.from(contents));
 					}
@@ -549,7 +555,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				if(llm instanceof OllamaStreamingChatModel)
 				{
-					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), msg.toString()));
+					String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", error=" + msg.text();
+					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
 				}
 				else
 				{

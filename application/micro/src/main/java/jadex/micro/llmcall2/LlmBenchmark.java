@@ -60,7 +60,9 @@ public class LlmBenchmark
 		{
 			try(FileWriter	writer	= new FileWriter(out))	
 			{
-				writer.write("Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time\n");
+				writer.write("Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
+					+";Avg Tokens;Min Tokens;Max Tokens"
+					+ "\n");
 			}
 			catch(Exception e)
 			{
@@ -103,8 +105,8 @@ public class LlmBenchmark
 		
 		// Run benchmarks for local Ollama models
 		List<String>	include_models	= Arrays.asList(
-			"gemma4:e2b", "gemma4:e4b", "gemma4:26b",// "gemma4:31b",
-			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b", //"mistral-small3.2:24b", "devstral-small-2:24b",
+			"gemma4:e2b", "gemma4:e4b", "gemma4:26b", "gemma4:31b",
+			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b", "mistral-small3.2:24b", "devstral-small-2:24b",
 			"qwen3.5:9b", "qwen3.5:4b", "qwen3.5:2b", "qwen3.5:0.8b",
 			"qwen3.6:35b", "qwen3.6:27b",
 			"nemotron3:33b"
@@ -116,10 +118,29 @@ public class LlmBenchmark
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.LOCAL_AI, true);
 		
 //		// Run benchmarks for available Google Gemini models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.GOOGLE_GEMINI, true);
-//		
-//		// Run benchmarks for available Mistral AI models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.MISTRAL_AI, true);
+		include_models	= Arrays.asList(
+			"gemini-2.5-flash", 
+			"gemini-2.5-flash-lite", 
+			"gemini-2.5-pro", 
+			"gemini-3-flash-preview", 
+			"gemini-3-pro-image-preview", 
+			"gemini-3-pro-preview", 
+			"gemini-3.1-flash-image-preview", 
+			"gemini-3.1-flash-lite-preview", 
+			"gemini-3.1-pro-preview", 
+//			"gemini-3.1-pro-preview-customtools", 
+			"gemini-robotics-er-1.6-preview" 
+//			"gemma-4-26b-a4b-it", 
+//			"gemma-4-31b-it", 
+//			"nano-banana-pro-preview"
+			);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.GOOGLE_GEMINI, true);
+		
+		// Run benchmarks for available Mistral AI models
+		include_models	= Arrays.asList(
+			
+			);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.MISTRAL_AI, true);
 	}
 
 	/**
@@ -188,6 +209,7 @@ public class LlmBenchmark
 	{
 		int runs	= 10;
 		long[] times	= new long[runs-1];
+		int[] tokens	= new int[runs];
 		Boolean[]	successes	= new Boolean[runs];
 		for(int i=0; i<runs; i++)
 		{
@@ -217,12 +239,14 @@ public class LlmBenchmark
 				
 				successes[i]	= success.apply(LlmChatAgent.getResponse(results));
 				long	end	= System.currentTimeMillis();
+				tokens[i]	= successes[i] ? chat.getTotalTokenCount().get() : -1;
 				if(i>0)
 				{
 					times[i-1]	= successes[i] ? end-start : -1;
 				}
 				
-				System.out.println((successes[i] ? "Success" : "Failure")+" ("+(end-start)/1000+" s)");
+				System.out.println((successes[i] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
+						+ ", "+tokens[i]+" tokens)");
 			}
 			catch(Exception e)
 			{
@@ -253,6 +277,7 @@ public class LlmBenchmark
 				else
 				{
 					successes[i]	= false;
+					tokens[i]	= -1;
 					if(i>0)
 					{
 						times[i-1]	= -1;
@@ -271,12 +296,18 @@ public class LlmBenchmark
 		long	min	= Arrays.stream(times).filter(time -> time>=0).min().orElse(-1000)/1000;
 		long	max	= Arrays.stream(times).filter(time -> time>=0).max().orElse(-1000)/1000;
 		long	avg	= (long) (Arrays.stream(times).filter(time -> time>=0).average().orElse(-1000)/1000);
+		int	token_min	= Arrays.stream(tokens).filter(t -> t>=0).min().orElse(-1);
+		int	token_max	= Arrays.stream(tokens).filter(t -> t>=0).max().orElse(-1);
+		int	token_avg	= (int) Arrays.stream(tokens).filter(t -> t>=0).average().orElse(-1);
 		long	rate	= Arrays.stream(successes).filter(s -> s).count()*100/successes.length;
-		System.out.println(model_name+" results: Success rate "+rate+"%, min "+min+" s, max "+max+" s, avg "+avg+" s");
+		System.out.println(model_name+" results: Success rate "+rate+"%, min "+min+" s, max "+max+" s, avg "+avg+" s"
+			+ ", tokens min "+token_min+", max "+token_max+", avg "+token_avg);
 		
 		try(FileWriter	writer	= new FileWriter(SUtil.toSnakeCase(benchmark_name)+".csv", true))
 		{
-			writer.write(benchmark_name+";"+model_name+";"+provider+";"+dothink+";"+rate+"%;"+avg+";"+min+";"+max+"\n");
+			writer.write(benchmark_name+";"+model_name+";"+provider+";"+dothink+";"+rate+"%;"+avg+";"+min+";"+max
+				+";"+token_avg+";"+token_min+";"+token_max
+				+"\n");
 		}
 		catch(Exception e)
 		{
@@ -341,10 +372,17 @@ public class LlmBenchmark
 				StreamingChatModel llm = provider.createChatModel(model_name, false);
 				boolean	nothink	= !LlmHelper.isThinking(llm);
 				System.out.println("Model: "+model_name+" No-think: "+nothink);
-				
-				llm = provider.createChatModel(model_name, true);
+			}
+			catch(Exception e)
+			{
+				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
+			}
+			
+			try
+			{
+				StreamingChatModel	llm = provider.createChatModel(model_name, true);
 				boolean	think	= LlmHelper.isThinking(llm);
-				System.out.println("  Think: "+think);
+				System.out.println("Model: "+model_name+" Think: "+think);
 			}
 			catch(Exception e)
 			{

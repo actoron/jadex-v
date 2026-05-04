@@ -39,6 +39,13 @@ import jadex.future.ITerminableIntermediateFuture;
 
 public class LlmHelper
 {
+	static
+	{
+		System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
+		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j", "debug");
+		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j.model.ollama", "debug");		
+	}
+	
 	public static enum Provider
 	{
 		OLLAMA_LOCAL("Ollama (local)",
@@ -226,10 +233,6 @@ public class LlmHelper
 
 	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think)
 	{
-		System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "info");
-		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j", "debug");
-		System.setProperty("org.slf4j.simpleLogger.log.dev.langchain4j.model.ollama", "debug");
-		
 		if(provider==null)
 			provider = Provider.values()[0];
 		
@@ -284,7 +287,7 @@ public class LlmHelper
 			.baseUrl(baseurl)
 			.modelName(model)
 //			.logRequests(true)
-//			.logResponses(true)
+			.logResponses(true)
 			// If there is thinking -> always use it.
 			.returnThinking(true);
 			
