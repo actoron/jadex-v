@@ -37,6 +37,7 @@ import dev.langchain4j.model.chat.response.PartialToolCall;
 import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
+import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
@@ -536,6 +537,17 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						contents.addAll(msg.contents());
 						messages.add(UserMessage.from(contents));
 					}
+				}
+				else if(llm instanceof MistralAiStreamingChatModel && !msg.hasSingleText())
+				{
+					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), "result=see user message"));
+					
+					// Handle complex content as user message, because Mistral only supports text content in tool results.
+					List<Content> contents = new ArrayList<>();
+					String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=see attached contents";
+					contents.add(TextContent.from(text));
+					contents.addAll(msg.contents());
+					messages.add(UserMessage.from(contents));					
 				}
 				else
 				{
