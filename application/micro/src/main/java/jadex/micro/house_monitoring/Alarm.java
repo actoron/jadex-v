@@ -50,7 +50,7 @@ public class Alarm implements IAlarmService
 	//-------- UI only methods --------
 	
 	@Override
-	public ISubscriptionIntermediateFuture<AlarmState> subSubcribeToAlarmState()
+	public ISubscriptionIntermediateFuture<AlarmState> subcribeToAlarmState()
 	{
 		SubscriptionIntermediateFuture<AlarmState> subscriber = new SubscriptionIntermediateFuture<>();
 		subscriber.setTerminationCommand(ex -> subscribers.remove(subscriber));

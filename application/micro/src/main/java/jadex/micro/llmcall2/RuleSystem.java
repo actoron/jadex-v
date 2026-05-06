@@ -1,4 +1,4 @@
-package jadex.micro.house_monitoring;
+package jadex.micro.llmcall2;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.cronutils.model.Cron;
@@ -24,9 +25,6 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
-import jadex.micro.llmcall2.ChatFragment;
-import jadex.micro.llmcall2.ILlmChatService;
-import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -61,8 +59,11 @@ public class RuleSystem	implements IRuleSystemService
 	@Inject
 	protected IComponent	comp;
 	
+	/** The registered event types with their source service type. */
+	protected Map<String, Class<?>>	event_types = new LinkedHashMap<>();
+	
 	/** The registered rules, mapped by event type and source. */
-	protected Map<EventType, List<Rule>>	rules = new LinkedHashMap<>();
+	protected Map<String, List<Rule>>	rules = new LinkedHashMap<>();
 	
 	/** The subscribers to the registered rules. */
 	protected List<SubscriptionIntermediateFuture<ChangeEvent>>	subscribers = new ArrayList<>();
@@ -73,19 +74,25 @@ public class RuleSystem	implements IRuleSystemService
 	//-------- tool methods --------
 	
 	@Override
-	public IFuture<String> createEventRule(EventType type, String source, String prompt)
+	public IFuture<Set<String>> getEventTypes()
 	{
-		if(type==EventType.MOTION_DETECTED)
+		return new Future<>(event_types.keySet());
+	}
+	
+	@Override
+	public IFuture<String> createEventRule(String event_type, String event_source, String prompt)
+	{
+		if(event_types.containsKey(event_type))
 		{
-			return comp.getFeature(IRequiredServiceFeature.class).searchServices(IMotionSensorService.class)
+			return comp.getFeature(IRequiredServiceFeature.class).searchServices(event_types.get(event_type))
 				.thenApply(services ->
 			{
 				boolean found = services.stream().anyMatch(service ->
-					((IService)service).getServiceId().getProviderId().getLocalName().matches(source));
+					((IService)service).getServiceId().getProviderId().getLocalName().matches(event_source));
 				if(found)
 				{
-					Rule rule = new Rule("rule_"+(++rule_cnt), null, type, source, prompt);
-					rules.computeIfAbsent(type, v -> new ArrayList<>()).add(rule);
+					Rule rule = new Rule("rule_"+(++rule_cnt), null, event_type, event_source, prompt);
+					rules.computeIfAbsent(event_type, v -> new ArrayList<>()).add(rule);
 					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
 					{
 						try
@@ -101,7 +108,8 @@ public class RuleSystem	implements IRuleSystemService
 				}
 				else
 				{
-					throw new IllegalArgumentException("No motion sensor found with name: "+source+"\nAvailable motion sensors: "+services.stream()
+					throw new IllegalArgumentException("No '"+event_type+"' event source found with name: "+event_source
+						+"\nAvailable event sources: "+services.stream()
 						.map(service -> ((IService)service).getServiceId().getProviderId().getLocalName())
 						.reduce((a,b) -> a+", "+b).orElse("none"));
 				}
@@ -109,8 +117,7 @@ public class RuleSystem	implements IRuleSystemService
 		}
 		else
 		{
-			// For simplicity, we only allow rules for motion sensors in this example.
-			throw new UnsupportedOperationException("Only motion sensor rules are supported in this example.");
+			return new Future<>(new IllegalArgumentException("Event type '"+event_type+"' is not registered. Available event types: "+event_types.keySet()));
 		}
 	}
 	
@@ -221,11 +228,22 @@ public class RuleSystem	implements IRuleSystemService
 	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	@Override
-	public IFuture<Void> notifyEvent(EventType type, String data)
+	public IFuture<Void> registerEventType(String event_type, Class<?> service_type)
+	{
+		if(event_types.containsKey(event_type) && !event_types.get(event_type).equals(service_type))
+		{
+			return new Future<>(new IllegalArgumentException("Event type '"+event_type+"' is already registered by service type: "+event_types.get(event_type).getName()));
+		}
+		event_types.put(event_type, service_type);
+		return IFuture.DONE;
+	}
+	
+	@Override
+	public IFuture<Void> notifyEvent(String event_type, String data)
 	{
 		String	source	= ServiceCall.getCurrentInvocation().getCaller().getLocalName();
-		List<Rule>	matches	= rules.getOrDefault(type, Collections.emptyList()).stream()
-			.filter(rule -> source.matches(rule.source()))
+		List<Rule>	matches	= rules.getOrDefault(event_type, Collections.emptyList()).stream()
+			.filter(rule -> source.matches(rule.event_source()))
 			.toList();
 		
 		if(!matches.isEmpty())
@@ -233,7 +251,7 @@ public class RuleSystem	implements IRuleSystemService
 			IFuture<Void>	ret	= IFuture.DONE;
 			for(Rule rule : matches)
 			{
-				String	prompt = "Event "+type+" from source "+source+" occurred"+(data!=null && ! data.isBlank() ? " with data '"+data+"'" : "")+".\n"
+				String	prompt = "Event "+event_type+" from source "+source+" occurred"+(data!=null && ! data.isBlank() ? " with data '"+data+"'" : "")+".\n"
 					+"The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
 					+ rule.prompt();
 				ret	= executePrompt(prompt);

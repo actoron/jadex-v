@@ -38,5 +38,5 @@ public interface IAlarmService
 	/**
 	 *  Subscribe to the state of the alarm system.
 	 */
-	public ISubscriptionIntermediateFuture<AlarmState> subSubcribeToAlarmState();
+	public ISubscriptionIntermediateFuture<AlarmState> subcribeToAlarmState();
 }

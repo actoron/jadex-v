@@ -8,8 +8,10 @@ import com.cronutils.model.Cron;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.micro.house_monitoring.IAlarmService.AlarmState;
-import jadex.micro.house_monitoring.IRuleSystemService.Rule;
+import jadex.micro.llmcall2.IRuleSystemService;
 import jadex.micro.llmcall2.LlmBenchmark;
+import jadex.micro.llmcall2.RuleSystem;
+import jadex.micro.llmcall2.IRuleSystemService.Rule;
 
 public class LlmSmartHomeBenchmark
 {
@@ -46,8 +48,8 @@ public class LlmSmartHomeBenchmark
 				List<Rule>	rules	= rule_system.listRules().get();
 				IAlarmService alarm = LlmBenchmark.getService(IAlarmService.class, "Alarm");
 				if(rules.size()!=1
-					|| rule_system.listRules().get().get(0).type()!=IRuleSystemService.EventType.MOTION_DETECTED
-					|| !rule_system.listRules().get().get(0).source().equals("Bewegungsmelder A")
+					|| !rule_system.listRules().get().get(0).event_type().equals(MotionSensor.EVENT_TYPE_MOTION_DETECTED)
+					|| !rule_system.listRules().get().get(0).event_source().equals("Bewegungsmelder A")
 					|| alarm.getAlarmState().get()==AlarmState.ON)
 				{
 					return false;
@@ -83,7 +85,7 @@ public class LlmSmartHomeBenchmark
 					// Check if motion sensor rule is still present
 					// And at least one cron rule is created
 					// And the alarm is not triggered immediately (before the first 30 seconds are over)
-					if(!rules.stream().filter(r -> r.type()==IRuleSystemService.EventType.MOTION_DETECTED).findAny().isPresent()
+					if(!rules.stream().filter(r -> r.event_type().equals(MotionSensor.EVENT_TYPE_MOTION_DETECTED)).findAny().isPresent()
 						|| !rules.stream().filter(r -> r.cron_expression()!=null).findAny().isPresent()
 						|| alarm.getAlarmState().get()==AlarmState.ON)
 					{

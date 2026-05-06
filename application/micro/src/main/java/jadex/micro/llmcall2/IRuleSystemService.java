@@ -1,6 +1,7 @@
-package jadex.micro.house_monitoring;
+package jadex.micro.llmcall2;
 
 import java.util.List;
+import java.util.Set;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -15,17 +16,16 @@ import jadex.providedservice.annotation.Service;
 @Service
 public interface IRuleSystemService
 {
-	/**  The possible event types that can trigger rules. */
-	public enum EventType
-	{
-		DOORBELL_PRESSED,
-		MOTION_DETECTED
-	}
-	
 	/** Record to hold rule information. */
-	public record Rule(String rule_id, String cron_expression, EventType type, String source, String prompt) {}
+	public record Rule(String rule_id, String cron_expression, String event_type, String event_source, String prompt) {}
 	
 	//-------- tool methods, i.e. visible to the LLM --------
+	
+	/**
+	 *  Get the available event types.
+	 */
+	@Tool("Get the available event types that can trigger rules.")
+	public IFuture<Set<String>>	getEventTypes();
 	
 	/**
 	 *  Register an LLM prompt that is triggered by the given event type.
@@ -33,8 +33,8 @@ public interface IRuleSystemService
 	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
 		+ "The tool returns the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createEventRule(
-		@P("The event type") EventType type,
-		@P("The event source, i.e. the name of the component.") String source,
+		@P("The event type") String event_type,
+		@P("The event source, i.e. the name of the component.") String event_source,
 		@P("The LLM prompt to be executed") String prompt);
 	
 	/**
@@ -65,11 +65,16 @@ public interface IRuleSystemService
 	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	/**
+	 *  Register an event type.
+	 */
+	public IFuture<Void>	registerEventType(String event_type, Class<?> service_type);
+	
+	/**
 	 *  Notify the rule system of an event.
 	 *  @param type	The event type.
-	 *  @param data	Optional event data, e.g. for a doorbell event the name of the doorbell.
+	 *  @param data	Optional event data.
 	 */
-	public IFuture<Void>	notifyEvent(EventType type, String data);
+	public IFuture<Void>	notifyEvent(String event_type, String data);
 	
 	/**
 	 *  Execute a prompt.

@@ -1,4 +1,4 @@
-package jadex.micro.house_monitoring;
+package jadex.micro.llmcall2;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -23,7 +23,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
 import jadex.core.ChangeEvent;
-import jadex.micro.house_monitoring.IRuleSystemService.Rule;
+import jadex.micro.llmcall2.IRuleSystemService.Rule;
 
 /**
  * Panel that displays the registered rules of the rule system in a sortable table.
@@ -112,8 +112,8 @@ public class RuleSystemGui extends JPanel
 			return switch(col)
 			{
 				case 0 -> r.rule_id();
-				case 1 -> r.type()!=null ? r.type().name() : null;
-				case 2 -> r.source();
+				case 1 -> r.event_type();
+				case 2 -> r.event_source();
 				case 3 -> r.cron_expression();
 				case 4 -> r.prompt();
 				default -> null;
@@ -175,7 +175,7 @@ public class RuleSystemGui extends JPanel
 		add(south, BorderLayout.SOUTH);
 
 		// Subscribe to rule changes
-		ruleService.subscribeToRules().next(ev -> SwingUtilities.invokeLater(() -> handleEvent(ev)));
+		ruleService.subscribeToRules().next(ev -> handleEvent(ev));
 	}
 
 	// -------- helpers --------

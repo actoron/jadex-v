@@ -31,7 +31,7 @@ public class AlarmGui extends JPanel
 		stateLabel.setFont(stateLabel.getFont().deriveFont(Font.BOLD, 24f));
 		add(stateLabel, BorderLayout.CENTER);
 
-		sub = alarmService.subSubcribeToAlarmState();
+		sub = alarmService.subcribeToAlarmState();
 		sub.next(state -> SwingUtilities.invokeLater(() -> updateState(state)));
 	}
 

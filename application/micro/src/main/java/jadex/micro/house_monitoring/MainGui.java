@@ -9,6 +9,8 @@ import javax.swing.SwingUtilities;
 
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
+import jadex.micro.llmcall2.IRuleSystemService;
+import jadex.micro.llmcall2.RuleSystemGui;
 import jadex.providedservice.IService;
 
 /**

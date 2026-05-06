@@ -287,7 +287,7 @@ public class LlmHelper
 			.baseUrl(baseurl)
 			.modelName(model)
 //			.logRequests(true)
-			.logResponses(true)
+//			.logResponses(true)
 			// If there is thinking -> always use it.
 			.returnThinking(true);
 			
