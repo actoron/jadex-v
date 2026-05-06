@@ -342,7 +342,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+	    	System.err.println("Exception in LLM chat call: "+e);
 			current_loop.setExceptionIfUndone(e);
 		}
 	}
