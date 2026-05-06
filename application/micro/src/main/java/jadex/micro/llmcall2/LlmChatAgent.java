@@ -61,7 +61,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
 public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>, ILlmChatService
 {
 	/** Helper record for lookup through simple service naming. */
-	static record ToolRef(ToolSpecification spec, Object service, Method method) {}
+	public static record ToolRef(ToolSpecification spec, Object service, Method method) {}
 	
 	//-------- attributes --------
 	
@@ -281,6 +281,11 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    	last_token_count = completeResponse.tokenUsage().totalTokenCount();
 		    		agent.getComponentHandle().scheduleStep(() ->
 		    		{
+		    			if(current_loop.isDone())
+						{
+		    				return;
+						}
+		    			
 		    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
 		    			if(llm instanceof OllamaStreamingChatModel)
 		    			{
@@ -308,7 +313,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				    			ChatFragment	last	= fragments.get(fragments.size()-1);
 			    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
 				    		}
-				    		current_loop.setFinishedIfUndone();
+				    		current_loop.setFinished();
 				    	}
 				    	
 				    	// Otherwise, wait for all tool calls to complete before sending next request to LLM with all tool results.
@@ -330,7 +335,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    	System.err.println("Error in LLM response handler: "+error);
 			    	agent.getComponentHandle().scheduleStep(() ->
 		    		{
-		    			current_loop.setException(SUtil.convertToRuntimeException(error));
+		    			current_loop.setExceptionIfUndone(SUtil.convertToRuntimeException(error));
 		    		});
 			    }
 			});
@@ -338,7 +343,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		catch(Exception e)
 		{
 			e.printStackTrace();
-			current_loop.setException(e);
+			current_loop.setExceptionIfUndone(e);
 		}
 	}
 	
