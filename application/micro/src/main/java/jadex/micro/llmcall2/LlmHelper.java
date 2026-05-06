@@ -25,13 +25,13 @@ import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
-import dev.langchain4j.model.localai.LocalAiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiModelCatalog;
+import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder;
 import jadex.core.IComponentManager;
@@ -69,7 +69,7 @@ public class LlmHelper
 			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true),
 			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", model)),
 		LOCAL_AI("Local AI",
-			(model, think) -> createOpenAiChatModel("http://localhost:8080/v1", model, think),
+			(model, think) -> createLocalAiChatModel(model, think),
 			() -> fetchOpenAiModels("http://localhost:8080/v1", false),
 			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", model));
 		
@@ -257,6 +257,18 @@ public class LlmHelper
 		return oscmb.build();
 	}
 	
+	protected static StreamingChatModel	createLocalAiChatModel(String model, Boolean think)
+	{
+		return OpenAiResponsesStreamingChatModel.builder()
+			.baseUrl("http://localhost:8080/v1")
+			.modelName(model)
+			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
+			.reasoningSummary("auto")
+			.logRequests(true)
+			.logResponses(true)
+			.build();
+	}
+	
 	protected static List<String>	fetchOpenAiModels(String baseurl, boolean free)
 	{
 		ModelCatalog	cat	= OpenAiModelCatalog.builder()
@@ -343,14 +355,14 @@ public class LlmHelper
 			.build();
 	}
 	
-	protected static StreamingChatModel createLocalAiChatModel(String model, Boolean think)
-	{
-		return LocalAiStreamingChatModel.builder()
-			.baseUrl("http://localhost:8080/v1")
-			.modelName(model)
-			.logRequests(true)
-			.build();
-	}
+//	protected static StreamingChatModel createLocalAiChatModel(String model, Boolean think)
+//	{
+//		return LocalAiStreamingChatModel.builder()
+//			.baseUrl("http://localhost:8080/v1")
+//			.modelName(model)
+//			.logRequests(true)
+//			.build();
+//	}
 	
 	/**
 	 *  Is the model thinking?
