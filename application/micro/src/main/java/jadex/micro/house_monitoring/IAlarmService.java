@@ -23,7 +23,7 @@ public interface IAlarmService
 	/**
 	 *  Trigger or disable the alarm.
 	 */
-	@Tool
+	@Tool("Trigger or disable the alarm.")
 	public IFuture<Void> setAlarmState(AlarmState state);
 	
 	/**

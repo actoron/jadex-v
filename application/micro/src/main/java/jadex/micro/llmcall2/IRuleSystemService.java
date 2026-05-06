@@ -31,7 +31,7 @@ public interface IRuleSystemService
 	 *  Register an LLM prompt that is triggered by the given event type.
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
-		+ "The tool returns the rule_id of the created rule, which can be used to delete the rule later.")
+		+ "A successful tool call provides as result the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createEventRule(
 		@P("The event type") String event_type,
 		@P("The event source, i.e. the name of the component.") String event_source,
@@ -41,7 +41,7 @@ public interface IRuleSystemService
 	 *  Register an LLM prompt that is scheduled using a cron expression.
 	 */
 	@Tool("Register a rule for an LLM prompt to be executed repeatedly according to the Quartz cron expression.\n"
-		+ "The tool returns the rule_id of the created rule, which can be used to delete the rule later.")
+		+ "A successful tool call provides as result the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createCronRule(
 		@P("The Quartz cron expression (seconds minutes hours day_of_month month day_of_week [year])."
 		// qwen3.5:4b performs better without the example expression (!?)
