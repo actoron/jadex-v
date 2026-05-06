@@ -215,7 +215,7 @@ public class LlmBenchmark
 //			"devstral-2512",	// No image input
 //			"devstral-medium-2507", 	// No image input
 //			"devstral-small-2507",
-//			"labs-leanstral-2603",	// doesn't support mixing tool/user!?
+			"labs-leanstral-2603",
 //			"magistral-medium-2509",	// loops
 //			"magistral-small-2509",
 //			"ministral-14b-2512",

@@ -552,7 +552,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				}
 				else if(llm instanceof MistralAiStreamingChatModel && !msg.hasSingleText())
 				{
-					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), "result=see user message"));
+					int i	= messages.size();
+					while(i>0 && (messages.get(i-1) instanceof UserMessage))
+					{
+						i--;
+					}
+					
+					messages.add(i, ToolExecutionResultMessage.from(call.toolExecutionRequest(), "result=see user message"));
 					
 					// Handle complex content as user message, because Mistral only supports text content in tool results.
 					List<Content> contents = new ArrayList<>();
