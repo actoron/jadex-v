@@ -1,11 +1,18 @@
 package jadex.micro.llmcall2;
 
+import java.awt.BorderLayout;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import dev.langchain4j.exception.InternalServerException;
 import dev.langchain4j.exception.RateLimitException;
@@ -25,6 +32,61 @@ import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmBenchmark
 {
+	/**
+	 * Small helper GUI to mark current run as failed and terminate the active future.
+	 */
+	protected static JFrame showFailureGui(String model, int run, int runs)
+	{
+		JFrame[] frame = new JFrame[1];
+		try
+		{
+			SwingUtilities.invokeAndWait(() ->
+			{
+				frame[0] = new JFrame("Benchmark Control");
+				frame[0].setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+				JPanel panel = new JPanel(new BorderLayout(0, 6));
+				panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10));
+				panel.add(new JLabel(" Model: "+model+"    Run: "+run+"/"+runs+" "), BorderLayout.NORTH);
+
+				JButton failure = new JButton("Failure");
+				failure.addActionListener(ev ->
+				{
+					try
+					{
+						ITerminableIntermediateFuture<ChatFragment> results =
+							getService(ILlmChatService.class, "").getCurrentChat();
+						results.terminate(new RuntimeException("Manual failure triggered via GUI"));
+					}
+					catch(Exception ex)
+					{
+						// Ignore termination races/late termination.
+					}
+					frame[0].dispose();
+				});
+				panel.add(failure, BorderLayout.CENTER);
+				frame[0].getContentPane().add(panel);
+				frame[0].pack();
+				frame[0].setLocationByPlatform(true);
+				frame[0].setAlwaysOnTop(true);
+				frame[0].setVisible(true);
+			});
+		}
+		catch(Exception e)
+		{
+			return null;
+		}
+		return frame[0];
+	}
+
+	protected static void closeFailureGui(JFrame frame)
+	{
+		if(frame!=null)
+		{
+			SwingUtilities.invokeLater(frame::dispose);
+		}
+	}
+
 	public static void runBenchmarks(String benchmark_name, String prompt,
 		Runnable setup, Function<String, Boolean> success, Runnable teardown)
 	{
@@ -254,6 +316,7 @@ public class LlmBenchmark
 			
 			long	start	= System.currentTimeMillis();
 			ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
+			JFrame failureFrame = showFailureGui(model_name, i+1, runs);
 			LlmChatAgent.printResults(results);
 			try
 			{
@@ -318,6 +381,7 @@ public class LlmBenchmark
 			}
 			finally
 			{
+				closeFailureGui(failureFrame);
 				if(teardown!=null)
 					teardown.run();
 				agent.terminate().get();

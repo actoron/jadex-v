@@ -24,4 +24,9 @@ public interface ILlmChatService
 	 *  (complete history of user, assistant, tool tokens).
 	 */
 	public IFuture<Integer>	getTotalTokenCount();
+	
+	/**
+	 *  Get the current chat, if any.
+	 */
+	public ITerminableIntermediateFuture<ChatFragment>		getCurrentChat();
 }
