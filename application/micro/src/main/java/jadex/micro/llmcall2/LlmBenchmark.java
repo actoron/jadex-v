@@ -105,10 +105,21 @@ public class LlmBenchmark
 		
 		// Run benchmarks for local Ollama models
 		List<String>	include_models	= Arrays.asList(
-			"gemma4:e2b", "gemma4:e4b", "gemma4:26b", "gemma4:31b",
-			"ministral-3:14b", "ministral-3:8b", "ministral-3:3b", "mistral-small3.2:24b", "devstral-small-2:24b",
-			"qwen3.5:9b", "qwen3.5:4b", "qwen3.5:2b", "qwen3.5:0.8b",
-			"qwen3.6:35b", "qwen3.6:27b",
+			"gemma4:e2b",
+			"gemma4:e4b",
+			"gemma4:26b",
+			"gemma4:31b",
+			"ministral-3:14b",
+			"ministral-3:8b",
+			"ministral-3:3b",
+			"mistral-small3.2:24b",
+			"devstral-small-2:24b",
+			"qwen3.5:9b",
+			"qwen3.5:4b",
+			"qwen3.5:2b",
+			"qwen3.5:0.8b",
+			"qwen3.6:35b",
+			"qwen3.6:27b",
 			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
@@ -138,7 +149,27 @@ public class LlmBenchmark
 		
 		// Run benchmarks for available Mistral AI models
 		include_models	= Arrays.asList(
-			
+//			"codestral-2508",	// No image input
+//			"devstral-2512",	// No image input
+//			"devstral-medium-2507", 	// No image input
+//			"devstral-small-2507",
+//			"labs-leanstral-2603",	// doesn't support mixing tool/user!?
+//			"magistral-medium-2509",	// loops
+//			"magistral-small-2509",
+//			"ministral-14b-2512",
+//			"ministral-3b-2512",
+//			"ministral-8b-2512",
+			"mistral-large-2512", 
+			"mistral-large-pixtral-2411", 
+			"mistral-medium-2604",
+			"mistral-small-2603",
+//			"mistral-tiny-2407",
+			"mistral-vibe-cli-fast", 
+			"mistral-vibe-cli-with-tools", 
+			"open-mistral-nemo-2407",
+			"pixtral-large-2411"
+//			"voxtral-mini-2507", 
+//			"voxtral-small-2507" 
 			);
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.MISTRAL_AI, true);
 	}
