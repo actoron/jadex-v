@@ -49,7 +49,7 @@ public class LlmBenchmark
 				panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10));
 				panel.add(new JLabel(" Model: "+model+"    Run: "+run+"/"+runs+" "), BorderLayout.NORTH);
 
-				JButton failure = new JButton("Failure");
+				JButton failure = new JButton("Trigger Failure");
 				failure.addActionListener(ev ->
 				{
 					try
@@ -196,12 +196,12 @@ public class LlmBenchmark
 			"gemini-2.5-flash-lite", 
 			"gemini-2.5-pro", 
 			"gemini-3-flash-preview", 
-			"gemini-3-pro-image-preview", 
-			"gemini-3-pro-preview", 
-			"gemini-3.1-flash-image-preview", 
+//			"gemini-3-pro-image-preview",	//Image part is missing a thought_signature in content position 3, part position 2.
+//			"gemini-3-pro-preview", 	// Timeout due to slow processing
+//			"gemini-3.1-flash-image-preview", 	//Image part is missing a thought_signature in content position 3, part position 2.
 			"gemini-3.1-flash-lite-preview", 
-			"gemini-3.1-pro-preview", 
-//			"gemini-3.1-pro-preview-customtools", 
+//			"gemini-3.1-pro-preview", // Timeout due to slow processing / Duplicate of gemini-3-pro-preview?
+//			"gemini-3.1-pro-preview-customtools", // Timeout due to slow processing
 			"gemini-robotics-er-1.6-preview" 
 //			"gemma-4-26b-a4b-it", 
 //			"gemma-4-31b-it", 
@@ -214,7 +214,7 @@ public class LlmBenchmark
 //			"codestral-2508",	// No image input
 //			"devstral-2512",	// No image input
 //			"devstral-medium-2507", 	// No image input
-//			"devstral-small-2507",
+//			"devstral-small-2507",	// available locally
 			"labs-leanstral-2603",
 //			"magistral-medium-2509",	// loops
 //			"magistral-small-2509",
@@ -222,14 +222,14 @@ public class LlmBenchmark
 //			"ministral-3b-2512",
 //			"ministral-8b-2512",
 			"mistral-large-2512", 
-			"mistral-large-pixtral-2411", 
-			"mistral-medium-2604",
-			"mistral-small-2603",
+//			"mistral-large-pixtral-2411", // outdated, replaced by mistral-large-2512!?
+			"mistral-medium-2604",	// available locally, but too big
+			"mistral-small-2603",	// not (yet) available locally
 //			"mistral-tiny-2407",
 			"mistral-vibe-cli-fast", 
-			"mistral-vibe-cli-with-tools", 
-			"open-mistral-nemo-2407",
-			"pixtral-large-2411"
+			"mistral-vibe-cli-with-tools"
+//			"open-mistral-nemo-2407",	// outdated
+//			"pixtral-large-2411",	// duplicate of mistral-large-pixtral-2411!?
 //			"voxtral-mini-2507", 
 //			"voxtral-small-2507" 
 			);
@@ -340,7 +340,7 @@ public class LlmBenchmark
 				}
 				
 				System.out.println((successes[i] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
-						+ ", "+tokens[i]+" tokens)");
+						+ ", "+chat.getTotalTokenCount().get()+" tokens)");
 			}
 			catch(Exception e)
 			{
