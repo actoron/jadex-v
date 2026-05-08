@@ -42,7 +42,7 @@ public class Main
 		
 		String	prompt;
 		prompt	= 
-			"Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1 "
+			"Immer wenn ein Bewegungsmelder auslöst, analysiere das aktuelle Bild jeder Kamera "
 			+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.";
 		rulesystem.executePrompt(prompt).get();
 		
