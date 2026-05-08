@@ -20,13 +20,20 @@ public interface ILlmChatService
 	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, RenderedImage... images);
 
 	/**
-	 *  Get the total token count of the last completed chat interaction, including all tokens
+	 *  Get the token count of the last completed chat interaction loop
+	 *  (user, assistant, tool tokens).
+	 */
+	public IFuture<Integer>	getLastTokenCount();
+	
+	/**
+	 *  Get the total token count of the all chat interactions
 	 *  (complete history of user, assistant, tool tokens).
 	 */
 	public IFuture<Integer>	getTotalTokenCount();
 	
 	/**
-	 *  Get the current chat, if any.
+	 *  Get the current or last chat, if any.
+	 *  @return An empty finished future, if no chat has been started yet, or the current/last chat, which may still be running. 
 	 */
 	public ITerminableIntermediateFuture<ChatFragment>		getCurrentChat();
 }
