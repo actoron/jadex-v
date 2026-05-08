@@ -5,6 +5,7 @@ import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.micro.llmcall2.IRuleSystemService;
+import jadex.micro.llmcall2.IRuleSystemService.EventType;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 /**
@@ -31,7 +32,9 @@ public class MotionSensor	implements IMotionSensorService
 	@Inject
 	protected void ruleSystemAdded(IRuleSystemService ruleSystem)
 	{
-		ruleSystem.registerEventType(EVENT_TYPE_MOTION_DETECTED, IMotionSensorService.class)
+		ruleSystem.registerEventType(
+			new EventType(EVENT_TYPE_MOTION_DETECTED, "A motion is detected by the sensor (e.g. an animal or person).")
+				, IMotionSensorService.class)
 			.catchEx(ex -> SUtil.throwUnchecked(ex));
 	}
 	

@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,10 @@ public class RuleSystem	implements IRuleSystemService
 	protected IComponent	comp;
 	
 	/** The registered event types with their source service type. */
-	protected Map<String, Class<?>>	event_types = new LinkedHashMap<>();
+	protected Map<String, Class<?>>	event_sources = new LinkedHashMap<>();
+	
+	/** The registered event types with their description. */
+	protected Set<EventType>	event_types = new LinkedHashSet<>();
 	
 	/** The registered rules, mapped by event type and source. */
 	protected Map<String, List<Rule>>	rules = new LinkedHashMap<>();
@@ -74,25 +78,25 @@ public class RuleSystem	implements IRuleSystemService
 	//-------- tool methods --------
 	
 	@Override
-	public IFuture<Set<String>> getEventTypes()
+	public IFuture<Set<EventType>> getEventTypes()
 	{
-		return new Future<>(event_types.keySet());
+		return new Future<>(event_types);
 	}
 	
 	@Override
-	public IFuture<String> createEventRule(String event_type, String event_source, String prompt)
+	public IFuture<String> createEventRule(String event_name, String event_source, String prompt)
 	{
-		if(event_types.containsKey(event_type))
+		if(event_sources.containsKey(event_name))
 		{
-			return comp.getFeature(IRequiredServiceFeature.class).searchServices(event_types.get(event_type))
+			return comp.getFeature(IRequiredServiceFeature.class).searchServices(event_sources.get(event_name))
 				.thenApply(services ->
 			{
 				boolean found = services.stream().anyMatch(service ->
 					((IService)service).getServiceId().getProviderId().getLocalName().matches(event_source));
 				if(found)
 				{
-					Rule rule = new Rule("rule_"+(++rule_cnt), null, event_type, event_source, prompt);
-					rules.computeIfAbsent(event_type, v -> new ArrayList<>()).add(rule);
+					Rule rule = new Rule("rule_"+(++rule_cnt), null, event_name, event_source, prompt);
+					rules.computeIfAbsent(event_name, v -> new ArrayList<>()).add(rule);
 					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
 					{
 						try
@@ -108,7 +112,7 @@ public class RuleSystem	implements IRuleSystemService
 				}
 				else
 				{
-					throw new IllegalArgumentException("No '"+event_type+"' event source found with name: "+event_source
+					throw new IllegalArgumentException("No '"+event_name+"' event source found with name: "+event_source
 						+"\nAvailable event sources: "+services.stream()
 						.map(service -> ((IService)service).getServiceId().getProviderId().getLocalName())
 						.reduce((a,b) -> a+", "+b).orElse("none"));
@@ -117,7 +121,7 @@ public class RuleSystem	implements IRuleSystemService
 		}
 		else
 		{
-			return new Future<>(new IllegalArgumentException("Event type '"+event_type+"' is not registered. Available event types: "+event_types.keySet()));
+			return new Future<>(new IllegalArgumentException("Event name '"+event_name+"' is not registered. Available event names: "+event_sources.keySet()));
 		}
 	}
 	
@@ -228,13 +232,14 @@ public class RuleSystem	implements IRuleSystemService
 	//-------- non-tool methods, i.e. for inter-service calls --------
 	
 	@Override
-	public IFuture<Void> registerEventType(String event_type, Class<?> service_type)
+	public IFuture<Void> registerEventType(EventType event_type, Class<?> service_type)
 	{
-		if(event_types.containsKey(event_type) && !event_types.get(event_type).equals(service_type))
+		if(event_sources.containsKey(event_type.name()) && !event_sources.get(event_type.name()).equals(service_type))
 		{
-			return new Future<>(new IllegalArgumentException("Event type '"+event_type+"' is already registered by service type: "+event_types.get(event_type).getName()));
+			return new Future<>(new IllegalArgumentException("Event name '"+event_type.name()+"' is already registered by service type: "+event_sources.get(event_type.name()).getName()));
 		}
-		event_types.put(event_type, service_type);
+		event_sources.put(event_type.name(), service_type);
+		event_types.add(event_type);
 		return IFuture.DONE;
 	}
 	

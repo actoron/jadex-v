@@ -16,6 +16,9 @@ import jadex.providedservice.annotation.Service;
 @Service
 public interface IRuleSystemService
 {
+	/** Record to hold event type information. */
+	public record EventType(String name, String description) {}
+	
 	/** Record to hold rule information. */
 	public record Rule(String rule_id, String cron_expression, String event_type, String event_source, String prompt) {}
 	
@@ -25,7 +28,7 @@ public interface IRuleSystemService
 	 *  Get the available event types.
 	 */
 	@Tool("Get the available event types that can trigger rules.")
-	public IFuture<Set<String>>	getEventTypes();
+	public IFuture<Set<EventType>>	getEventTypes();
 	
 	/**
 	 *  Register an LLM prompt that is triggered by the given event type.
@@ -33,7 +36,7 @@ public interface IRuleSystemService
 	@Tool("Register a rule for an LLM prompt to be executed later, when the given event occurs and the source matches.\n"
 		+ "A successful tool call provides as result the rule_id of the created rule, which can be used to delete the rule later.")
 	public IFuture<String>	createEventRule(
-		@P("The event type") String event_type,
+		@P("The event name") String event_name,
 		@P("The event source, i.e. the name of the component.") String event_source,
 		@P("The LLM prompt to be executed") String prompt);
 	
@@ -67,14 +70,14 @@ public interface IRuleSystemService
 	/**
 	 *  Register an event type.
 	 */
-	public IFuture<Void>	registerEventType(String event_type, Class<?> service_type);
+	public IFuture<Void>	registerEventType(EventType event_type, Class<?> service_type);
 	
 	/**
 	 *  Notify the rule system of an event.
 	 *  @param type	The event type.
 	 *  @param data	Optional event data.
 	 */
-	public IFuture<Void>	notifyEvent(String event_type, String data);
+	public IFuture<Void>	notifyEvent(String event_name, String data);
 	
 	/**
 	 *  Execute a prompt.
