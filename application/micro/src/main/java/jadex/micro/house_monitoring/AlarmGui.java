@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -22,6 +23,8 @@ public class AlarmGui extends JPanel
 	protected final ISubscriptionIntermediateFuture<AlarmState> sub;
 
 	protected final JLabel stateLabel;
+	protected final JButton toggleButton;
+	protected volatile AlarmState currentState;
 
 	public AlarmGui(IAlarmService alarmService)
 	{
@@ -31,23 +34,35 @@ public class AlarmGui extends JPanel
 		stateLabel.setFont(stateLabel.getFont().deriveFont(Font.BOLD, 24f));
 		add(stateLabel, BorderLayout.CENTER);
 
+		toggleButton = new JButton("Toggle Alarm");
+		toggleButton.addActionListener(e -> {
+			AlarmState state = currentState;
+			if(state == null)
+				return;
+			alarmService.setAlarmState(state == AlarmState.ON ? AlarmState.OFF : AlarmState.ON);
+		});
+		add(toggleButton, BorderLayout.SOUTH);
+
 		sub = alarmService.subcribeToAlarmState();
 		sub.next(state -> SwingUtilities.invokeLater(() -> updateState(state)));
 	}
 
 	protected void updateState(AlarmState state)
 	{
+		currentState = state;
 		if(state == AlarmState.ON)
 		{
 			setBackground(new Color(255, 215, 215));
 			stateLabel.setForeground(new Color(180, 0, 0));
 			stateLabel.setText("Alarm: ON");
+			toggleButton.setText("Disable alarm");
 		}
 		else
 		{
 			setBackground(new Color(215, 255, 215));
 			stateLabel.setForeground(new Color(0, 120, 0));
 			stateLabel.setText("Alarm: OFF");
+			toggleButton.setText("Enable alarm");
 		}
 	}
 }
