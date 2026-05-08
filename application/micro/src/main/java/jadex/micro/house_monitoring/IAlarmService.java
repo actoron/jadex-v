@@ -21,9 +21,13 @@ public interface IAlarmService
 	//-------- tool methods, i.e. visible to the LLM --------
 	
 	/**
-	 *  Trigger or disable the alarm.
+	 *  Trigger or stop the alarm.
 	 */
-	@Tool("Trigger or disable the alarm.")
+	@Tool("Set the state of the alarm system. "
+		+ "ON will immediately trigger the alarm. "
+		+ "OFF will stop an ongoing alarm."
+		+ "Only trigger the alarm if you are sure that there is an intruder, "
+		+ "to avoid disturbing the house owner with false alarms.")
 	public IFuture<Void> setAlarmState(AlarmState state);
 	
 	/**
