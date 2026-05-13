@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +19,9 @@ import java.util.function.Supplier;
 import javax.imageio.ImageIO;
 
 import dev.langchain4j.data.image.Image;
+import dev.langchain4j.http.client.jdk.JdkHttpClient;
+import dev.langchain4j.model.anthropic.AnthropicModelCatalog;
+import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -25,6 +29,7 @@ import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.localai.LocalAiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
@@ -32,8 +37,6 @@ import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder;
 import jadex.core.IComponentManager;
 import jadex.future.ITerminableIntermediateFuture;
 
@@ -61,17 +64,25 @@ public class LlmHelper
 			() -> fetchGeminiModels(),
 			(model) -> fetchGeminiContextSize(model)),
 		MISTRAL_AI("Mistral AI",
-				(model, think) -> createMistralChatModel(model, think),
-				() -> fetchMistralModels(),
-				(model) -> fetchMistralContextSize(model)),
+			(model, think) -> createMistralChatModel(model, think),
+			() -> fetchMistralModels(),
+			(model) -> fetchMistralContextSize(model)),
 		OPEN_ROUTER("Open Router",
-			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", model, think),
-			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", true),
-			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", model)),
+			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model, think),
+			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), true),
+			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model)),
 		LOCAL_AI("Local AI",
-			(model, think) -> createLocalAiChatModel(model, think),
-			() -> fetchOpenAiModels("http://localhost:8080/v1", false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", model));
+			(model, think) -> createOpenAiChatModel("http://localhost:8080/v1", "", model, think),
+			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
+		LM_STUDIO("LM Studio",
+			(model, think) -> createAnthropicChatModel("http://localhost:1234/v1", "nix", model, think),
+			() -> fetchOpenAiModels("http://localhost:1234/v1", "nix", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:1234/v1", "", model)),
+		UNSLOTH("Unsloth",
+			(model, think) -> createOpenAiChatModel("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
+			() -> fetchOpenAiModels("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model));
 		
 		private final String name;
 		private final BiFunction<String, Boolean, StreamingChatModel> creator;
@@ -239,58 +250,117 @@ public class LlmHelper
 		return provider.createChatModel(model, think);
 	}
 	
-	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String model, Boolean think)
+	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String apikey, String model, Boolean think)
 	{
-		OpenAiStreamingChatModelBuilder	oscmb	= OpenAiStreamingChatModel.builder()
-			.baseUrl(baseurl)
-			.apiKey(System.getenv("OPENAI_API_KEY"))
-			.modelName(model)
-			// cf. https://developers.openai.com/api/docs/guides/reasoning
-			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
-			// If there is thinking -> always use it.
-			.returnThinking(true)
-			.sendThinking(true)
-			.logRequests(true)
+//		return OpenAiStreamingChatModel.builder()
+//			.baseUrl(baseurl)
+//			.apiKey(apikey)
+//			.modelName(model)
+//			// cf. https://developers.openai.com/api/docs/guides/reasoning
+//			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
+//			// If there is thinking -> always use it.
+//			.returnThinking(true)
+//			.sendThinking(true)
+//			.logRequests(true)
 //			.logResponses(true)
-			;
-				
-		return oscmb.build();
-	}
-	
-	protected static StreamingChatModel	createLocalAiChatModel(String model, Boolean think)
-	{
+//			// For LM Studio, we need to force HTTP/1.1 :-(
+//			.httpClientBuilder(JdkHttpClient.builder()
+//				.httpClientBuilder(HttpClient.newBuilder()
+//					.version(HttpClient.Version.HTTP_1_1)))
+//			.build();
+		
 		return OpenAiResponsesStreamingChatModel.builder()
-			.baseUrl("http://localhost:8080/v1")
+			.baseUrl(baseurl)
+			.apiKey(apikey)
 			.modelName(model)
 			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
 			.reasoningSummary("auto")
 			.logRequests(true)
 			.logResponses(true)
+			// For LM Studio, we need to force HTTP/1.1 :-(
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
 			.build();
 	}
 	
-	protected static List<String>	fetchOpenAiModels(String baseurl, boolean free)
+	protected static StreamingChatModel	createLocalAiChatModel(String model, Boolean think)
+	{
+//		return OpenAiResponsesStreamingChatModel.builder()
+//			.baseUrl("http://localhost:8080/v1")
+//			.modelName(model)
+//			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
+//			.reasoningSummary("auto")
+//			.logRequests(true)
+//			.logResponses(true)
+//			.build();
+		
+		return LocalAiStreamingChatModel.builder()
+			.baseUrl("http://localhost:8080/v1")
+			.modelName(model)
+			.logRequests(true)
+			.logResponses(true)
+			.build();
+	}
+	
+	protected static List<String>	fetchOpenAiModels(String baseurl, String apikey, boolean free)
 	{
 		ModelCatalog	cat	= OpenAiModelCatalog.builder()
 			.baseUrl(baseurl)
-			.apiKey(System.getenv("OPENAI_API_KEY"))
+			.apiKey(apikey)
+			// For LM Studio, we need to force HTTP/1.1 :-(
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
 			.build();
 		return cat.listModels().stream()
-			.filter(m -> m.type()==null || m.type()==ModelType.CHAT)
+//			.filter(m -> m.type()==null || m.type()==ModelType.CHAT)
 			.map(m -> m.name())
 			.filter(name -> !free || name.endsWith(":free"))
 			.sorted().toList();
 	}
 	
-	protected static int fetchOpenAiContextSize(String baseurl, String model)
+	protected static int fetchOpenAiContextSize(String baseurl, String apikey, String model)
 	{
 		ModelCatalog	cat	= OpenAiModelCatalog.builder()
 			.baseUrl(baseurl)
-			.apiKey(System.getenv("OPENAI_API_KEY"))
+			.apiKey(apikey)
 			.build();
 		return cat.listModels().stream()
 			.filter(m -> m.name().equals(model))
 			.findFirst().map(m -> m.maxInputTokens()!=null ? m.maxInputTokens() : -1).orElse(-1);
+	}
+	
+	protected static StreamingChatModel createAnthropicChatModel(String baseurl, String apikey, String model, Boolean think)
+	{
+		return AnthropicStreamingChatModel.builder()
+			.baseUrl(baseurl)
+			.apiKey(apikey)
+			// For LM Studio, we need to force HTTP/1.1 :-(
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
+			.modelName(model)
+			.returnThinking(true)
+			.sendThinking(true)
+			.thinkingType(think ? "enabled": null)
+			.thinkingDisplay("summarized")
+			.logRequests(true)
+			.logResponses(true)
+			.build();
+	}
+	
+	protected static List<String>	fetchAnthropicModels(String baseurl, String apikey)
+	{
+		ModelCatalog	cat	= AnthropicModelCatalog.builder()
+			.baseUrl(baseurl)
+			.apiKey(apikey)
+			.build();
+		return cat.listModels().stream()
+//			.filter(m -> m.type()==ModelType.CHAT)
+			.map(m -> m.name())
+			.sorted()
+			.toList();
 	}
 	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)

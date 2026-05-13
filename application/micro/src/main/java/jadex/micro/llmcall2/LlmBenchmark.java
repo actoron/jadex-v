@@ -123,7 +123,7 @@ public class LlmBenchmark
 			try(FileWriter	writer	= new FileWriter(out))	
 			{
 				writer.write("Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
-					+";Avg Tokens;Min Tokens;Max Tokens"
+					+";Avg Tokens;Min Tokens;Max Tokens;Max Context"
 					+ "\n");
 			}
 			catch(Exception e)
@@ -169,8 +169,8 @@ public class LlmBenchmark
 		List<String>	include_models	= Arrays.asList(
 			"gemma4:e2b",
 			"gemma4:e4b",
-			"gemma4:26b",
-			"gemma4:31b",
+//			"gemma4:26b",
+//			"gemma4:31b",
 			"ministral-3:14b",
 			"ministral-3:8b",
 			"ministral-3:3b",
@@ -179,13 +179,22 @@ public class LlmBenchmark
 			"qwen3.5:9b",
 			"qwen3.5:4b",
 //			"qwen3.5:2b",
-			"qwen3.5:0.8b",
-			"qwen3.6:35b",
-			"qwen3.6:27b"
+			"qwen3.5:0.8b"
+//			"qwen3.6:35b"
+//			"qwen3.6:27b"
 //			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.OLLAMA_LOCAL, true);
+		
+		// Run benchmarks for remote Ollama models
+		include_models	= Arrays.asList(
+//			"gemma4:26b-a4b-it-q4_K_M",
+//			"gemma4:31b",
+//			"qwen3.6:27b",
+//			"qwen3.6:35b"
+			);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.OLLAMA_REMOTE, true);
 		
 //		// Run benchmarks for Local Ai models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, skip_models, include_models, Provider.LOCAL_AI, true);
@@ -218,7 +227,7 @@ public class LlmBenchmark
 			"labs-leanstral-2603",
 //			"magistral-medium-2509",	// loops
 //			"magistral-small-2509",
-//			"ministral-14b-2512",
+			"ministral-14b-2512",
 //			"ministral-3b-2512",
 //			"ministral-8b-2512",
 			"mistral-large-2512", 
@@ -304,6 +313,7 @@ public class LlmBenchmark
 		long[] times	= new long[runs-1];
 		int[] tokens	= new int[runs];
 		Boolean[]	successes	= new Boolean[runs];
+		int max_context	= -1;
 		for(int i=0; i<runs; i++)
 		{
 			System.out.print(model_name+" run "+(i+1)+"/"+runs+": ");
@@ -334,6 +344,7 @@ public class LlmBenchmark
 				successes[i]	= success.apply(LlmChatAgent.getResponse(results));
 				long	end	= System.currentTimeMillis();
 				tokens[i]	= successes[i] ? chat.getTotalTokenCount().get() : -1;
+				max_context	= successes[i] ? chat.getMaxTokenCount().get() : max_context;
 				if(i>0)
 				{
 					times[i-1]	= successes[i] ? end-start : -1;
@@ -396,12 +407,12 @@ public class LlmBenchmark
 		int	token_avg	= (int) Arrays.stream(tokens).filter(t -> t>=0).average().orElse(-1);
 		long	rate	= Arrays.stream(successes).filter(s -> s).count()*100/successes.length;
 		System.out.println(model_name+" results: Success rate "+rate+"%, min "+min+" s, max "+max+" s, avg "+avg+" s"
-			+ ", tokens min "+token_min+", max "+token_max+", avg "+token_avg);
+			+ ", tokens min "+token_min+", max "+token_max+", avg "+token_avg+", max context "+max_context);
 		
 		try(FileWriter	writer	= new FileWriter(SUtil.toSnakeCase(benchmark_name)+".csv", true))
 		{
 			writer.write(benchmark_name+";"+model_name+";"+provider+";"+dothink+";"+rate+"%;"+avg+";"+min+";"+max
-				+";"+token_avg+";"+token_min+";"+token_max
+				+";"+token_avg+";"+token_min+";"+token_max+";"+max_context
 				+"\n");
 		}
 		catch(Exception e)

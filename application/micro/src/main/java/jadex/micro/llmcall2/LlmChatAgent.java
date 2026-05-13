@@ -39,6 +39,7 @@ import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
@@ -92,6 +93,9 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	
 	/** Total token count of all completed chat interactions. */
 	int total_token_count = 0;
+	
+	/** Maximum of single token count over all completed chat interactions. */
+	int max_token_count = 0;
 	
 	/** Flag to indicate if the agent should clear the conversation history after each completed chat interaction, to save tokens. */
 	boolean clear_history = true;
@@ -208,6 +212,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	
 	@Override
 	@ComponentMethod
+	public IFuture<Integer> getMaxTokenCount()
+	{
+		return new Future<>(max_token_count);
+	}
+	
+	@Override
+	@ComponentMethod
 	public ITerminableIntermediateFuture<ChatFragment> getCurrentChat()
 	{
 		if(current_loop==null)
@@ -227,21 +238,16 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	{
 		messages.clear();		
 		messages.add(SystemMessage.from(
-//			"You are a helpful assistant that helps to complete tasks by calling tools. " +
-//			"Tools are functions provided by the environment that you can call to get information or perform actions. " +
-//			"You can call tools by specifying the tool name and providing arguments in JSON format. " +
-//			"After calling a tool, you will receive the result of the tool call, which you can use to decide your next steps. " +
-//			"Your goal is to complete the task as best as possible by autonomously planning and executing tool calls. " +
-//			"Do not ask the user for missing information, but make arbitrary decisions yourself to fill in any gaps. " +
-//			"Experiment with the available tools to make progress, i.e. execute incomplete plans and try out tools to see what happens. " +
-//			"Handle any exceptions that occur during tool calls by adjusting your plan and calling tools again with different arguments or different tools. " +
-//			"Use argument names as given in the function properties when calling tools."
-			"You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
-		  + "For missing information, take arbitrary decisions yourself and do not ask the user.\n"
-		  + "Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.\n"
-		  + "Execute tools directly without asking the user for confirmation or missing information.\n"
-		  + "Handle Exceptions by re-calling tools with adjusted arguments or calling a different tools.\n"
-		  + "Use argument names as given in the function properties.\n"
+			"# Role\n"
+			+ "You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
+			+ "## Instructions\n"
+			+ "1. Execute tools directly without asking the user for confirmation or missing information.\n"
+			+ "2. Analyze tool replies carefully for results or exceptions before stopping or further planning. \n"
+			+ "3. Do not stop when a tool call leads to an exception. Instead call the tool with adjusted arguments or call a different tool.\n"
+			+ "4. For missing information, take arbitrary decisions yourself and do not ask the user.\n"
+			+ "5. Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.\n"
+			+ "6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.\n"
+//		  	+ "7. Use argument names as given in the function properties.\n"
 		));
 	}
 	
@@ -325,6 +331,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 //			    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
 			    	last_token_count = completeResponse.tokenUsage().totalTokenCount();
 			    	total_token_count = total_token_count + last_token_count;
+			    	max_token_count = Math.max(max_token_count, last_token_count);
 		    		agent.getComponentHandle().scheduleStep(() ->
 		    		{
 		    			if(current_loop.isDone())
@@ -342,6 +349,26 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    				.toolExecutionRequests(completeResponse.aiMessage().toolExecutionRequests())
 			    				.attributes(completeResponse.aiMessage().attributes())
 			    				.build());
+		    			}
+		    			// Some Unsloth models disallow consecutive assistant messages without intermediate user messages.
+		    			// e.g. ministral-3:14b
+		    			else if(llm instanceof OpenAiResponsesStreamingChatModel)
+		    			{
+		    				// Check for consecutive assistant messages and add user message if needed.
+		    				for(int i=messages.size()-1; i>=0; i--)
+		    				{
+		    					if(messages.get(i) instanceof UserMessage)
+		    					{
+		    						break;
+		    					}
+		    					else if(messages.get(i) instanceof AiMessage
+		    						&& ((AiMessage) messages.get(i)).text()!=null && !((AiMessage) messages.get(i)).text().isBlank())
+		    					{
+		    						messages.add(UserMessage.from(TextContent.from("continue")));
+		    						break;
+		    					}
+		    				}
+		    				messages.add(completeResponse.aiMessage());
 		    			}
 		    			else
 		    			{
