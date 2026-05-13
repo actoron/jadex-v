@@ -18,7 +18,7 @@ public interface ICameraService
 	 *  Get the current image from the security camera.
 	 *  @return The current image, or null if no image is available.
 	 */
-	@Tool
+	@Tool("Get the current image as seen by the camera, e.g., to check if you see intruders.")
 	public IFuture<RenderedImage>	getCurrentImage();
 	
 	//-------- UI only methods --------

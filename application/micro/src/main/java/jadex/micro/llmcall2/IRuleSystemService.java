@@ -38,7 +38,8 @@ public interface IRuleSystemService
 	public IFuture<String>	createEventRule(
 		@P("The event name") String event_name,
 		@P("The event source, i.e. the name of the component.") String event_source,
-		@P("The LLM prompt to be executed") String prompt);
+		@P("The LLM prompt to be executed."
+			+ " Formulate a prompt that can be fulfilled with currently available tools.") String prompt);
 	
 	/**
 	 *  Register an LLM prompt that is scheduled using a cron expression.
@@ -50,7 +51,11 @@ public interface IRuleSystemService
 		// qwen3.5:4b performs better without the example expression (!?)
 //			+ ", e.g. '0 0/5 * ? * * *' for every full 5 minutes."
 		) String cron_expression,
-		@P("The LLM prompt to be executed") String prompt);
+		@P("The LLM prompt to be executed."
+			+ " Formulate a prompt that can be fulfilled with currently available tools."
+			+ " Do not include timing information in the prompt, "
+			+ "as the timing is already specified by the cron expression.")
+			String prompt);
 	
 
 	/**

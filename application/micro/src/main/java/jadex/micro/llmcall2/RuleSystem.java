@@ -165,7 +165,7 @@ public class RuleSystem	implements IRuleSystemService
 //	protected void scheduleCronRule(CronExpression cron, Rule rule)
 	protected void scheduleCronRule(Cron cron, Rule rule)
 	{
-		String	fprompt	= "The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
+		String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 				+ rule.prompt();
 		@SuppressWarnings("unchecked")
 		Consumer<Void>[]	execute	= new Consumer[1];
@@ -257,7 +257,7 @@ public class RuleSystem	implements IRuleSystemService
 			for(Rule rule : matches)
 			{
 				String	prompt = "Event "+event_type+" from source "+source+" occurred"+(data!=null && ! data.isBlank() ? " with data '"+data+"'" : "")+".\n"
-					+"The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
+					+"The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 					+ rule.prompt();
 				ret	= executePrompt(prompt);
 			}

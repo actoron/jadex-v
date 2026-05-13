@@ -48,9 +48,9 @@ public class LlmSmartHomeBenchmark
 				List<Rule>	rules	= rule_system.listRules().get();
 				IAlarmService alarm = LlmBenchmark.getService(IAlarmService.class, "Alarm");
 				if(rules.size()!=1
-					|| !rule_system.listRules().get().get(0).event_type().equals(MotionSensor.EVENT_TYPE_MOTION_DETECTED)
-					|| !rule_system.listRules().get().get(0).event_source().equals("Bewegungsmelder A")
-					|| alarm.getAlarmState().get()==AlarmState.ON)
+					|| !MotionSensor.EVENT_TYPE_MOTION_DETECTED.equals(rule_system.listRules().get().get(0).event_type())
+					|| !"Bewegungsmelder A".equals(rule_system.listRules().get().get(0).event_source())
+					|| alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 				{
 					return false;
 				}
@@ -58,7 +58,7 @@ public class LlmSmartHomeBenchmark
 				// Check first use case: trigger motion sensor, check if alarm is (not) triggered
 				IMotionSensorService sensor = LlmBenchmark.getService(IMotionSensorService.class, "Bewegungsmelder A");
 				sensor.motionDetected().get(300000);
-				if(alarm.getAlarmState().get()==AlarmState.ON)
+				if(alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 				{
 					return false;
 				}
@@ -66,7 +66,7 @@ public class LlmSmartHomeBenchmark
 				ICameraService camera = LlmBenchmark.getService(ICameraService.class, "Kamera 1");
 				camera.setCurrentImage("a burglar breaking into a house at night").get();
 				sensor.motionDetected().get(300000);
-				if(alarm.getAlarmState().get()!=AlarmState.ON)
+				if(alarm.getAlarmState().get()!=AlarmState.TRIGGERED)
 				{
 					return false;
 				}
@@ -74,7 +74,7 @@ public class LlmSmartHomeBenchmark
 				// Check second use case: scheduled rule, check if alarm is triggered at the right time
 				else
 				{
-					alarm.setAlarmState(AlarmState.OFF).get();
+					alarm.setAlarmState(AlarmState.SILENT).get();
 					
 					String	prompt2	= 
 						"Überprüfe alle 30 Sekunden die aktuellen Bilder von Kamera 2 und 3 "
@@ -87,7 +87,7 @@ public class LlmSmartHomeBenchmark
 					// And the alarm is not triggered immediately (before the first 30 seconds are over)
 					if(!rules.stream().filter(r -> r.event_type().equals(MotionSensor.EVENT_TYPE_MOTION_DETECTED)).findAny().isPresent()
 						|| !rules.stream().filter(r -> r.cron_expression()!=null).findAny().isPresent()
-						|| alarm.getAlarmState().get()==AlarmState.ON)
+						|| alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 					{
 						return false;
 					}
@@ -116,7 +116,7 @@ public class LlmSmartHomeBenchmark
 								return false;
 							}
 							
-							String	fprompt	= "The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
+							String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 									+ rule.prompt();
 							rule_system.executePrompt(fprompt).get(300000);
 //						}
@@ -127,7 +127,7 @@ public class LlmSmartHomeBenchmark
 //						}
 					}
 					
-					if(alarm.getAlarmState().get()==AlarmState.ON)
+					if(alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 					{
 						return false;
 					}
@@ -138,11 +138,11 @@ public class LlmSmartHomeBenchmark
 					// Check and execute the cron rules manually (maybe one for each camera)
 					for(Rule rule: rules.stream().filter(r -> r.cron_expression()!=null).toList())
 					{
-						String	fprompt	= "The rule "+rule.rule_id()+" has been triggered. Thus you as the LLM should perform the following action(s):\n"
+						String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 							+ rule.prompt();
 						rule_system.executePrompt(fprompt).get(300000);
 					}
-					return alarm.getAlarmState().get()==AlarmState.ON;
+					return alarm.getAlarmState().get()==AlarmState.TRIGGERED;
 				}
 			},
 			() -> {

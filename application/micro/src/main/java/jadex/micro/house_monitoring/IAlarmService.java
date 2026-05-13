@@ -14,8 +14,8 @@ public interface IAlarmService
 	/**  The possible states of the alarm system. */
 	public enum AlarmState
 	{
-		ON,
-		OFF,
+		TRIGGERED,
+		SILENT,
 	}
 	
 	//-------- tool methods, i.e. visible to the LLM --------
@@ -23,18 +23,22 @@ public interface IAlarmService
 	/**
 	 *  Trigger or stop the alarm.
 	 */
-	@Tool("Set the state of the alarm system. "
-		+ "ON will immediately trigger the alarm. "
-		+ "OFF will stop an ongoing alarm."
-		+ "Only trigger the alarm if you are sure that there is an intruder, "
-		+ "to avoid disturbing the house owner with false alarms.")
+	@Tool("# Purpose\n"
+		+ "Trigger or stop the alarm.\n"
+		+ "\n"
+		+ "## Usage\n"
+		+ "1. Trigger the alarm only if you notice a clear and imminent danger to the house.\n"
+		+ "2. Do not set the alarm to TRIGGERED unless you are sure that there is an immediate threat,"
+		+ " e.g., you clearly see intruders or suspicious activity around the house.\n"
+		+ "3. Setting the state to SILENT will stop an ongoing alarm, if any.\n"
+		+ "4. Do not stop an ongoing alarm unless explicitly instructed to do so by the house owner.")
 	public IFuture<Void> setAlarmState(AlarmState state);
 	
 	/**
 	 *  Get the current state of the alarm system.
 	 *  @return The current state of the alarm system.
 	 */
-	@Tool
+	@Tool("Get the current state of the alarm system.")
 	public IFuture<AlarmState> getAlarmState();
 	
 	//-------- UI only methods --------

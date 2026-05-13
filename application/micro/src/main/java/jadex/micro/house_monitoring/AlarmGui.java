@@ -39,7 +39,7 @@ public class AlarmGui extends JPanel
 			AlarmState state = currentState;
 			if(state == null)
 				return;
-			alarmService.setAlarmState(state == AlarmState.ON ? AlarmState.OFF : AlarmState.ON);
+			alarmService.setAlarmState(state == AlarmState.TRIGGERED ? AlarmState.SILENT : AlarmState.TRIGGERED);
 		});
 		add(toggleButton, BorderLayout.SOUTH);
 
@@ -50,18 +50,18 @@ public class AlarmGui extends JPanel
 	protected void updateState(AlarmState state)
 	{
 		currentState = state;
-		if(state == AlarmState.ON)
+		if(state == AlarmState.TRIGGERED)
 		{
 			setBackground(new Color(255, 215, 215));
 			stateLabel.setForeground(new Color(180, 0, 0));
-			stateLabel.setText("Alarm: ON");
+			stateLabel.setText("Alarm: Triggered!");
 			toggleButton.setText("Disable alarm");
 		}
 		else
 		{
 			setBackground(new Color(215, 255, 215));
 			stateLabel.setForeground(new Color(0, 120, 0));
-			stateLabel.setText("Alarm: OFF");
+			stateLabel.setText("Alarm: Silent");
 			toggleButton.setText("Enable alarm");
 		}
 	}

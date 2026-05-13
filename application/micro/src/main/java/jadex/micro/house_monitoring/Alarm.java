@@ -16,7 +16,7 @@ public class Alarm implements IAlarmService
 	//-------- attributes --------
 	
 	/** The current state of the alarm system. */
-	protected AlarmState	state = AlarmState.OFF;
+	protected AlarmState	state = AlarmState.SILENT;
 	
 	/** The subscribers to the alarm state. */
 	protected List<SubscriptionIntermediateFuture<AlarmState>>	subscribers = new ArrayList<>(); 

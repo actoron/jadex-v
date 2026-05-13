@@ -26,10 +26,15 @@ public interface ILlmChatService
 	public IFuture<Integer>	getLastTokenCount();
 	
 	/**
-	 *  Get the total token count of the all chat interactions
+	 *  Get the total token count of all chat interactions
 	 *  (complete history of user, assistant, tool tokens).
 	 */
 	public IFuture<Integer>	getTotalTokenCount();
+	
+	/**
+	 *  Get the maximum single token count over all chat interactions.
+	 */
+	public IFuture<Integer>	getMaxTokenCount();
 	
 	/**
 	 *  Get the current or last chat, if any.
