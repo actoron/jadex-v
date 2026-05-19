@@ -53,6 +53,7 @@ import jadex.javaparser.SJavaParser;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.service.ServiceCall;
 import jadex.publishservice.IRequestManager;
+import jadex.publishservice.PublishType;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo;
 import jadex.publishservice.impl.MappingEvaluator.MappingInfo.HttpMethod;
 import jadex.publishservice.impl.v2.Request;
@@ -204,16 +205,31 @@ public class RequestManager implements jadex.publishservice.IRequestManager
 	
 	protected static RequestManager instance;
 	
+	public boolean isSupported(PublishType pt)
+    {
+        return PublishType.REST==pt;
+    }
+
 	public static synchronized void createInstance()
 	{
 		if(instance==null)
 			instance = new RequestManager();
 	}
 	
-	public static synchronized IRequestManager getInstance()
+	protected static synchronized IRequestManager getInstance()
+	{
+		return getInstance(false);
+	}
+
+	protected static synchronized IRequestManager getInstance(boolean create)
 	{
 		if(instance==null)
-			throw new RuntimeException("request manager was not created");
+		{
+			if(create)
+				createInstance();
+			else
+				throw new RuntimeException("request manager was not created");
+		}
 		return instance; 
 	}
 	

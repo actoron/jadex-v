@@ -42,7 +42,7 @@ public class JsonPrimitiveProcessor implements ITraverseProcessor
 	{
 
 		Object ret = null;
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = type!=null ? SReflect.getClass(type): null;
 		
 		JsonValue val = (JsonValue)object;
 		if(val.isNumber())

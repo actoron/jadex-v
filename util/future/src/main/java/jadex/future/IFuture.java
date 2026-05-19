@@ -154,7 +154,7 @@ public interface IFuture<E>	extends Supplier<E>
 	 *  @param function Function that takes the result of this future as input and delivers future(t). 
 	 *  @return Future of the result of the second async call.
 	 */
-	public <T> IFuture<T> thenCompose(Function<? super E, IFuture<T>> function);
+	public <U, T extends IFuture<U>> T thenCompose(Function<? super E, T> function);
 	
 	/**
 	 *  The result of this future is delegated to the given (future-returning) function.
@@ -163,7 +163,7 @@ public interface IFuture<E>	extends Supplier<E>
 	 *  @param futuretype The type of the return future. If null, a default future is created.
 	 *  @return Future of the result of the second async call.
 	 */
-	public <T> IFuture<T> thenCompose(Function<? super E, IFuture<T>> function, Class<?> futuretype);
+	public <U, T extends IFuture<U>> T thenCompose(Function<? super E, T> function, Class<?> futuretype);
 	
 	/**
 	 *  Applies a synchronous function consuming the result after it is available.

@@ -347,7 +347,7 @@ public class SASM
 		}
 		catch(Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		
 		return cns;

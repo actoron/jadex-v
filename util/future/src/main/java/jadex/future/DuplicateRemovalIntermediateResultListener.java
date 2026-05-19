@@ -105,14 +105,14 @@ public class DuplicateRemovalIntermediateResultListener<E> extends IntermediateD
 			}
 			catch(Exception e)
 			{
-				SUtil.rethrowAsUnchecked(e);
+				SUtil.throwUnchecked(e);
 			}
 			finally
 			{
 				if(bos!=null)
-					try{bos.close();}catch(Exception e){SUtil.rethrowAsUnchecked(e);}
+					try{bos.close();}catch(Exception e){SUtil.throwUnchecked(e);}
 				if(out!=null)
-					try{out.close();}catch(Exception e){SUtil.rethrowAsUnchecked(e);}
+					try{out.close();}catch(Exception e){SUtil.throwUnchecked(e);}
 			}
 		}	
 		else 

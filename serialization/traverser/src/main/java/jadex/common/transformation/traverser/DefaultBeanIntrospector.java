@@ -18,7 +18,6 @@ import jadex.collection.LRU;
 import jadex.collection.WeakObject;
 import jadex.common.SAccess;
 import jadex.common.SReflect;
-import jadex.common.SUtil;
 import jadex.common.Tuple2;
 import jadex.common.transformation.annotations.Exclude;
 import jadex.common.transformation.annotations.Include;

@@ -2,6 +2,7 @@ package jadex.future;
 
 
 import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -28,7 +29,7 @@ public interface IIntermediateFuture<E> extends IFuture<Collection <E>>
      *  Non-blocking method.
      *  @return The future result.
      */
-    public Collection<E> getIntermediateResults();
+    public List<E> getIntermediateResults();
 
     /**
      *  Check if there are more results for iteration for the given caller.

@@ -21,8 +21,8 @@ public class PublishInfo
 	/** The publish type. */
 	protected String publishtype;
 	
-	/** The publish target. */
-	protected String publishtarget;
+	/** The publish name. */
+	protected String publishname;
 
 	/** Method automapping flag */
 	protected boolean automapping;
@@ -66,14 +66,16 @@ public class PublishInfo
 	 *  @param pid The publish id, e.g. url.
 	 *  @param publishtype The publish type.
 	 */
-	public PublishInfo(String pid, String publishtype, String publishtaget,
+	public PublishInfo(String pid, String publishtype, String publishname,
 		//ServiceScope publishscope, boolean multi,
 		Class<?> mapping, boolean automapping)
 		//, UnparsedExpression[] properties)
 	{
+		//System.out.println("created publish info: "+publishtype);
+
 		this.pid = pid;
 		this.publishtype = publishtype;
-		this.publishtarget = publishtaget;
+		this.publishname = publishname;
 		//this.publishscope = publishscope;
 		//this.multi = multi;
 		this.mapping = mapping==null? null: new ClassInfo(mapping);
@@ -114,7 +116,7 @@ public class PublishInfo
 	{
 		this.pid = info.getPublishId();
 		this.publishtype = info.getPublishType();
-		this.publishtarget = info.getPublishTarget();
+		this.publishname = info.getPublishName();
 		//this.publishscope = info.getPublishScope();
 		//this.multi = info.multi;
 		this.mapping = info.getMapping();
@@ -197,14 +199,14 @@ public class PublishInfo
 		this.publishscope = publishscope;
 	}*/
 
-	public String getPublishTarget() 
+	public String getPublishName() 
 	{
-		return publishtarget;
+		return publishname;
 	}
 
-	public void setPublishTarget(String publishtarget) 
+	public void setPublishName(String publishname) 
 	{
-		this.publishtarget = publishtarget;
+		this.publishname = publishname;
 	}
 
 	/**
@@ -291,6 +293,6 @@ public class PublishInfo
 	@Override
 	public String toString()
 	{
-		return "PublishInfo [pid=" + pid + ", mapping=" + mapping + "]";
+		return "PublishInfo [pid=" + pid + ", mapping=" + mapping + ", type=" +publishtype + "]";
 	}
 }

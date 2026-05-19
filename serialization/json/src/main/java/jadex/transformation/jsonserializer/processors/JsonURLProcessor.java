@@ -29,7 +29,7 @@ public class JsonURLProcessor implements ITraverseProcessor
 	 */
 	public boolean isApplicable(Object object, Type type, ClassLoader targetcl, Object context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(URL.class, clazz);
 	}
 	

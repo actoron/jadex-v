@@ -28,7 +28,7 @@ public class JsonRectangleProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return object instanceof JsonObject && SReflect.isSupertype(Rectangle.class, clazz);
 	}
 	
@@ -41,7 +41,7 @@ public class JsonRectangleProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(Rectangle.class, clazz);
 	}
 	

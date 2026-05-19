@@ -172,7 +172,7 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
      *  2) Also <i>blocking</i> access from same thread: All results since the first blocking access
      *  	that have not yet been consumed by getNextIntermediateResult().
      */
-	public Collection<E> getIntermediateResults()
+	public List<E> getIntermediateResults()
 	{
 		List<E>	ret;
 
@@ -428,6 +428,20 @@ public class SubscriptionIntermediateFuture<E> extends TerminableIntermediateFut
 		};
 		addQuietListener(reslis);
 		
+		return this;
+	}
+	
+	@Override
+	public IIntermediateFuture<E> printOnEx()
+	{
+		this.addResultListener(new IntermediateEmptyResultListener<E>()
+		{
+			@Override
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
 		return this;
 	}
 	

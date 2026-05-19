@@ -21,17 +21,20 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 	{
 		super(self);
 		this.ports = new HashSet<Integer>();
-		System.out.println("PublishServiceJettyFeature created for component: " + self.getId());
+		//System.out.println("PublishServiceJettyFeature created for component: " + self.getId());
 	}
     
 	@Override
     public void	init()
     {
+		super.init();
     }
     
 	@Override
     public void	cleanup()
     {
+		super.cleanup();
+
     	// Terminate all servers created by this component
     	ServerManager.getInstance().terminateServers(ports);
     }
@@ -45,6 +48,8 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 	 */
 	public IFuture<Void> publishService(IService service, PublishInfo info)
 	{
+		super.publishService(service, info);
+
 		ServerManager.getInstance().publishService(service, info, self);
 		return IFuture.DONE;
 	}
@@ -55,15 +60,17 @@ public class PublishServiceJettyFeature extends PublishServiceFeature implements
 	 */
 	public void unpublishService(IServiceIdentifier sid)
 	{
+		super.unpublishService(sid);
+
 		ServerManager.getInstance().unpublishService(sid);
 	}
 
 	/**
 	 * Get or start an api to the http server.
 	 */
-	public IFuture<Object> getHttpServer(URI uri, PublishInfo info)
+	public IFuture<Object> getHttpServer(URI uri)//, PublishInfo info)
 	{
-		return ServerManager.getInstance().getHttpServer(uri, info);
+		return ServerManager.getInstance().getHttpServer(uri);//, info);
 	}
 	
 	/**

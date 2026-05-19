@@ -319,7 +319,12 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 */
 	public static RuntimeException	throwException(Throwable t)
 	{
-		if(t instanceof RuntimeException
+		if(t instanceof ErrorException)
+		{
+			// Special case to allow errors being set as exception result and thrown as errors.
+			throw throwException(((ErrorException)t).getError());
+		}
+		else if(t instanceof RuntimeException
 			|| t instanceof Error)
 		{
 			// Combine exception and current stack trace with filler in between.
@@ -343,11 +348,6 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 				throw (RuntimeException)t;
 			else
 				throw (Error)t;
-		}
-		else if(t instanceof ErrorException)
-		{
-			// Special case to allow errors being set as exception result and thrown as errors.
-			throw throwException(((ErrorException)t).getError());
 		}
 		else
 		{
@@ -1125,24 +1125,28 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
         return ret;
     }
 	
-	public <T> IFuture<T> thenCompose(final Function<? super E, IFuture<T>> function)
+    @Override
+	public <U, T extends IFuture<U>> T thenCompose(final Function<? super E, T> function)
     {
         return thenCompose(function, null);
     }
 	
-	public <T> IFuture<T> thenCompose(final Function<? super E, IFuture<T>> function, Class<?> futuretype)
+    @Override
+	public <U, T extends IFuture<U>> T thenCompose(final Function<? super E, T> function, Class<?> futuretype)
     {
-		final Future<T> ret = getFuture(futuretype);
+		final Future<U> fut = getFuture(futuretype);
 
-        this.addResultListener(new ExceptionDelegationResultListener<E, T>(ret)
+        this.addResultListener(new ExceptionDelegationResultListener<E, U>(fut)
         {
         	public void customResultAvailable(E result)
         	{
-        		 IFuture<T> res = function.apply(result);
-                 res.delegateTo(ret);
+        		 T res = function.apply(result);
+                 res.delegateTo(fut);
         	}	
         });
 
+        @SuppressWarnings("unchecked")
+		T ret	= (T) fut;
         return ret;
     }
 	

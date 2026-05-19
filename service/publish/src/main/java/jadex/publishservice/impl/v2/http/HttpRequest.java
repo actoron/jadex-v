@@ -2,6 +2,7 @@ package jadex.publishservice.impl.v2.http;
 
 import java.io.IOException;
 
+import jadex.common.SUtil;
 import jadex.publishservice.impl.v2.Connection;
 import jadex.publishservice.impl.v2.Request;
 import jadex.publishservice.impl.v2.TransportType;
@@ -38,8 +39,10 @@ public class HttpRequest extends Request
         id = request.getHeader(HttpConnection.HEADER_JADEX_CALLID);
         if (id != null && !id.isEmpty()) 
             return id;
+
+        id = SUtil.createUniqueId("_newcallid");
         
-        return null;
+        return id;
     }
 
     public String extractSessionId() 
@@ -162,7 +165,7 @@ public class HttpRequest extends Request
 
 			// Must be async because Jadex runs on other thread
 			// tomcat async bug? http://jira.icesoft.org/browse/PUSH-116
-			request.setAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO, new IAsyncContextInfo()
+			ret = new IAsyncContextInfo()
 			{
 				public boolean isComplete()
 				{
@@ -173,7 +176,8 @@ public class HttpRequest extends Request
 				{
 					return rctx;
 				}
-			});
+			};
+            request.setAttribute(IAsyncContextInfo.ASYNC_CONTEXT_INFO, ret); 
 		}
 		
 		return ret;

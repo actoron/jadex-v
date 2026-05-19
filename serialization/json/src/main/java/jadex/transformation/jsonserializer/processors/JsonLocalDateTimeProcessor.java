@@ -54,7 +54,7 @@ public class JsonLocalDateTimeProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		boolean ret = (CHRONOLOCALDATECLASS != null && SReflect.isSupertype(CHRONOLOCALDATECLASS, clazz)) ||
 					  (LOCALTIMECLASS != null && SReflect.isSupertype(LOCALTIMECLASS, clazz)) ||
 					  (CHRONOLOCALDATETIMECLASS != null && SReflect.isSupertype(CHRONOLOCALDATETIMECLASS, clazz));
@@ -71,7 +71,7 @@ public class JsonLocalDateTimeProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		boolean ret = (jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.CHRONOLOCALDATECLASS != null && SReflect.isSupertype(jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.CHRONOLOCALDATECLASS, clazz)) ||
 					  (jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.LOCALTIMECLASS != null && SReflect.isSupertype(jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.LOCALTIMECLASS, clazz)) ||
 					  (jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.CHRONOLOCALDATETIMECLASS != null && SReflect.isSupertype(jadex.transformation.jsonserializer.processors.JsonLocalDateTimeProcessor.CHRONOLOCALDATETIMECLASS, clazz));
@@ -98,7 +98,7 @@ public class JsonLocalDateTimeProcessor extends AbstractJsonProcessor
 		}
 		catch (Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		
 		return ret;

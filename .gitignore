@@ -35,3 +35,4 @@ startHelloWorld.sh
 /bdi/engine - Kopie
 /application/bdi-service/.lwjgl/
 .vscode/settings.json
+/application/micro/generated_images

@@ -2,10 +2,11 @@ package jadex.publishservice.impl.v2;
 
 
 import jadex.common.SUtil;
-import jakarta.servlet.http.HttpServletRequest;
 
 public abstract class Request 
 {
+    protected boolean inited;
+
     protected String callId;
 
     protected String sessionId;
@@ -16,41 +17,44 @@ public abstract class Request
 
     protected Connection connection;
 
-    //protected TransportMode transportMode = TransportMode.REQUEST_RESPONSE;
-
     public Request(Object rawRequest) 
     {
         this.rawRequest = rawRequest;
+    }
 
-        this.callId = extractCallId();
+    protected void ensureInited()
+    {
+        if(!inited)
+        {
+            this.callId = extractCallId();
 
-        this.sessionId = extractSessionId();
-		
-		// sessionid can be missing if client just sends a REST request instead of a jadex.js request
-		
-        this.type = extractTransportType();
-        //this.connection = extractRequestConnection();
+            this.type = extractTransportType();
 
-		// Session can be null if no header is provided by client
-		if(sessionId==null)
-			sessionId = SUtil.createUniqueId();
+            this.sessionId = extractSessionId();
+
+            // Session can be null if no header is provided by client
+            if(sessionId==null)
+                sessionId = SUtil.createUniqueId();
+            
+            this.inited = true;
+        }
     }
 
     public abstract String extractSessionId();
 
     public abstract String extractCallId();
 
-    //public abstract Connection extractRequestConnection();
-
     public abstract TransportType extractTransportType();
 
     public String getSessionId() 
     { 
-        return sessionId; 
+       ensureInited();
+       return sessionId; 
     }
 
     public String getCallId() 
     { 
+        ensureInited();
         return callId; 
     }
 
@@ -61,16 +65,19 @@ public abstract class Request
 
     public Connection getConnection() 
     {
+        ensureInited();
         return connection;
     }
 
     public void setConnection(Connection connection) 
     {
+        ensureInited();
         this.connection = connection;
     }
 
     public TransportType getTransportType()
     {
+        ensureInited();
         return type;
     }
 

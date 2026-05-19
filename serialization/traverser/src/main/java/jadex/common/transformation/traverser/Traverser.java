@@ -262,9 +262,15 @@ public class Traverser
 //					fin = true;
 //					handleDuplicate(orig, clazz, match, processors, clone, context);
 //				}
+				
+				// Use type from input (e.g. __classname__) when required type is unknown or supertype
 				Class<?> oclazz = findClazz(object, targetcl);
-				if(type==null || SReflect.isSupertype(SReflect.getClass(type), oclazz))
-					type = oclazz;
+				if(oclazz!=null)
+				{
+					Class<?> clazz = type!=null? SReflect.getClass0(type): null;
+					if(clazz==null || SReflect.isSupertype(clazz, oclazz))
+						type = oclazz;
+				}
 					
 				// Todo: apply all or only first matching processor!?
 				Object	processed	= object;
@@ -415,7 +421,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}
@@ -433,7 +439,7 @@ public class Traverser
 					}
 					catch(Exception e)
 					{
-						SUtil.rethrowAsUnchecked(e);
+						SUtil.throwUnchecked(e);
 					}
 				}
 			}

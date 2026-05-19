@@ -84,7 +84,7 @@ public class SystemPackageScanner
         }
         catch(IOException e)
         {
-        	SUtil.rethrowAsUnchecked(e);
+        	SUtil.throwUnchecked(e);
         }
         
         return ret;

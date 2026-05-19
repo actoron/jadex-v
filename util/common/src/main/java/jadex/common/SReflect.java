@@ -1,11 +1,5 @@
 package jadex.common;
 
-import java.awt.GraphicsEnvironment;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,12 +13,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,8 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /*import jadex.commons.SClassReader.ClassFileInfo;
 import jadex.commons.SClassReader.ClassInfo;
@@ -51,7 +41,34 @@ import jadex.commons.collection.WeakValueMap;
 public class SReflect
 {
 	//-------- attributes --------
-	
+
+	/**
+	 *  Helper class for creating parameterized types.
+	 * @param raw	The base type (e.g. List.class).
+	 * @param actual	The actual type parameters (e.g. String.class -> List&lt;String>).
+	 */
+	public static record ParameterizedTypeImpl(Type raw, Type... actual) implements ParameterizedType
+	{
+		@Override
+		public Type getOwnerType()
+		{
+			return getClass0(raw)!=null ? getClass0(raw).getDeclaringClass() : null;
+		}
+		
+		@Override
+		public Type[] getActualTypeArguments()
+		{
+			// Create copy of actual types, because the array is mutable and we do not want to allow changes from outside.
+			return actual!=null ? Arrays.copyOf(actual, actual.length) : null;
+		}
+		
+		@Override
+		public Type getRawType()
+		{
+			return raw;
+		}
+	}
+
 	/** Class lookup cache (classloader(weak)->Map([name, import]->class)). */
 //	protected static final Map classcache	= Collections.synchronizedMap(new WeakHashMap());
 	//protected static final Map<Tuple2<String, Integer>, Class<?>> classcache	
@@ -159,16 +176,6 @@ public class SReflect
 	 *  @param type The generic type.
 	 *  @return The unwrapped class.
 	 */
-	public static Class<?> unwrapGenericType(Type type)
-	{
-		return getClass(getInnerGenericType(type));
-	}
-	
-	/**
-	 *  Unwrap a generic type.
-	 *  @param type The generic type.
-	 *  @return The unwrapped class.
-	 */
 	public static Type getInnerGenericType(Type type)
 	{
 		Type ret = null;
@@ -183,20 +190,28 @@ public class SReflect
 		
 		return ret;
 	}
-	
+
 	/**
 	 *  Get the class for a type.
 	 */
-	public static Class<?> getClass(Type type)
+	public static Class<?> getClass0(Type type)
 	{
 		Class<?> ret = null;
 		if(type instanceof Class)
 			ret = (Class<?>)type;
 		else if(type instanceof ParameterizedType)
-			ret = (Class<?>)((ParameterizedType)type).getRawType();
-		else if(type!=null)
+			ret = getClass0(((ParameterizedType)type).getRawType());
+		return ret;
+	}
+
+	/**
+	 *  Get the class for a type.
+	 */
+	public static Class<?> getClass(Type type)
+	{
+		Class<?> ret = getClass0(type);
+		if(ret==null)
 			throw new RuntimeException("Cannot unwrap: "+type);
-		
 		return ret;
 	}
 	

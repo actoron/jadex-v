@@ -66,4 +66,10 @@ public class Message
         return isError;
     }
 
+    @Override
+    public String toString() 
+    {
+        return "Message: "+result+" err:"+isError+" meta="+meta;
+    }
+
 }

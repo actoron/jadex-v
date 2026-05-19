@@ -32,7 +32,7 @@ public class JsonMultiCollectionProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(MultiCollection.class, clazz);
 	}
 	
@@ -45,7 +45,7 @@ public class JsonMultiCollectionProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(MultiCollection.class, clazz);
 	}
 	

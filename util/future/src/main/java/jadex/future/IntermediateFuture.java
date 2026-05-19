@@ -72,9 +72,9 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
      *  Get the intermediate results that are available.
      *  @return The current intermediate results (copy of the list).
      */
-	public synchronized Collection<E> getIntermediateResults()
+	public synchronized List<E> getIntermediateResults()
 	{
-		Collection<E>	ret;
+		List<E>	ret;
 		if(results!=null)
 			ret	= new ArrayList<E>(results);
 		else
@@ -973,29 +973,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	
 	public IIntermediateFuture<E> catchEx(final Consumer<? super Exception> consumer, Class<?> futuretype)
     {
-		IResultListener<Collection<E>> reslis = new IntermediateEmptyResultListener<>()
-		{
-			public void exceptionOccurred(Exception exception)
-			{
-				 consumer.accept(exception);
-			}
-		};
-		addResultListener(reslis);
-		
-		/*this.addResultListener(new IResultListener<E>()
-		{
-			@Override
-			public void exceptionOccurred(Exception exception)
-			{
-				consumer.accept(exception);
-			}
-			
-			@Override
-			public void resultAvailable(E result)
-			{
-			}
-		});*/
-		
+		super.catchEx(consumer, futuretype);
         return this;
     }
 	
@@ -1020,14 +998,8 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	
 	public IIntermediateFuture<E> then(Consumer<? super Collection<E>> function)
     {
-		this.addResultListener(new IntermediateEmptyResultListener<E>()
-		{
-			public void resultAvailable(Collection<E> result)
-        	{
-        		 function.accept(result);
-        	}
-		});
-        return this;
+		super.then(function);
+		return this;
     }
 	
 	/**
@@ -1301,15 +1273,7 @@ public class IntermediateFuture<E> extends Future<Collection <E>> implements IIn
 	 */
 	public IIntermediateFuture<E> printOnEx()
 	{
-		this.addResultListener(new IntermediateDefaultResultListener<E>()
-		{
-			@Override
-			public void exceptionOccurred(Exception exception)
-			{
-				exception.printStackTrace();
-			}
-		});
-		
+		super.printOnEx();
 		return this;
 	}
 }

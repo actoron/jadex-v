@@ -31,10 +31,12 @@ public class JsonArrayProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
-
-		return (object instanceof JsonArray && (clazz==null || clazz.isArray())) || 
-			(object instanceof JsonObject && ((JsonObject)object).get(JsonTraverser.ARRAY_MARKER)!=null);
+		if(object instanceof JsonArray)
+		{
+			Class<?>	clazz	= type!=null ? SReflect.getClass0(type): null;
+			return clazz==null || clazz.isArray();
+		}
+		return (object instanceof JsonObject && ((JsonObject)object).get(JsonTraverser.ARRAY_MARKER)!=null);
 	}
 	
 	/**

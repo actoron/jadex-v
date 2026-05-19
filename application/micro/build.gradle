@@ -41,10 +41,17 @@ dependencies
     //implementation 'org.activecomponents.jadex:simulation:'+v
     implementation 'org.activecomponents.jadex:llm:'+v
     
-    implementation 'dev.langchain4j:langchain4j:1.12.2'
-    implementation 'dev.langchain4j:langchain4j-ollama:1.12.2'
-	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.12.2'
-    implementation 'dev.langchain4j:langchain4j-open-ai:1.12.2'
+    // for house_monitoring rule system scheduler
+    //implementation 'org.quartz-scheduler:quartz:2.5.2'
+    implementation 'com.cronutils:cron-utils:9.2.1'
+    
+    implementation 'dev.langchain4j:langchain4j:1.14.1'
+    implementation 'dev.langchain4j:langchain4j-ollama:1.14.1'
+	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.14.1'
+	implementation 'dev.langchain4j:langchain4j-mistral-ai:1.14.1'
+    implementation 'dev.langchain4j:langchain4j-open-ai:1.14.1'
+    //implementation 'dev.langchain4j:langchain4j-open-ai-official:1.14.0-beta23'
+    //implementation 'dev.langchain4j:langchain4j-local-ai:1.14.0-beta23'
 	runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'

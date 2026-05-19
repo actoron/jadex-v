@@ -27,7 +27,7 @@ public class JsonClassInfoProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(ClassInfo.class, clazz);
 	}
 	

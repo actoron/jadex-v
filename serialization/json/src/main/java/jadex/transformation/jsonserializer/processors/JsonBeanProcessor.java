@@ -1,7 +1,9 @@
 package jadex.transformation.jsonserializer.processors;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,7 @@ import com.eclipsesource.json.JsonValue;
 
 import jadex.common.SAccess;
 import jadex.common.SReflect;
+import jadex.common.SReflect.ParameterizedTypeImpl;
 import jadex.common.SUtil;
 import jadex.common.transformation.BeanIntrospectorFactory;
 import jadex.common.transformation.IStringConverter;
@@ -38,7 +41,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return object instanceof JsonObject && (clazz!=null && !SReflect.isSupertype(Map.class, clazz));
 	}
 	
@@ -75,7 +78,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 		
 		try
 		{
-			readProperties(object, clazz, conversionprocessors, processors, converter, mode, traverser, targetcl, ret, context, intro);
+			readProperties(object, type, conversionprocessors, processors, converter, mode, traverser, targetcl, ret, context, intro);
 		}
 		catch(Exception e)
 		{
@@ -146,7 +149,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 		{
 			try
 			{
-				BeanProperty prop = (BeanProperty)props.get(name);
+				BeanProperty prop = props.get(name);
 				if(prop!=null && prop.isReadable() && prop.isWritable())
 				{
 					JsonValue val = jval.get(name);
@@ -157,6 +160,15 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 							sot = JsonTraverser.findClazzOfJsonObject((JsonObject)val, targetcl);
 						if(sot==null)
 							sot = prop.getGenericType();
+						
+						if(sot instanceof TypeVariable)
+						{
+							sot = resolveTypeVar((ParameterizedType)type, (TypeVariable<?>)sot);
+						}
+						else if(sot instanceof ParameterizedType)
+						{
+							sot = resolveTypeVars((ParameterizedType)type, (ParameterizedType)sot);
+						}
 						
 //						System.out.println("VAL " + ((JsonObject) val).toString());
 //						System.out.println("CL " + ((JsonObject) val).getString(JsonTraverser.CLASSNAME_MARKER, null));
@@ -170,7 +182,7 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 //							if ("result".equals(prop.getName()))
 //								System.out.println("PROP SET CALLED");
 							
-							prop.setPropertyValue(ret, traverser.convertBasicType(converter, newval, prop.getType(), targetcl, context));
+							prop.setPropertyValue(ret, Traverser.convertBasicType(converter, newval, prop.getType(), targetcl, context));
 							//prop.setPropertyValue(ret, convertBasicType(newval, prop.getType()));
 						}
 					}
@@ -182,7 +194,45 @@ public class JsonBeanProcessor extends AbstractJsonProcessor
 			}
 		}
 	}
+
+	/**
+	 *  Resolve type variables in a parameterized type.
+	 * 	@param outertype	The declaring type that contains the actual type information.
+	 *  @param valuetype	The inner type, e.g. field type, that may contain type variables that need to be resolved.
+	 *  @return The inner type with resolved type variables.
+	 */
+	protected static Type resolveTypeVars(ParameterizedType outertype, ParameterizedType valuetype)
+	{
+		Type[]	typeargs	= valuetype.getActualTypeArguments();
+		for(int i=0; i<typeargs.length; i++)
+		{
+			Type arg = typeargs[i];
+			if(arg instanceof TypeVariable)
+			{
+				typeargs[i]	= resolveTypeVar(outertype, (TypeVariable<?>)arg);
+			}
+			else if(arg instanceof ParameterizedType)
+			{
+				typeargs[i] = resolveTypeVars(outertype, (ParameterizedType)arg);
+			}
+		}
+		return new ParameterizedTypeImpl(valuetype.getRawType(), typeargs);
+	}
 	
+	protected static Type resolveTypeVar(ParameterizedType outertype, TypeVariable<?> tv)
+	{
+		Type[] typeargs2 = outertype.getActualTypeArguments();
+		TypeVariable<?>[] typevars2 = SReflect.getClass(outertype).getTypeParameters();
+		for(int j=0; j<typevars2.length; j++)
+		{
+			if(typevars2[j].getName().equals(tv.getName()))
+			{
+				return typeargs2[j];
+			}
+		}
+		throw new RuntimeException("Cannot resolve type variable " + tv.getName() + " in type " + outertype);
+	}
+
 	/**
 	 *  Clone all properties of an object.
 	 */

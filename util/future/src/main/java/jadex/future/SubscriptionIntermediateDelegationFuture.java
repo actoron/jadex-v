@@ -148,7 +148,7 @@ public class SubscriptionIntermediateDelegationFuture<E> extends TerminableInter
      *  2) Also <i>blocking</i> access from same thread: All results since the first blocking access
      *  	that have not yet been consumed by getNextIntermediateResult().
      */
-	public Collection<E> getIntermediateResults()
+	public List<E> getIntermediateResults()
 	{
 		List<E>	ret;
 

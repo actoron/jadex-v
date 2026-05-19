@@ -18,6 +18,7 @@ import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.IntermediateDelegationResultListener;
+import jadex.future.IntermediateEmptyResultListener;
 import jadex.future.IntermediateFuture;
 import jadex.future.PullIntermediateDelegationFuture;
 import jadex.future.PullSubscriptionIntermediateDelegationFuture;
@@ -45,14 +46,14 @@ public class FutureFunctionality
 	protected Future<?> future;
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality()
 	{
 	}
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality(Logger logger)
 	{
@@ -60,14 +61,12 @@ public class FutureFunctionality
 	}
 	
 	/**
-	 * 
+	 *  Create a new future functionality.
 	 */
 	public FutureFunctionality(IResultCommand<Logger, Void> loggerfetcher)
 	{
 		this.loggerfetcher = loggerfetcher;
 	}
-	
-	
 	
 	public Future<?> getFuture() 
 	{
@@ -880,6 +879,20 @@ class DelegatingSubscriptionIntermediateDelegationFuture<E> extends Subscription
 		{
 			super.addResultListener(listener);
 		}
+	}
+	
+	@Override
+	public IIntermediateFuture<E> printOnEx()
+	{
+		this.addResultListener(new IntermediateEmptyResultListener<E>()
+		{
+			@Override
+			public void exceptionOccurred(Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+		return this;
 	}
 };
 

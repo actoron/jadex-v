@@ -39,7 +39,7 @@ public class SseConnection extends Connection
         }
         catch(IOException e)
         {
-            SUtil.rethrowAsUnchecked(e);
+            SUtil.throwUnchecked(e);
         }
     }
 

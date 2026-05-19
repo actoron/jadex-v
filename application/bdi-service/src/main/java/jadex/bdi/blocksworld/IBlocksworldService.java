@@ -13,7 +13,7 @@ public interface IBlocksworldService
 	 */
 //	@Tool("Get the current state of the world.")
 	@Tool("Get all information about existing blocks.")
-		public IFuture<String> getWorldState();
+	public IFuture<String> getWorldState();
 	
 	/**
 	 *  Move a block on top of another block.

@@ -200,7 +200,7 @@ public class ServiceInvocationHandler	implements InvocationHandler, ISwitchCall
 					}
 				}
 				if(ret instanceof Throwable)
-					SUtil.rethrowAsUnchecked((Throwable)ret);
+					SUtil.throwUnchecked((Throwable) ret);
 			}
 		}
 		

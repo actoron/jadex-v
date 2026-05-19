@@ -170,7 +170,7 @@ public class TestConditionAbort
             catch(Exception e)
             {
                 e.printStackTrace();
-                SUtil.rethrowAsUnchecked(e);
+                SUtil.throwUnchecked(e);
             }
             return null;
         }
