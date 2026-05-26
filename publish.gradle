@@ -138,7 +138,8 @@ if(project.hasProperty('repos')) {
                 }
                 repositories {
                     maven {
-                        url = uri("https://oss.sonatype.org/service/local/staging/deployByRepositoryId/${System.getProperty('repoId')}")
+                    	url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+                        //url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deployByRepositoryId/${System.getProperty('repoId')}")
                         credentials {
                             username = repoaccess.user
                             password = repoaccess.password

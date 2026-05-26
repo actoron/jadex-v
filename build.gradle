@@ -101,13 +101,7 @@ task closeStagingRepo {
     group = "publishing"
     
     doLast {
-        def stagedRepositoryId = System.getProperty("repoId")
-        if(stagedRepositoryId==null) {
-        	logger.lifecycle "no staging repo id: "+stagedRepositoryId
-        }
-        else
-        {
-	        def url = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/finish")
+	        def url = new URL("https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/org.activecomponents.jadex")
 	        def connection = url.openConnection() as HttpURLConnection
 	        connection.setRequestMethod("POST")
 	        connection.setDoOutput(true)
@@ -116,14 +110,7 @@ task closeStagingRepo {
 	        def pass = System.getProperty("centralPassword")
     		connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user+":"+pass).getBytes()))
 	
-	        def requestBody = """
-	            <promoteRequest>
-	                <data>
-	                    <stagedRepositoryId>${stagedRepositoryId}</stagedRepositoryId>
-	                    <description>Jadex</description>
-	                </data>
-	            </promoteRequest>
-	        """
+	        def requestBody = ""
 	
 	        try (OutputStream os = connection.outputStream) {
 	            byte[] input = requestBody.getBytes("utf-8")
@@ -133,16 +120,14 @@ task closeStagingRepo {
 			def responseCode = connection.getResponseCode()
 			logger.lifecycle "Response Code: ${responseCode}"
     		
-	        if (responseCode == 201) {
+	        if (responseCode == 200) {
 	            logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
-	            waitForStagingRepoClosed()
 	        } else {
 	            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
             	logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
-		}
     }
 }
 closeStagingRepo.mustRunAfter publish
@@ -215,7 +200,7 @@ task releaseStagingRepo {
             return
         }
 
-        def url = new URL("https://oss.sonatype.org/service/local/staging/bulk/promote")
+        def url = new URL("https://ossrh-staging-api.central.sonatype.com/service/local/staging/bulk/promote")
         def data = '{"data":{"stagedRepositoryIds":["' + stagedRepositoryId + '"],"description":"Jadex"}}'
         def user = System.getProperty("centralUser")
         def pass = System.getProperty("centralPassword")

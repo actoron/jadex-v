@@ -109,7 +109,7 @@ def createStagingRepo() {
         </promoteRequest>
     """
 
-    def connection = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
+    def connection = new URL("https://ossrh-staging-api.central.sonatype.com/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
     connection.setRequestMethod("POST")
     connection.setDoOutput(true)
     connection.setRequestProperty("Content-Type", "application/xml")
