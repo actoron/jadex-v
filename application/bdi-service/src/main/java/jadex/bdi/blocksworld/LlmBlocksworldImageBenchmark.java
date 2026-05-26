@@ -5,21 +5,21 @@ import jadex.core.IComponentManager;
 import jadex.micro.llmcall2.LlmBenchmark;
 
 /**
- *  Benchmark for the LlmBlocksworldAgent using text-based world state representation.
+ *  Benchmark for the LlmBlocksworldAgent using image-based world state representation.
  */
-public class LlmBlocksworldBenchmark
+public class LlmBlocksworldImageBenchmark
 {
-	static LlmBlocksworldAgent	pojo;
+	static LlmBlocksworldImageAgent	pojo;
 	static IComponentHandle	bwagent;
 	
 	public static void main(String[] args) throws Exception
 	{
 		String	prompt	= "Move the red block onto the green one.";
-		String	benchmark_name	= LlmBlocksworldBenchmark.class.getSimpleName();
+		String	benchmark_name	= LlmBlocksworldImageBenchmark.class.getSimpleName();
 		
 		LlmBenchmark.runBenchmarks(benchmark_name, prompt,
 			() -> {
-				pojo = new LlmBlocksworldAgent();
+				pojo = new LlmBlocksworldImageAgent();
 				bwagent = IComponentManager.get().create(pojo).get();
 				pojo.gui.get();
 			},
