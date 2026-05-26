@@ -37,6 +37,7 @@ import dev.langchain4j.model.chat.response.PartialToolCall;
 import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.chat.response.StreamingHandle;
+import dev.langchain4j.model.google.genai.GoogleGenAiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
@@ -275,10 +276,11 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				{
 					agent.getComponentHandle().scheduleStep(() ->
 					{
-						if(current_loop.isDone())
-						{
-							ctx.streamingHandle().cancel();
-						}
+//						if(current_loop.isDone())
+//						{
+//							ctx.streamingHandle().cancel();
+//						}
+						addChatFragment(ChatFragment.Type.TOOL_CALL, partialToolCall.partialArguments(), ctx.streamingHandle());
 					}).catchEx(es -> 
 					{
 						ctx.streamingHandle().cancel();
@@ -290,7 +292,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				{
 					agent.getComponentHandle().scheduleStep(() ->
 					{
-						addChatFragment(ChatFragment.Type.TOOL_CALL, completeToolCall.toolExecutionRequest().toString(), null);
+						addChatFragment(ChatFragment.Type.TOOL_CALL, "\n"+completeToolCall.toolExecutionRequest().toString(), null);
 						callfutures.add(callTool(agent, completeToolCall));
 					});
 				}
@@ -329,9 +331,12 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    public void onCompleteResponse(ChatResponse completeResponse)
 			    {
 //			    	System.out.println("Input/output tokens: " + completeResponse.tokenUsage());
-			    	last_token_count = completeResponse.tokenUsage().totalTokenCount();
-			    	total_token_count = total_token_count + last_token_count;
-			    	max_token_count = Math.max(max_token_count, last_token_count);
+			    	if(completeResponse.tokenUsage()!=null)
+			    	{
+				    	last_token_count = completeResponse.tokenUsage().totalTokenCount();
+				    	total_token_count = total_token_count + last_token_count;
+				    	max_token_count = Math.max(max_token_count, last_token_count);
+			    	}
 		    		agent.getComponentHandle().scheduleStep(() ->
 		    		{
 		    			if(current_loop.isDone())
@@ -623,7 +628,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						messages.add(UserMessage.from(contents));
 					}
 				}
-				else if(llm instanceof MistralAiStreamingChatModel && !msg.hasSingleText())
+				else if((llm instanceof MistralAiStreamingChatModel || llm instanceof GoogleGenAiStreamingChatModel) && !msg.hasSingleText())
 				{
 					int i	= messages.size();
 					while(i>0 && (messages.get(i-1) instanceof UserMessage))
@@ -633,7 +638,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					
 					messages.add(i, ToolExecutionResultMessage.from(call.toolExecutionRequest(), "result=see user message"));
 					
-					// Handle complex content as user message, because Mistral only supports text content in tool results.
+					// Handle complex content as user message, because Mistral/Google GenAi only supports text content in tool results.
 					List<Content> contents = new ArrayList<>();
 					String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=see attached contents";
 					contents.add(TextContent.from(text));
@@ -723,7 +728,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			}
 			else if(fragment.type()==ChatFragment.Type.TOOL_CALL || fragment.type()==ChatFragment.Type.TOOL_RESULT)
 			{
-				System.out.println("\033[3;1m"+fragment.text()+"\033[0m");
+				System.out.print("\033[3;1m"+fragment.text()+"\033[0m");
 			}
 		}).printOnEx();
 	}

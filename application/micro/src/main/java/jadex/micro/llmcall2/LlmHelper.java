@@ -25,6 +25,7 @@ import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.google.genai.GoogleGenAiStreamingChatModel;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
@@ -37,6 +38,7 @@ import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import jadex.core.IComponentManager;
 import jadex.future.ITerminableIntermediateFuture;
 
@@ -60,7 +62,8 @@ public class LlmHelper
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
 		GOOGLE_GEMINI("Google Gemini",
-			(model, think) -> createGoogleGeminiChatModel(model, think),
+//			(model, think) -> createGoogleGeminiChatModel(model, think),
+			(model, think) -> createGoogleGenAiChatModel(model, think),
 			() -> fetchGeminiModels(),
 			(model) -> fetchGeminiContextSize(model)),
 		MISTRAL_AI("Mistral AI",
@@ -71,14 +74,26 @@ public class LlmHelper
 			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model, think),
 			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), true),
 			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model)),
+//		LOCAL_AI("Local AI",
+//			(model, think) -> createLocalAiChatModel(model, think),
+//			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
+//			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
+//		LOCAL_AI("Local AI",
+//			(model, think) -> createOllamaChatModel("http://localhost:8080", model, think),
+//			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
+//			(model) -> fetchOllamaContextSize("http://localhost:8080", model)),
 		LOCAL_AI("Local AI",
 			(model, think) -> createOpenAiChatModel("http://localhost:8080/v1", "", model, think),
 			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
 			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
 		LM_STUDIO("LM Studio",
-			(model, think) -> createAnthropicChatModel("http://localhost:1234/v1", "nix", model, think),
+			(model, think) -> createOpenAiResponsesChatModel("http://localhost:1234/v1", "nix", model, think),
 			() -> fetchOpenAiModels("http://localhost:1234/v1", "nix", false),
 			(model) -> fetchOpenAiContextSize("http://localhost:1234/v1", "", model)),
+		LLAMA_SERVER("Llama Server",
+			(model, think) -> createOpenAiChatModel("http://localhost:8033/v1", "nix", model, think),
+			() -> fetchOpenAiModels("http://localhost:8033/v1", "nix", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8033/v1", "", model)),
 		UNSLOTH("Unsloth",
 			(model, think) -> createOpenAiChatModel("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
 			() -> fetchOpenAiModels("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), false),
@@ -229,17 +244,25 @@ public class LlmHelper
 	
 	protected static int fetchOllamaContextSize(String baseurl, String model)
 	{
-		OllamaModels ollamaModels = OllamaModels.builder()
-			.baseUrl(baseurl)
-			.build();
-		return ollamaModels.runningModels().content().stream()
-			.filter(m -> m.getName().equals(model))
-			.findFirst().map(m ->
+		try
 		{
-			System.out.println("Ollama model: "+m.getName());
+			OllamaModels ollamaModels = OllamaModels.builder()
+				.baseUrl(baseurl)
+				.build();
+			return ollamaModels.runningModels().content().stream()
+				.filter(m -> m.getName().equals(model))
+				.findFirst().map(m ->
+			{
+				System.out.println("Ollama model: "+m.getName());
+				return m.getContextLength();
+			})
+				.orElse(-1);
+		}
+		catch(Exception e)
+		{
+			System.err.println("Failed to fetch Ollama context size: "+e);
 			return -1;
-		})
-			.orElse(-1);
+		}
 	}
 
 	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think)
@@ -252,32 +275,36 @@ public class LlmHelper
 	
 	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String apikey, String model, Boolean think)
 	{
-//		return OpenAiStreamingChatModel.builder()
-//			.baseUrl(baseurl)
-//			.apiKey(apikey)
-//			.modelName(model)
-//			// cf. https://developers.openai.com/api/docs/guides/reasoning
-//			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
-//			// If there is thinking -> always use it.
-//			.returnThinking(true)
-//			.sendThinking(true)
+		return OpenAiStreamingChatModel.builder()
+			.baseUrl(baseurl)
+			.apiKey(apikey)
+			.modelName(model)
+			// cf. https://developers.openai.com/api/docs/guides/reasoning
+			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
+			// If there is thinking -> always use it.
+			.returnThinking(true)
+			.sendThinking(true)
 //			.logRequests(true)
 //			.logResponses(true)
-//			// For LM Studio, we need to force HTTP/1.1 :-(
-//			.httpClientBuilder(JdkHttpClient.builder()
-//				.httpClientBuilder(HttpClient.newBuilder()
-//					.version(HttpClient.Version.HTTP_1_1)))
-//			.build();
+			// For LM Studio, we need to force HTTP/1.1 :-(
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
+			.build();
+	}
 		
+	protected static StreamingChatModel	createOpenAiResponsesChatModel(String baseurl, String apikey, String model, Boolean think)
+	{
 		return OpenAiResponsesStreamingChatModel.builder()
 			.baseUrl(baseurl)
 			.apiKey(apikey)
 			.modelName(model)
 			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
 			.reasoningSummary("auto")
-			.logRequests(true)
-			.logResponses(true)
+//			.logRequests(true)
+//			.logResponses(true)
 			// For LM Studio, we need to force HTTP/1.1 :-(
+			// Also needed for Unsloth!?, otherwise we get strange errors
 			.httpClientBuilder(JdkHttpClient.builder()
 				.httpClientBuilder(HttpClient.newBuilder()
 					.version(HttpClient.Version.HTTP_1_1)))
@@ -393,6 +420,15 @@ public class LlmHelper
 			.build();
 		return cat.listModels().stream().filter(m -> m.name().equals(model)).findFirst()
 			.map(m -> m.maxInputTokens()!=null ? m.maxInputTokens() : -1).orElse(-1);
+	}
+	
+	protected static StreamingChatModel createGoogleGenAiChatModel(String model, Boolean think)
+	{
+		return GoogleGenAiStreamingChatModel.builder()
+			.apiKey(System.getenv("GOOGLE_API_KEY"))
+			.modelName(model)
+			.thinkingBudget(think!=null && !think ? 0 : null)
+			.build();
 	}
 	
 	protected static StreamingChatModel	createGoogleGeminiChatModel(String model, Boolean think)
