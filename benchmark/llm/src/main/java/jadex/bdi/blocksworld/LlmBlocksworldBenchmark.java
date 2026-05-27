@@ -2,7 +2,7 @@ package jadex.bdi.blocksworld;
 
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.micro.llmcall2.LlmBenchmark;
+import jadex.llm.LlmBenchmark;
 
 /**
  *  Benchmark for the LlmBlocksworldAgent using text-based world state representation.

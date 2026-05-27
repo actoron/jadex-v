@@ -2,6 +2,7 @@ package jadex.micro.llmcall2;
 
 import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
+import jadex.llm.LlmBenchmark;
 import jadex.micro.llmcall2.LlmBreakfast.ICoffeeMaker;
 import jadex.micro.llmcall2.LlmBreakfast.IToaster;
 

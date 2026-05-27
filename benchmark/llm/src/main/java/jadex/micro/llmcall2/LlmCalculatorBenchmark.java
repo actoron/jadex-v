@@ -5,6 +5,7 @@ import jadex.core.IComponentManager;
 import jadex.core.impl.IDaemonComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.llm.LlmBenchmark;
 import jadex.providedservice.annotation.Service;
 
 public class LlmCalculatorBenchmark

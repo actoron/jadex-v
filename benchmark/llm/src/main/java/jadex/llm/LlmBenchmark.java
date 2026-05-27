@@ -1,4 +1,4 @@
-package jadex.micro.llmcall2;
+package jadex.llm;
 
 import java.awt.BorderLayout;
 import java.io.File;
@@ -21,7 +21,6 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.google.genai.GoogleGenAiStreamingChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
-import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
@@ -30,6 +29,10 @@ import jadex.core.INoCopyStep;
 import jadex.errorhandling.IErrorHandlingFeature;
 import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.micro.llmcall2.ChatFragment;
+import jadex.micro.llmcall2.ILlmChatService;
+import jadex.micro.llmcall2.LlmChatAgent;
+import jadex.micro.llmcall2.LlmHelper;
 import jadex.micro.llmcall2.LlmHelper.Provider;
 import jadex.providedservice.IService;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -355,7 +358,7 @@ public class LlmBenchmark
 			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
 		
 		// Run benchmarks for remote Ollama models
 		include_models	= Arrays.asList(
@@ -418,7 +421,7 @@ public class LlmBenchmark
 ////			"voxtral-mini-2507", 
 ////			"voxtral-small-2507" 
 			);
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.MISTRAL_AI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.MISTRAL_AI, true);
 	}
 
 	/**
