@@ -37,3 +37,4 @@ startHelloWorld.sh
 .vscode/settings.json
 /application/micro/generated_images
 /benchmark/llm/analysis_output
+/benchmark/llm/*.csv
