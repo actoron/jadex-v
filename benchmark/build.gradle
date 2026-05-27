@@ -21,6 +21,11 @@ task plot(type : PythonTask)
 	command = 'plot_benchmarks.py'
 }
 
+task analyzeLlm(type : PythonTask)
+{
+	command = 'analyze_llm_benchmarks.py'
+}
+
 task purge(type: Delete)
 {
 	delete fileTree('.')

@@ -36,3 +36,4 @@ startHelloWorld.sh
 /application/bdi-service/.lwjgl/
 .vscode/settings.json
 /application/micro/generated_images
+/benchmark/llm/analysis_output
