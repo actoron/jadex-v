@@ -1,7 +1,9 @@
 from pathlib import Path
+import os
 import re
 import textwrap
 from datetime import date
+import webbrowser
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -833,6 +835,21 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     return "\n".join(lines)
 
 
+def open_generated_report(report_path: Path) -> None:
+    """Open the generated report file with the default system handler."""
+    if not report_path.exists():
+        print(f"Report not found: {report_path}")
+        return
+
+    try:
+        if os.name == "nt":
+            os.startfile(str(report_path))  # type: ignore[attr-defined]
+        else:
+            webbrowser.open(report_path.resolve().as_uri())
+    except OSError as exc:
+        print(f"Could not open report automatically: {exc}")
+
+
 def analyze_benchmark(csv_path: Path) -> None:
     benchmark_name = benchmark_name_from_path(csv_path)
     benchmark_out_dir = OUT_DIR / benchmark_name
@@ -870,6 +887,7 @@ def main() -> None:
         return
 
     analyze_all_benchmarks(benchmark_files)
+    open_generated_report(OUT_DIR / "overall_analysis.md")
 
     print("Analysis complete. Files in:", OUT_DIR)
 
