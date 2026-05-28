@@ -140,13 +140,12 @@ task releaseStagingRepo {
     	
 
         def url = new URL("https://central.sonatype.com/api/v1/publisher/deployments/files")
-        // should be sortDirection: "desc" to get the latest repo, but somehow its asc!?
         def data = """
 			{
 			  "page": 0,
 			  "size": 1,
-			  "sortField": "createdTimestamp",
-			  "sortDirection": "asc",
+			  "sortField": "createTimestamp",
+			  "sortDirection": "desc",
 			  "pathStarting": "org/activecomponents/jadex/"
 			}"""
         def user = System.getProperty("centralUser")
@@ -165,7 +164,7 @@ task releaseStagingRepo {
         writer.flush()
         writer.close()
 
-        logger.lifecycle "Response Code: ${connection.responseCode}"
+        //logger.lifecycle "Response Code: ${connection.responseCode}"
 
         if (connection.responseCode == 200) {
             //logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
