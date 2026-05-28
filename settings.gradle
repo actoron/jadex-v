@@ -85,7 +85,7 @@ def parseURLWithCredentials(urlstring) {
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	logger.lifecycle 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
+	//logger.lifecycle 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
 		
 	return ret;
 }
@@ -100,53 +100,8 @@ def centralpass = repoaccess ? repoaccess.password : null;
 if(centralpass!=null)
 	System.setProperty("centralPassword", centralpass)
 	
-def createStagingRepo() {
-    def descXml = """
-        <promoteRequest>
-            <data>
-                <description>Jadex</description>
-            </data>
-        </promoteRequest>
-    """
-
-    def connection = new URL("https://ossrh-staging-api.central.sonatype.com/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
-    connection.setRequestMethod("POST")
-    connection.setDoOutput(true)
-    connection.setRequestProperty("Content-Type", "application/xml")
-    connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((System.getProperty("centralUser")+":"+System.getProperty("centralPassword")).getBytes()))
-
-    def outputStream = connection.getOutputStream()
-    outputStream.write(descXml.getBytes())
-    outputStream.flush()
-    outputStream.close()
-
-    def responseCode = connection.getResponseCode()
-    if (responseCode == 201) {
-        def responseStream = connection.getInputStream()
-        def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
-        
-        logger.lifecycle "Response: ${responseText}"
-        def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
-        if (matcher.find()) {
-            def repoId = matcher.group(1)
-            logger.lifecycle "Repository ID: ${repoId}"
-            System.setProperty("repoId", repoId)
-        } else {
-            logger.lifecycle "Repo-ID nicht gefunden"
-        }
-    } else {
-        logger.lifecycle "HTTP-POST fehlgeschlagen: ${responseCode}"
-    }
-}
-//createStagingRepo()
-
 logger.lifecycle 'version:'+getVar(jversion)+"|"
-if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
-	logger.lifecycle "publish task called. Creating staging repo ..."
-    createStagingRepo()
-} else {
-	logger.lifecycle "publish task not called. no staging repo is created."
-}
+
 	
 //includeBuild('.') {}
 includeBuild('util/common') {}
