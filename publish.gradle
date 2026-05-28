@@ -177,10 +177,10 @@ if(project.hasProperty('repos')) {
 def common() {
 	return {
         scm {
-            url 'https://github.com/actoron/jadex.git'
+            url 'https://github.com/actoron/jadex-v.git'
         }
 
-        url 'https://www.activecomponents.org'
+        url 'https://github.com/actoron/jadex-v'
 
         // beware: organization needs '=' assignment:
         // https://issues.gradle.org/browse/GRADLE-2719
@@ -215,16 +215,16 @@ def common() {
                 organization 'Actoron GmbH'
                 organizationUrl 'https://actoron.com/'
             }
-            developer {
-                id 'julian'
-                name 'Julian Kalinowski'
-                email 'kalinowski@informatik.uni-hamburg.de'
-                //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/974'
-                //                organization 'Actoron GmbH'
-                //                organizationUrl 'https://actoron.com/'
-                organization 'University of Hamburg'
-                organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
-            }
+            //developer {
+            //    id 'julian'
+            //    name 'Julian Kalinowski'
+            //    email 'kalinowski@informatik.uni-hamburg.de'
+            //    //                url 'http://vsis-www.informatik.uni-hamburg.de/members/info.php/974'
+            //    //                organization 'Actoron GmbH'
+            //    //                organizationUrl 'https://actoron.com/'
+            //    organization 'University of Hamburg'
+            //    organizationUrl 'http://vsis-www.informatik.uni-hamburg.de/'
+            //}
         }
 
     }
