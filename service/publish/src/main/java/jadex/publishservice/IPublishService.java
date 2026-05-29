@@ -18,7 +18,7 @@ public interface IPublishService extends IComponentFeature
 	/** The publish type rest service. */
 	public static final String PUBLISH_RS = "rs";
 	
-	/** The default publish implementations for rest. */
+	/** The default publish implementations for rest. * /
 	public static final String[] DEFAULT_RSPUBLISH_COMPONENTS = new String[]
 	{
 		"/jadex/extension/rs/publish/NanoRSPublishAgent.class",
@@ -26,7 +26,7 @@ public interface IPublishService extends IComponentFeature
 		"/jadex/extension/rs/publish/GrizzlyRSPublishAgent.class",
 		"/jadex/extension/rs/publish/LegacyGrizzlyRSPublishAgent.class",
 		"/jadex/extension/rs/publish/ExternalRSPublishAgent.class"
-	};
+	};*/
 	
 	/**
 	 *  Test if publishing a specific type is supported (e.g. web service).

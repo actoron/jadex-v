@@ -40,7 +40,7 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 					model.addPostInject((comp, pojos, context, oldval) ->
 					{
 						IProvidedServiceFeature	prov	= comp.getFeature(IProvidedServiceFeature.class);
-						Object	service	= prov.getProvidedService(publish.publishtarget());
+						Object	service	= prov.getProvidedService(publish.publishinterface());
 						
 						IPublishServiceFeature	feature	= comp.getFeature(IPublishServiceFeature.class);
 						// do we want to chain the publication on serviceStart and serviceEnd of each service?!
@@ -95,13 +95,16 @@ public abstract class PublishServiceFeatureProvider	extends ComponentFeatureProv
 	 *  Convert annotation to info object.
 	 */
 	// TODO: Just use annotation?
-	protected static PublishInfo getPublishInfo(Publish p)
+	public static PublishInfo getPublishInfo(Publish p)
 	{
-		String pt = p.publishtagetname().length()>0? p.publishtagetname(): null;
-		if(pt==null && !p.publishtarget().equals(Object.class))
-			pt = SReflect.getClassName(p.publishtarget());
+		System.out.println("creating publish info: "+p.publishtype());
+
+		String name = p.publishname().length()>0? p.publishname(): null;
+		if(name==null && !p.publishinterface().equals(Object.class))
+			name = SReflect.getClassName(p.publishinterface());
 		
-		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), pt, Object.class.equals(p.mapping())? null: p.mapping());
+		PublishInfo pi = new PublishInfo(p.publishid(), p.publishtype(), name, 
+			Object.class.equals(p.mapping())? null: p.mapping(), p.automapping());
 		return pi;
 	}
 }

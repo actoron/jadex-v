@@ -66,7 +66,7 @@ public class LocalDateTimeCodec extends AbstractCodec
 		}
 		catch (Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		return ret;
 	}

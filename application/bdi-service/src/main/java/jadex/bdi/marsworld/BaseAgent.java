@@ -50,7 +50,7 @@ public abstract class BaseAgent
 		self.set((BaseObject)movecapa.getEnvironment().addSpaceObject(createSpaceObject()).get());
 		movecapa.getEnvironment().observeObject(getSpaceObject()).next(e ->
 		{
-			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+			agent.getComponentHandle().scheduleStep(() ->
 			{
 				if(e instanceof VisionEvent)
 				{
@@ -80,7 +80,7 @@ public abstract class BaseAgent
 						}
 					}
 				}
-			});
+			}).catchEx(ex -> ex.printStackTrace());
 		});
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(movecapa.new WalkAround());
 	}

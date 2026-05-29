@@ -1,5 +1,7 @@
 package jadex.common;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -15,7 +17,7 @@ public class OperatingSystemMXBeanFacade
 {
 	protected static Object	bean;
 
-	protected static Map<String, Method> methods;
+	protected static Map<String, MethodHandle> methods;
 
 	static
 	{
@@ -91,18 +93,20 @@ public class OperatingSystemMXBeanFacade
 		{
 			if(methods==null)
 			{
-				methods = new HashMap<String, Method>();
+				methods = new HashMap<String, MethodHandle>();
 			}
-			Method m = methods.get(name);
+			MethodHandle m = methods.get(name);
 			if(m==null)
 			{
-				m = bean.getClass().getMethod(name, new Class[0]);
-				ret = m.invoke(bean, new Object[0]);
+				Method method = bean.getClass().getMethod(name, new Class[0]);
+				m	= MethodHandles.lookup().unreflect(method);
+				methods.put(name, m);
 			}
+			ret = m.invoke(bean);
 		}
-		catch(Exception e)
+		catch(Throwable e)
 		{
-			throw new RuntimeException();
+			SUtil.throwUnchecked(e);
 		}
 		return ret;
 	}

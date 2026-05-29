@@ -1,0 +1,333 @@
+package jadex.bdi.tool;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.IGoal;
+import jadex.bdi.annotation.Belief;
+import jadex.bdi.impl.BDIAgentFeature;
+import jadex.bdi.impl.plan.IPlanBody;
+import jadex.bdi.impl.plan.RPlan;
+import jadex.collection.CollectionWrapper;
+import jadex.collection.MapWrapper;
+import jadex.common.SUtil;
+import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
+import jadex.core.IThrowingFunction;
+import jadex.injection.Dyn;
+import jadex.injection.IInjectionFeature;
+import jadex.injection.Val;
+import jadex.injection.impl.InjectionFeature;
+import jadex.injection.impl.InjectionModel;
+import jadex.injection.impl.InjectionModel.MDynVal;
+
+@SuppressWarnings("serial")
+public class BDIViewer extends JFrame 
+{
+    private final IComponentHandle agent;
+    private final JTable goalTable, planTable, beliefTable;
+    private final DefaultTableModel goalModel, planModel, beliefModel;
+    
+    record BeliefInfo(Class<?> type, Object value) 
+    {
+    }
+
+    public BDIViewer(IComponentHandle agent) 
+    {
+        this.agent = agent;
+        setTitle("" + agent.getId().getLocalName());
+        setSize(500, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        JSplitPane topSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        mainSplitPane.setTopComponent(topSplitPane);
+
+        goalModel = new DefaultTableModel(new String[]{"ID", /*"Type",*/ "Lifecycle State", "Processing State", "Pojo"}, 0);
+        goalTable = createTable(goalModel, false);
+        topSplitPane.setTopComponent(createBorderPanel("Goals", goalTable));
+
+        planModel = new DefaultTableModel(new String[]{"ID", /*"Type",*/ "State", "Subgoals", "Pojo"}, 0);
+        planTable = createTable(planModel, false);
+        
+        topSplitPane.setBottomComponent(createBorderPanel("Plans", planTable));
+        topSplitPane.setResizeWeight(0.5);
+
+        beliefModel = new DefaultTableModel(new String[]{"Name", "Type", /*"Dynamic", "Updaterate",*/ "Value"}, 0);
+        beliefTable = createTable(beliefModel, true);
+        mainSplitPane.setBottomComponent(createBorderPanel("Beliefs", beliefTable));
+        mainSplitPane.setResizeWeight(0.66);
+
+        add(mainSplitPane);
+        startAutoRefresh();
+    }
+    
+    private JPanel createBorderPanel(String title, JTable table)
+    {
+        JPanel pan = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(table); 
+        pan.add(BorderLayout.CENTER, scrollPane); 
+        pan.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), title, TitledBorder.LEADING, TitledBorder.TOP));
+        return pan; 
+    }
+
+    private JTable createTable(DefaultTableModel model, boolean belief) 
+    {
+        JTable table = new JTable(model);
+        PojoCellRenderer renderer = new PojoCellRenderer();
+        int	start	= belief ? 1 : 0;	// Skip beautifying of belief name (i.e. do not strip capa prefix)
+        for(int i=start; i<table.getColumnModel().getColumnCount(); i++) 
+        {
+        	table.getColumnModel().getColumn(i).setCellRenderer(renderer);
+        }
+
+        
+        table.addMouseListener(new MouseAdapter() 
+        {
+            @Override
+            public void mouseClicked(MouseEvent e) 
+            {
+                int row = table.rowAtPoint(e.getPoint());
+                int col = table.columnAtPoint(e.getPoint());
+                if (col == model.getColumnCount() - 1) 
+                {
+                    Object pojo = model.getValueAt(row, col);
+                    Object id = model.getValueAt(row, 1);
+                    if (pojo != null) 
+                    {
+                        JFrame frame = ObjectInspectorPanel.createObjectFrame(""+id, pojo);
+                        frame.setLocationRelativeTo(null);
+                        frame.setVisible(true);
+                    }
+                }
+            }
+        });
+        return table;
+    }
+
+    private Timer startAutoRefresh() 
+    {
+        Timer timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() 
+        {
+            @Override
+            public void run() 
+            {
+                SwingUtilities.invokeLater(BDIViewer.this::refreshTables);
+            }
+        }, 0, 100);
+        
+        return timer;
+    }
+
+    private void refreshTables() 
+    {
+       	refreshGoalsTable(goalModel, agent.scheduleStep((IThrowingFunction<IComponent, IGoal[]>)a -> {
+       		return a.getFeature(IBDIAgentFeature.class).getGoals().toArray(new IGoal[0]);
+       	}).get());
+       	
+       	refreshPlansTable(planModel, agent.scheduleStep((IThrowingFunction<IComponent, RPlan[]>)a -> 
+       	{
+       		List<RPlan>	allplans	= new ArrayList<>();
+       		Map<IPlanBody, Set<RPlan>>	plans	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans();
+       		if(plans!=null)
+       		{
+       			for(Set<RPlan> planset: plans.values())
+       			{
+       				allplans.addAll(planset);
+       			}
+       		}
+       		return allplans.toArray(new RPlan[allplans.size()]);
+       	}).get());
+       	
+       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, List<String>>)a -> 
+       	{
+       		List<String>	beliefnames	= new ArrayList<>();
+       		Collection<MDynVal>	mdynvals	= ((InjectionFeature) a.getFeature(IInjectionFeature.class)).getModel().getDynamicValues();
+       		for(MDynVal mdynval: mdynvals)
+       		{
+       			if(mdynval.kinds().contains(Belief.class))
+       			{
+       				beliefnames.add(mdynval.name());
+       			}
+       		}
+       		return beliefnames;
+       	}).get());
+    }
+
+    private void refreshGoalsTable(DefaultTableModel model, IGoal[] goals) 
+    {
+        model.setRowCount(0);
+        for (IGoal goal: goals) 
+        {
+            Object[] row = new Object[]
+            {
+                goal.getId(),
+//                goal.getPojo().getClass(),
+                goal.getLifecycleState(),
+                goal.getProcessingState(),
+                goal.getPojo()
+            };
+            model.addRow(row);
+        }
+    }
+    
+    private void refreshPlansTable(DefaultTableModel model, RPlan[] plans) 
+    {
+        model.setRowCount(0);
+        for (RPlan plan: plans) 
+        {
+            Object[] row = new Object[]
+            {
+                plan.getId(),
+                //plan.getType(),
+                plan.getLifecycleState(),
+                plan.getSubgoals(),
+                plan.getPojo()
+            };
+            model.addRow(row);
+        }
+    }
+
+    private void refreshBeliefsTable(DefaultTableModel model, List<String> beliefs) 
+    {
+        model.setRowCount(0);
+        for (String belief : beliefs) 
+        {
+        	BeliefInfo info = agent.scheduleStep((IThrowingFunction<IComponent, BeliefInfo>) a -> 
+            {
+//            	Object val= belief.getValue();
+//            	return new BeliefValue(val, val.toString());
+            	InjectionModel	imodel	= ((InjectionFeature)a.getFeature(IInjectionFeature.class)).getModel();
+            	Class<?>	type	= imodel.getDynamicValue(belief).type();
+            	Object	value	= getBeliefValue(belief, a.getPojo());
+            	return new BeliefInfo(type, value);
+            }).get();
+
+            model.addRow(new Object[]
+            {
+                belief,//.replace(".", "/"),
+                info.type(),
+//                belief.isDynamic(),
+//                belief.getUpdateRate(),
+                info.value()
+            });
+        }
+    }
+    
+    public static Object	getBeliefValue(String name, Object pojo)
+    {
+    	while(name.contains("."))
+    	{
+    		String	capa	= name.substring(0, name.indexOf("."));
+    		name	= name.substring(name.indexOf(".")+1);
+    		pojo	= getFieldValue(capa, pojo);
+    	}
+    	Object	value	= getFieldValue(name, pojo);
+    	
+    	if(value instanceof Dyn<?>)
+    	{
+    		value	= ((Dyn<?>) value).get();
+    	}
+    	
+    	else if(value instanceof Val<?>)
+    	{
+    		value	= ((Val<?>) value).get();
+    	}
+    	
+    	else if(value instanceof CollectionWrapper<?>)
+    	{
+    		value	= ((CollectionWrapper<?>) value).getDelegate();
+    	}
+    	
+    	else if(value instanceof MapWrapper<?,?>)
+    	{
+    		value	= ((MapWrapper<?,?>) value).getDelegate();
+    	}
+    	
+    	return value;
+    }
+    
+    public static Object	getFieldValue(String name, Object pojo)
+    {
+		Class<?>	clazz	= pojo.getClass();
+		Field	f	= null;
+		while(clazz!=null && f==null)
+		{
+			try
+			{
+				f	= clazz.getDeclaredField(name);
+			}
+			catch(NoSuchFieldException e)
+			{
+				clazz	= clazz.getSuperclass();
+			}
+		}
+		
+    	try
+    	{
+    		f.setAccessible(true);
+    		return f.get(pojo);
+    	}
+    	catch(Exception e)
+    	{
+    		throw SUtil.throwUnchecked(e);
+    	}
+    }
+    
+
+    public static String getShortedText(String text) 
+    {
+        int idx = text.lastIndexOf("$");
+        if (idx != -1) 
+        {
+            text = text.substring(idx + 1);
+        } 
+        else 
+        {
+            idx = text.lastIndexOf(".");
+            if (idx != -1) text = text.substring(idx + 1);
+        }
+        return text;
+    }
+
+    public static class PojoCellRenderer extends DefaultTableCellRenderer 
+    {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if(value instanceof String || value instanceof Class)
+            	setText(getShortedText(value.toString()));
+//            else if(value instanceof UnparsedExpression)
+//            	setText(((UnparsedExpression)value).getValue());
+//            else if(value instanceof BeliefInfo)
+//            	setText(((BeliefInfo)value).preview());
+            
+            return this;
+        }
+    }
+}

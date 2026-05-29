@@ -1,6 +1,6 @@
 package jadex.requiredservice;
 
-import jadex.providedservice.impl.search.ServiceQuery;
+import jadex.providedservice.ServiceQuery;
 
 /**
  *  Exception to denote that a requested service was not found.

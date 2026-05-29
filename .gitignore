@@ -35,3 +35,7 @@ startHelloWorld.sh
 /bdi/engine - Kopie
 /application/bdi-service/.lwjgl/
 .vscode/
+.vscode/settings.json
+/application/micro/generated_images
+/benchmark/llm/analysis_output
+/benchmark/llm/*.csv

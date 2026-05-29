@@ -55,15 +55,6 @@ public class TerminableFuture<E> extends Future<E> implements ITerminableFuture<
 	//-------- methods --------
 	
 	/**
-	 *  Terminate the future.
-	 *  The exception will be set to FutureTerminatedException.
-	 */
-	public void terminate()
-	{
-		terminate(new FutureTerminatedException());
-	}
-	
-	/**
 	 *  Terminate the future and supply a custom reason.
 	 */
 	public void terminate(Exception reason)

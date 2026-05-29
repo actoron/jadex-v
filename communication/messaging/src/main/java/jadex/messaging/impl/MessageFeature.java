@@ -5,18 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 import jadex.common.SUtil;
-import jadex.core.ComponentIdentifier;
-import jadex.core.IComponentManager;
-import jadex.core.IComponentHandle;
-import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
-import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.IMessageHandler;
-import jadex.messaging.INetworkFeature;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.ISecurityFeature.DecodedMessage;
 import jadex.messaging.ISecurityInfo;
@@ -24,6 +17,12 @@ import jadex.messaging.SecureExchange;
 import jadex.messaging.impl.ipc.IpcFeature;
 import jadex.messaging.impl.security.SecurityFeature;
 import jadex.serialization.SerializationServices;
+import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentHandle;
+import jadex.core.ComponentIdentifier;
 
 public class MessageFeature implements IMessageFeature
 {
@@ -199,6 +198,7 @@ public class MessageFeature implements IMessageFeature
 			{
 				((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, tex);
 			});
+			// catchEx -> ignore when receiver is terminated
 		}
 		else
 		{

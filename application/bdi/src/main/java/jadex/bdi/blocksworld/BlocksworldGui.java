@@ -187,7 +187,7 @@ public class BlocksworldGui	extends JFrame
 												addblocks.addElement(newtable);
 											}
 										});
-								});
+								}).catchEx(ex -> ex.printStackTrace());
 //								agent.getBeliefbase().getBeliefSetFacts("blocks").addResultListener(new SwingDefaultResultListener(BlocksworldGui.this)
 //								{
 //									public void customResultAvailable(Object source, Object result)
@@ -219,7 +219,7 @@ public class BlocksworldGui	extends JFrame
 //										// Hack!!! Blocks must be in state directly.
 //										achieve.getParameterSet("blocks").addValues(newtable.getAllBlocks());
 //										bia.getGoalbase().dispatchTopLevelGoal(achieve);
-								});
+								}).catchEx(ex -> ex.printStackTrace());
 										
 //								agent.getGoalbase().createGoal("configure").addResultListener(new DefaultResultListener()
 //								{
@@ -282,7 +282,7 @@ public class BlocksworldGui	extends JFrame
 												newblocks.addElement(new Block(block.number, showcol.getBackground(), null));
 											}
 										});
-								});
+								}).catchEx(ex -> ex.printStackTrace());
 										
 //								agent.getBeliefbase().getBeliefFact("table").addResultListener(new SwingDefaultResultListener(BlocksworldGui.this)
 //								{
@@ -358,7 +358,7 @@ public class BlocksworldGui	extends JFrame
 								agent.scheduleStep(() ->
 								{
 										pag.setMode(sel);
-								});
+								}).catchEx(ex -> ex.printStackTrace());
 //								agent.getBeliefbase().setBeliefFact("mode", mode.getSelectedItem());
 							}
 						});
@@ -372,7 +372,7 @@ public class BlocksworldGui	extends JFrame
 										
 //										IInternalEvent ie = bia.getEventbase().createInternalEvent("step");
 //										bia.getEventbase().dispatchInternalEvent(ie);
-								});
+								}).catchEx(ex -> ex.printStackTrace());
 								
 //								agent.getEventbase().createInternalEvent("step").addResultListener(new DefaultResultListener()
 //								{
@@ -436,7 +436,8 @@ public class BlocksworldGui	extends JFrame
 							public void	windowClosing(WindowEvent we)
 							{
 								we.getWindow().dispose();
-								agent.scheduleStep((IThrowingConsumer<IComponent>)ia -> ia.terminate());
+								agent.terminate()
+									.catchEx(e -> e.printStackTrace());
 							}
 						});
 						
@@ -477,6 +478,8 @@ public class BlocksworldGui	extends JFrame
 								pack();
 								setLocation(SGUI.calculateMiddlePosition(BlocksworldGui.this));
 								setVisible(true);
+								
+								pag.gui.setResult(BlocksworldGui.this);
 //							}
 //							
 //							public void exceptionOccurred(Exception exception)
@@ -487,7 +490,7 @@ public class BlocksworldGui	extends JFrame
 					}
 				});
 			}
-		);
+		).catchEx(e -> e.printStackTrace());
 		
 //		agent.getBeliefbase().getBeliefSetFacts("blocks").addResultListener(new SwingDefaultResultListener(BlocksworldGui.this)
 //		{

@@ -85,7 +85,7 @@ def parseURLWithCredentials(urlstring) {
 
 	// URL without extra info (e.g. no password for security reasons)
 	ret.url	= uri.scheme + '://' + uri.host + (uri.port!=-1 ? ':' + uri.port : '') + (uri.rawPath!=null ? uri.rawPath : '') + (uri.rawQuery!=null ? '?' + uri.rawQuery : '') + (uri.rawFragment!=null ? '#' + uri.rawFragment : '')
-	logger.lifecycle 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
+	//logger.lifecycle 'repouser and pass: url=' + urlstring+" user="+ret.user +" pw="+ret.password
 		
 	return ret;
 }
@@ -100,53 +100,8 @@ def centralpass = repoaccess ? repoaccess.password : null;
 if(centralpass!=null)
 	System.setProperty("centralPassword", centralpass)
 	
-def createStagingRepo() {
-    def descXml = """
-        <promoteRequest>
-            <data>
-                <description>Jadex</description>
-            </data>
-        </promoteRequest>
-    """
-
-    def connection = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/start").openConnection()
-    connection.setRequestMethod("POST")
-    connection.setDoOutput(true)
-    connection.setRequestProperty("Content-Type", "application/xml")
-    connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((System.getProperty("centralUser")+":"+System.getProperty("centralPassword")).getBytes()))
-
-    def outputStream = connection.getOutputStream()
-    outputStream.write(descXml.getBytes())
-    outputStream.flush()
-    outputStream.close()
-
-    def responseCode = connection.getResponseCode()
-    if (responseCode == 201) {
-        def responseStream = connection.getInputStream()
-        def responseText = new BufferedReader(new InputStreamReader(responseStream)).readLines().join('\n')
-        
-        logger.lifecycle "Response: ${responseText}"
-        def matcher = responseText =~ /<stagedRepositoryId>(.*?)<\/stagedRepositoryId>/
-        if (matcher.find()) {
-            def repoId = matcher.group(1)
-            logger.lifecycle "Repository ID: ${repoId}"
-            System.setProperty("repoId", repoId)
-        } else {
-            logger.lifecycle "Repo-ID nicht gefunden"
-        }
-    } else {
-        logger.lifecycle "HTTP-POST fehlgeschlagen: ${responseCode}"
-    }
-}
-//createStagingRepo()
-
 logger.lifecycle 'version:'+getVar(jversion)+"|"
-if(gradle.startParameter.taskNames.contains('publish') && getVar(jversion)!=null && getVar(jversion).length()>0) {
-	logger.lifecycle "publish task called. Creating staging repo ..."
-    createStagingRepo()
-} else {
-	logger.lifecycle "publish task not called. no staging repo is created."
-}
+
 	
 //includeBuild('.') {}
 includeBuild('util/common') {}
@@ -163,18 +118,27 @@ includeBuild('serialization/traverser') {}
 includeBuild('serialization/binary') {}
 includeBuild('serialization/json') {}
 
-includeBuild('core/engine') {}
-includeBuild('core/featuretest') {}
-includeBuild('core/execution') {}
-includeBuild('core/simulation') {}
-includeBuild('core/injection'){name='injection'}
-//includeBuild('core/errorhandling') {}
-includeBuild('core/autostart'){name='autostart'}
+includeBuild('engine/core') {}
+includeBuild('engine/bdi') {}
+includeBuild('engine/bt') {}
+
+includeBuild('engine/bpmn/engine') {name='bpmn'}
+includeBuild('engine/bpmn/model') {name='modelbpmn'}
+includeBuild('engine/bpmn/providedservice') {name='providedservicebpmn'}
+includeBuild('engine/bpmn/requiredservice') {name='requiredservicebpmn'}
+
+includeBuild('feature/featuretest') {}
+includeBuild('feature/result') {}
+includeBuild('feature/execution') {}
+includeBuild('feature/simulation') {}
+includeBuild('feature/injection'){name='injection'}
+//includeBuild('feature/errorhandling') {}
+includeBuild('feature/autostart'){name='autostart'}
 
 includeBuild('service/provided') {}
 includeBuild('service/required') {}
 includeBuild('service/publish') {}
-includeBuild('service/publishjetty') {}
+includeBuild('service/publishjetty') {name='publishjetty'}
 includeBuild('service/nfproperty') {}
 includeBuild('service/registry') {}
 
@@ -184,19 +148,9 @@ includeBuild('communication/remoteservice') {}
 includeBuild('communication/networking') {}
 includeBuild('communication/remoteresolver') {}
 
+includeBuild('llm') {}
+
 includeBuild('micro/lib'){name='libmicro'}
-
-includeBuild('bdi/engine') {name='bdi'}
-
-includeBuild('model/model') {name='model'}
-
-includeBuild('bpmn/engine') {name='bpmn'}
-includeBuild('bpmn/providedservice') {name='providedservicebpmn'}
-includeBuild('bpmn/requiredservice') {name='requiredservicebpmn'}
-
-includeBuild('bt/engine') {name='bt'}
-
-includeBuild('rules/eca') {}
 
 includeBuild('monitoring/logbase') {}
 includeBuild('monitoring/graylog') {}
@@ -219,6 +173,7 @@ includeBuild('benchmark/bdi'){name='benchmark-bdi'}
 includeBuild('benchmark/bpmn'){name='benchmark-bpmn'}
 includeBuild('benchmark/micro'){name='benchmark-micro'}
 includeBuild('benchmark/bt'){name='benchmark-bt'}
+includeBuild('benchmark/llm'){name='benchmark-llm'}
 includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
 includeBuild('benchmark'){name='benchmark'}
 

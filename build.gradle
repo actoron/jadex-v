@@ -101,13 +101,7 @@ task closeStagingRepo {
     group = "publishing"
     
     doLast {
-        def stagedRepositoryId = System.getProperty("repoId")
-        if(stagedRepositoryId==null) {
-        	logger.lifecycle "no staging repo id: "+stagedRepositoryId
-        }
-        else
-        {
-	        def url = new URL("https://oss.sonatype.org/service/local/staging/profiles/5bcba2b9075ec8/finish")
+	        def url = new URL("https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/org.activecomponents.jadex")
 	        def connection = url.openConnection() as HttpURLConnection
 	        connection.setRequestMethod("POST")
 	        connection.setDoOutput(true)
@@ -116,14 +110,7 @@ task closeStagingRepo {
 	        def pass = System.getProperty("centralPassword")
     		connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user+":"+pass).getBytes()))
 	
-	        def requestBody = """
-	            <promoteRequest>
-	                <data>
-	                    <stagedRepositoryId>${stagedRepositoryId}</stagedRepositoryId>
-	                    <description>Jadex</description>
-	                </data>
-	            </promoteRequest>
-	        """
+	        def requestBody = ""
 	
 	        try (OutputStream os = connection.outputStream) {
 	            byte[] input = requestBody.getBytes("utf-8")
@@ -133,130 +120,94 @@ task closeStagingRepo {
 			def responseCode = connection.getResponseCode()
 			logger.lifecycle "Response Code: ${responseCode}"
     		
-	        if (responseCode == 201) {
+	        if (responseCode == 200) {
 	            logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
-	            waitForStagingRepoClosed()
 	        } else {
 	            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
             	logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
 	        }
 	
 	        connection.disconnect()
-		}
     }
 }
 closeStagingRepo.mustRunAfter publish
-
-def waitForStagingRepoClosed() {
-	def repoid = System.getProperty("repoId")
-	def closed = false
-	
-	while(!closed) {	
-		def data = fetchStagingRepos()
-		closed = extractRepoStatus(repoid, data)
-		if(!closed) {
-			logger.lifecycle 'Waiting for repo to close: '+repoid
-			Thread.sleep(5000)
-		}
-	}
-}
-
-def fetchStagingRepos() {
-    def user = System.getProperty("centralUser")
-    def pass = System.getProperty("centralPassword")
-
-    def url = new URL("https://oss.sonatype.org/service/local/staging/profile_repositories/5bcba2b9075ec8")
-
-    try {
-        def connection = url.openConnection() as HttpURLConnection
-        connection.setRequestMethod("GET")
-        connection.setRequestProperty("Accept", "application/json")
-        connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
-
-        logger.lifecycle "Fetching staging repositories..."
-
-        int responseCode = connection.responseCode
-        logger.lifecycle "Response Code: ${responseCode}"
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            def jsonResponse = readStream(connection.getInputStream())
-            //logger.lifecycle "Response: ${jsonResponse}"
-            return jsonResponse
-        } else {
-            logger.lifecycle "Failed to execute request. Response code: ${responseCode}"
-            logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
-            return null
-        }
-    } catch (Exception e) {
-        logger.lifecycle "Exception occurred while fetching staging repositories: ${e.message}"
-        return null
-    }
-}
-
-def extractRepoStatus(repoId, jsonResponse) {
-    def jsonSlurper = new JsonSlurper()
-    def json = jsonSlurper.parseText(jsonResponse)
-    
-    def data = json.data.find { it.repositoryId == repoId }
-    
-    def ret = false;
-    if(data)
-    	ret = data.type.toLowerCase()=="closed"? true: false;
-    return ret;
-}
 
 task releaseStagingRepo {
     group = "publishing"
     
     doLast {
-        def stagedRepositoryId = System.getProperty("repoId")
-        if (stagedRepositoryId == null) {
-            logger.lifecycle "No staging repo id provided."
-            return
-        }
+    	// Get the staging repository ID from server
+    	
 
-        def url = new URL("https://oss.sonatype.org/service/local/staging/bulk/promote")
-        def data = '{"data":{"stagedRepositoryIds":["' + stagedRepositoryId + '"],"description":"Jadex"}}'
+        def url = new URL("https://central.sonatype.com/api/v1/publisher/deployments/files")
+        def data = """
+			{
+			  "page": 0,
+			  "size": 1,
+			  "sortField": "createTimestamp",
+			  "sortDirection": "desc",
+			  "pathStarting": "org/activecomponents/jadex/"
+			}"""
         def user = System.getProperty("centralUser")
         def pass = System.getProperty("centralPassword")
         
-        def maxAttempts = 5
-        def attempts = 0
 
-        while (attempts < maxAttempts) {
-            attempts++
-            logger.lifecycle "Attempt $attempts to release staging repository..."
+        def connection = url.openConnection() as HttpURLConnection
+        connection.setRequestMethod("POST")
+        connection.setRequestProperty("Accept", "application/json")
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+        connection.setDoOutput(true)
 
-            def connection = url.openConnection() as HttpURLConnection
-            connection.setRequestMethod("POST")
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
-            connection.setDoOutput(true)
+        def writer = new OutputStreamWriter(connection.getOutputStream())
+        writer.write(data)
+        writer.flush()
+        writer.close()
 
-            def writer = new OutputStreamWriter(connection.getOutputStream())
-            writer.write(data)
-            writer.flush()
-            writer.close()
+        //logger.lifecycle "Response Code: ${connection.responseCode}"
 
-            logger.lifecycle "Response Code: ${connection.responseCode}"
-
-            if (connection.responseCode == 201) {
-                logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
-                break
-            } else {
-                logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
-                logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
-                if (attempts < maxAttempts) {
-                    logger.lifecycle "Retrying... "+attempts
-                } else {
-                    logger.lifecycle "Maximum attempts reached. Exiting."
-                }
+        if (connection.responseCode == 200) {
+            //logger.lifecycle "Response: ${readStream(connection.getInputStream())}"
+            def jsonResponse = readStream(connection.getInputStream())
+            def jsonSlurper = new JsonSlurper()
+            def json = jsonSlurper.parseText(jsonResponse)
+            def deploymentId = json.deployments[0].deploymentId
+            def state = json.deployments[0].deploymentState
+            if(state.toLowerCase()!="validated") {
+            	logger.lifecycle "Deployment '"+deploymentId+"' is not in validated state: "+state
             }
-            connection.disconnect()
+            else {
+            	logger.lifecycle "Found staging repository with deployment ID: ${deploymentId}. Releasing..."
+            	
+            	def releaseUrl = new URL("https://central.sonatype.com/api/v1/publisher/deployment/${deploymentId}")
+            	def releaseConnection = releaseUrl.openConnection() as HttpURLConnection
+            	releaseConnection.setRequestMethod("POST")
+            	releaseConnection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
+            	releaseConnection.setDoOutput(true)
 
-            Thread.sleep(10000) 
+		        writer = new OutputStreamWriter(releaseConnection.getOutputStream())
+		        writer.write(data)
+		        writer.flush()
+		        writer.close()
+            	
+            	if (releaseConnection.responseCode == 204) {
+                    logger.lifecycle "Release Response: ${readStream(releaseConnection.getInputStream())}"
+                } else {
+                    logger.lifecycle "Failed to release staging repository. Response code: ${releaseConnection.responseCode}"
+                    logger.lifecycle "Payload: ${readStream(releaseConnection.errorStream)}"
+                }
+                releaseConnection.disconnect()
+            }
+        } else {
+            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
+            logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
+            if (attempts < maxAttempts) {
+                logger.lifecycle "Retrying... "+attempts
+            } else {
+                logger.lifecycle "Maximum attempts reached. Exiting."
+            }
         }
+        connection.disconnect()
     }
 }
 releaseStagingRepo.mustRunAfter closeStagingRepo

@@ -31,7 +31,7 @@ public class JsonCertificateProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return object instanceof JsonObject && SReflect.isSupertype(Certificate.class, clazz);
 	}
 	
@@ -44,7 +44,7 @@ public class JsonCertificateProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonWriteContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return SReflect.isSupertype(Certificate.class, clazz);
 	}
 	

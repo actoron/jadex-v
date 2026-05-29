@@ -2,6 +2,7 @@ package jadex.bdi.blocksworld;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -259,11 +260,13 @@ public class BlocksworldPanel	extends JPanel
 		g.fillRect(x, y, blocksize, blocksize);
 		g.setColor(border1);
 		g.drawRect(x, y, blocksize-1, blocksize-1);
-/*		g.setColor(Color.black);
-		g.drawString(b.toString(), x+2, y+g.getFont().getSize());
-		g.drawString("u: "+b.upper, x+2, y+g.getFont().getSize()*2);
-		g.drawString("l: "+b.lower, x+2, y+g.getFont().getSize()*3);
-*/
+		g.setColor(Color.BLACK);
+		g.setFont(new Font(g.getFont().getName(), Font.BOLD, g.getFont().getSize()));
+		g.drawString(b.toString(), x+5, y+3+g.getFont().getSize());
+//		g.setFont(new Font(g.getFont().getName(), Font.PLAIN, g.getFont().getSize()));
+//		g.drawString("u: "+b.upper, x+5, y+3+g.getFont().getSize()*2);
+//		g.drawString("l: "+b.lower, x+5, y+3+g.getFont().getSize()*3);
+
 		// Draw top.
 		int[]	xp	= new int[]{x+blocksize-1, x+blocksize+blocksize/5-1, x+blocksize/5, x};
 		int[]	yp	= new int[]{y, y-blocksize/5, y-blocksize/5, y};

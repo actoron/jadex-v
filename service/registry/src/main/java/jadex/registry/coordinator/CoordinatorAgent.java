@@ -22,7 +22,7 @@ import jadex.publishservice.IPublishServiceFeature;
 import jadex.publishservice.publish.annotation.Publish;
 import jakarta.ws.rs.GET;
 
-@Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = ICoordinatorGuiService.class)
+@Publish(publishid="http://${host}:${port}/${cid}/api", publishinterface = ICoordinatorGuiService.class)
 public class CoordinatorAgent implements ICoordinatorService, ICoordinatorGuiService, IDaemonComponent
 {
 	/** The agent. */

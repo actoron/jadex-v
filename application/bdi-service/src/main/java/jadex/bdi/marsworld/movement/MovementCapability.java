@@ -128,7 +128,7 @@ public class MovementCapability
 		/**
 		 *  Create a new Move. 
 		 */
-		@GoalCreationCondition(factchanged="missionend")
+		@GoalCreationCondition
 		public static boolean checkCreate(MovementCapability capa)
 		{
 			return capa.missionend.get();// && !capa.getMyself().getPosition().equals(capa.getHomebase().getPosition());

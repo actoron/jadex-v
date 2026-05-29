@@ -56,7 +56,7 @@ public class GeneratePanel extends JPanel
 			this.algos = AbstractFractalAlgorithm.createAlgorithms(algos);
 		
 			SwingUtilities.invokeLater(() -> init(agent));
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 	}
 	
 	protected void init(final IComponentHandle agent)
@@ -153,7 +153,7 @@ public class GeneratePanel extends JPanel
 								});
 							}
 						});
-					});
+					}).catchEx(ex -> ex.printStackTrace());
 				}
 				catch(Exception e)
 				{

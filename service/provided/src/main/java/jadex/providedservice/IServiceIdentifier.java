@@ -2,6 +2,7 @@ package jadex.providedservice;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.Collections;
 
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
@@ -60,4 +61,10 @@ public interface IServiceIdentifier
 	 *  @return The tags.
 	 */
 	public Collection<String> getTags();
+	
+	/**
+	 *  Get the annotation type names present on the service interface and its methods.
+	 *  @return The annotation type names, or an empty set if none.
+	 */
+	public ClassInfo[] getAnnotations();
 }

@@ -9,8 +9,8 @@ import jadex.nfproperty.INFPropertyFeature;
 import jadex.nfproperty.annotation.NFProperties;
 import jadex.nfproperty.annotation.NFProperty;
 import jadex.providedservice.IService;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.annotation.ProvideService;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 @NFProperties(@NFProperty(name="componentcores", value=CoreNumberProperty2.class))

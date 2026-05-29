@@ -21,6 +21,11 @@ task plot(type : PythonTask)
 	command = 'plot_benchmarks.py'
 }
 
+task analyzeLlm(type : PythonTask)
+{
+	command = 'analyze_llm_benchmarks.py'
+}
+
 task purge(type: Delete)
 {
 	delete fileTree('.')
@@ -29,6 +34,8 @@ task purge(type: Delete)
 //        include '**/.benchmark*/*Cleaner*Memory*'
 //        include '**/.benchmark*/*PlainComponent*Memory*'
         include 'nix'
+		// purge all time benchmarks
+        //include '**/.benchmark*/*Time*'
 		// purge all
         //include '**/.benchmark*/*'
     }

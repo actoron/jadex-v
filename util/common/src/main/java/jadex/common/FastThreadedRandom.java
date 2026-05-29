@@ -53,7 +53,7 @@ public class FastThreadedRandom extends Random
 		}
 		catch (Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 	}
 	

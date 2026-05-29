@@ -55,18 +55,6 @@ public class TerminableIntermediateFuture<E> extends IntermediateFuture<E>
 	//-------- methods --------
 
 	/**
-	 *  Terminate the future.
-	 *  The exception will be set to FutureTerminatedException.
-	 */
-	public void terminate()
-	{
-		if(!isDone())
-			terminate(new FutureTerminatedException());
-		else
-			System.out.println("terminate ignored due to done: "+this);
-	}
-	
-	/**
 	 *  Terminate the future and supply a custom reason.
 	 */
 	public void terminate(Exception reason)

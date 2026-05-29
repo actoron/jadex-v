@@ -112,7 +112,7 @@ public class MultiCollectionCodec extends AbstractCodec
 		}
 		catch (Exception e)
 		{
-			SUtil.rethrowAsUnchecked(e);
+			SUtil.throwUnchecked(e);
 		}
 		
 		return object;

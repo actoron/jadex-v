@@ -3,6 +3,8 @@ package jadex.remoteservicetest;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -14,9 +16,6 @@ import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.messaging.IIpcFeature;
-import jadex.messaging.IMessageFeature;
-import jadex.messaging.ISecurityFeature;
-import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
@@ -72,5 +71,10 @@ public class ProviderAgent implements ITestService
     {
     	IComponentHandle handle = IComponentManager.get().create(new ProviderAgent()).get();
         handle.waitForTermination().get();
+    }
+    
+    @Test
+    public void testServiceCall() throws Exception    {
+    	IComponentHandle handle = IComponentManager.get().create(new ProviderAgent()).get();    	handle.waitForTermination().get();
     }
 }

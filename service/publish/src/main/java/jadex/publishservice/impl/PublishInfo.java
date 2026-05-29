@@ -21,8 +21,11 @@ public class PublishInfo
 	/** The publish type. */
 	protected String publishtype;
 	
-	/** The publish target. */
-	protected String publishtarget;
+	/** The publish name. */
+	protected String publishname;
+
+	/** Method automapping flag */
+	protected boolean automapping;
 	
 	///** The publish target. */
 	//protected String publishtargetname;
@@ -63,19 +66,22 @@ public class PublishInfo
 	 *  @param pid The publish id, e.g. url.
 	 *  @param publishtype The publish type.
 	 */
-	public PublishInfo(String pid, String publishtype, String publishtaget,
+	public PublishInfo(String pid, String publishtype, String publishname,
 		//ServiceScope publishscope, boolean multi,
-		Class<?> mapping)
+		Class<?> mapping, boolean automapping)
 		//, UnparsedExpression[] properties)
 	{
+		//System.out.println("created publish info: "+publishtype);
+
 		this.pid = pid;
 		this.publishtype = publishtype;
-		this.publishtarget = publishtaget;
+		this.publishname = publishname;
 		//this.publishscope = publishscope;
 		//this.multi = multi;
 		this.mapping = mapping==null? null: new ClassInfo(mapping);
 		//if(properties!=null)
 		//	this.properties = SUtil.arrayToList(properties);
+		this.automapping = automapping;
 	}
 	
 	/**
@@ -110,10 +116,11 @@ public class PublishInfo
 	{
 		this.pid = info.getPublishId();
 		this.publishtype = info.getPublishType();
-		this.publishtarget = info.getPublishTarget();
+		this.publishname = info.getPublishName();
 		//this.publishscope = info.getPublishScope();
 		//this.multi = info.multi;
 		this.mapping = info.getMapping();
+		this.automapping = info.automapping;
 		//if(info.getProperties()!=null)
 		//	this.properties = new ArrayList<UnparsedExpression>(info.getProperties());
 	}
@@ -156,7 +163,23 @@ public class PublishInfo
 		this.publishtype = type;
 	}
 	
+	/**
+	 *  Gets the automapping flag.
+	 *  @return True, if automapping is enabled.
+	 */
+	public boolean isAutoMapping() 
+	{
+		return automapping;
+	}
 	
+	/**
+	 *  Sets the automapping flag.
+	 *  @param automapping The automapping to set.
+	 */
+	public void setAutoMapping(boolean automapping) 
+	{
+		this.automapping = automapping;
+	}
 	
 	/**
 	 *  Gets the publish scope.
@@ -176,14 +199,14 @@ public class PublishInfo
 		this.publishscope = publishscope;
 	}*/
 
-	public String getPublishTarget() 
+	public String getPublishName() 
 	{
-		return publishtarget;
+		return publishname;
 	}
 
-	public void setPublishTarget(String publishtarget) 
+	public void setPublishName(String publishname) 
 	{
-		this.publishtarget = publishtarget;
+		this.publishname = publishname;
 	}
 
 	/**
@@ -270,6 +293,6 @@ public class PublishInfo
 	@Override
 	public String toString()
 	{
-		return "PublishInfo [pid=" + pid + ", mapping=" + mapping + "]";
+		return "PublishInfo [pid=" + pid + ", mapping=" + mapping + ", type=" +publishtype + "]";
 	}
 }

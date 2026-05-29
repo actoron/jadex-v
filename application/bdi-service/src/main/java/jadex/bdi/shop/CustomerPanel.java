@@ -38,16 +38,17 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import jadex.bdi.IBDIAgentFeature;
-import jadex.bdi.IBeliefListener;
 import jadex.bdi.ICapability;
 import jadex.bdi.shop.CustomerCapability.BuyItem;
 import jadex.common.SGUI;
 import jadex.common.SUtil;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 import jadex.future.IResultListener;
 import jadex.requiredservice.IRequiredServiceFeature;
-import jadex.rules.eca.ChangeInfo;
 
 /**
  *  Customer gui that allows buying items at different shops.
@@ -159,26 +160,26 @@ public class CustomerPanel extends JPanel
 						money.setText(df.format(mon));
 					}
 				});
-		});
+		}).catchEx(ex -> ex.printStackTrace());
 		money.setEditable(false);
 		
 		agent.getComponentHandle().scheduleStep(() ->
 		{
-				capa.addBeliefListener("money", new IBeliefListener<Double>()
+			capa.addChangeListener("money", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(ChangeEvent event)
 				{
-					@Override
-					public void factChanged(final ChangeInfo<Double> info)
+					SwingUtilities.invokeLater(new Runnable()
 					{
-						SwingUtilities.invokeLater(new Runnable()
+						public void run()
 						{
-							public void run()
-							{
-								money.setText(df.format(info.getValue()));
-							}
-						});
-					}
-				});
-		});
+							money.setText(df.format(event.value()));
+						}
+					});
+				}
+			});
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		JPanel selpanel = new JPanel(new GridBagLayout());
 		selpanel.setBorder(new TitledBorder(new EtchedBorder(), "Properties"));
@@ -217,55 +218,56 @@ public class CustomerPanel extends JPanel
 
 		agent.getComponentHandle().scheduleStep(() ->
 		{
-				try
+			try
+			{
+				capa.addChangeListener("inventory", new IChangeListener()
 				{
-					capa.addBeliefListener("inventory", new IBeliefListener<ItemInfo>()
+					@Override
+					public void valueChanged(ChangeEvent event)
 					{
-						@Override
-						public void factRemoved(final ChangeInfo<ItemInfo> value)
+						if(event.type()==Type.REMOVED)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
 								public void run()
 								{
-									invlist.remove(value.getValue());
+									invlist.remove(event.value());
 									invmodel.fireTableDataChanged();
 								}
 							});
 						}
 						
-						@Override
-						public void factAdded(final ChangeInfo<ItemInfo> value)
+						else if(event.type()==Type.ADDED)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
 								public void run()
 								{
-									invlist.add(value.getValue());
+									invlist.add((ItemInfo) event.value());
 									invmodel.fireTableDataChanged();
 								}
 							});
 						}
 						
-						@Override
-						public void factChanged(ChangeInfo<ItemInfo> object)
+						else if(event.type()==Type.CHANGED)
 						{
 							SwingUtilities.invokeLater(new Runnable()
 							{
 								public void run()
 								{
-//									System.out.println("factchanged: "+value);
+	//									System.out.println("factchanged: "+value);
 									invmodel.fireTableDataChanged();
 								}
 							});
 						}
-					});
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-		});
+					}
+				});
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}).catchEx(ex -> ex.printStackTrace());
 		
 		JPanel butpanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 //		butpanel.setBorder(new TitledBorder(new EtchedBorder(), "Actions"));
@@ -309,7 +311,7 @@ public class CustomerPanel extends JPanel
 									});
 								}
 							});
-					});
+					}).catchEx(ex -> ex.printStackTrace());
 				}
 			}
 		});

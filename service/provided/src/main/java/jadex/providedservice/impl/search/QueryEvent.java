@@ -1,5 +1,7 @@
 package jadex.providedservice.impl.search;
 
+import jadex.providedservice.ServiceQuery;
+
 /**
  *  Query event for signaling when a query is added or removed.
  */

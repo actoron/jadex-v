@@ -1,34 +1,54 @@
 package jadex.publishservice.impl;
 
-import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import jadex.core.IComponent;
 import jadex.core.impl.Component;
+import jadex.core.impl.ILifecycle;
 import jadex.future.IFuture;
 import jadex.providedservice.IService;
+import jadex.providedservice.IServiceIdentifier;
 import jadex.publishservice.IPublishService;
 import jadex.publishservice.IPublishServiceFeature;
-import jadex.publishservice.impl.RequestManager.MappingInfo;
-import jadex.publishservice.publish.PathManager;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jadex.publishservice.IRequestManager.PublishContext;
+import jadex.publishservice.impl.v2.Request;
+import jadex.publishservice.impl.v2.Response;
 
-public abstract class PublishServiceFeature implements IPublishServiceFeature//, IParameterGuesser
+public abstract class PublishServiceFeature implements IPublishServiceFeature, ILifecycle//, IParameterGuesser
 {
 	/** The component. */
 	protected Component self;
 	
+	protected List<IServiceIdentifier> published = new ArrayList<>();
+
 	protected PublishServiceFeature(Component self)
 	{
 		this.self	= self;
-		RequestManager.createInstance();
+		RequestManagerFactory.createInstance();
 	}
 	
 	public IComponent getComponent()
 	{
 		return self;
+	}
+
+	//-------- ILifecycle methods --------
+	
+	@Override
+	public void	init()
+	{
+		// NOP -> injection is done by extending injection feature in Provided2FeatureProvider
+	}
+	
+	@Override
+	public void	cleanup()
+	{
+		for(IServiceIdentifier sid: published.toArray(new IServiceIdentifier[published.size()]))
+		{
+			unpublishService(sid);
+		}
 	}
 
 	/**
@@ -55,10 +75,10 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 	 * @param request The request.
 	 * @param response The response.
 	 */
-	public void handleRequest(IService service, PathManager<MappingInfo> pm, final HttpServletRequest request, final HttpServletResponse response, Object[] others)
-		throws IOException, ServletException
+	public void handleRequest(final Request request, final Response response, PublishContext context)
+		throws Exception
 	{
-		RequestManager.getInstance().handleRequest(service, pm, request, response, others);
+		RequestManager.getInstance().handleRequest(request, response, context);//, others);
 	}
 
 	/**
@@ -68,10 +88,23 @@ public abstract class PublishServiceFeature implements IPublishServiceFeature//,
 	 * @param service The original service.
 	 * @param pid The publish id (e.g. url or name).
 	 */
-	public abstract IFuture<Void> publishService(IService service, PublishInfo info);
+	public IFuture<Void> publishService(IService service, PublishInfo info)
+	{
+		published.add(service.getServiceId());
+		return IFuture.DONE;
+	}
+
+	/**
+	 * Unpublish a service.
+	 * @param sid The service id.
+	 */
+	public void unpublishService(IServiceIdentifier sid)
+	{
+		published.remove(sid);
+	}
 
 	/**
 	 * Get or start an api to the http server.
 	 */
-	public abstract Object getHttpServer(URI uri, PublishInfo info);	
+	public abstract Object getHttpServer(URI uri);//, PublishInfo info);	
 }

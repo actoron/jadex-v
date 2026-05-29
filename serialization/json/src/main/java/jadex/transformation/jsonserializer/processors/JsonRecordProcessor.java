@@ -1,8 +1,10 @@
 package jadex.transformation.jsonserializer.processors;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,7 +37,7 @@ public class JsonRecordProcessor extends AbstractJsonProcessor
 	 */
 	protected boolean isApplicable(Object object, Type type, ClassLoader targetcl, JsonReadContext context)
 	{
-		Class<?> clazz = SReflect.getClass(type);
+		Class<?> clazz = SReflect.getClass0(type);
 		return clazz!=null && clazz.isRecord();
 	}
 	
@@ -68,10 +70,10 @@ public class JsonRecordProcessor extends AbstractJsonProcessor
 
 		try
 		{
-			Object params[] = readProperties(object, clazz, conversionprocessors, processors, converter, mode, traverser, targetcl, context);
+			Object params[] = readProperties(object, type, conversionprocessors, processors, converter, mode, traverser, targetcl, context);
 		
 			Constructor<?>[] con = clazz.getDeclaredConstructors();
-			
+			con[0].setAccessible(true);
 			ret = con[0].newInstance(params);
 			
 			JsonValue idx = (JsonValue)((JsonObject)object).get(JsonTraverser.ID_MARKER);
@@ -164,6 +166,22 @@ public class JsonRecordProcessor extends AbstractJsonProcessor
 						sot = JsonTraverser.findClazzOfJsonObject((JsonObject)val, targetcl);
 					if(sot==null)
 						sot = prop.getGenericType();
+					
+						// if the type is a type variable, we have to find the actual type argument
+						if(sot instanceof TypeVariable<?>)
+						{
+							TypeVariable<?> tv = (TypeVariable<?>)sot;
+							Type[] params = ((ParameterizedType)type).getActualTypeArguments();
+							TypeVariable<?>[] typevars = clazz.getTypeParameters();
+							for(int j=0; j<typevars.length; j++)
+							{
+								if(typevars[j].getName().equals(tv.getName()))
+								{
+									sot = params[j];
+									break;
+								}
+							}
+						}
 					
 //						System.out.println("VAL " + ((JsonObject) val).toString());
 //						System.out.println("CL " + ((JsonObject) val).getString(JsonTraverser.CLASSNAME_MARKER, null));

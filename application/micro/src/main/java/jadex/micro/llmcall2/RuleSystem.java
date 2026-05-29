@@ -1,0 +1,318 @@
+package jadex.micro.llmcall2;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+
+import com.cronutils.model.Cron;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.model.time.ExecutionTime;
+import com.cronutils.parser.CronParser;
+
+import jadex.core.ChangeEvent;
+import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
+import jadex.injection.annotation.Inject;
+import jadex.providedservice.IService;
+import jadex.providedservice.impl.service.ServiceCall;
+import jadex.requiredservice.IRequiredServiceFeature;
+
+/**
+ *  The rule system component, which is responsible for storing and evaluating rules in the smart home.
+ */
+public class RuleSystem	implements IRuleSystemService
+{
+	//-------- static part --------
+	
+	// Quartz cron expression parser, cf. https://stackoverflow.com/a/64942294
+	// Some models try to use * for both day-of-month and day-of-week, which is not supported by org.quartz-scheduler:quartz.
+	// So we use cron-utils to validate the cron expressions.
+	public static CronParser	CRON_PARSER = new CronParser(
+		CronDefinitionBuilder.defineCron()
+	        .withSeconds().withValidRange(0, 59).and()
+	        .withMinutes().withValidRange(0, 59).and()
+	        .withHours().withValidRange(0, 23).and()
+	        .withDayOfMonth().withValidRange(1, 31).supportsL().supportsW().supportsLW().supportsQuestionMark().and()
+	        .withMonth().withValidRange(1, 12).and()
+	        .withDayOfWeek().withValidRange(1, 7).withMondayDoWValue(2).supportsHash().supportsL().supportsQuestionMark().and()
+	        .withYear().withValidRange(1970, 2099).withStrictRange().optional().and()
+	        .instance());
+	
+	//-------- attributes --------
+	
+	/** The rule counter for ID generation. */
+	protected int rule_cnt = 0;
+	
+	/** The component. */
+	@Inject
+	protected IComponent	comp;
+	
+	/** The registered event types with their source service type. */
+	protected Map<String, Class<?>>	event_sources = new LinkedHashMap<>();
+	
+	/** The registered event types with their description. */
+	protected Set<EventType>	event_types = new LinkedHashSet<>();
+	
+	/** The registered rules, mapped by event type and source. */
+	protected Map<String, List<Rule>>	rules = new LinkedHashMap<>();
+	
+	/** The subscribers to the registered rules. */
+	protected List<SubscriptionIntermediateFuture<ChangeEvent>>	subscribers = new ArrayList<>();
+	
+	/** The current LLM call, if any.*/
+	protected IFuture<Void>	current_call = IFuture.DONE;
+	
+	//-------- tool methods --------
+	
+	@Override
+	public IFuture<Set<EventType>> getEventTypes()
+	{
+		return new Future<>(event_types);
+	}
+	
+	@Override
+	public IFuture<String> createEventRule(String event_name, String event_source, String prompt)
+	{
+		if(event_sources.containsKey(event_name))
+		{
+			return comp.getFeature(IRequiredServiceFeature.class).searchServices(event_sources.get(event_name))
+				.thenApply(services ->
+			{
+				boolean found = services.stream().anyMatch(service ->
+					((IService)service).getServiceId().getProviderId().getLocalName().matches(event_source));
+				if(found)
+				{
+					Rule rule = new Rule("rule_"+(++rule_cnt), null, event_name, event_source, prompt);
+					rules.computeIfAbsent(event_name, v -> new ArrayList<>()).add(rule);
+					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+					{
+						try
+						{
+							subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.ADDED, "rules", rule, null, null));
+						}
+						catch(Exception e)
+						{
+							System.err.println("Failed to notify subscriber: "+e);
+						}
+					}
+					return rule.rule_id();
+				}
+				else
+				{
+					throw new IllegalArgumentException("No '"+event_name+"' event source found with name: "+event_source
+						+"\nAvailable event sources: "+services.stream()
+						.map(service -> ((IService)service).getServiceId().getProviderId().getLocalName())
+						.reduce((a,b) -> a+", "+b).orElse("none"));
+				}
+			});
+		}
+		else
+		{
+			return new Future<>(new IllegalArgumentException("Event name '"+event_name+"' is not registered. Available event names: "+event_sources.keySet()));
+		}
+	}
+	
+	@Override
+	public IFuture<String> createCronRule(String cron_expression, String prompt)
+	{
+//		try
+//		{
+			// Create cron expression to validate it.
+//			CronExpression cron	= new CronExpression(cron_expression);
+			Cron cron	= CRON_PARSER.parse(cron_expression); // Will throw an exception if the expression is invalid.
+			
+			// Add the rule to the list of rules. 
+			Rule rule = new Rule("rule_"+(++rule_cnt), cron_expression, null, null, prompt);
+			rules.computeIfAbsent(null, v -> new ArrayList<>()).add(rule);
+			for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+			{
+				try
+				{
+					subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.ADDED, "rules", rule, null, null));
+				}
+				catch(Exception e)
+				{
+					System.err.println("Failed to notify subscriber: "+e);
+				}
+			}
+			
+			scheduleCronRule(cron, rule);
+			
+			return new Future<>(rule.rule_id());
+//		}
+//		catch(ParseException e)
+//		{
+//			return new Future<>(e);
+//		}
+	}
+
+	/**
+	 *  Schedule next execution of the given cron rule.
+	 */
+//	protected void scheduleCronRule(CronExpression cron, Rule rule)
+	protected void scheduleCronRule(Cron cron, Rule rule)
+	{
+		String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
+				+ rule.prompt();
+		@SuppressWarnings("unchecked")
+		Consumer<Void>[]	execute	= new Consumer[1];
+		execute[0]	= v ->
+		{
+			long	current_time	= comp.getFeature(IExecutionFeature.class).getTime();
+//			long	next_time	= cron.getNextValidTimeAfter(new Date(current_time)).getTime();
+		    long next_time = getNextExecutionTime(cron, current_time, rule);
+			
+			System.out.println("Scheduling "+rule.rule_id()+" to run in "+(next_time-current_time)+" ms");
+			comp.getFeature(IExecutionFeature.class).waitForDelay(next_time - current_time)
+				.then(v1 -> executePrompt(fprompt)
+					.then(v2 -> execute[0].accept(null)));
+		};
+		execute[0].accept(null);
+	}
+
+	/**
+	 *  Get the next execution time after the current time.
+	 */
+	public static long getNextExecutionTime(Cron cron, long current_time, Rule rule)
+	{
+		ExecutionTime executionTime = ExecutionTime.forCron(cron);
+		ZonedDateTime current_datetime	= Instant.ofEpochMilli(current_time).atZone(ZoneId.systemDefault());
+		long next_time = executionTime.nextExecution(current_datetime)
+		    .orElseThrow(() -> new IllegalStateException("No next execution time found for cron expression: " + rule.cron_expression()))
+		    .toInstant().toEpochMilli();
+		return next_time;
+	}
+	
+	@Override
+	public IFuture<Void> deleteRule(String rule_id)
+	{
+		for(List<Rule> lrules : rules.values())
+		{
+			for(Rule rule : lrules)
+			{
+				if(rule.rule_id().equals(rule_id))
+				{
+					for(SubscriptionIntermediateFuture<ChangeEvent> subscriber : subscribers)
+					{
+						try
+						{
+							subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.REMOVED, "rules", rule, null, null));
+						}
+						catch(Exception e)
+						{
+							System.err.println("Failed to notify subscriber: "+e);
+						}
+					}
+					return IFuture.DONE;
+				}
+			}
+		}
+		return new Future<>(new IllegalArgumentException("No rule found with ID: "+rule_id));
+	}
+	
+	@Override
+	public IFuture<List<Rule>> listRules()
+	{
+		return new Future<>(rules.values().stream().flatMap(List::stream).toList());
+	}
+	
+	//-------- non-tool methods, i.e. for inter-service calls --------
+	
+	@Override
+	public IFuture<Void> registerEventType(EventType event_type, Class<?> service_type)
+	{
+		if(event_sources.containsKey(event_type.name()) && !event_sources.get(event_type.name()).equals(service_type))
+		{
+			return new Future<>(new IllegalArgumentException("Event name '"+event_type.name()+"' is already registered by service type: "+event_sources.get(event_type.name()).getName()));
+		}
+		event_sources.put(event_type.name(), service_type);
+		event_types.add(event_type);
+		return IFuture.DONE;
+	}
+	
+	@Override
+	public IFuture<Void> notifyEvent(String event_type, String data)
+	{
+		String	source	= ServiceCall.getCurrentInvocation().getCaller().getLocalName();
+		List<Rule>	matches	= rules.getOrDefault(event_type, Collections.emptyList()).stream()
+			.filter(rule -> source.matches(rule.event_source()))
+			.toList();
+		
+		if(!matches.isEmpty())
+		{
+			IFuture<Void>	ret	= IFuture.DONE;
+			for(Rule rule : matches)
+			{
+				String	prompt = "Event "+event_type+" from source "+source+" occurred"+(data!=null && ! data.isBlank() ? " with data '"+data+"'" : "")+".\n"
+					+"The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
+					+ rule.prompt();
+				ret	= executePrompt(prompt);
+			}
+			return ret;
+		}
+		else
+		{
+			return IFuture.DONE; // No rules to trigger, just return.
+		}
+	}
+	
+	@Override
+	public IFuture<Void> executePrompt(String prompt)
+	{
+		// If there is an ongoing call, we chain the new calls to it, otherwise we start a new chain.
+		current_call = current_call!=null ? current_call : IFuture.DONE;
+		Future<Void>	next_call	= new Future<>();
+		Consumer<Object>	execute	= v ->
+		{
+			IFuture<Void>	fut	= comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
+				.thenCompose(llmChat -> 
+			{
+				System.out.println("User: "+prompt);
+				ITerminableIntermediateFuture<ChatFragment>	ifut	= llmChat.chat(prompt);
+				LlmChatAgent.printResults(ifut);
+				return ifut
+					.then(v1 -> System.out.println("================"))
+					.catchEx(ex -> 
+					{
+						System.err.println("================");
+						ex.printStackTrace();
+					})
+					.thenApply(fragments -> null);
+			});
+			fut.then(next_call::setResult)
+				.catchEx(ex -> next_call.setResult(null));
+		};
+		current_call.catchEx(execute).then(execute);
+		current_call	= next_call;
+		return current_call;
+	}
+	
+	//-------- UI only methods --------
+	
+	@Override
+	public ISubscriptionIntermediateFuture<ChangeEvent> subscribeToRules()
+	{
+		SubscriptionIntermediateFuture<ChangeEvent> subscriber = new SubscriptionIntermediateFuture<>();
+		subscriber.setTerminationCommand(ex -> subscribers.remove(subscriber));
+		subscribers.add(subscriber);
+		
+		// Emit all existing rules as "new" rules to the new subscriber.
+		rules.values().stream().flatMap(List::stream).forEach(rule ->
+			subscriber.addIntermediateResult(new ChangeEvent(ChangeEvent.Type.INITIAL, "rules", rule, null, null)));
+		
+		return subscriber;
+	}
+}

@@ -24,7 +24,6 @@ dependencies
 {
 	def v = System.getProperty('JADEX_VERSION')?:'+'
 	implementation 'org.activecomponents.jadex:common:'+v
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
 }
 
 processResources 

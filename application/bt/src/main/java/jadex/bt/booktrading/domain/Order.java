@@ -134,7 +134,7 @@ public class Order
 				{
 					if(getState().equals(OPEN))
 					{
-//						System.out.println("Order state failed: "+wait+" "+Order.this);
+						System.out.println("Order state failed: "+wait+" "+Order.this);
 						setState(FAILED);
 					}				
 				}
@@ -313,6 +313,7 @@ public class Order
 		sbuf.append(isBuyOrder() ? ", Buy '" : ", Sell '");
 		sbuf.append(getTitle());
 		sbuf.append("'");
+		sbuf.append(", state: ").append(getState());
 		return sbuf.toString();
 	}
 	

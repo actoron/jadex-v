@@ -19,8 +19,8 @@ import jadex.nfproperty.impl.search.BasicEvaluator;
 import jadex.nfproperty.impl.search.ComposedEvaluator;
 import jadex.nfproperty.impl.search.CountThresholdSearchTerminationDecider;
 import jadex.nfproperty.sensor.unit.MemoryUnit;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.annotation.ProvideService;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.requiredservice.IRequiredServiceFeature;
 
 @NFProperties({@NFProperty(FakeCpuLoadProperty.class),

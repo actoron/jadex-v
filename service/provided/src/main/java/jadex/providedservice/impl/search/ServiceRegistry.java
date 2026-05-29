@@ -24,6 +24,7 @@ import jadex.future.TerminableIntermediateFuture;
 import jadex.future.TerminationCommand;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.ServiceScope;
 
 /**

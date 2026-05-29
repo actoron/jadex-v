@@ -152,10 +152,10 @@ public class CleanerAgent
 		envfut = getEnvironment().observeObject((Cleaner)getSelf());
 		envfut.next(e ->
 		{
-			agent.getFeature(IExecutionFeature.class).scheduleStep(() ->
+			agent.getComponentHandle().scheduleStep(() ->
 			{
 				pp.handleEvent(e);
-			});
+			}).catchEx(ex -> ex.printStackTrace());
 		});
 		
 		// Open a window showing the agent's perceptions

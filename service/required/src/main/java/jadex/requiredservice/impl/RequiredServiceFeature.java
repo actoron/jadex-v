@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import jadex.core.IComponent;
+import jadex.execution.IExecutionFeature;
 import jadex.execution.future.ComponentFutureFunctionality;
 import jadex.execution.future.FutureFunctionality;
 import jadex.future.Future;
@@ -19,10 +20,10 @@ import jadex.future.IntermediateFuture;
 import jadex.future.TerminableIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
+import jadex.providedservice.ServiceQuery.Multiplicity;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.ServiceEvent;
-import jadex.providedservice.impl.search.ServiceQuery;
-import jadex.providedservice.impl.search.ServiceQuery.Multiplicity;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.requiredservice.IRemoteServiceHandler;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -222,7 +223,7 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		ISubscriptionIntermediateFuture<T> tfut	= (ISubscriptionIntermediateFuture)FutureFunctionality
 			// Component functionality as local registry pushes results on arbitrary thread.
-			.getDelegationFuture(localresults, new ComponentFutureFunctionality(getComponent())
+			.getDelegationFuture(localresults, new ComponentFutureFunctionality(self.getFeature(IExecutionFeature.class), false)
 		{
 			protected int resultcnt = 0;
 			

@@ -7,6 +7,7 @@ import jadex.core.ComponentIdentifier;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 
 /**
  *  Interface for a service registry.

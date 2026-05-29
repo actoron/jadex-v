@@ -147,7 +147,7 @@ public class JsonPrimitiveObjectProcessor implements ITraverseProcessor
 			}
 			catch(Exception e)
 			{
-				SUtil.rethrowAsUnchecked(e);
+				SUtil.throwUnchecked(e);
 			}
 		}
 		return ret;

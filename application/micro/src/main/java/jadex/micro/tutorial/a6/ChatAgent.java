@@ -32,7 +32,7 @@ import jadex.requiredservice.annotation.InjectService.Mode;
  *    - The UI uses sendMessageToAll of IChatGuiService to tell its agent to send the chat message to the other agents
  *	- The agent publishes the UI via its folder and the contained index.html page on the web server
  */
-@Publish(publishid="http://localhost:8081/${cid}/chatapi", publishtarget = IChatGuiService.class)
+@Publish(publishid="http://localhost:8081/${cid}/chatapi", publishinterface = IChatGuiService.class)
 public class ChatAgent implements IChatService, IChatGuiService
 {
 	/** The underlying micro agent. */

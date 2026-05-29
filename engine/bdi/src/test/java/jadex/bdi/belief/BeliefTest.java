@@ -1,0 +1,283 @@
+package jadex.bdi.belief;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
+
+import org.junit.jupiter.api.Test;
+
+import jadex.bdi.IBDIAgentFeature;
+import jadex.bdi.TestHelper;
+import jadex.bdi.annotation.BDIAgent;
+import jadex.bdi.annotation.Belief;
+import jadex.core.ChangeEvent;
+import jadex.core.ChangeEvent.Type;
+import jadex.core.IChangeListener;
+import jadex.core.IComponentHandle;
+import jadex.core.IComponentManager;
+import jadex.future.Future;
+import jadex.future.IFuture;
+import jadex.future.IIntermediateFuture;
+import jadex.future.IntermediateFuture;
+import jadex.injection.AbstractDynVal.ObservationMode;
+import jadex.injection.AbstractDynamicValueTest;
+import jadex.injection.Dyn;
+import jadex.injection.Val;
+
+/**
+ *  Test events from all kinds of beliefs.
+ */
+public class BeliefTest	extends AbstractDynamicValueTest
+{
+	@BDIAgent
+	static class BeliefTestAgent extends AbstractDynamicValueTest.AbstractDynamicValueTestAgent
+	{
+		@Belief
+		Val<Integer>	val;
+		@Override
+		public Val<Integer> getVal() { return val; }
+		@Override
+		public void initVal(Val<Integer> ini) { val=ini; }
+		
+		@Belief
+		Val<Bean>	valbean;
+		@Override
+		public Val<Bean> getValBean() { return valbean; }
+		@Override
+		public void initValBean(Val<Bean> ini) { valbean=ini; }
+		
+		// Test that nested generic types work
+		@Belief
+		Val<Supplier<String>>	valsupplier;
+		@Override
+		public Val<Supplier<String>> getValSupplier() { return valsupplier; }
+		
+		// Test that nested generic types work
+		@Belief
+		Val<List<Supplier<String>>>	vallistsupplier;
+		@Override
+		public Val<List<Supplier<String>>> getValListSupplier() { return vallistsupplier; }
+		
+		@Belief
+		Bean	bean;
+		@Override
+		public Bean getBean() { return bean; }
+		@Override
+		public void initBean(Bean ini) { bean=ini; }
+		
+		@Belief
+		List<String>	list;
+		@Override
+		public List<String> getList() { return list; }
+		@Override
+		public void initList(List<String> ini) { list=ini; }
+		
+		@Belief
+		Val<List<String>>	vallist;
+		@Override
+		public Val<List<String>> getValList() { return vallist; }
+		@Override
+		public void initValList(Val<List<String>> ini) { vallist=ini; }
+		
+		@Belief
+		Val<List<Bean>>	vallistbean;
+		@Override
+		public Val<List<Bean>> getValListBean() { return vallistbean; }
+		@Override
+		public void initValListBean(Val<List<Bean>> ini) { vallistbean=ini; }
+		
+		@Belief
+		List<Bean>	listbean;
+		@Override
+		public List<Bean> getListBean() { return listbean; }
+		@Override
+		public void initListBean(List<Bean> ini) { listbean=ini; }
+		
+		@Belief
+		Set<String>	set;
+		@Override
+		public Set<String> getSet() { return set; }
+		@Override
+		public void initSet(Set<String> ini) { set=ini; }
+
+		@Belief
+		Map<String, String>	map;
+		@Override
+		public Map<String, String> getMap() { return map; }
+		@Override
+		public void initMap(Map<String, String> ini) { map=ini; }
+		
+		@Belief
+		Dyn<Integer>	dynamic	= new Dyn<>(new Callable<Integer>()
+		{
+			@Override
+			public Integer call() throws Exception
+			{
+				return getVal().get()+1;
+			}
+		});
+		@Override
+		public Dyn<Integer> getDynamic() { return dynamic; }
+
+		@Belief
+		public Dyn<Long>	update	= new Dyn<>(()->System.currentTimeMillis())
+			.setUpdateRate(1000)
+			// Test if byte code can be analyzed when also calling setObservationMode
+			.setObservationMode(ObservationMode.ON_ALL_CHANGES);
+		@Override
+		public Dyn<Long> getUpdate() { return update; }
+	}
+	
+	@Test
+	public void	testBeliefListener()
+	{
+		BeliefTestAgent	pojo	= new BeliefTestAgent();
+		IComponentHandle	exta	= IComponentManager.get().create(pojo).get(TestHelper.TIMEOUT);
+		
+		// Test fact changed
+		List<String>	facts	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addChangeListener("val", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(jadex.core.ChangeEvent event)
+				{
+					if(event.type()==Type.CHANGED)
+					{
+						facts.add(event.oldvalue()+":"+event.value());
+					}
+				}
+			});
+			
+			pojo.getVal().set(1);
+			pojo.getVal().set(2);
+			pojo.getVal().set(3);
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("1:2", "2:3"), facts);
+
+		// Test fact added/removed
+		List<String>	changes	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addChangeListener("set", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(jadex.core.ChangeEvent event)
+				{
+					if(event.type()==Type.ADDED)
+					{
+						changes.add("a:"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						changes.add("r:"+event.value());
+					}
+				}
+			});
+			
+			pojo.getSet().add("1");	// already contained
+			pojo.getSet().add("2");
+			pojo.getSet().remove("1");
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("a:2", "r:1"), changes);
+
+		// Test map belief
+		List<String>	mchanges	= new ArrayList<>();
+		exta.scheduleStep(comp -> {
+			comp.getFeature(IBDIAgentFeature.class)
+				.addChangeListener("map", new IChangeListener()
+			{
+				@Override
+				public void valueChanged(jadex.core.ChangeEvent event)
+				{
+					if(event.type()==Type.CHANGED)
+					{
+						mchanges.add("c:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.ADDED)
+					{
+						mchanges.add("a:"+event.info()+";"+event.value());
+					}
+					else if(event.type()==Type.REMOVED)
+					{
+						mchanges.add("r:"+event.info()+";"+event.value());
+					}
+				}
+			});
+			
+			pojo.getMap().put("2", "two");	// already contained
+			pojo.getMap().put("3", "three");
+			pojo.getMap().remove("1");
+			
+			return null;
+		}).get(TestHelper.TIMEOUT);
+		assertEquals(Arrays.asList("c:2;two", "a:3;three", "r:1;one"), mchanges);
+	}
+	
+	//-------- helper methods --------
+	
+	@Override
+	public AbstractDynamicValueTestAgent createAgent()
+	{
+		return new BeliefTestAgent();
+	}
+
+	static int	rulecnt	= 0;
+	
+	@Override
+	public void	addEventListener(Future<Object> fut, Type type, String name)
+	{
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
+			.getFeature(IBDIAgentFeature.class);
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.setResultIfUndone(event);
+			}
+		});
+	}
+	
+	@Override
+	public void	addEventListener(IntermediateFuture<Object> fut, Type type, String name)
+	{
+		IBDIAgentFeature	feat	= IComponentManager.get().getCurrentComponent()
+			.getFeature(IBDIAgentFeature.class);
+		feat.addChangeListener(name, event ->
+		{
+			if(type==event.type())
+			{
+				fut.addIntermediateResultIfUndone(event);
+			}
+		});
+	}
+	
+	@Override
+	public void checkEventInfo(IFuture<Object> fut, Object oldval, Object newval, Object info)
+	{
+		ChangeEvent	event	= (ChangeEvent) fut.get(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
+	}
+	
+	@Override
+	public void checkEventInfo(IIntermediateFuture<Object> fut, Object oldval, Object newval, Object info)
+	{
+		ChangeEvent	event	= (ChangeEvent) fut.getNextIntermediateResult(TestHelper.TIMEOUT);
+		assertEquals(oldval, event.oldvalue(), "old value");
+		assertEquals(newval, event.value(), "new value");
+		assertEquals(info, event.info(), "info");
+	}
+}

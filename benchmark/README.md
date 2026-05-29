@@ -29,10 +29,8 @@ Results are printed during execution. Also you can generate plots of the results
     took: 1882846
     runs: 5
     Change(%): 37.43531872930181
-    Used memory: 6158472
-    Mem change(%): 0.0613515273540724
 ```
-where *took* is the average execution time in nanoseconds, *runs* states how often the code snippet was run and *change* compares the current result to the previous best value. For reference purposes, also memory consumption is printed during time benchmarks allowing to detect possible memory leaks.
+where *took* is the average execution time in nanoseconds, *runs* states how often the code snippet was run and *change* compares the current result to the previous best value.
 
 For memory benchmarks:
 ```
@@ -63,13 +61,12 @@ Both methods return a double values that indicates the percentual change with re
 The implementation of time benchmarks is easy as you only have to provide a `java.lang.Runnable` for the code to be benchmarked. E.g.:
 ```
 @Test
-void benchmarkTime()
+void	benchmarkTime()
 {
-    double pct = BenchmarkHelper.benchmarkTime(() ->
-    {
-        Component.createComponent(Component.class, () -> new Component()).terminate().get();
-    });
-    assertTrue(pct<20);	// Fail when more than 20% worse
+	BenchmarkHelper.benchmarkTime(() ->
+	{
+		IComponentManager.get().create(new Object()).get().terminate().get();
+	});
 }
 ```
 
@@ -80,13 +77,12 @@ For memory benchmarks you have to provide startup and shutdown code. The benchma
 The is done by using a `java.util.concurrent.Callable` that executes the startup code and returns a `java.lang.Runnable` for the corresponding shutdown code. E.g.:
 ```
 @Test
-void benchmarkMemory()
+void	benchmarkMemory()
 {
-    double pct = BenchmarkHelper.benchmarkMemory(() ->
-    {
-        Component comp = Component.createComponent(Component.class, () -> new Component());
-        return () -> comp.terminate().get();
-    });
-    assertTrue(pct<20);	// Fail when more than 20% worse
+	BenchmarkHelper.benchmarkMemory(() ->
+	{
+		IComponentHandle	comp	= IComponentManager.get().create(new Object()).get();
+		return () -> comp.terminate().get();
+	});
 }
 ```

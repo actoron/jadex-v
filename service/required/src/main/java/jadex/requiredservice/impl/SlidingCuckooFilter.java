@@ -1,7 +1,5 @@
 package jadex.requiredservice.impl;
 
-import jadex.common.SUtil;
-import net.cinnom.nanocuckoo.ConcurrentSwapSafety;
 import net.cinnom.nanocuckoo.NanoCuckooFilter;
 
 /**
@@ -98,9 +96,9 @@ public class SlidingCuckooFilter
 	 */
 	protected NanoCuckooFilter createFilter(long capacity)
 	{
-		NanoCuckooFilter.Builder builder = new NanoCuckooFilter.Builder(capacity).withConcurrency(1).withConcurrentSwapSafety(ConcurrentSwapSafety.FAST);
+		NanoCuckooFilter.Builder builder = new NanoCuckooFilter.Builder(capacity).withConcurrency(1); //.withConcurrentSwapSafety(ConcurrentSwapSafety.FAST);
 		builder = builder.withFingerprintBits(fingerprintsize).withEntriesPerBucket(bucketsize);
-		builder = builder.withRandomSeed(SUtil.FAST_RANDOM.nextInt());
+		//builder = builder.withRandomInt(SUtil.FAST_RANDOM.nextInt());
 		return builder.build();
 	}
 }

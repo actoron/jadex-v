@@ -29,11 +29,11 @@ import jadex.injection.annotation.OnStart;
 import jadex.providedservice.IProvidedServiceFeature;
 import jadex.providedservice.IService;
 import jadex.providedservice.IServiceIdentifier;
+import jadex.providedservice.ServiceQuery;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.search.IServiceRegistry;
 import jadex.providedservice.impl.search.QueryEvent;
 import jadex.providedservice.impl.search.ServiceEvent;
-import jadex.providedservice.impl.search.ServiceQuery;
 import jadex.providedservice.impl.search.ServiceQueryInfo;
 import jadex.providedservice.impl.search.ServiceRegistry;
 import jadex.providedservice.impl.service.ServiceCall;
@@ -47,7 +47,7 @@ import jakarta.ws.rs.GET;
 /**
  *  Registry collects services from client and answers search requests and queries.
  */
-@Publish(publishid="http://${host}:${port}/${cid}/api", publishtarget = IRemoteRegistryGuiService.class)
+@Publish(publishid="http://${host}:${port}/${cid}/api", publishinterface = IRemoteRegistryGuiService.class)
 public class RemoteRegistryAgent implements IRemoteRegistryService, IRemoteRegistryGuiService, IDaemonComponent
 {
 	/** Connection delay*/

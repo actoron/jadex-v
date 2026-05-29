@@ -1,6 +1,7 @@
 package jadex.providedservice.impl.search;
 
 import jadex.future.TerminableIntermediateFuture;
+import jadex.providedservice.ServiceQuery;
 
 /**
  *  Info with query and result future.

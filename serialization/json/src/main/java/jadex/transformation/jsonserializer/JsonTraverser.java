@@ -516,9 +516,31 @@ public class JsonTraverser extends Traverser
 	 *  @param classloader The class loader.
 	 *  @return The decoded object.
 	 */
+	public static Object objectFromString(String val, ClassLoader classloader, Type type)
+	{
+		return objectFromString(val, classloader, null, type);
+	}
+	
+	/**
+	 *  Convert a byte array (of an xml) to an object.
+	 *  @param val The byte array.
+	 *  @param classloader The class loader.
+	 *  @return The decoded object.
+	 */
 	public static <T> T objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Class<T> clazz)
 	{
 		return objectFromString(val, classloader, null, clazz, null);
+	}
+	
+	/**
+	 *  Convert a byte array (of an xml) to an object.
+	 *  @param val The byte array.
+	 *  @param classloader The class loader.
+	 *  @return The decoded object.
+	 */
+	public static Object objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Type type)
+	{
+		return objectFromString(val, classloader, null, type, null);
 	}
 	
 	/**
@@ -538,6 +560,17 @@ public class JsonTraverser extends Traverser
 	 *  @param classloader The class loader.
 	 *  @return The decoded object.
 	 */
+	public static Object objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Type type, List<ITraverseProcessor> processors)
+	{
+		return objectFromString(val, classloader, rep, type, processors, null);
+	}
+
+	/**
+	 *  Convert a byte array (of an xml) to an object.
+	 *  @param val The byte array.
+	 *  @param classloader The class loader.
+	 *  @return The decoded object.
+	 */
 	public static <T> T objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Class<T> clazz, List<ITraverseProcessor> processors, List<ITraverseProcessor> postprocessors)
 	{
 		return objectFromString(val, classloader, rep, clazz, processors, postprocessors, null, null);
@@ -549,8 +582,30 @@ public class JsonTraverser extends Traverser
 	 *  @param classloader The class loader.
 	 *  @return The decoded object.
 	 */
-	@SuppressWarnings("unchecked")
+	public static Object objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Type type, List<ITraverseProcessor> processors, List<ITraverseProcessor> postprocessors)
+	{
+		return objectFromString(val, classloader, rep, type, processors, postprocessors, null, null);
+	}
+
+	/**
+	 *  Convert a byte array (of an xml) to an object.
+	 *  @param val The byte array.
+	 *  @param classloader The class loader.
+	 *  @return The decoded object.
+	 */
 	public static <T> T objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Class<T> clazz, List<ITraverseProcessor> processors, List<ITraverseProcessor> postprocessors, Object usercontext, IStringConverter converter)
+	{
+		return objectFromString(val, classloader, rep, (Type)clazz, processors, postprocessors, usercontext, converter);
+	}
+	
+	/**
+	 *  Convert a byte array (of an xml) to an object.
+	 *  @param val The byte array.
+	 *  @param classloader The class loader.
+	 *  @return The decoded object.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T objectFromString(String val, ClassLoader classloader, IErrorReporter rep, Type type, List<ITraverseProcessor> processors, List<ITraverseProcessor> postprocessors, Object usercontext, IStringConverter converter)
 	{
 		Object ret;
 		rep = rep==null? DefaultErrorReporter.DEFAULT_ERROR_REPORTER: rep;
@@ -561,7 +616,7 @@ public class JsonTraverser extends Traverser
 			JsonTraverser traverser = getReadTraverser();
 			JsonReadContext rc = new JsonReadContext();
 			rc.setUserContext(usercontext);
-			ret = traverser.traverse(value, clazz, postprocessors, processors!=null? processors: readprocs, converter, Traverser.MODE.POSTPROCESS, classloader, rc);
+			ret = traverser.traverse(value, type, postprocessors, processors!=null? processors: readprocs, converter, Traverser.MODE.POSTPROCESS, classloader, rc);
 	//		System.out.println("rc: "+rc.knownobjects);
 		}
 		catch(Exception e)

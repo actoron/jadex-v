@@ -48,15 +48,6 @@ public class TerminableIntermediateDelegationFuture<E> extends IntermediateFutur
 	}
 	
 	/**
-	 *  Terminate the future.
-	 *  The exception will be set to FutureTerminatedException.
-	 */
-	public void terminate()
-	{
-		handler.terminate();
-	}
-	
-	/**
 	 *  Terminate the future and supply a custom reason.
 	 */
 	public void terminate(Exception reason)

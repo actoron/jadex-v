@@ -22,10 +22,14 @@ import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.IThrowingFunction;
+import jadex.core.INoCopyStep;
+import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
+import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
+import jadex.future.IIntermediateResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.providedservice.annotation.Service;
@@ -46,6 +50,74 @@ public class RequiredServiceTest
 	interface IHelloService
 	{
 		public IFuture<String> sayHello(String name);
+
+		public default ISubscriptionIntermediateFuture<String> sayHellos()
+		{
+			SubscriptionIntermediateFuture<String> ret = new SubscriptionIntermediateFuture<>()
+			{
+				@Override
+				public void terminate(Exception reason) 
+				{
+					System.out.println("terminate called: "+reason);
+					super.terminate(reason);
+				}
+			};
+
+			int[] i = new int[1];
+			Runnable step = new Runnable()
+			{
+				@Override
+				public void run() 
+				{
+					
+					if(ret.addIntermediateResultIfUndone(""+i[0]++))
+					{
+						IExecutionFeature.get().getComponent().getFeature(IExecutionFeature.class).waitForDelay(500).get();
+						IExecutionFeature.get().getComponent().getFeature(IExecutionFeature.class).scheduleStep(this);
+					}
+					else
+					{
+						System.out.println("Call terminated: "+ret);
+					}
+				}
+			};
+
+			IExecutionFeature.get().getComponent().getFeature(IExecutionFeature.class).scheduleStep(step);
+
+			/*ret.addResultListener(new IIntermediateResultListener<String>() 
+			{
+				@Override
+				public void intermediateResultAvailable(String result) 
+				{
+					System.out.println("intermediateResAva: "+result);
+				}
+
+				@Override
+				public void exceptionOccurred(Exception exception) 
+				{
+					System.out.println("ex: "+exception);
+				}
+
+				@Override
+				public void resultAvailable(Collection<String> result) 
+				{
+					System.out.println("resAva: "+result);
+				}
+
+				@Override
+				public void finished() 
+				{
+					System.out.println("finished");
+				}
+
+				@Override
+				public void maxResultCountAvailable(int max) 
+				{
+				}
+			});*/
+
+			return ret;
+		}
 	}
 	
 	//-------- test methods --------
@@ -58,8 +130,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	getservice
-				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
+			INoCopyStep<IHelloService>	getservice	= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
 			
 			// Test that service is not found
 			assertThrows(ServiceNotFoundException.class, () -> caller.scheduleStep(getservice).get(TIMEOUT));
@@ -86,7 +157,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	search
+			INoCopyStep<IHelloService>	search
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).searchService(IHelloService.class).get(TIMEOUT);
 			
 			// Test that service is not found
@@ -115,8 +186,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, Collection<IHelloService>>	getservices
-				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalServices(IHelloService.class);
+			INoCopyStep<Collection<IHelloService>>	getservices	= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalServices(IHelloService.class);
 			
 			// Test that services are not found
 			assertTrue(caller.scheduleStep(getservices).get(TIMEOUT).isEmpty());
@@ -150,7 +220,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, Collection<IHelloService>>	search
+			INoCopyStep<Collection<IHelloService>>	search
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).searchServices(IHelloService.class).get(TIMEOUT);
 			
 			// Test that services are not found
@@ -236,7 +306,7 @@ public class RequiredServiceTest
 		{
 			// helper objects
 			IComponentHandle	caller	= IComponentManager.get().create(new Object()).get(TIMEOUT);
-			IThrowingFunction<IComponent, IHelloService>	getservice
+			INoCopyStep<IHelloService>	getservice
 				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
 			provider	= IComponentManager.get().create((IHelloService)name -> new Future<>("Hello "+name)).get(TIMEOUT);
 			provider.scheduleStep(() -> null).get(TIMEOUT);
@@ -249,7 +319,7 @@ public class RequiredServiceTest
 				service.sayHello("world")
 					.then(hello -> fut.setResult(IComponentManager.get().getCurrentComponent().getId()))
 					.catchEx(e -> fut.setException(e));
-			});
+			}).get(TIMEOUT);
 			assertEquals(caller.getId(), fut.get(TIMEOUT));
 		}
 		finally
@@ -259,6 +329,75 @@ public class RequiredServiceTest
 				provider.terminate().get(TIMEOUT);
 			}
 		}
+	}
+
+	@Test
+	public void	testServiceTerminate()
+	{
+		IComponentHandle	provider	= null;
+		try
+		{
+			IComponentHandle caller = IComponentManager.get().create(new Object()).get(TIMEOUT);
+			INoCopyStep<IHelloService>	getservice
+				= comp -> comp.getFeature(IRequiredServiceFeature.class).getLocalService(IHelloService.class);
+			
+			provider = IComponentManager.get().create((IHelloService)name -> new Future<>()).get(TIMEOUT);
+			provider.scheduleStep(() -> null).get(TIMEOUT);
+			
+			IHelloService service = caller.scheduleStep(getservice).get(TIMEOUT);
+
+			Future<ComponentIdentifier>	fut	= new Future<ComponentIdentifier>();
+			caller.scheduleStep(() -> 
+			{
+				ISubscriptionIntermediateFuture<String> ret = service.sayHellos();
+				
+				ret.terminate();
+
+				ret.finished(hello -> fut.setException(new RuntimeException("Expected terminated exception.")))
+					.catchEx(e -> 
+					{
+						if(e instanceof FutureTerminatedException)
+						{
+							System.out.println("Component terminated: "+e);
+							fut.setResult(IComponentManager.get().getCurrentComponent().getId());
+						}
+						else
+						{
+							fut.setException(new RuntimeException("Expected terminated exception, got: "+e.getMessage(), e));
+						}
+					});	
+
+				/*ret.then(hello -> fut.setException(new RuntimeException("Expected terminated exception.")))
+					.catchEx(e -> 
+					{
+						if(e instanceof FutureTerminatedException)
+						{
+							System.out.println("Component terminated: "+e);
+							fut.setResult(IComponentManager.get().getCurrentComponent().getId());
+						}
+						else
+						{
+							fut.setException(new RuntimeException("Expected terminated exception, got: "+e.getMessage(), e));
+						}
+					});*/
+			}).get(TIMEOUT);
+
+			assertEquals(caller.getId(), fut.get(TIMEOUT));
+		}
+		finally
+		{
+			if(provider!=null)
+			{
+				provider.terminate().get(TIMEOUT);
+			}
+		}
+	}
+
+	public static void main(String[] args) 
+	{
+		RequiredServiceTest t = new RequiredServiceTest();
+		
+		t.testServiceTerminate();
 	}
 	
 	@Test

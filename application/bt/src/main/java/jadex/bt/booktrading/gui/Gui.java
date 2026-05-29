@@ -21,12 +21,12 @@ public class Gui extends JFrame
 	/**
 	 *  Shows the gui, and updates it when beliefs change.
 	 */
-	public Gui(final IComponentHandle agent)//, final boolean buy)
+	public Gui(final IComponentHandle agent, long closedelay)//, final boolean buy)
 	{
 		super((GuiPanel.isBuyer(agent)? "Buyer: ": "Seller: ")+agent.getId().getLocalName());
 		
 //		System.out.println("booktrading0: "+agent.getComponentIdentifier());
-		GuiPanel gp = new GuiPanel(agent);
+		GuiPanel gp = new GuiPanel(agent, closedelay);
 		
 		add(gp, BorderLayout.CENTER);
 		pack();
