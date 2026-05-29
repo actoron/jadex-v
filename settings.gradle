@@ -146,7 +146,7 @@ includeBuild('communication/serialization') {}
 includeBuild('communication/messaging') {}
 includeBuild('communication/remoteservice') {}
 includeBuild('communication/networking') {}
-includeBuild('communication/remoteresolver') {}
+//includeBuild('communication/remoteresolver') {}
 
 includeBuild('llm') {}
 
