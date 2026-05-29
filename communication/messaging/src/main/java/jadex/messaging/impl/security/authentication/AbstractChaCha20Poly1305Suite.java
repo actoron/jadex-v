@@ -480,9 +480,14 @@ public abstract class AbstractChaCha20Poly1305Suite extends AbstractCryptoSuite
 							if (authenticated)
 								break;
 						}
-						if (!authenticated)
-							throw new SecurityException("Remote platform presented unverifiable group signature for group " + groupname + ", handshake terminated.");
-						ret.add(groupname);
+						if (authenticated)
+							ret.add(groupname);
+						else
+						{
+							// Ignore localgroup
+							if (groupname != "localgroup")
+								throw new SecurityException("Remote platform presented unverifiable group signature for group " + groupname + ", handshake terminated.");
+						}
 					}
 				}
 			}

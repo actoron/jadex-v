@@ -5,6 +5,7 @@ import jadex.common.IAutoLock;
 import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
+import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -15,6 +16,7 @@ import jadex.networking.impl.resolve.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger.Level;
 import java.net.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,15 +40,20 @@ public class TcpTransport implements ITransport
     /** Currently open TCP connections. */
     private RwMapWrapper<String, Socket> connections = new RwMapWrapper<>(new HashMap<>());
 
+    /** Resolver for host names. */
+    private IResolver resolver;
+
     /**
      *  Creates a new TCP transport.
+     *  @param resolver Resolver for host names.
      *  @param messagehandler The message handler for incoming messages.
      *  @param ip The IP address to bind.
      *  @param port Port to bind.
      *  @param backlog Number of incoming connection in backlog.
      */
-    public TcpTransport(IMessageHandler messagehandler, String ip, int port, int backlog)
+    public TcpTransport(IResolver resolver, IMessageHandler messagehandler, String ip, int port, int backlog)
     {
+        this.resolver = resolver;
         this.messagehandler = messagehandler;
         this.port = port;
         this.backlog = backlog;
@@ -75,22 +82,23 @@ public class TcpTransport implements ITransport
     /**
      *  Sends a message to a remote host.
      *
+     *  @param origin Message origin.
      *  @param receiver Message receiver.
      *  @param rawmessage The raw message.
      *  @return Null, when sent.
      */
-    public IFuture<Void> sendMessage(ComponentIdentifier receiver, byte[] rawmessage)
+    public IFuture<Void> sendMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] rawmessage)
     {
         Socket conn = connections.get(receiver.getGlobalProcessIdentifier().host());
 
         if (conn == null)
         {
             boolean v6 = bindaddress instanceof Inet6Address;
-            Set<IEndpoint> endpoints = MultiResolver.get().resolve(receiver.getGlobalProcessIdentifier().host());
+            Set<IEndpoint> endpoints = resolver.resolve(receiver.getGlobalProcessIdentifier().host());
             if (endpoints != null)
             {
                 endpoints = endpoints.stream().filter((ep) -> v6 ? ep instanceof TcpV6Endpoint : ep instanceof TcpV4Endpoint).collect(Collectors.toSet());
-
+                
                 byte[] hostbytes = GlobalProcessIdentifier.getSelf().host().getBytes(SUtil.UTF8);
                 for (IEndpoint ep : endpoints)
                 {
@@ -99,10 +107,12 @@ public class TcpTransport implements ITransport
                     {
                         conn = new Socket(tep.getAddress(), tep.getPort());
                         SIOHelper.writeChunk(conn.getOutputStream(), hostbytes);
+                        handleIncomingPackages(conn);
 
                     }
                     catch (IOException e)
                     {
+                        e.printStackTrace();
                         SUtil.close(conn);
                         conn = null;
                     }
@@ -110,7 +120,7 @@ public class TcpTransport implements ITransport
                         break;
                 }
 
-                if (conn != null)
+                /*if (conn != null)
                 {
                     try (IAutoLock l = connections.writeLock())
                     {
@@ -119,33 +129,40 @@ public class TcpTransport implements ITransport
                         if (existingconn == null)
                         {
                             connections.put(receiver.getGlobalProcessIdentifier().host(), conn);
+                            handleIncomingPackages(conn);
                         }
                         else
                         {
                             // Other Thread has already established the connection, dropping new one.
+                            System.out.println("Closing opened connection because it's obsolete.");
                             SUtil.close(conn);
                             conn = existingconn;
                         }
                     }
-                }
+                }*/
             }
         }
 
-        try
+        if (conn != null)
         {
-            SIOHelper.writeChunk(conn.getOutputStream(), receiver.toString().getBytes(SUtil.UTF8));
-            SIOHelper.writeChunk(conn.getOutputStream(), rawmessage);
-            return IFuture.DONE;
-        }
-        catch (IOException e)
-        {
-            try (IAutoLock l = connections.writeLock())
+            try
             {
-                // Implement retry if new connection already exists?
-                if (conn == connections.get(receiver.getGlobalProcessIdentifier().host()))
-                    connections.remove(receiver.getGlobalProcessIdentifier().host());
+                SIOHelper.writeChunk(conn.getOutputStream(), origin.toString().getBytes(SUtil.UTF8));
+                SIOHelper.writeChunk(conn.getOutputStream(), receiver.toString().getBytes(SUtil.UTF8));
+                SIOHelper.writeChunk(conn.getOutputStream(), rawmessage);
+                return IFuture.DONE;
             }
-            SUtil.close(conn);
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                try (IAutoLock l = connections.writeLock())
+                {
+                    // Implement retry if new connection already exists?
+                    if (conn == connections.get(receiver.getGlobalProcessIdentifier().host()))
+                        connections.remove(receiver.getGlobalProcessIdentifier().host());
+                }
+                SUtil.close(conn);
+            }
         }
 
         return new Future<>(new IOException("TCP connection to " + receiver.getGlobalProcessIdentifier().host() + " failed."));
@@ -186,42 +203,58 @@ public class TcpTransport implements ITransport
                 while (!serversocket.isClosed())
                 {
                     Socket incoming = serversocket.accept();
+                    byte[] hostbytes = GlobalProcessIdentifier.getSelf().host().getBytes(SUtil.UTF8);
+                    SIOHelper.writeChunk(incoming.getOutputStream(), hostbytes);
 
-                    SUtil.getExecutor().execute(() ->
-                    {
-                        try
-                        {
-                            InputStream is = incoming.getInputStream();
-                            byte[] sizebuf = new byte[4];
-                            String remotehost = new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8);
-
-                            try (IAutoLock l = connections.writeLock())
-                            {
-                                Socket existing = connections.get(remotehost);
-                                SUtil.close(existing);
-                                connections.put(remotehost, incoming);
-                            }
-
-                            while (incoming.isConnected())
-                            {
-                                GlobalProcessIdentifier receiver = GlobalProcessIdentifier.fromString(new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8));
-                                byte[] rawmessage = SIOHelper.readChunk(is, sizebuf);
-                                messagehandler.handleMessage(remotehost, receiver, rawmessage);
-                            }
-                        }
-                        catch (IOException e)
-                        {
-                        }
-                        finally
-                        {
-                            SUtil.close(incoming);
-                        }
-                    });
+                    handleIncomingPackages(incoming);
                 }
             }
             catch (IOException e)
             {
             }
         };
+    }
+
+    private void handleIncomingPackages(Socket incoming)
+    {
+        SUtil.getExecutor().execute(() ->
+        {
+            try
+            {
+                InputStream is = incoming.getInputStream();
+                byte[] sizebuf = new byte[4];
+                
+                String remotehost = new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8);
+                
+                try (IAutoLock l = connections.writeLock())
+                {
+                    Socket existing = connections.get(remotehost);
+                    SUtil.close(existing);
+                    connections.put(remotehost, incoming);
+                }
+
+                while (incoming.isConnected())
+                {
+                    String originstring = new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8);
+                    GlobalProcessIdentifier origin = GlobalProcessIdentifier.fromString(originstring);
+                
+                    ComponentIdentifier receiver = ComponentIdentifier.fromString(new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8));
+                    //GlobalProcessIdentifier receiver = GlobalProcessIdentifier.fromString(new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8));
+                    byte[] rawmessage = SIOHelper.readChunk(is, sizebuf);
+
+                    messagehandler.handleMessage(origin, receiver, rawmessage);
+
+                    //ComponentManager.get().getLogger(this.getClass()).log(Level.WARNING, "Discarding message received from " + remotehost + " originating from " + origin.toString());
+                }
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+            }
+            finally
+            {
+                SUtil.close(incoming);
+            }
+        });
     }
 }

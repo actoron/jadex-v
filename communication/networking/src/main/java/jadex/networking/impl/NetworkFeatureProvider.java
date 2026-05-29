@@ -1,9 +1,9 @@
-package jadex.networking.impl;
+ package jadex.networking.impl;
 
 import jadex.core.IRuntimeFeature;
 import jadex.core.impl.RuntimeFeatureProvider;
 import jadex.messaging.IIpcFeature;
-import jadex.networking.INetworkFeature;
+import jadex.messaging.INetworkFeature;
 
 import java.util.*;
 
@@ -12,7 +12,6 @@ import java.util.*;
  */
 public class NetworkFeatureProvider extends RuntimeFeatureProvider<INetworkFeature>
 {
-
     /**
      *  Create an instance of the feature. Can be a subclass or interface implementation of the feature type.
      *  @return	The feature instance.

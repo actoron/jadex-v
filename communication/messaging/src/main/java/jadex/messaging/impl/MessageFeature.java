@@ -16,6 +16,7 @@ import jadex.future.IFuture;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.IMessageFeature;
 import jadex.messaging.IMessageHandler;
+import jadex.messaging.INetworkFeature;
 import jadex.messaging.ISecurityFeature;
 import jadex.messaging.ISecurityFeature.DecodedMessage;
 import jadex.messaging.ISecurityInfo;
@@ -57,31 +58,25 @@ public class MessageFeature implements IMessageFeature
 	{
 		for (ComponentIdentifier receiver : receivers)
 		{
-			if (GlobalProcessIdentifier.getSelf().host().equals(receiver.getGlobalProcessIdentifier().host()))
+			if (GlobalProcessIdentifier.getSelf().host().equals(receiver.getGlobalProcessIdentifier().host()) &&
+			   (GlobalProcessIdentifier.getSelf().pid().equals(receiver.getGlobalProcessIdentifier().pid())))
 			{
-				if (GlobalProcessIdentifier.getSelf().pid().equals(receiver.getGlobalProcessIdentifier().pid()))
+				// Local message
+				IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
+				exta.scheduleStep((comp) ->
 				{
-					// Local message
-					IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
-					exta.scheduleStep((comp) ->
-					{
-						((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
-					});
-				}
-				else
-				{
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), message);
-					SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
-					byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
-					baos = null;
-					IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
-					ipc.sendMessage(receiver, emsg);
-				}
+					((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
+				});
 			}
 			else
 			{
-				throw new UnsupportedOperationException("Networking not yet available.");
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), message);
+				SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
+				byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
+				baos = null;
+				IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
+				ipc.sendMessage(receiver, emsg);
 			}
 		}
 		return IFuture.DONE;
@@ -214,8 +209,7 @@ public class MessageFeature implements IMessageFeature
 			baos = null;
 			IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
 			ipc.sendMessage(receiver, emsg);
-		}
-		
+		}	
 		return conversationid;
 	}
 }

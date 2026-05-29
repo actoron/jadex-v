@@ -5,6 +5,7 @@ import jadex.common.SBinConv;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
 /**
  *  Helper class for IO operations.
@@ -24,14 +25,21 @@ public class SIOHelper
         int readbytes = 0;
         while (readbytes < sizebuf.length)
         {
-            readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
+            int bytesread = is.read(sizebuf, readbytes, sizebuf.length - readbytes);
+            if (bytesread < 0)
+                throw new UncheckedIOException(new IOException("Unexpected end of stream reading size of next chunk."));
+            readbytes += bytesread;
         }
 
         readbytes = 0;
         byte[] chunk = new byte[SBinConv.bytesToInt(sizebuf)];
         while (readbytes < chunk.length)
-            readbytes += is.read(chunk, readbytes, chunk.length - readbytes);
-
+        {
+            int bytesread = is.read(chunk, readbytes, chunk.length - readbytes);
+            if (bytesread < 0)
+                throw new UncheckedIOException(new IOException("Unexpected end of stream reading data of next chunk."));
+            readbytes += bytesread;
+        }
         return chunk;
     }
 

@@ -1,35 +1,41 @@
 package jadex.messaging.impl.ipc;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.lang.System.Logger.Level;
 import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
 import java.nio.channels.Channels;
-import java.nio.channels.FileLock;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.Set;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
-import jadex.common.SBinConv;
 import jadex.common.SUtil;
 import jadex.core.ComponentIdentifier;
-import jadex.core.IComponentManager;
 import jadex.core.IComponentHandle;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.messaging.IIpcFeature;
 import jadex.messaging.IMessageFeature;
+import jadex.messaging.INetworkFeature;
 import jadex.messaging.impl.MessageFeature;
 import jadex.messaging.impl.SIOHelper;
-import jadex.serialization.SerializationServices;
 
 /**
  *  Class implementing IPC communication between JVMs on the same host
@@ -58,7 +64,7 @@ public class IpcFeature implements IIpcFeature
 	private GlobalProcessIdentifier gpid;
 	
 	/** Currently established connections. */
-	private RwMapWrapper<String, LinkedBlockingQueue<ScheduledMessage>> connections;
+	private RwMapWrapper<String, LinkedBlockingQueue<TransportMessage>> connections;
 	
 	/** Expire unused connections after this timeout */
 	private long connectiontimeout = 900000;
@@ -66,10 +72,11 @@ public class IpcFeature implements IIpcFeature
 	/** Handler dealing with received messages. */
 	private Consumer<byte[]> secmsghandler;
 
-	private FileLock fifolock;
+	/** PID of the process handling network traffic. */
+	private String networkprocess;
 	
 	/** Handler dealing with received messages. */
-	private Consumer<ReceivedMessage> rcbmsghandler = (rmsg) ->
+	private Consumer<TransportMessage> rcbmsghandler = (rmsg) ->
 	{	
 		try
 		{
@@ -114,27 +121,20 @@ public class IpcFeature implements IIpcFeature
 
 		if (gpid.host().equals(receiver.getGlobalProcessIdentifier().host()))
 		{
-			ScheduledMessage smsg = new ScheduledMessage(receiver, message);
-			LinkedBlockingQueue<ScheduledMessage> connection = null;
-			try (IAutoLock l = connections.readLock())
-			{
-				connection = connections.get(receiver.getGlobalProcessIdentifier().pid());
-				if (connection != null)
-				{
-					//System.out.println("IPC sending to1 "+receiver.getGlobalProcessIdentifier().pid());
-					connection.add(smsg);
-					return;
-				}
-				
-			}
-			
-			connection = connect(receiver.getGlobalProcessIdentifier().pid());
-			//System.out.println("IPC sending to2 "+receiver.getGlobalProcessIdentifier().pid());
-			connection.add(smsg);
+			forwardMessage(gpid, receiver, message);
 		}
 		else
 		{
-			throw new UnsupportedOperationException("Remote messaging not supported yet.");
+			String nwp = getNetworkPid();
+
+			if (nwp != null)
+			{
+				forwardMessage(gpid, receiver, message, nwp);
+			}
+			else
+				throw new UnsupportedOperationException("Remote messaging not available.");
+			
+
 			// TODO: Remote
 		}
 	}
@@ -170,7 +170,7 @@ public class IpcFeature implements IIpcFeature
 	 *  Sets the message handle for received messages, overwriting the default.
 	 *  @param rcvmsghandler The new message handler.
 	 */
-	public void setReceivedMessageHandler(Consumer<ReceivedMessage> rcvmsghandler)
+	public void setReceivedMessageHandler(Consumer<TransportMessage> rcvmsghandler)
 	{
 		this.rcbmsghandler = rcvmsghandler;
 	}
@@ -254,10 +254,9 @@ public class IpcFeature implements IIpcFeature
 	 *  @param remotepid The remot pid.
 	 *  @return Queue for sending messages.
 	 */
-	private LinkedBlockingQueue<ScheduledMessage> connect(String remotepid)
+	private LinkedBlockingQueue<TransportMessage> connect(String remotepid)
 	{
-		LinkedBlockingQueue<ScheduledMessage> queue = null;
-		
+		LinkedBlockingQueue<TransportMessage> queue = null;
 		SocketChannel channel = null;
 		try
 		{
@@ -287,29 +286,23 @@ public class IpcFeature implements IIpcFeature
 				throw new UncheckedIOException(new IOException("Failed to establish connection to " + remotepid + "."));
 			
 			SocketChannel fchannel = channel;
-			LinkedBlockingQueue<ScheduledMessage> fqueue = new LinkedBlockingQueue<>();
+			LinkedBlockingQueue<TransportMessage> fqueue = new LinkedBlockingQueue<>();
 			queue = fqueue;
 			SUtil.getExecutor().execute(() -> {
 				OutputStream os = Channels.newOutputStream(fchannel);
-				ClassLoader cl = IComponentManager.get().getClassLoader();
 				
 				try
-				{
-					String gpidstr = gpid.toString();
-					byte[] gpidbytes = gpidstr.getBytes(SUtil.UTF8);
-					os.write(SBinConv.intToBytes(gpidbytes.length));
-					os.write(gpidbytes);
-					
+				{	
 					while(true)
 					{
 						//System.out.println("IPC sending to "+remotepid);
-						ScheduledMessage smsg = fqueue.poll(connectiontimeout, TimeUnit.MILLISECONDS);
+						TransportMessage smsg = fqueue.poll(connectiontimeout, TimeUnit.MILLISECONDS);
 						if (smsg != null)
 						{
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							SerializationServices.get().encode(baos, cl, smsg.receiver());
-							//byte[] encrec = ((Security) ComponentManager.get().getFeature(ISecurityFeatur
-							SIOHelper.writeChunk(os, baos.toByteArray());
+							byte[] strbuf = smsg.origin().toString().getBytes(SUtil.UTF8);
+							SIOHelper.writeChunk(os, strbuf);
+							strbuf = smsg.receiver().toString().getBytes(SUtil.UTF8);
+							SIOHelper.writeChunk(os, strbuf);
 							SIOHelper.writeChunk(os, smsg.message());
 							os.flush();
 						}
@@ -325,10 +318,10 @@ public class IpcFeature implements IIpcFeature
 					connections.remove(remotepid, fqueue);
 					if (!fqueue.isEmpty())
 					{
-						LinkedBlockingQueue<ScheduledMessage> newqueue = connect(remotepid);
+						LinkedBlockingQueue<TransportMessage> newqueue = connect(remotepid);
 						do
 						{
-							ScheduledMessage smsg = fqueue.poll();
+							TransportMessage smsg = fqueue.poll();
 							newqueue.add(smsg);
 						}
 						while (!fqueue.isEmpty());
@@ -343,6 +336,43 @@ public class IpcFeature implements IIpcFeature
 		
 		return queue;
 	}
+
+	/**
+	 *  Handles incoming messages.
+	 * 
+	 * @param origin Message origin.
+	 * @param receiver The message receiver.
+	 * @param msg The message.
+	 */
+	public void handleIncomingMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] msg)
+	{
+		if (gpid.host().equals(receiver.getGlobalProcessIdentifier().host()))
+		{
+			if (gpid.pid().equals(receiver.getGlobalProcessIdentifier().pid()))
+			{
+				if (receiver.getLocalName() != null)
+				{
+					rcbmsghandler.accept(new TransportMessage(origin, receiver, msg));
+				}
+				else if (secmsghandler != null)
+				{
+					secmsghandler.accept(msg);
+				}
+			}
+			else
+				forwardMessage(origin, receiver, msg);
+		}
+		else
+		{
+			if (GlobalProcessIdentifier.getSelf().pid().equals(getNetworkPid()))
+			{
+				INetworkFeature nwfeat = ComponentManager.get().getFeature(INetworkFeature.class);
+				nwfeat.sendMessage(origin, receiver, msg);
+			}
+			else
+				ComponentManager.get().getLogger(this.getClass()).log(Level.WARNING, "IPC received message for foreign host: " + receiver + ", discarding...");
+		}
+	}
 	
 	/**
 	 *  Deals with a new incoming connection.
@@ -353,44 +383,15 @@ public class IpcFeature implements IIpcFeature
 		SUtil.getExecutor().execute(() ->
 		{
 			InputStream is = Channels.newInputStream(channel);
-			ClassLoader cl = IComponentManager.get().getClassLoader();
-			SerializationServices serserv = SerializationServices.get();
-			int readbytes = 0;
 			byte[] sizebuf = new byte[4];
 			try
 			{
-				while (readbytes < sizebuf.length)
-					readbytes += is.read(sizebuf, readbytes, sizebuf.length - readbytes);
-				
-				GlobalProcessIdentifier origin = null;
-				{
-					readbytes = 0;
-					byte[] msg = new byte[SBinConv.bytesToInt(sizebuf)];
-					while (readbytes < msg.length)
-						readbytes += is.read(msg, readbytes, msg.length - readbytes);
-					
-					String originstr = new String(msg, SUtil.UTF8);
-					origin = GlobalProcessIdentifier.fromString(originstr);
-				}
-				
 				while (channel.isConnected())
 				{
-					byte[] recbytes = SIOHelper.readChunk(is, sizebuf);
-					//recbytes = ((Security) ComponentManager.get().getFeature(ISecurityFeature.class)).decryptAndAuth(origin, recbytes).message();
-
-					Object o = serserv.decode(new ByteArrayInputStream(recbytes), cl);
-					ComponentIdentifier receiver = (ComponentIdentifier) o;
-
+					GlobalProcessIdentifier origin = GlobalProcessIdentifier.fromString(new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8));
+					ComponentIdentifier receiver = ComponentIdentifier.fromString(new String(SIOHelper.readChunk(is, sizebuf), SUtil.UTF8));
 					byte[] msg = SIOHelper.readChunk(is, sizebuf);
-					
-					if (receiver.getLocalName() != null)
-					{
-						rcbmsghandler.accept(new ReceivedMessage(origin, receiver, msg));
-					}
-					else if (secmsghandler != null)
-					{
-						secmsghandler.accept(msg);
-					}
+					handleIncomingMessage(origin, receiver, msg);
 				}
 				SUtil.close(is);
 			}
@@ -403,12 +404,94 @@ public class IpcFeature implements IIpcFeature
 	}
 
 	/**
-	 *  A message that has been scheduled for transfer.
+	 *  Gets the current network PID.
+	 *  
+	 *  @return PID of the process handling network traffic.
 	 */
-	private static record ScheduledMessage(ComponentIdentifier receiver, byte[] message) {};
+	private String getNetworkPid()
+	{
+		if (networkprocess == null)
+		{
+			synchronized(this)
+			{
+				if (networkprocess == null)
+				{
+					GlobalProcessIdentifier nwpid = readNetworkProcess();
+					if (nwpid != null)
+						networkprocess = nwpid.pid();
+					else
+						networkprocess = null;
+				}
+			}
+		}
+
+		return networkprocess;
+	}
+
+	/**
+     *  Reads the current process handling network traffic from the config file.
+     * @return
+     */
+    public GlobalProcessIdentifier readNetworkProcess()
+    {
+        GlobalProcessIdentifier ret = null;
+		File conffile = Path.of(System.getProperty("java.io.tmpdir"))
+                                      .resolve(IMessageFeature.COM_DIRECTORY_NAME)
+									  .resolve("network.cfg").toFile();
+        try (FileInputStream fis = new FileInputStream(conffile))
+        {
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+            ret = GlobalProcessIdentifier.fromString(br.readLine());
+        }
+        catch(Exception e)
+        {
+			e.printStackTrace();
+        }
+        return ret;
+    }
+
+	/**
+	 *  Forwards a message to a different process.
+	 *  Will forward to receiver directly.
+	 * 
+	 *  @param origin Origin of the message.
+	 *  @param receiver Receiver of the message.
+	 *  @param message The message.
+	 */
+	private void forwardMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message)
+	{
+		forwardMessage(origin, receiver, message, receiver.getGlobalProcessIdentifier().pid());
+	}
+
+	/**
+	 *  Forwards a message to a different process.
+	 * 
+	 *  @param origin Origin of the message.
+	 *  @param receiver Receiver of the message.
+	 *  @param message The message.
+	 *  @param targetpid PID of the process to forward the message to.
+	 */
+	private void forwardMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message, String targetpid) {
+		TransportMessage smsg = new TransportMessage(origin, receiver, message);
+		LinkedBlockingQueue<TransportMessage> connection = null;
+		try (IAutoLock l = connections.readLock())
+		{
+			connection = connections.get(targetpid);
+			if (connection != null)
+			{
+				//System.out.println("IPC sending with existing conn to "+receiver.getGlobalProcessIdentifier().pid());
+				connection.add(smsg);
+				return;
+			}
+		}
+		
+		//System.out.println("IPC sending to with new conn "+receiver.getGlobalProcessIdentifier().pid() + " from " + gpid);
+		connection = connect(targetpid);
+		connection.add(smsg);
+	}
 	
 	/**
-	 *  A message that has been received.
+	 *  A message that is being transported.
 	 */
-	public static record ReceivedMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message) {};
+	public static record TransportMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message) {};
 }

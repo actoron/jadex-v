@@ -1,7 +1,9 @@
-package jadex.networking;
+package jadex.messaging;
 
+import jadex.core.ComponentIdentifier;
 import jadex.core.IRuntimeFeature;
-import jadex.networking.impl.NetworkFeature;
+import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.future.IFuture;
 
 /**
  *  Interface for the service providing network communication across hosts.
@@ -26,4 +28,21 @@ public interface INetworkFeature extends IRuntimeFeature
      *  @param ipv6bindaddress The IPv6 address to bind for incoming TCP connections.
      */
     public void setIpv6bindaddress(String ipv6bindaddress);
+
+    /**
+     *  Returns the catalog resolver for configuring fixed
+     *  host -> IP resolving.
+     * 
+     *  @return The catalog resolver.
+     */
+    public ICatalogResolver getCatalogResolver();
+
+    /**
+	 *  Sends a message to a component using the network.
+	 *  
+     *  @param origin Origin of the message.
+	 *  @param receiver The intended message receiver.
+	 *  @param message The message.
+	 */
+	public IFuture<Void> sendMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message);
 }
