@@ -2,7 +2,7 @@
 // ------------ PUBLISH ----------------
 // -------------------------------------
 
-logger.lifecycle "publish gradle used"
+//logger.lifecycle "publish gradle used"
 
 // for some mysterious reason plugin cannot be loaded in external script :-(((
 /*
@@ -23,7 +23,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 def canSign = project.hasProperty('signing.secretKeyRingFile') || System.getProperty("signingKey")!=null
-logger.lifecycle "canSign: "+canSign
+//logger.lifecycle "canSign: "+canSign
 
 java {
     withSourcesJar()

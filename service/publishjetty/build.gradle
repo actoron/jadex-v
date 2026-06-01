@@ -70,22 +70,6 @@ tasks.test {
     classpath += sourceSets.testFixtures.output + sourceSets.testFixtures.runtimeClasspath
 }
 
-task copyDependencies {
-    doLast {
-        copy {
-            configurations.compileClasspath.each { File file ->
-                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
-                    if (file.name.endsWith('.jar'))
-                        from file.getParent()
-                }
-            } 
-            into 'build/libs/external-dependencies'
-        }
-    }
-    outputs.upToDateWhen { false }
-}
-build.dependsOn(copyDependencies)
-
 processResources 
 {
     from ('src/main/java') 

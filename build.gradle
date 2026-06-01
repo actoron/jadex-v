@@ -292,11 +292,9 @@ def waitForSSHCmd(cmd) {
 
 task createZip(type: Zip) {
 	group = "publishing"
+	dependsOn build
 	
 	def v = getVar("JADEX_VERSION")
-	def suf = getVar("JADEX_VERSION_SUFFIX")
-	if(suf!=null)
-		v += "-"+suf
 	logger.lifecycle "Jadex Build Version " + v
 
     archiveFileName = 'jadex-'+v+'.zip'
@@ -304,24 +302,31 @@ task createZip(type: Zip) {
     includeEmptyDirs = false
     
     from(sourceSets.main.output) {
-        gradle.includedBuilds.each { build ->
-            from("${build.projectDir}/build/libs") {
+        //gradle.includedBuilds.each { build ->
+        //    from("${build.projectDir}/build/libs") {
+		    from("application/micro/build/libs") {
                 include '**/*.jar'
+                exclude '**/*-sources.jar'
+                exclude '**/*-javadoc.jar'
                 into 'lib' 
                 eachFile { f -> f.path = "lib/${f.name}" }
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             }
-        }
+        //}
     }
 
-    //def classpath = gradle.includedBuilds.collect { build -> build.projectDir.path + "/build/libs/*.jar" }.join(':')
     def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
-    def scriptFile = file('startHelloWorld.sh')
+    def scriptFile = file(new File(System.getProperty("java.io.tmpdir"), 'startHelloWorld.sh'))
     scriptFile.text = scriptContent
     scriptFile.setExecutable(true)
+
+    def batContent = '@java -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
+    def batFile = file(new File(System.getProperty("java.io.tmpdir"), 'startHelloWorld.bat'))
+    batFile.text = batContent
     
     into('') {
         from scriptFile
+        from batFile
     }
 }
 
@@ -345,9 +350,6 @@ task deployZip() {
     	}
 		
 		def v = getVar("JADEX_VERSION")
-		def suf = getVar("JADEX_VERSION_SUFFIX")
-		if(suf!=null)
-			v += "-"+suf
 		
 		def dir = "/www/releases/" + v;
 		//def zipsdir = "" + project.buildDir + File.separator + 'distributions' + File.separator + 'zips';

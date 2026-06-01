@@ -17,7 +17,7 @@ Object fetchNextBuildNameFromGitTag(jversionpre)
         def txt = p1.text;
         if (txt.length() > 0)
         {
-            throw new Exception("Working directory is dirty. Please commit or stash changes before publishing.");
+            throw new Exception("Working directory contains changes. Please commit or stash changes before publishing.");
         }
     }
     else

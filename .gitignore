@@ -21,7 +21,6 @@ alarmclock_settings.ser
 *.iws
 *.ipr
 jadex-deploy-vars.sh
-startHelloWorld.sh
 /jadex-deploy-vars.bat
 **/.benchmark*
 /.pydevproject
@@ -32,9 +31,9 @@ startHelloWorld.sh
 /benchmark/.pydevproject
 /benchmark/execution/.benchmark_ide
 /benchmark/.venv
-/bdi/engine - Kopie
 /application/bdi-service/.lwjgl/
 .vscode/settings.json
 /application/micro/generated_images
 /benchmark/llm/analysis_output
 /benchmark/llm/*.csv
+/deploy
