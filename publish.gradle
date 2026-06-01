@@ -118,9 +118,9 @@ if(project.hasProperty('repos')) {
     		return
     	}
         
-        logger.lifecycle 'publishing to: ' + repoaccess.url
-        logger.lifecycle 'repouser: ' + repoaccess.user
-        logger.lifecycle 'repopassword: ' + repoaccess.password
+        //logger.lifecycle 'publishing to: ' + repoaccess.url
+        //logger.lifecycle 'repouser: ' + repoaccess.user
+        //logger.lifecycle 'repopassword: ' + repoaccess.password
 
         if("central".equals(repo)) {
             // Settings for staging when publishing to central repo

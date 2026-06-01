@@ -245,7 +245,7 @@ task updateTag() {
 		//cmd.call();
 	}
 }
-publishTag.mustRunAfter releaseStagingRepo
+updateTag.mustRunAfter releaseStagingRepo
 
 String readStream(InputStream stream) {
     def reader = new BufferedReader(new InputStreamReader(stream))
