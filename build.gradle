@@ -125,6 +125,7 @@ task closeStagingRepo {
 	        } else {
 	            logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
             	logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
+            	throw new RuntimeException("Failed to close staging repository. Response code: ${connection.responseCode}")
 	        }
 	
 	        connection.disconnect()
@@ -181,7 +182,7 @@ task releaseStagingRepo {
             	
             	def releaseUrl = new URL("https://central.sonatype.com/api/v1/publisher/deployment/${deploymentId}")
             	def releaseConnection = releaseUrl.openConnection() as HttpURLConnection
-            	releaseConnection.setRequestMethod("POST")
+            	releaseConnection.setRequestMethod("DELETE")
             	releaseConnection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
             	releaseConnection.setDoOutput(true)
 
@@ -195,25 +196,24 @@ task releaseStagingRepo {
                 } else {
                     logger.lifecycle "Failed to release staging repository. Response code: ${releaseConnection.responseCode}"
                     logger.lifecycle "Payload: ${readStream(releaseConnection.errorStream)}"
+                    throw new RuntimeException("Failed to release staging repository. Response code: ${releaseConnection.responseCode}")
                 }
                 releaseConnection.disconnect()
             }
         } else {
             logger.lifecycle "Failed to execute request. Response code: ${connection.responseCode}"
             logger.lifecycle "Payload: ${readStream(connection.errorStream)}"
-            if (attempts < maxAttempts) {
-                logger.lifecycle "Retrying... "+attempts
-            } else {
-                logger.lifecycle "Maximum attempts reached. Exiting."
-            }
+            throw new RuntimeException("Failed to retrieve staging repository information. Response code: ${connection.responseCode}")
         }
         connection.disconnect()
     }
 }
 releaseStagingRepo.mustRunAfter closeStagingRepo
 
-// Update the tag and commit it to repository.
+// Create a tag for the configured jadex version and push it to repository.
 task updateTag() {
+    group = "publishing"
+    
 	doLast() {
 		def tag_url = getVar('tag_url')
     	def acc = parseURLWithCredentials(tag_url)
@@ -225,11 +225,16 @@ task updateTag() {
 				
 		def git = org.eclipse.jgit.api.Git.open(project.projectDir);
 		//org.eclipse.jgit.lib.Repository repo = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setMustExist(true).setGitDir(project.projectDir).readEnvironment().findGitDir().build();
-		def tags = git.tagList().call();
+		//def tags = git.tagList().call();
+		//print "Existing tags: "+tags;
+		
+		def jadex_build_version	= getVar("JADEX_VERSION")
+		println "Tagging Jadex build version: "+jadex_build_version
+		
 		def cmd = git.tag();
 		cmd.setName(jadex_build_version);
 		cmd.setForceUpdate(true);
-		cmd.call();
+		//cmd.call();
 		cmd = git.push();
 		def pushopts = new ArrayList<String>();
 		pushopts.add("ci.skip"); 
@@ -237,9 +242,10 @@ task updateTag() {
 		cmd.setRemote(acc.url);
 		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
 		cmd.setPushTags();
-		cmd.call();
+		//cmd.call();
 	}
 }
+publishTag.mustRunAfter releaseStagingRepo
 
 String readStream(InputStream stream) {
     def reader = new BufferedReader(new InputStreamReader(stream))
@@ -375,13 +381,13 @@ def getDownloadServerAccess() {
 }
 
 String getVar(String key) {
-	def ret = System.getenv(key)
-	if (ret == null)
-		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
-	if (ret == null)
-		ret = System.getProperty(key)
+	def ret = System.getProperty(key)
 	if (ret == null)
 		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
 	return ret;
 }
 

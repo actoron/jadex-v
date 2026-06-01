@@ -1,21 +1,22 @@
 def pscript = "PUBLISH_SCRIPT_PATH"
 def jversion = "JADEX_VERSION"
+def jversionpre = "JADEX_VERSION_PREFIX"
 def sk = "sigKey"
 def skp = "signingPassword"
 
 String getVar(String key) {
-	def ret = System.getenv(key)
-	if (ret == null)
-		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
-	if (ret == null)
-		ret = System.getProperty(key)
+	def ret = System.getProperty(key)
 	if (ret == null)
 		ret = System.getProperty("ORG_GRADLE_PROJECT_"+key)
+	if (ret == null)
+		ret = System.getenv(key)
+	if (ret == null)
+		ret = System.getenv("ORG_GRADLE_PROJECT_"+key)
 	return ret;
 }
 
 if(System.getenv(pscript)) {
-	System.setProperty(pscript, System.getenv(pscript))
+	System.setProperty(pscript, getVar(pscript))
 } else if (!System.getProperty(pscript)) {
     System.setProperty(pscript, "${rootProject.projectDir}/publish.gradle")
 }
@@ -27,9 +28,9 @@ binding.settingsDir = settingsDir
 def shell = new GroovyShell(binding)
 def versionScript = new File(settingsDir, 'version.gradle')
 def vs = shell.parse(versionScript)
-def jv = vs.fetchNextBuildNameFromGitTag()
+def jv = vs.fetchNextBuildNameFromGitTag(getVar(jversionpre))
 if (jv != null) {
-	System.setProperty(jversion, jv.full);
+	System.setProperty(jversion, jv);
 	logger.lifecycle "Configured version: "+System.getProperty(jversion);
 }
 else
