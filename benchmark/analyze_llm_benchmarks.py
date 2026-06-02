@@ -107,6 +107,38 @@ def extract_model_size_billions(model_name: str) -> float | None:
     return None
 
 
+def benchmark_sort_key(name: str) -> tuple:
+    """Inverse-alphabetical sort key for benchmark names.
+
+    Keeps the overall ordering Z -> A by inverting characters per segment, and
+    forces blocksworld_image to the very end in every benchmark-sorted view.
+    """
+    candidate = str(name).strip()
+
+    # Canonicalize to handle raw file names and display names consistently.
+    canonical = candidate.lower()
+    if canonical.startswith("llm_"):
+        canonical = canonical[4:]
+    if canonical.endswith("_benchmark"):
+        canonical = canonical[:-10]
+    canonical = re.sub(r"[^a-z0-9]+", "_", canonical).strip("_")
+
+    # Special-case: always put blocksworld_image last.
+    if canonical == "blocksworld_image":
+        return (1,)
+
+    def invert_part(s: str) -> str:
+        return "".join(
+            chr(ord('z') - (ord(c) - ord('a'))) if 'a' <= c <= 'z'
+            else chr(ord('Z') - (ord(c) - ord('A'))) if 'A' <= c <= 'Z'
+            else c
+            for c in s
+        )
+
+    # Use canonical form for stable ordering independent of source label format.
+    return (0,) + tuple(invert_part(part) for part in canonical.split("_"))
+
+
 def classify_deployment_type(provider_name: str) -> str:
     candidate = str(provider_name).strip().lower()
     if "local" in candidate or "ollama" in candidate:
@@ -289,7 +321,7 @@ def build_summary(df: pd.DataFrame, benchmark_name: str) -> str:
 
 def build_top_sections(benchmark_frames: dict[str, pd.DataFrame]) -> list[str]:
     sections = []
-    for benchmark_name, df in sorted(benchmark_frames.items()):
+    for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
         benchmark_display = display_benchmark_name(benchmark_name)
         top5 = (
             df.sort_values(["Success Rate Num", "Avg Time"], ascending=[False, True])
@@ -462,10 +494,157 @@ def create_overall_family_model_size_bar_charts(benchmark_frames: dict[str, pd.D
     return generated_charts
 
 
+def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame], out_dir: Path) -> None:
+    """Create a unified bar chart showing the best model per family across all benchmarks."""
+    # Collect data: for each family, find best model per benchmark
+    family_benchmark_data = []
+    
+    for benchmark_name, df in benchmark_frames.items():
+        if not {"Model", "Success Rate Num", "Model Family"}.issubset(df.columns):
+            continue
+        
+        benchmark_display = display_benchmark_name(benchmark_name)
+        
+        # For each model family, find the best model (highest success rate, then lowest time)
+        for family in df["Model Family"].dropna().unique():
+            family_df = df[df["Model Family"] == family].copy()
+            
+            # Keep only models with an inferable size of 20B or less.
+            family_df["_size"] = family_df["Model"].apply(extract_model_size_billions)
+            family_df = family_df[family_df["_size"].notna() & (family_df["_size"] <= 20)]
+            if family_df.empty:
+                continue
+            
+            # Sort by success rate (descending) then by avg time (ascending)
+            if "Avg Time" in family_df.columns:
+                best_model_row = family_df.sort_values(
+                    ["Success Rate Num", "Avg Time"],
+                    ascending=[False, True]
+                ).iloc[0]
+            else:
+                best_model_row = family_df.sort_values(
+                    "Success Rate Num",
+                    ascending=False
+                ).iloc[0]
+            
+            family_benchmark_data.append({
+                "Model Family": family,
+                "Model Family Display": display_model_family_name(family),
+                "Model": best_model_row.get("Model", "N/A"),
+                "Benchmark": benchmark_display,
+                "Success Rate": best_model_row.get("Success Rate Num", 0),
+                "Avg Time": best_model_row.get("Avg Time", 0),
+                "Thinking Bool": bool(best_model_row.get("Thinking Bool", str(best_model_row.get("Thinking", "false")).lower() == "true")),
+            })
+    
+    if not family_benchmark_data:
+        return
+    
+    plot_df = pd.DataFrame(family_benchmark_data)
+    
+    # Get unique benchmarks and families
+    benchmarks = sorted(plot_df["Benchmark"].unique(), key=benchmark_sort_key)
+    families = sorted(plot_df["Model Family Display"].unique())
+    
+    # Use the same default seaborn palette as the runtime vs. success rate scatter chart
+    colors = sns.color_palette(None, len(benchmarks))
+    color_map = dict(zip(benchmarks, colors))
+    
+    fig, ax = plt.subplots(figsize=(16, 9))
+    
+    # Prepare data for grouped bar chart
+    x = range(len(families))
+    bar_width = 0.8 / len(benchmarks)
+    
+    for idx, benchmark in enumerate(benchmarks):
+        benchmark_data = plot_df[plot_df["Benchmark"] == benchmark]
+        # Create series indexed by family for alignment
+        family_success_rates = benchmark_data.set_index("Model Family Display")["Success Rate"]
+        family_model_names = benchmark_data.set_index("Model Family Display")["Model"]
+        family_thinking = benchmark_data.set_index("Model Family Display")["Thinking Bool"]
+        
+        # Get values in the correct family order; None = no data for this family/benchmark
+        values = [family_success_rates.get(family, None) for family in families]
+        model_names = [
+            (f"{family_model_names.get(family, '')} (think)" if bool(family_thinking.get(family, False)) else family_model_names.get(family, ""))
+            for family in families
+        ]
+        
+        # Also get avg times for display inside bars
+        family_avg_times = benchmark_data.set_index("Model Family Display")["Avg Time"]
+        avg_times = [family_avg_times.get(family, None) for family in families]
+        
+        # Calculate x position for this benchmark's bars
+        x_pos = [i + idx * bar_width - (bar_width * (len(benchmarks) - 1) / 2) for i in x]
+        
+        bars = ax.bar(
+            x_pos,
+            [v if v is not None else 0 for v in values],
+            bar_width,
+            label=benchmark,
+            color=color_map[benchmark],
+            edgecolor="black",
+            linewidth=0.8
+        )
+        
+        # Add value labels and model names on bars
+        for bar, value, model_name, avg_time in zip(bars, values, model_names, avg_times):
+            height = bar.get_height()
+            bar_center_x = bar.get_x() + bar.get_width() / 2.
+            if value is not None:
+                # Show success rate on top (including 0)
+                ax.text(
+                    bar_center_x,
+                    height,
+                    f'{value:.0f}',
+                    ha='center',
+                    va='bottom',
+                    fontsize=8
+                )
+                # Show avg time inside the bar
+                if avg_time is not None:
+                    ax.text(
+                        bar_center_x,
+                        height / 2,
+                        f'{avg_time:.2f}',
+                        ha='center',
+                        va='center',
+                        fontsize=7,
+                        color='white',
+                        fontweight='bold'
+                    )
+            if model_name:
+                # Model name as rotated label below each bar
+                ax.text(
+                    bar_center_x,
+                    -1.5,
+                    model_name,
+                    ha='right',
+                    va='top',
+                    fontsize=9,
+                    rotation=45,
+                    clip_on=False,
+                )
+    
+    ax.set_xlabel("", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Success Rate (%)", fontsize=12, fontweight="bold")
+    ax.set_title("Best Model per Family across All Benchmarks (≤ 20B) - Ranked by Success Rate then Runtime", fontsize=14, fontweight="bold")
+    ax.set_xticks(x)
+    ax.set_xticklabels([""] * len(families))  # hide family name labels; model names shown below each bar
+    ax.set_ylim(0, 105)
+    ax.legend(title="Benchmark", loc="upper center", bbox_to_anchor=(0.5, -0.45), ncol=len(benchmarks), frameon=True)
+    ax.grid(axis='y', alpha=0.3)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.45)
+    plt.savefig(out_dir / "best_model_per_family_chart.png", dpi=150, bbox_inches='tight')
+    plt.close()
+
+
 def build_deployment_summary(benchmark_frames: dict[str, pd.DataFrame], deployment_type: str) -> str:
     filtered_frames = {
         benchmark_name: df[df["Deployment Type"] == deployment_type].copy()
-        for benchmark_name, df in sorted(benchmark_frames.items())
+        for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0]))
         if "Deployment Type" in df.columns
     }
     filtered_frames = {benchmark_name: df for benchmark_name, df in filtered_frames.items() if not df.empty}
@@ -483,9 +662,9 @@ def build_deployment_summary(benchmark_frames: dict[str, pd.DataFrame], deployme
     overview_rows = []
     thinking_rows = []
     model_benchmark_rows = []
-    benchmark_display_names = [display_benchmark_name(name) for name in sorted(filtered_frames)]
+    benchmark_display_names = [display_benchmark_name(name) for name in sorted(filtered_frames, key=benchmark_sort_key)]
 
-    for benchmark_name, df in filtered_frames.items():
+    for benchmark_name, df in sorted(filtered_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
         benchmark_display = display_benchmark_name(benchmark_name)
         success = df["Success Rate Num"] if "Success Rate Num" in df.columns else pd.Series([])
         thinking_df = df[df["Thinking Bool"]] if "Thinking Bool" in df.columns else df.iloc[0:0]
@@ -604,9 +783,9 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     overview_rows = []
     thinking_rows = []
     model_benchmark_rows = []
-    benchmark_display_names = [display_benchmark_name(name) for name in sorted(benchmark_frames)]
+    benchmark_display_names = [display_benchmark_name(name) for name in sorted(benchmark_frames, key=benchmark_sort_key)]
 
-    for benchmark_name, df in sorted(benchmark_frames.items()):
+    for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
         benchmark_display = display_benchmark_name(benchmark_name)
         success = df["Success Rate Num"] if "Success Rate Num" in df.columns else pd.Series([])
         thinking_df = df[df["Thinking Bool"]] if "Thinking Bool" in df.columns else df.iloc[0:0]
@@ -805,8 +984,15 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
         lines.append("Colors and markers encode benchmarks.")
         lines.append("")
 
+    lines.append("## 6) Best model per family across benchmarks")
+    lines.append("")
+    lines.append("![Best model per family across benchmarks](best_model_per_family_chart.png)")
+    lines.append("")
+    lines.append("This chart shows the best-performing model from each family per benchmark, color-coded by benchmark.")
+    lines.append("")
+
     if overall_family_charts:
-        lines.append("## 6) Family model-size charts (accumulated over benchmarks)")
+        lines.append("## 7) Family model-size charts (accumulated over benchmarks)")
         lines.append("")
         lines.append("Each chart aggregates all benchmarks for one model family and compares Thinking vs non-thinking bars.")
         lines.append("")
@@ -825,12 +1011,12 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
                 )
             lines.append("")
 
-    lines.append("## 7) Links to individual analyses")
+    lines.append("## 8) Links to individual analyses")
     lines.append("")
-    lines.append("- analysis_output/cloud_analysis.md")
-    lines.append("- analysis_output/local_analysis.md")
-    for benchmark_name in sorted(benchmark_frames):
-        lines.append(f"- analysis_output/{benchmark_name}/analysis.md")
+    lines.append("- [Cloud analysis](cloud_analysis.md)")
+    lines.append("- [Local analysis](local_analysis.md)")
+    for benchmark_name in sorted(benchmark_frames, key=benchmark_sort_key):
+        lines.append(f"- [{benchmark_name} analysis]({benchmark_name}/analysis.md)")
 
     return "\n".join(lines)
 
@@ -871,12 +1057,29 @@ def analyze_all_benchmarks(benchmark_files: list[Path]) -> None:
         analyze_benchmark(csv_path)
         benchmark_frames[benchmark_name] = load_data(csv_path)
 
-    overall_family_charts = create_overall_family_model_size_bar_charts(benchmark_frames, OUT_DIR)
-    overall_summary = build_overall_summary(benchmark_frames, overall_family_charts)
+    # Filter to only ollama models for overall/local analysis
+    ollama_frames = {}
+    for name, df in benchmark_frames.items():
+        if "Provider" in df.columns:
+            ollama_df = df[df["Provider"].astype(str).str.contains("ollama", case=False, na=False)]
+            if not ollama_df.empty:
+                ollama_frames[name] = ollama_df
+
+    # Filter to non-ollama providers for cloud analysis
+    non_ollama_frames = {}
+    for name, df in benchmark_frames.items():
+        if "Provider" in df.columns:
+            non_ollama_df = df[~df["Provider"].astype(str).str.contains("ollama", case=False, na=False)]
+            if not non_ollama_df.empty:
+                non_ollama_frames[name] = non_ollama_df
+
+    overall_family_charts = create_overall_family_model_size_bar_charts(ollama_frames, OUT_DIR)
+    create_best_model_per_family_chart(ollama_frames, OUT_DIR)
+    overall_summary = build_overall_summary(ollama_frames, overall_family_charts)
     (OUT_DIR / "overall_analysis.md").write_text(overall_summary, encoding="utf-8")
-    cloud_summary = build_deployment_summary(benchmark_frames, "Cloud")
+    cloud_summary = build_deployment_summary(non_ollama_frames, "Cloud")
     (OUT_DIR / "cloud_analysis.md").write_text(cloud_summary, encoding="utf-8")
-    local_summary = build_deployment_summary(benchmark_frames, "Local")
+    local_summary = build_deployment_summary(ollama_frames, "Local")
     (OUT_DIR / "local_analysis.md").write_text(local_summary, encoding="utf-8")
 
 

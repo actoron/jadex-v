@@ -342,8 +342,9 @@ public class LlmBenchmark
 			"gpt-oss:20b",
 			"granite4.1:3b",
 			"granite4.1:8b",
-			"granite4.1:30b",
+//			"granite4.1:30b",
 //			"lfm2:24b",
+//			"laguna-xs.2:q4_K_M",
 			"ministral-3:14b",
 			"ministral-3:8b",
 			"ministral-3:3b",
@@ -352,10 +353,10 @@ public class LlmBenchmark
 			"qwen3.5:9b",
 			"qwen3.5:4b",
 			"qwen3.5:2b",
-			"qwen3.5:0.8b",
+			"qwen3.5:0.8b"
 //			"qwen3.6:35b"
 //			"qwen3.6:27b"
-			"nemotron3:33b"
+//			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
