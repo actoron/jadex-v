@@ -2,14 +2,19 @@ package jadex.networking.impl.resolve;
 
 import jadex.collection.RwMapWrapper;
 import jadex.common.IAutoLock;
-import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.common.SUtil;
+import jadex.messaging.ICatalogResolver;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /**
  *  Resolver using a manually-defined catalog for resolving endpoints.
  */
-public class CatalogResolver implements IResolver
+public class CatalogResolver implements IResolver, ICatalogResolver
 {
     /** The catalog, maps from host name to List of endpoints. */
     private RwMapWrapper<String, Set<IEndpoint>> catalog;
@@ -20,6 +25,7 @@ public class CatalogResolver implements IResolver
     public CatalogResolver()
     {
         catalog = new RwMapWrapper<>(new HashMap<>());
+        
     }
 
     /**
@@ -30,6 +36,44 @@ public class CatalogResolver implements IResolver
      */
     public void addEndpoint(String host, IEndpoint endpoint)
     {
+        try (IAutoLock l = catalog.writeLock())
+        {
+            Set<IEndpoint> endpoints = catalog.get(host);
+            if (endpoints == null)
+            {
+                endpoints = new HashSet<>();
+                catalog.put(host,endpoints);
+            }
+            endpoints.add(endpoint);
+        }
+    }
+
+    /**
+     *  Adds an endpoint for a host.
+     *
+     *  @param host Host that can be reached using the endpoint.
+     *  @param ipaddress The IP address.
+     */
+    public void addEndpoint(String host, String ipaddress)
+    {
+        InetAddress inetaddr = null; 
+        try
+        {
+            inetaddr = InetAddress.getByName(ipaddress);
+        }
+        catch (UnknownHostException e)
+        {
+            throw SUtil.throwUnchecked(e);
+        }
+
+        IEndpoint endpoint = null;
+        if (inetaddr instanceof Inet4Address)
+            endpoint = new TcpV4Endpoint((Inet4Address) inetaddr);
+        else if (inetaddr instanceof Inet6Address)
+            endpoint = new TcpV6Endpoint((Inet6Address) inetaddr);
+        else
+            throw SUtil.throwUnchecked(new IllegalArgumentException("Unknown address type"));
+        
         try (IAutoLock l = catalog.writeLock())
         {
             Set<IEndpoint> endpoints = catalog.get(host);

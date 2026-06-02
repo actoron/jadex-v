@@ -8,34 +8,12 @@ import java.util.Set;
 /**
  *  Meta-Resolver that joins multiple resolvers together.
  */
-public class MultiResolver implements IResolver
+public class Resolver implements IResolver
 {
     /** The resolvers */
     private Map<Class<? extends IResolver>, IResolver> resolvers = new HashMap<>();
 
-    /** The singleton instance. */
-    private static volatile MultiResolver instance;
-
-    /**
-     *  Gets the singleton.
-     *  @return The singleton.
-     */
-    public static MultiResolver get()
-    {
-        if (instance == null)
-        {
-            synchronized (MultiResolver.class)
-            {
-                if (instance == null)
-                {
-                    instance = new MultiResolver();
-                }
-            }
-        }
-        return instance;
-    }
-
-    private MultiResolver()
+    public Resolver()
     {
         resolvers.put(CatalogResolver.class, new CatalogResolver());
         resolvers.put(DnsResolver.class, new DnsResolver());
@@ -50,7 +28,7 @@ public class MultiResolver implements IResolver
     public Set<IEndpoint> resolve(String host)
     {
         Set<IEndpoint> ret = new HashSet<>();
-        for (IResolver resolver : resolvers)
+        for (IResolver resolver : resolvers.values())
             ret.addAll(resolver.resolve(host));
         return ret;
     }
@@ -78,8 +56,9 @@ public class MultiResolver implements IResolver
      *  @param type The resolver type.
      *  @return The resolver.
      */
-    public IResolver getResolveR(Class<? extends IResolver> type)
+    @SuppressWarnings("unchecked")
+    public <T extends IResolver> T getResolver(Class<T> type)
     {
-        return resolvers.get(type);
+        return (T) resolvers.get(type);
     }
 }

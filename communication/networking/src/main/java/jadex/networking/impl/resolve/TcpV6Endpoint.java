@@ -1,8 +1,13 @@
 package jadex.networking.impl.resolve;
 
 
+import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import jadex.common.SUtil;
+import jadex.networking.impl.NetworkFeature;
 
 /**
  *  Address for a TCP endpoint using IPv6.
@@ -28,10 +33,34 @@ public class TcpV6Endpoint implements ITcpEndpoint
      *  @param address IP address used for the endpoint.
      *  @param port Port used for the endpoint.
      */
-    public TcpV6Endpoint(Inet6Address address, int port)
+    public TcpV6Endpoint(Inet6Address address)
     {
         this.address = address;
-        this.port = port;
+        if (address == null)
+            throw new RuntimeException("Host cannot be null: " + address);
+        this.port = NetworkFeature.DEFAULT_TCP_PORT;
+    }
+
+    /**
+     *  Creates a new TCP Endpoint.
+     *  @param address IP address used for the endpoint.
+     *  @param port Port used for the endpoint.
+     */
+    public TcpV6Endpoint(String address)
+    {
+        Inet6Address v6addr = null;
+        try
+        {
+            v6addr = (Inet6Address) InetAddress.getByName(address);
+        }
+        catch (UnknownHostException e)
+        {
+            throw SUtil.throwUnchecked(e);
+        }
+        if (v6addr == null)
+            throw new RuntimeException("Host cannot be resolved: " + address);
+        this.address = v6addr;
+        this.port = NetworkFeature.DEFAULT_TCP_PORT;
     }
 
     /**
@@ -47,9 +76,10 @@ public class TcpV6Endpoint implements ITcpEndpoint
      *  Sets the address used to connect using TCP.
      *  @param address The address used to connect using TCP.
      */
-    public void setAddress(Inet6Address address)
+    public TcpV6Endpoint setAddress(Inet6Address address)
     {
         this.address = address;
+        return this;
     }
 
     /**
@@ -65,9 +95,10 @@ public class TcpV6Endpoint implements ITcpEndpoint
      *  Sets the port used to connect using TCP.
      *  @param port The port used to connect using TCP.
      */
-    public void setPort(int port)
+    public TcpV6Endpoint setPort(int port)
     {
         this.port = port;
+        return this;
     }
 
     /**

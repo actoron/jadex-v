@@ -32,6 +32,7 @@ jadex-deploy-vars.sh
 /benchmark/execution/.benchmark_ide
 /benchmark/.venv
 /application/bdi-service/.lwjgl/
+.vscode/
 .vscode/settings.json
 /application/micro/generated_images
 /benchmark/llm/analysis_output

@@ -1489,6 +1489,46 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 		ISerializationServices.get().encode(baos, ComponentManager.get().getClassLoader(), message);
 		ipc.sendMessage(secid, baos.toByteArray());
 	}
+
+	/**
+	 *  Request reencryption by source.
+	 *  
+	 *  @param source Source of the content.
+	 *  @param content The encrypted content.
+	 *  @return Reply of decryption request, may be exception.
+	 */
+	/*protected IFuture<byte[]> requestReencryption(String platformname, byte[] content)
+	{
+		//if(debug)
+			//System.out.println("reencryption: "+platformname+" "+Arrays.hashCode(content) + " " + currentcryptosuites.get(platformname));
+		expireCryptosuite(platformname);
+		
+		ReencryptionRequest req = new ReencryptionRequest();
+		req.setContent(content);
+		
+		Future<byte[]> ret = new Future<>();
+		ComponentIdentifier source = new ComponentIdentifier("security@" + platformname);
+		agent.getFeature(IMessageFeature.class).sendMessageAndWait(source, req)
+			.addResultListener(agent.getFeature(IExecutionFeature.class).createResultListener(new IResultListener<Object>()
+		{
+			public void resultAvailable(Object result)
+			{
+				if (result instanceof byte[])
+					ret.setResult((byte[]) result);
+				else if (result instanceof Exception)
+					exceptionOccurred((Exception) result);
+				else
+					ret.setException(new IllegalArgumentException("Received unknown reply: " + result));
+			}
+			
+			public void exceptionOccurred(Exception exception)
+			{
+				ret.setException(exception);
+			}
+		}));
+		
+		return ret;
+	}*/
 	
 	//-------- Message Handling -------
 	

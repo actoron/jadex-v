@@ -5,12 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 import jadex.common.SUtil;
-import jadex.core.ComponentIdentifier;
-import jadex.core.IComponentManager;
-import jadex.core.IComponentHandle;
-import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
-import jadex.core.impl.GlobalProcessIdentifier;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.messaging.IIpcFeature;
@@ -23,6 +17,12 @@ import jadex.messaging.SecureExchange;
 import jadex.messaging.impl.ipc.IpcFeature;
 import jadex.messaging.impl.security.SecurityFeature;
 import jadex.serialization.SerializationServices;
+import jadex.core.impl.GlobalProcessIdentifier;
+import jadex.core.impl.Component;
+import jadex.core.impl.ComponentManager;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentHandle;
+import jadex.core.ComponentIdentifier;
 
 public class MessageFeature implements IMessageFeature
 {
@@ -57,32 +57,25 @@ public class MessageFeature implements IMessageFeature
 	{
 		for (ComponentIdentifier receiver : receivers)
 		{
-			if (GlobalProcessIdentifier.getSelf().host().equals(receiver.getGlobalProcessIdentifier().host()))
+			if (GlobalProcessIdentifier.getSelf().host().equals(receiver.getGlobalProcessIdentifier().host()) &&
+			   (GlobalProcessIdentifier.getSelf().pid().equals(receiver.getGlobalProcessIdentifier().pid())))
 			{
-				if (GlobalProcessIdentifier.getSelf().pid().equals(receiver.getGlobalProcessIdentifier().pid()))
+				// Local message
+				IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
+				exta.scheduleStep((comp) ->
 				{
-					// Local message
-					IComponentHandle exta = ComponentManager.get().getComponentHandle(receiver);
-					exta.scheduleStep((comp) ->
-					{
-						((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
-					});
-					// catchEx -> ignore when receiver is ternminated
-				}
-				else
-				{
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), message);
-					SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
-					byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
-					baos = null;
-					IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
-					ipc.sendMessage(receiver, emsg);
-				}
+					((MessageFeature) comp.getFeature(IMessageFeature.class)).messageArrived(null, message);
+				});
 			}
 			else
 			{
-				throw new UnsupportedOperationException("Networking not yet available.");
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				SerializationServices.get().encode(baos, IComponentManager.get().getClassLoader(), message);
+				SecurityFeature sec = (SecurityFeature) IComponentManager.get().getFeature(ISecurityFeature.class);
+				byte[] emsg = sec.encryptAndSign(receiver, baos.toByteArray());
+				baos = null;
+				IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
+				ipc.sendMessage(receiver, emsg);
 			}
 		}
 		return IFuture.DONE;
@@ -216,8 +209,7 @@ public class MessageFeature implements IMessageFeature
 			baos = null;
 			IpcFeature ipc = (IpcFeature) IComponentManager.get().getFeature(IIpcFeature.class);
 			ipc.sendMessage(receiver, emsg);
-		}
-		
+		}	
 		return conversationid;
 	}
 }
