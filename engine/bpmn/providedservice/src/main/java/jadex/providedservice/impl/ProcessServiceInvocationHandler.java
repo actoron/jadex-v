@@ -173,7 +173,7 @@ public class ProcessServiceInvocationHandler  implements InvocationHandler
 		if(pnames!=null)
 		{
 			boolean hasval = false;
-			for(int i=0; i<pnames.length && i<pnames.length && !hasval; i++)
+			for(int i=0; i<pnames.length && !hasval; i++)
 			{
 				hasval |= act.hasInitialPropertyValue(pnames[i]);
 			}
@@ -183,7 +183,7 @@ public class ProcessServiceInvocationHandler  implements InvocationHandler
 			{
 				if(args.length==pnames.length)
 				{
-					for(int i=0; i<pnames.length && i<pnames.length; i++)
+					for(int i=0; i<pnames.length; i++)
 					{
 						thread.setOrCreateParameterValue(pnames[i], args[i]);
 					}
@@ -195,7 +195,7 @@ public class ProcessServiceInvocationHandler  implements InvocationHandler
 			}
 			else
 			{
-				for(int i=0; i<pnames.length && i<pnames.length; i++)
+				for(int i=0; i<pnames.length; i++)
 				{
 					Object val = thread.getPropertyValue(pnames[i]);
 					thread.setOrCreateParameterValue(pnames[i], val);

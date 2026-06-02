@@ -175,6 +175,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 *  Get the result - blocking call.
 	 *  @return The future result.
 	 */
+	@Deprecated
 	public E get(ThreadSuspendable sus)
 	{
 		return get(NONE); 
@@ -1334,6 +1335,7 @@ public class Future<E> implements IFuture<E>, IForwardCommandFuture
 	 *  
 	 *  @deprecated Use delegateTo.
 	 */
+	@Deprecated
 	public void delegate(Future<E> delegate)
 	{
 		delegateTo(delegate);

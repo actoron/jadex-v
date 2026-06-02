@@ -141,9 +141,11 @@ public class PathManager<T>
 		// remove handler with more path parts
 		int maxdepth = getPathDepth(path);
 		res = res.stream().filter(x -> getPathDepth(x)<=maxdepth).collect(Collectors.toList());
-		Collections.sort(new ArrayList<T>(res), (x,y) -> getPathDepth(x)-getPathDepth(y));
+		//Collections.sort(new ArrayList<T>(res), (x,y) -> getPathDepth(x)-getPathDepth(y));
 		
-		return res;
+		List<T> sorted = new ArrayList<>(res);
+		sorted.sort((x, y) -> getPathDepth(x) - getPathDepth(y));
+		return sorted;
 	}
 	
 	// todo: remove per element?!

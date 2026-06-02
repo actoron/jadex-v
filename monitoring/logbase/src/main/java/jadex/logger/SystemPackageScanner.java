@@ -58,6 +58,9 @@ public class SystemPackageScanner
 	                } 
 	                else if(path.endsWith(".jar")) 
 	                {
+                        if(!file.exists())  // can happen in virtual filesystems aka bazel sandbox
+                            continue;
+
 	  	                //String jpath = path.substring(5, path.indexOf("!"));
 	  	                try(JarFile jfile = new JarFile(file))
 	  	                {

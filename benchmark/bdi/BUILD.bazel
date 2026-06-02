@@ -1,0 +1,41 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "benchmark-bdi")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+#load(":deps.bzl", "DEPS")
+
+java_test(
+    name = "bdi_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--fail-if-no-tests",
+        "--select-package", "jadex.benchmark",
+        "--include-classname", ".*",
+    ],
+    deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//monitoring/logbase",
+        "//monitoring/opentelemetry",
+        "//util/collection:collection",
+        "//feature/execution",
+        "//feature/injection",
+        "//benchmark/core",
+        "//util/future",
+        "//engine/bdi",
+        "//application/bdi",
+        "//environment/environment",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ],
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)

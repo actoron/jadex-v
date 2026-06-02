@@ -1,0 +1,18 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "opentelemetry",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//util/future",
+        "//monitoring/logbase"
+    ] + DEPS
+)
+

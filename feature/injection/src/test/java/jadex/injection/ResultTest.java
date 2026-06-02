@@ -142,16 +142,12 @@ public class ResultTest
 			}
 		}).get(TIMEOUT);
 		
-		Map<String, Object>	expected	= new LinkedHashMap<>()
-		{
-			{
-				this.put("field", "fieldvalue");
-				this.put("thefield", "fieldvalue2");
-				this.put("method", "methodvalue");
-				this.put("themethod", "methodvalue2");
-				this.put("mymethod", "methodvalue3");
-			}
-		};
+		Map<String, Object> expected = new LinkedHashMap<>();
+		expected.put("field",     "fieldvalue");
+		expected.put("thefield",  "fieldvalue2");
+		expected.put("method",    "methodvalue");
+		expected.put("themethod", "methodvalue2");
+		expected.put("mymethod",  "methodvalue3");
 		assertEquals(expected, handle.getResults().get(TIMEOUT));
 		
 		// Test get results after termination

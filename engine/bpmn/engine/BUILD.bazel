@@ -1,0 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+#load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "engine",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = [
+        "//util/common",
+        "//util/collection",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//util/javaparser",
+        "//util/classreader",
+        "//util/bytecode",
+        "//serialization/traverser",
+        "//engine/bpmn/model"
+    ] 
+    #+ DEPS,
+)

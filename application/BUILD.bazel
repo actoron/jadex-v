@@ -1,0 +1,5 @@
+load("//feature/configurator:feature.bzl", "feature_group")
+
+feature_group(
+  description="Example applications using different kinds of component types."
+)

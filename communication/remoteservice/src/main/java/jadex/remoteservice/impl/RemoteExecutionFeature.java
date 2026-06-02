@@ -65,22 +65,18 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
 	public static final String RX_DEBUG = "__rx_debug__";
 	
 	/** Commands safe to use with untrusted clients. */
-	@SuppressWarnings("serial")
-	protected static final Set<Class<?>> SAFE_COMMANDS	= Collections.unmodifiableSet(new HashSet<Class<?>>()
-	{{
-		// Unconditional commands
-		add(RemoteFinishedCommand.class);
-		add(RemoteForwardCmdCommand.class);
-		add(RemoteIntermediateResultCommand.class);
-		add(RemotePullCommand.class);
-		add(RemoteBackwardCommand.class);
-		add(RemoteResultCommand.class);
-		add(RemoteTerminationCommand.class);
-
-		// Conditional commands (throwing security exception in execute when not allowed).
-//		add(RemoteSearchCommand.class);
-		add(RemoteMethodInvocationCommand.class);
-	}});
+	protected static final Set<Class<?>> SAFE_COMMANDS =
+    Set.of(
+        RemoteFinishedCommand.class,
+		RemoteForwardCmdCommand.class,
+		RemoteForwardCmdCommand.class,
+		RemoteIntermediateResultCommand.class,
+		RemotePullCommand.class,
+		RemoteBackwardCommand.class,
+		RemoteResultCommand.class,
+		RemoteTerminationCommand.class,
+		RemoteMethodInvocationCommand.class //RemoteSearchCommand.class
+    );
 
 	/** The component. */
 	protected Component component;

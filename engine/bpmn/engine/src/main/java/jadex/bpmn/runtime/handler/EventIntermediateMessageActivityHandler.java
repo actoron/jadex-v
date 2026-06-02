@@ -64,7 +64,7 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 		}
 		else
 		{
-			ret = (ComponentIdentifier)ret;
+			ret = (ComponentIdentifier)cid;
 		}
 		return ret;
 	}

@@ -1,0 +1,67 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "execution",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ["//util/common",
+        "//util/collection",
+        "//util/future",
+        "//engine/core",
+        ] + DEPS,
+)
+
+java_library(
+    name = "execution_fixtures",
+    srcs = glob(["src/testFixtures/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = [":execution",
+        "//util/common",
+        "//util/collection",
+        "//util/future",
+        "//engine/core",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+        "@maven//:org_junit_platform_junit_platform_commons",
+        ] + DEPS,
+)
+
+java_test(
+    name = "execution_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":execution",
+        ":execution_fixtures",
+        "//util/common:common",
+        "//engine/core",
+        "//util/future",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+        "@maven//:org_junit_platform_junit_platform_commons",
+    ],
+    runtime_deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//feature/execution",
+        "//util/future",
+        "//feature/result",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
+

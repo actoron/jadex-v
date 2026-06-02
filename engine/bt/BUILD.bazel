@@ -1,0 +1,51 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "bt",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"]),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ["//util/common:common",
+        "//util/collection:collection",
+        "//serialization/traverser",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+    ] + DEPS,
+)
+
+java_test(
+    name = "bt_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    javacopts = ["--release", "21"],
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.bt",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":bt",
+        "//util/common:common",
+        "//util/collection:collection",
+        "//serialization/traverser",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//feature/result",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+

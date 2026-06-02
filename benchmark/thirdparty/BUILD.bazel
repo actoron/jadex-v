@@ -1,0 +1,46 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "benchmark-thirdparty")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_import")
+
+load(":deps.bzl", "DEPS")
+
+java_import(
+    name = "jason",
+    jars = ["libs/jason-3.2.0-SNAPSHOT.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_test(
+    name = "thirdparty_test",
+    srcs = glob(["src/test/java/**/*.java"], 
+        exclude = ["src/test/java/**/akka/*",],),
+    data = glob(["**/*.asl"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--fail-if-no-tests",
+        "--select-package", "benchmark.jason",
+        "--include-classname", ".*",
+    ],
+    jvm_flags = [
+        "-Dbenchmark.asl.dir=$$TEST_SRCDIR/__main__/benchmark/thirdparty",
+    ],
+    deps = [
+        "@bazel_tools//tools/java/runfiles",
+        "//util/common",
+        "//util/future",
+        "//benchmark/core",  
+        ":jason", 
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+

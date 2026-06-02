@@ -1,0 +1,101 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Bazel Run",
+      "type": "shell",
+      "command": "bazel run //dein/package:target",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Bazel Run (Debug)",
+      "type": "shell",
+      "command": "bazel run //dein/package:target -- --jvm_flags='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": ".*Listening for transport dt_socket.*"
+        }
+      }
+    }
+  ],
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Attach to Bazel",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "timeout": 30000,
+      "sourcePaths": [
+        "${workspaceFolder}/benchmark/core/src/main/java",
+        "${workspaceFolder}/llm/src/main/java",
+        "${workspaceFolder}/communication/remoteservice/src/main/java",
+        "${workspaceFolder}/communication/networking/src/main/java",
+        "${workspaceFolder}/communication/messaging/src/main/java",
+        "${workspaceFolder}/communication/serialization/src/main/java",
+        "${workspaceFolder}/micro/lib/src/main/java",
+        "${workspaceFolder}/feature/result/src/main/java",
+        "${workspaceFolder}/feature/autostart/src/main/java",
+        "${workspaceFolder}/feature/errorhandling/src/main/java",
+        "${workspaceFolder}/feature/execution/src/main/java",
+        "${workspaceFolder}/feature/injection/src/main/java",
+        "${workspaceFolder}/feature/simulation/src/main/java",
+        "${workspaceFolder}/util/common/src/main/java",
+        "${workspaceFolder}/util/future/src/main/java",
+        "${workspaceFolder}/util/javaparser/src/main/java",
+        "${workspaceFolder}/util/nativetools/src/main/java",
+        "${workspaceFolder}/util/idgenerator/src/main/java",
+        "${workspaceFolder}/util/bytecode/src/main/java",
+        "${workspaceFolder}/util/collection/src/main/java",
+        "${workspaceFolder}/util/classreader/src/main/java",
+        "${workspaceFolder}/util/bean/src/main/java",
+        "${workspaceFolder}/engine/bdi/src/main/java",
+        "${workspaceFolder}/engine/core/src/main/java",
+        "${workspaceFolder}/engine/bpmn/model/src/main/java",
+        "${workspaceFolder}/engine/bpmn/providedservice/src/main/java",
+        "${workspaceFolder}/engine/bpmn/requiredservice/src/main/java",
+        "${workspaceFolder}/engine/bpmn/engine/src/main/java",
+        "${workspaceFolder}/engine/bt/src/main/java",
+        "${workspaceFolder}/core/engine/src/main/java",
+        "${workspaceFolder}/environment/environment/src/main/java",
+        "${workspaceFolder}/service/registry/src/main/java",
+        "${workspaceFolder}/service/provided/src/main/java",
+        "${workspaceFolder}/service/nfproperty/src/main/java",
+        "${workspaceFolder}/service/publishjetty/src/main/java",
+        "${workspaceFolder}/service/publish/src/main/java",
+        "${workspaceFolder}/service/required/src/main/java",
+        "${workspaceFolder}/application/micro/src/main/java",
+        "${workspaceFolder}/application/bdi/src/main/java",
+        "${workspaceFolder}/application/micro-nfp/src/main/java",
+        "${workspaceFolder}/application/bpmn/src/main/java",
+        "${workspaceFolder}/application/bdi-service/src/main/java",
+        "${workspaceFolder}/application/bt/src/main/java",
+        "${workspaceFolder}/monitoring/logbase/src/main/java",
+        "${workspaceFolder}/monitoring/opentelemetry/src/main/java",
+        "${workspaceFolder}/monitoring/fluentd/src/main/java",
+        "${workspaceFolder}/monitoring/graylog/src/main/java",
+        "${workspaceFolder}/monitoring/log4j/src/main/java",
+        "${workspaceFolder}/serialization/json/src/main/java",
+        "${workspaceFolder}/serialization/binary/src/main/java",
+        "${workspaceFolder}/serialization/traverser/src/main/java"
+      ]
+    }
+  ]
+}

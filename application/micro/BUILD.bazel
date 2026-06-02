@@ -1,0 +1,111 @@
+
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "application-micro")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_binary")
+
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+load(":deps.bzl", "DEPS")
+
+java_binary(
+    name = "helloworld",
+    main_class = "jadex.micro.helloworld.HelloWorldAgent",
+    runtime_deps = [":micro"] + DEPS,
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":helloworld_deploy.jar"],
+    package_dir = "/app",
+)
+
+oci_image(
+    name = "helloworld_image",
+    base = "@distroless_java21",
+    tars = [":app_layer"],
+    entrypoint = [
+        "java",
+        "-jar",
+        "/app/helloworld_deploy.jar",
+    ],
+)
+
+oci_load(
+    name = "helloworld_tar",
+    image = ":helloworld_image",
+    repo_tags = ["helloworld:latest"],
+)
+
+java_library(
+    name = "micro",
+    srcs = glob(["src/main/java/**/*.java",]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = [
+        "//util/common",
+        "//util/collection",
+        "//util/classreader",
+        "//util/future",
+        "//feature/autostart",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//feature/result",
+        "//feature/simulation",
+        "//llm",
+        "//monitoring/logbase",
+        "//service/provided",
+        "//service/required",
+        "//service/publish",
+        "//service/publishjetty",
+        "//micro/lib"
+    ] + DEPS,
+)
+
+java_test(
+    name = "micro_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    javacopts = ["--release", "21"],
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.micro.autostart",
+        "--fail-if-no-tests",
+        "--include-classname", ".*",
+    ],
+    deps = [
+        ":micro",
+        "//util/common",
+        "//util/collection",
+        "//util/classreader",
+        "//util/future",
+        "//feature/autostart",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//feature/result",
+        "//feature/simulation",
+        "//llm",
+        "//monitoring/logbase",
+        "//service/provided",
+        "//service/required",
+        "//service/publish",
+        "//service/publishjetty",
+        "//micro/lib",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
+
+    

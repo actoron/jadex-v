@@ -22,7 +22,7 @@ public class TestFeatureStart
 		@OnStart
 		protected void onStart(IComponent agent)
 		{
-			System.out.println("Created dynamic autostart agent: " + agent.getId());
+			//System.out.println("Created dynamic autostart agent: " + agent.getId());
 			latch.countDown();
 		}
 	}
@@ -39,7 +39,7 @@ public class TestFeatureStart
 
         IComponentManager.get().run((IThrowingConsumer<IComponent>)agent -> 
         {
-            System.out.println("Created agent: " + agent.getId());
+            System.out.println("Created agent: " + agent.getId()+" "+agent.getPojo().getClass().getName());
         });
     }
 

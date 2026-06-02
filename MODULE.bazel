@@ -1,0 +1,120 @@
+
+module(
+    name = "jadex-v",
+    version = "1.0",
+)
+
+bazel_dep(name = "rules_java", version = "9.1.0")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_oci", version = "2.3.0")
+bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_python", version = "1.7.0")
+
+java_toolchains = use_extension(
+    "@rules_java//java:extensions.bzl",
+    "toolchains",
+)
+use_repo(java_toolchains, "local_jdk")
+
+register_toolchains("@rules_java//toolchains:all")
+
+maven = use_extension(
+    "@rules_jvm_external//:extensions.bzl",
+    "maven",
+)
+
+maven.install(
+    name = "maven",
+    artifacts = [
+
+"com.badlogicgames.gdx:gdx:1.12.1",
+"com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1",
+"com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop",
+"com.cronutils:cron-utils:9.2.1",
+"com.eclipsesource.minimal-json:minimal-json:0.9.5",
+"com.fasterxml.jackson.core:jackson-core:2.15.2",
+"com.fasterxml.jackson.core:jackson-databind:2.15.2",
+"com.github.docker-java:docker-java-api:3.7.1",
+"com.google.auto.service:auto-service:1.1.1",
+"com.google.auto.service:auto-service-annotations:1.1.1",
+"com.squareup:javapoet:1.13.0",
+"dev.langchain4j:langchain4j:1.14.1",
+"dev.langchain4j:langchain4j-core:1.14.1",
+"dev.langchain4j:langchain4j-google-ai-gemini:1.14.1",
+"dev.langchain4j:langchain4j-mistral-ai:1.14.1",
+"dev.langchain4j:langchain4j-ollama:1.14.1",
+"dev.langchain4j:langchain4j-open-ai:1.14.1",
+"dev.langchain4j:langchain4j-open-ai-official:1.14.1-beta24",
+"io.opentelemetry:opentelemetry-api:1.44.1",
+"io.opentelemetry:opentelemetry-exporter-otlp:1.44.1",
+"io.opentelemetry:opentelemetry-sdk:1.44.1",
+"io.opentelemetry:opentelemetry-sdk-common:1.44.1",
+"io.opentelemetry:opentelemetry-sdk-logs:1.44.1",
+"io.rest-assured:rest-assured:6.0.0",
+"jakarta.servlet:jakarta.servlet-api:6.1.0",
+"jakarta.websocket:jakarta.websocket-api:2.3.0-M2",
+"jakarta.websocket:jakarta.websocket-client-api:2.3.0-M2",
+"jakarta.ws.rs:jakarta.ws.rs-api:4.0.0",
+"javax.json:javax.json-api:1.1.4",
+"net.bytebuddy:byte-buddy:1.17.8",
+"net.cinnom:nano-cuckoo:3.0.2",
+"net.java.dev.jna:jna:5.13.0",
+"net.java.dev.jna:jna-platform:5.13.0",
+"net.sf.ingenias:jade:4.3",
+"org.apache.logging.log4j:log4j-api:3.0.0-beta2",
+"org.apache.logging.log4j:log4j-core:3.0.0-beta2",
+"org.bouncycastle:bcpkix-jdk18on:1.80",
+"org.bouncycastle:bcprov-jdk18on:1.80",
+"org.eclipse.jetty:jetty-server:11.0.26",
+"org.eclipse.jetty:jetty-servlet:11.0.26",
+"org.eclipse.jetty:jetty-util:11.0.26",
+"org.eclipse.jetty.websocket:websocket-jetty-api:11.0.26",
+"org.eclipse.jetty.websocket:websocket-jetty-server:11.0.26",
+"org.fluentd:fluent-logger:0.3.4",
+"org.glassfish:javax.json:1.1.4",
+"org.glassfish.tyrus:tyrus-client:2.2.2",
+"org.glassfish.tyrus:tyrus-container-grizzly-client:2.2.2",
+"org.glassfish.tyrus:tyrus-project:2.2.2",
+"org.graylog2:gelfclient:1.5.1",
+"org.graylog2:gelfj:1.1.16",
+"org.hamcrest:hamcrest:3.0",
+"org.mockito:mockito-core:5.2.0",
+"org.mockito:mockito-inline:5.2.0",
+"org.mockito:mockito-junit-jupiter:5.12.0",
+"org.ow2.asm:asm:9.9",
+"org.ow2.asm:asm-commons:9.9",
+"org.ow2.asm:asm-tree:9.9",
+"org.ow2.asm:asm-util:9.9",
+"org.quartz-scheduler:quartz:2.5.2",
+"org.slf4j:slf4j-simple:2.0.13",
+"org.testcontainers:testcontainers:2.0.3",
+"org.testcontainers:testcontainers-ollama:2.0.3",
+        # shared test deps
+        "org.junit.platform:junit-platform-suite-api:1.10.0",
+        "org.junit.platform:junit-platform-console:1.10.0",
+        "org.junit.jupiter:junit-jupiter-engine:5.10.0",
+        "org.junit.platform:junit-platform-suite-engine:1.10.0",
+    ],
+    repositories = ["https://repo1.maven.org/maven2"],
+)
+
+use_repo(maven, "maven")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "distroless_java21",
+    digest = "sha256:f34fd3e4e2d7a246d764d0614f5e6ffb3a735930723fac4cfc25a72798950262",
+    image = "gcr.io/distroless/java21-debian12",
+    platforms = ["linux/amd64", "linux/arm64"],
+)
+
+use_repo(
+    oci,
+    "distroless_java21",
+    "distroless_java21_linux_amd64",
+    "distroless_java21_linux_arm64",
+)
+

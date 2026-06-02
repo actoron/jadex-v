@@ -1,0 +1,49 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "required",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = [
+        "//util/common",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//service/provided",
+        "//monitoring/logbase",
+    ] + DEPS
+)
+
+java_test(
+    name = "required_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.requiredservice",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":required",
+        "//util/common",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//service/provided",
+        "//monitoring/logbase",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ],
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)

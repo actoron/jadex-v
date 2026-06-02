@@ -1,0 +1,2 @@
+# .bazelrc
+common --symlink_prefix=.bazel/

@@ -1,0 +1,59 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+#load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "bdi",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = [
+        "//util/common:common",
+        "//util/collection:collection",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//util/javaparser",
+        "//util/classreader",
+        "//util/bytecode",
+    ] 
+    #+ DEPS,
+)
+
+java_test(
+    name = "bdi_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    javacopts = ["--release", "21"],
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.bdi",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":bdi",
+        "//feature/injection:injection_testfixtures",
+        "//util/common:common",
+        "//util/collection:collection",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//util/javaparser",
+        "//util/classreader",
+        "//util/bytecode",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] 
+    #+ DEPS
+    ,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+

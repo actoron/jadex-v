@@ -1,0 +1,258 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_binary")
+
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+#load(":deps.bzl", "DEPS")
+
+filegroup(
+    name = "feature_sources",
+    srcs = glob(
+        ["**/src/main/resources/META-INF/services/**"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "autostart",
+    values = {
+        "define": "autostart=true",
+    },
+)
+
+config_setting(
+    name = "result",
+    values = {
+        "define": "result=true",
+    },
+)
+
+config_setting(
+    name = "simulation",
+    values = {
+        "define": "simulation=false",
+    },
+)
+
+config_setting(
+    name = "llm",
+    values = {
+        "define": "llm=false",
+    },
+)
+
+config_setting(
+    name = "micro",
+    values = {
+        "define": "micro=true",
+    },
+)
+
+config_setting(
+    name = "bdi",
+    values = {
+        "define": "bdi=false",
+    },
+)
+
+config_setting(
+    name = "bt",
+    values = {
+        "define": "bt=false",
+    },
+)
+
+config_setting(
+    name = "bpmn",
+    values = {
+        "define": "bpmn=false",
+    },
+)
+
+config_setting(
+    name = "messaging",
+    values = {
+        "define": "messaging=true",
+    },
+)
+
+config_setting(
+    name = "networking",
+    values = {
+        "define": "networking=true",
+    },
+)
+
+config_setting(
+    name = "remoteservice",
+    values = {
+        "define": "remoteservice=true",
+    },
+)
+
+config_setting(
+    name = "environment",
+    values = {
+        "define": "environment=false",
+    },
+)
+
+config_setting(
+    name = "service_provided",
+    values = {
+        "define": "service_provided=true",
+    },
+)
+
+config_setting(
+    name = "service_required",
+    values = {
+        "define": "service_required=true",
+    },
+)
+
+config_setting(
+    name = "service_publish",
+    values = {
+        "define": "service_publish=false",
+    },
+)
+
+config_setting(
+    name = "service_publish_jetty",
+    values = {
+        "define": "service_publish_jetty=false",
+    },
+)
+
+config_setting(
+    name = "service_registry",
+    values = {
+        "define": "service_registry=false",
+    },
+)
+
+config_setting(
+    name = "application_micro",
+    values = {
+        "define": "application_micro=true",
+    },
+)
+
+config_setting(
+    name = "application_bdi",
+    values = {
+        "define": "application_bdi=false",
+    },
+)
+
+config_setting(
+    name = "application_bt",
+    values = {
+        "define": "application_bt=false",
+    },
+)
+
+config_setting(
+    name = "application_bpmn",
+    values = {
+        "define": "application_bpmn=false",
+    },
+)
+
+java_library(
+    name = "feature_bundle",
+    deps =
+        select({
+            ":autostart": ["//features/autostart"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":result": ["//features/result"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":simulation": ["//features/simulation"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":llm": ["//llm"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":micro": ["//engine/micro"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":bdi": ["//engine/bdi"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":bt": ["//engine/bt"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":bpmn": ["//engine/bpmn"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":messaging": ["//communication/messaging"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":networking": ["//communication/networking"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":remoteservice": ["//communication/remoteservice"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":environment": ["//environment/environment"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":service_provided": ["//service/service_provided"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":service_required": ["//service/service_required"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":service_publish": ["//service/service_publish"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":service_publish_jetty": ["//service/service_publish_jetty"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":service_registry": ["//service/service_registry"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":application_micro": ["//application/micro"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":application_bdi": ["//application/bdi"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":application_bt": ["//application/bt"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":application_bpmn": ["//application/bpmn"],
+            "//conditions:default": [],
+        }),
+)
+
+java_binary(
+    name = "jadex",
+    runtime_deps = [":feature_bundle"],
+    main_class = "micro.helloworld.HelloWorldAgent",
+)
+

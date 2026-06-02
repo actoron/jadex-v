@@ -1,0 +1,123 @@
+#!/bin/bash
+# Generates the maven.install artifacts list in MODULE.bazel
+# from all MAVEN_DEPS defined in deps.bzl files across the project.
+set -e
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULE_FILE="$ROOT_DIR/MODULE.bazel"
+
+echo "Listing all .bzl files..."
+find "$ROOT_DIR" -name "*.bzl" \
+    -not -path "*/external/*" \
+    -not -path "*/.cache/*" \
+    -not -path "*/bazel-*"
+
+echo ""
+echo "Collecting MAVEN_DEPS from all deps.bzl files..."
+
+# Collect all Maven artifacts from deps.bzl files
+PLAIN_ARTIFACTS=""
+CLASSIFIER_ARTIFACTS=""
+
+while IFS= read -r -d '' deps_file; do
+    module_path=$(dirname "$deps_file" | sed "s|$ROOT_DIR/||")
+
+    # Extract Maven coordinates from deps.bzl
+    result=$(python3 - "$deps_file" <<'EOF'
+import sys
+import re
+
+with open(sys.argv[1]) as f:
+    content = f.read()
+
+matches = re.findall(
+    r'([A-Z0-9_]+)\s*(?:\+?=)\s*\[(.*?)\]',
+    content,
+    re.DOTALL
+)
+
+plain = []
+classifier = []
+
+for varname, block in matches:
+    items = re.findall(
+        r'["\']([^"\']+:[^"\']+:[^"\']+(?::[^"\']+)?)["\']',
+        block
+    )
+    for item in items:
+        parts = item.split(":")
+        if len(parts) == 3:
+            plain.append(item)
+        elif len(parts) == 4:
+            classifier.append(item)
+
+for item in plain:
+    print("PLAIN:" + item)
+for item in classifier:
+    print("CLASSIFIER:" + item)
+EOF
+)
+
+    if [ -n "$result" ]; then
+        echo "  Found in $module_path/deps.bzl:"
+        while IFS= read -r line; do
+            if [[ "$line" == PLAIN:* ]]; then
+                artifact="${line#PLAIN:}"
+                echo "    - $artifact"
+                PLAIN_ARTIFACTS="$PLAIN_ARTIFACTS        \"$artifact\",\n"
+            elif [[ "$line" == CLASSIFIER:* ]]; then
+                artifact="${line#CLASSIFIER:}"
+                echo "    - $artifact (with classifier)"
+                IFS=':' read -r group art version cls <<< "$artifact"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS\nmaven.artifact(\n"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS    group = \"$group\",\n"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS    artifact = \"$art\",\n"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS    version = \"$version\",\n"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS    classifier = \"$cls\",\n"
+                CLASSIFIER_ARTIFACTS="$CLASSIFIER_ARTIFACTS)\n"
+            fi
+        done <<< "$result"
+    fi
+done < <(find "$ROOT_DIR" -name "deps.bzl" \
+    -not -path "*/external/*" \
+    -not -path "*/.cache/*" \
+    -not -path "*/bazel-*" \
+    -print0)
+
+# Remove duplicates and sort
+PLAIN_ARTIFACTS=$(echo -e "$PLAIN_ARTIFACTS" | sort -u)
+
+# Generate MODULE.bazel
+cat > "$MODULE_FILE" << MODULEEOF
+bazel_dep(name = "rules_java", version = "9.1.0")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+
+java_toolchains = use_extension(
+    "@rules_java//java:extensions.bzl",
+    "toolchains",
+)
+use_repo(java_toolchains, "local_jdk")
+register_toolchains("@rules_java//toolchains:all")
+
+maven = use_extension(
+    "@rules_jvm_external//:extensions.bzl",
+    "maven",
+)
+maven.install(
+    artifacts = [
+$(echo -e "$PLAIN_ARTIFACTS")
+        # Shared test dependencies
+        "org.junit.jupiter:junit-jupiter-api:5.10.0",
+        "org.junit.jupiter:junit-jupiter-engine:5.10.0",
+        "org.junit.platform:junit-platform-launcher:1.10.0",
+        "org.junit.platform:junit-platform-console:1.10.0",
+        "org.junit.platform:junit-platform-suite-engine:1.10.0",
+        "org.junit.platform:junit-platform-suite-api:1.10.0",
+    ],
+    repositories = ["https://repo1.maven.org/maven2"],
+)
+$(echo -e "$CLASSIFIER_ARTIFACTS")
+use_repo(maven, "maven")
+MODULEEOF
+
+echo ""
+echo "MODULE.bazel updated successfully!"

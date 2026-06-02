@@ -1,0 +1,1075 @@
+{
+  "application": {
+    "name": "application",
+    "description": "Example applications using different kinds of component types.",
+    "type": "or",
+    "features": [
+      {
+        "name": "application-bdi",
+        "category": "application",
+        "description": "",
+        "path": "application/bdi",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "engine/bdi",
+          "environment/environment"
+        ],
+        "external_deps": [
+          "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1",
+          "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop",
+          "com.badlogicgames.gdx:gdx:1.12.1"
+        ]
+      },
+      {
+        "name": "application-bdi-service",
+        "category": "application",
+        "description": "",
+        "path": "application/bdi-service",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "engine/bdi",
+          "service/provided",
+          "service/required",
+          "serialization/traverser",
+          "environment/environment",
+          "application/bdi",
+          "application/micro"
+        ],
+        "external_deps": [
+          "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1",
+          "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop",
+          "com.badlogicgames.gdx:gdx:1.12.1",
+          "dev.langchain4j:langchain4j-core:1.14.1",
+          "dev.langchain4j:langchain4j:1.14.1"
+        ]
+      },
+      {
+        "name": "application-bpmn",
+        "category": "application",
+        "description": "",
+        "path": "application/bpmn",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "engine/bpmn/engine",
+          "service/required",
+          "service/provided",
+          "engine/bpmn/requiredservice",
+          "engine/bpmn/providedservice",
+          "environment/environment"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "application-bt",
+        "category": "application",
+        "description": "",
+        "path": "application/bt",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/classreader",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "engine/bt",
+          "feature/simulation",
+          "monitoring/logbase",
+          "service/provided",
+          "service/required",
+          "service/publish",
+          "service/publishjetty",
+          "environment/environment",
+          "monitoring/opentelemetry"
+        ],
+        "external_deps": [
+          "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1",
+          "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop",
+          "com.badlogicgames.gdx:gdx:1.12.1"
+        ]
+      },
+      {
+        "name": "application-micro",
+        "category": "application",
+        "description": "",
+        "path": "application/micro",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/classreader",
+          "util/future",
+          "feature/autostart",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "feature/result",
+          "feature/simulation",
+          "llm",
+          "monitoring/logbase",
+          "service/provided",
+          "service/required",
+          "service/publish",
+          "service/publishjetty",
+          "micro/lib"
+        ],
+        "external_deps": [
+          "com.cronutils:cron-utils:9.2.1",
+          "dev.langchain4j:langchain4j-google-ai-gemini:1.14.1",
+          "dev.langchain4j:langchain4j-mistral-ai:1.14.1",
+          "dev.langchain4j:langchain4j-ollama:1.14.1",
+          "dev.langchain4j:langchain4j-open-ai-official:1.14.1-beta24",
+          "dev.langchain4j:langchain4j-open-ai:1.14.1",
+          "dev.langchain4j:langchain4j:1.14.1",
+          "dev_langchain4j_langchain4j_core:1.14.1",
+          "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0",
+          "org.quartz-scheduler:quartz:2.5.2",
+          "org.slf4j:slf4j-simple:2.0.13"
+        ]
+      }
+    ]
+  },
+  "benchmark": {
+    "name": "benchmark",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "benchmark-bdi",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/bdi",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "monitoring/opentelemetry",
+          "util/collection",
+          "feature/execution",
+          "feature/injection",
+          "benchmark/core",
+          "util/future",
+          "engine/bdi",
+          "application/bdi",
+          "environment/environment"
+        ],
+        "external_deps": [
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "benchmark-bpmn",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/bpmn",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "util/collection",
+          "feature/execution",
+          "benchmark/core",
+          "engine/bpmn/engine",
+          "util/future",
+          "feature/result"
+        ],
+        "external_deps": [
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "benchmark-bt",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/bt",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "monitoring/opentelemetry",
+          "util/collection",
+          "feature/execution",
+          "feature/injection",
+          "benchmark/core",
+          "util/future",
+          "engine/bt",
+          "application/bt",
+          "environment/environment"
+        ],
+        "external_deps": [
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "benchmark-core",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/core",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "monitoring/opentelemetry",
+          "util/collection",
+          "feature/execution"
+        ],
+        "external_deps": [
+          "com.eclipsesource.minimal-json:minimal-json:0.9.5",
+          "io.opentelemetry:opentelemetry-api:1.44.1",
+          "io.opentelemetry:opentelemetry-sdk:1.44.1"
+        ]
+      },
+      {
+        "name": "benchmark-execution",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/execution",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "monitoring/opentelemetry",
+          "util/collection",
+          "feature/execution",
+          "benchmark/core",
+          "util/future"
+        ],
+        "external_deps": [
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "benchmark-micro",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/micro",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "monitoring/logbase",
+          "monitoring/opentelemetry",
+          "util/collection",
+          "feature/execution",
+          "feature/injection",
+          "benchmark/core",
+          "util/future"
+        ],
+        "external_deps": [
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "benchmark-thirdparty",
+        "category": "benchmark",
+        "description": "",
+        "path": "benchmark/thirdparty",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "benchmark/core"
+        ],
+        "external_deps": [
+          "javax.json:javax.json-api:1.1.4",
+          "net.sf.ingenias:jade:4.3",
+          "org.glassfish:javax.json:1.1.4",
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      }
+    ]
+  },
+  "bpmn": {
+    "name": "bpmn",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "engine",
+        "category": "bpmn",
+        "description": "",
+        "path": "engine/bpmn/engine",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "util/javaparser",
+          "util/classreader",
+          "util/bytecode",
+          "serialization/traverser",
+          "engine/bpmn/model"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "model",
+        "category": "bpmn",
+        "description": "",
+        "path": "engine/bpmn/model",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "engine/core",
+          "util/future",
+          "util/javaparser",
+          "util/classreader",
+          "serialization/traverser",
+          "util/idgenerator"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "providedservice",
+        "category": "bpmn",
+        "description": "",
+        "path": "engine/bpmn/providedservice",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "engine/core",
+          "util/future",
+          "util/javaparser",
+          "util/classreader",
+          "serialization/traverser",
+          "util/idgenerator",
+          "util/bytecode",
+          "feature/execution",
+          "engine/bpmn/model",
+          "feature/injection",
+          "communication/serialization",
+          "service/provided",
+          "engine/bpmn/engine"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "requiredservice",
+        "category": "bpmn",
+        "description": "",
+        "path": "engine/bpmn/requiredservice",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "engine/core",
+          "util/future",
+          "util/javaparser",
+          "util/classreader",
+          "util/idgenerator",
+          "util/bytecode",
+          "feature/execution",
+          "engine/bpmn/model",
+          "feature/injection",
+          "communication/serialization",
+          "service/provided",
+          "engine/bpmn/engine",
+          "service/required"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "communication": {
+    "name": "communication",
+    "description": "Inter-process and remote communication capabilities.",
+    "type": "and",
+    "features": [
+      {
+        "name": "messaging",
+        "category": "communication",
+        "description": "",
+        "path": "communication/messaging",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "communication/serialization",
+          "util/collection"
+        ],
+        "external_deps": [
+          "net.java.dev.jna:jna-platform:5.13.0",
+          "net.java.dev.jna:jna:5.13.0",
+          "org.bouncycastle:bcpkix-jdk18on:1.80",
+          "org.bouncycastle:bcprov-jdk18on:1.80"
+        ]
+      },
+      {
+        "name": "networking",
+        "category": "communication",
+        "description": "",
+        "path": "communication/networking",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "util/bytecode",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "service/provided",
+          "communication/messaging"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "remoteservice",
+        "category": "communication",
+        "description": "",
+        "path": "communication/remoteservice",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "util/bytecode",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "service/provided",
+          "communication/serialization",
+          "util/collection",
+          "communication/messaging"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "serialization",
+        "category": "communication",
+        "description": "",
+        "path": "communication/serialization",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "serialization/traverser",
+          "engine/core",
+          "serialization/json",
+          "serialization/binary"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "engine": {
+    "name": "engine",
+    "description": "Engines for different active component types such as goal driven (BDI) or behavior-tree schemas.",
+    "type": "or",
+    "features": [
+      {
+        "name": "bdi",
+        "category": "engine",
+        "description": "",
+        "path": "engine/bdi",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "util/javaparser",
+          "util/classreader",
+          "util/bytecode"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "bt",
+        "category": "engine",
+        "description": "",
+        "path": "engine/bt",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "serialization/traverser",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection"
+        ],
+        "external_deps": [
+          "org.mockito:mockito-core:5.2.0",
+          "org.mockito:mockito-inline:5.2.0",
+          "org.mockito:mockito-junit-jupiter:5.12.0",
+          "org.ow2.asm:asm-commons:9.9",
+          "org.ow2.asm:asm:9.9"
+        ]
+      },
+      {
+        "name": "core",
+        "category": "engine",
+        "description": "",
+        "path": "engine/core",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "serialization/traverser",
+          "util/future",
+          "util/idgenerator"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "environment": {
+    "name": "environment",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "envi",
+        "category": "environment",
+        "description": "Environment module for agents Handles runtime abstraction and environment interactions",
+        "path": "environment/environment",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "feature": {
+    "name": "feature",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "autostart",
+        "category": "feature",
+        "description": "",
+        "path": "feature/autostart",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "util/javaparser",
+          "serialization/traverser"
+        ],
+        "external_deps": [
+          "com.google.auto.service:auto-service-annotations:1.1.1",
+          "com.google.auto.service:auto-service:1.1.1"
+        ]
+      },
+      {
+        "name": "configurator",
+        "category": "feature",
+        "description": "",
+        "path": "feature/configurator",
+        "kind": "feature",
+        "deps": [],
+        "external_deps": []
+      },
+      {
+        "name": "execution",
+        "category": "feature",
+        "description": "",
+        "path": "feature/execution",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/future",
+          "engine/core"
+        ],
+        "external_deps": [
+          "net.bytebuddy:byte-buddy:1.17.8"
+        ]
+      },
+      {
+        "name": "featuretest",
+        "category": "feature",
+        "description": "",
+        "path": "feature/featuretest",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "feature/execution",
+          "util/future"
+        ],
+        "external_deps": [
+          "@maven//:org_junit_platform_junit_platform_commons",
+          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "org.junit.platform:junit-platform-suite-api:1.10.0"
+        ]
+      },
+      {
+        "name": "injection",
+        "category": "feature",
+        "description": "",
+        "path": "feature/injection",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "util/collection",
+          "engine/core",
+          "feature/execution"
+        ],
+        "external_deps": [
+          "org.ow2.asm:asm-commons:9.9",
+          "org.ow2.asm:asm-tree:9.9",
+          "org.ow2.asm:asm-util:9.9",
+          "org.ow2.asm:asm:9.9"
+        ]
+      },
+      {
+        "name": "result",
+        "category": "feature",
+        "description": "",
+        "path": "feature/result",
+        "kind": "feature",
+        "deps": [
+          "util/future",
+          "engine/core"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "simulation",
+        "category": "feature",
+        "description": "",
+        "path": "feature/simulation",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "feature/execution",
+          "util/future",
+          "engine/core"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "micro": {
+    "name": "micro",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "lib",
+        "category": "micro",
+        "description": "",
+        "path": "micro/lib",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/classreader",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "service/provided",
+          "service/required"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "monitoring": {
+    "name": "monitoring",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "log4j",
+        "category": "monitoring",
+        "description": "",
+        "path": "monitoring/log4j",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "feature/execution",
+          "util/future",
+          "monitoring/logbase"
+        ],
+        "external_deps": [
+          "org.apache.logging.log4j:log4j-core:3.0.0-beta2"
+        ]
+      },
+      {
+        "name": "logbase",
+        "category": "monitoring",
+        "description": "",
+        "path": "monitoring/logbase",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "opentelemetry",
+        "category": "monitoring",
+        "description": "",
+        "path": "monitoring/opentelemetry",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "util/future",
+          "monitoring/logbase"
+        ],
+        "external_deps": [
+          "io.opentelemetry:opentelemetry-api:1.44.1",
+          "io.opentelemetry:opentelemetry-exporter-otlp:1.44.1",
+          "io.opentelemetry:opentelemetry-sdk-common:1.44.1",
+          "io.opentelemetry:opentelemetry-sdk-logs:1.44.1",
+          "io.opentelemetry:opentelemetry-sdk:1.44.1"
+        ]
+      }
+    ]
+  },
+  "serialization": {
+    "name": "serialization",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "binary",
+        "category": "serialization",
+        "description": "",
+        "path": "serialization/binary",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "serialization/traverser"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "json",
+        "category": "serialization",
+        "description": "",
+        "path": "serialization/json",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "serialization/traverser"
+        ],
+        "external_deps": [
+          "com.eclipsesource.minimal-json:minimal-json:0.9.5"
+        ]
+      },
+      {
+        "name": "traverser",
+        "category": "serialization",
+        "description": "",
+        "path": "serialization/traverser",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection"
+        ],
+        "external_deps": []
+      }
+    ]
+  },
+  "service": {
+    "name": "service",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "provided",
+        "category": "service",
+        "description": "",
+        "path": "service/provided",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/javaparser",
+          "util/future",
+          "serialization/traverser",
+          "engine/core",
+          "feature/execution",
+          "feature/injection"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "publish",
+        "category": "service",
+        "description": "",
+        "path": "service/publish",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "util/collection",
+          "serialization/traverser",
+          "util/javaparser",
+          "engine/core",
+          "feature/injection",
+          "feature/execution",
+          "service/provided",
+          "service/required",
+          "serialization/json",
+          "serialization/binary",
+          "communication/serialization"
+        ],
+        "external_deps": [
+          "com.eclipsesource.minimal-json:minimal-json:0.9.5",
+          "io.rest-assured:rest-assured:6.0.0",
+          "jakarta.servlet:jakarta.servlet-api:6.1.0",
+          "jakarta.websocket:jakarta.websocket-api:2.3.0-M2",
+          "jakarta.websocket:jakarta.websocket-client-api:2.3.0-M2",
+          "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0",
+          "org.glassfish.tyrus:tyrus-client:2.2.2",
+          "org.glassfish.tyrus:tyrus-container-grizzly-client:2.2.2",
+          "org.glassfish.tyrus:tyrus-project:2.2.2",
+          "org.hamcrest:hamcrest:3.0"
+        ]
+      },
+      {
+        "name": "publishjetty",
+        "category": "service",
+        "description": "",
+        "path": "service/publishjetty",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "util/collection",
+          "util/javaparser",
+          "serialization/traverser",
+          "engine/core",
+          "feature/injection",
+          "feature/execution",
+          "service/provided",
+          "service/required",
+          "service/publish",
+          "communication/serialization"
+        ],
+        "external_deps": [
+          "com.fasterxml.jackson.core:jackson-core:2.15.2",
+          "com.fasterxml.jackson.core:jackson-databind:2.15.2",
+          "jakarta.servlet:jakarta.servlet-api:6.1.0",
+          "org.eclipse.jetty.websocket:websocket-jetty-api:11.0.26",
+          "org.eclipse.jetty.websocket:websocket-jetty-server:11.0.26",
+          "org.eclipse.jetty:jetty-server:11.0.26",
+          "org.eclipse.jetty:jetty-servlet:11.0.26",
+          "org.eclipse.jetty:jetty-util:11.0.26",
+          "org.glassfish.tyrus:tyrus-client:2.2.2"
+        ]
+      },
+      {
+        "name": "registry",
+        "category": "service",
+        "description": "",
+        "path": "service/registry",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "communication/serialization",
+          "util/collection",
+          "micro/lib",
+          "util/classreader",
+          "feature/injection",
+          "service/provided",
+          "service/required",
+          "feature/autostart",
+          "communication/remoteservice",
+          "communication/messaging",
+          "service/publish"
+        ],
+        "external_deps": [
+          "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
+        ]
+      },
+      {
+        "name": "required",
+        "category": "service",
+        "description": "",
+        "path": "service/required",
+        "kind": "feature",
+        "deps": [
+          "util/common",
+          "util/future",
+          "engine/core",
+          "feature/execution",
+          "feature/injection",
+          "service/provided",
+          "monitoring/logbase"
+        ],
+        "external_deps": [
+          "net.cinnom:nano-cuckoo:3.0.2"
+        ]
+      }
+    ]
+  },
+  "util": {
+    "name": "util",
+    "description": "",
+    "type": "or",
+    "features": [
+      {
+        "name": "bean",
+        "category": "util",
+        "description": "",
+        "path": "util/bean",
+        "kind": "library",
+        "deps": [
+          "util/common"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "bytecode",
+        "category": "util",
+        "description": "",
+        "path": "util/bytecode",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection",
+          "util/nativetools"
+        ],
+        "external_deps": [
+          "org.ow2.asm:asm-tree:9.9",
+          "org.ow2.asm:asm-util:9.9",
+          "org.ow2.asm:asm:9.9"
+        ]
+      },
+      {
+        "name": "classreader",
+        "category": "util",
+        "description": "",
+        "path": "util/classreader",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "collection",
+        "category": "util",
+        "description": "",
+        "path": "util/collection",
+        "kind": "library",
+        "deps": [
+          "util/common"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "common",
+        "category": "util",
+        "description": "",
+        "path": "util/common",
+        "kind": "library",
+        "deps": [],
+        "external_deps": []
+      },
+      {
+        "name": "future",
+        "category": "util",
+        "description": "",
+        "path": "util/future",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "idgenerator",
+        "category": "util",
+        "description": "",
+        "path": "util/idgenerator",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection"
+        ],
+        "external_deps": [
+          "com.squareup:javapoet:1.13.0"
+        ]
+      },
+      {
+        "name": "javaparser",
+        "category": "util",
+        "description": "",
+        "path": "util/javaparser",
+        "kind": "library",
+        "deps": [
+          "util/common",
+          "util/collection"
+        ],
+        "external_deps": []
+      },
+      {
+        "name": "nativetools",
+        "category": "util",
+        "description": "",
+        "path": "util/nativetools",
+        "kind": "library",
+        "deps": [],
+        "external_deps": [
+          "net.java.dev.jna:jna:5.13.0"
+        ]
+      }
+    ]
+  }
+}

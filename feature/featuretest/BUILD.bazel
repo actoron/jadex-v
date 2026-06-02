@@ -1,0 +1,34 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+#load(":deps.bzl", "DEPS")
+
+java_test(
+    name = "featuretest_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    resources = glob(["src/test/resources/**"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.featuretest",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//feature/execution",
+        "//util/future",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+        "@maven//:org_junit_platform_junit_platform_commons",
+    ],
+    runtime_deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//feature/execution",
+        "//util/future",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)

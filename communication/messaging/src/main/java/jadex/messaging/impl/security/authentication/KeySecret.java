@@ -1,5 +1,6 @@
 package jadex.messaging.impl.security.authentication;
 
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 import org.bouncycastle.crypto.digests.Blake2bDigest;
@@ -45,7 +46,7 @@ public class KeySecret extends SharedSecret
 		this.key = Base64.decodeNoPadding(keystr.getBytes(SUtil.UTF8));
 		
 		if (key.length < MIN_KEY_LENGTH)
-			Logger.getLogger("sharedsecret").warning("Weak key detected: + " + key + ", please use at least " + MIN_KEY_LENGTH + " bytes.");
+			Logger.getLogger("sharedsecret").warning("Weak key detected: + " + Arrays.toString(key) + ", please use at least " + MIN_KEY_LENGTH + " bytes.");
 	}
 	
 	/**
@@ -64,7 +65,7 @@ public class KeySecret extends SharedSecret
 		this.key = key;
 		if (key.length < MIN_KEY_LENGTH)
 		{
-			String weak = "Weak key detected: + " + key + ", please use at least " + MIN_KEY_LENGTH + " bytes.";
+			String weak = "Weak key detected: + " + Arrays.toString(key) + ", please use at least " + MIN_KEY_LENGTH + " bytes.";
 			if (warn)
 				Logger.getLogger("sharedsecret").warning(weak);
 			else

@@ -1,0 +1,21 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+filegroup(
+    name = "features_json",
+    srcs = ["features.json"],
+)
+
+py_binary(
+    name = "genfeatures",
+    srcs = ["genfeatures.py"],
+    python_version = "PY3",
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "ui_server",
+    main = "server.py",
+    srcs = ["server.py"],
+    data = [":features_json"],
+)
+

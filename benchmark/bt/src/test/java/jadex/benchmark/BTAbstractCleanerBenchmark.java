@@ -1,9 +1,16 @@
 package jadex.benchmark;
 
 import java.lang.System.Logger.Level;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.sun.management.HotSpotDiagnosticMXBean;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
 
 import jadex.bt.cleanerworld.environment.CleanerworldEnvironment;
 import jadex.core.IComponentHandle;
@@ -42,5 +49,42 @@ public class BTAbstractCleanerBenchmark
 		Environment.remove(envid);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setSystemLoggingLevel(lsystem);
 		IComponentManager.get().getFeature(ILoggingFeature.class).setAppLoggingLevel(lapp);
+
+		String tmpDir = System.getenv("TEST_TMPDIR");
+		if (tmpDir == null) 
+			tmpDir = "/tmp";
+		String file = tmpDir + "/heap-" + System.currentTimeMillis() + ".hprof";
+
+		dumpHeap(file, true);
 	}
+
+	/*@AfterAll
+	static void afterAll() throws Exception 
+	{
+		String file = "/tmp/heap-" + System.currentTimeMillis() + ".hprof";
+		dumpHeap(file, true);
+	}*/
+
+	public static void dumpHeap(String file, boolean live)
+	{
+		try
+		{
+			Path path = Paths.get(file).toAbsolutePath();
+			Files.createDirectories(path.getParent());
+
+			HotSpotDiagnosticMXBean mxBean =
+				ManagementFactory.newPlatformMXBeanProxy(
+					ManagementFactory.getPlatformMBeanServer(),
+					"com.sun.management:type=HotSpotDiagnostic",
+					HotSpotDiagnosticMXBean.class);
+
+			mxBean.dumpHeap(path.toString(), live);
+
+			System.out.println("Heap dumped to: " + path);
+		}
+		catch (Exception e)
+		{
+			System.out.println("Failed to dump heap: " + e.getMessage());
+		}
+    }
 }

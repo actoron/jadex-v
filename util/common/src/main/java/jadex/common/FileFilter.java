@@ -35,7 +35,7 @@ public class FileFilter implements IFilter<Object>
 	 */
 	public FileFilter(String suffix)
 	{
-		this(null, false, ".class");
+		this(null, false, suffix);
 	}
 	
 	/**

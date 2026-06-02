@@ -1157,6 +1157,12 @@ public abstract class Test
 				
 				return name.equals(othername);
 			}
+
+			@Override
+			public int hashCode() 
+			{
+				return name.hashCode()+"4711".hashCode();
+			}
 						
 			public String toString()
 			{
@@ -1206,6 +1212,12 @@ public abstract class Test
 				}
 				
 				return name.equals(othername) && otherbooli!=null && otherbooli.booleanValue()==booli;
+			}
+
+			@Override
+			public int hashCode() 
+			{
+				return name.hashCode()+"4711".hashCode();
 			}
 						
 			public String toString()

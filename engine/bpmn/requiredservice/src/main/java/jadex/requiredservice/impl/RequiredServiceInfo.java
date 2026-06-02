@@ -19,10 +19,13 @@ public class RequiredServiceInfo
 	/** @deprecated Use {@link ServiceScope} instead */
 	//public static final ServiceScope SCOPE_COMPONENT = ServiceScope.COMPONENT;
 	/** @deprecated Use {@link ServiceScope} instead */
+	@Deprecated
 	public static final ServiceScope SCOPE_LOCAL = ServiceScope.VM;
 	/** @deprecated Use {@link ServiceScope} instead */
+	@Deprecated
 	public static final ServiceScope SCOPE_HOST = ServiceScope.HOST;
 	/** @deprecated Use {@link ServiceScope} instead */
+	@Deprecated
 	public static final ServiceScope SCOPE_GLOBAL = ServiceScope.GLOBAL;
 	
 //	/** The scopes local to a platform. */

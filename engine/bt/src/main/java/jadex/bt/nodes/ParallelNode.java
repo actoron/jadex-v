@@ -244,10 +244,10 @@ public class ParallelNode<T> extends CompositeNode<T>
         return false;
     }*/
 
-    public RuntimeInfo<T> getRuntimeInfo()
+    /*public RuntimeInfo<T> getRuntimeInfo()
     {
         return getRuntimeInfo();
-    }
+    }*/
 
     public RuntimeInfo<T> getRuntimeInfo(ExecutionContext<T> context, Future<NodeState> call, Map<Node<T>, IFuture<NodeState>> results)
     {

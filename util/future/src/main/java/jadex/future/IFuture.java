@@ -95,6 +95,7 @@ public interface IFuture<E>	extends Supplier<E>
 	 *  Get the result - blocking call.
 	 *  @return The future result.
 	 */
+	@Deprecated
 	public E get(ThreadSuspendable sus);
 	
 	/**
@@ -279,6 +280,7 @@ public interface IFuture<E>	extends Supplier<E>
 	 *  
 	 *  @deprecated Use delegateTo.
 	 */
+	@Deprecated
 	public void delegate(Future<E> delegate);
 	
 	/**

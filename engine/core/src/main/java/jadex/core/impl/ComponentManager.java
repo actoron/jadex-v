@@ -5,6 +5,7 @@ import java.lang.System.Logger.Level;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -798,7 +799,7 @@ public class ComponentManager implements IComponentManager
 			try
 			{
 				// Check for overridden toString() (raises exception if not found)
-				comp.getPojo().getClass().getDeclaredMethod("toString");
+				Method unused = comp.getPojo().getClass().getDeclaredMethod("toString");
 				ret	= comp.getPojo().toString();
 			}
 			catch(Exception e)

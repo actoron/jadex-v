@@ -1,0 +1,63 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "publishjetty",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = [
+        "//util/common",
+        "//util/future",
+        "//util/collection",
+        "//util/javaparser",
+        "//serialization/traverser",
+        "//engine/core",
+        "//feature/injection",
+        "//feature/execution",
+        "//service/provided",
+        "//service/required",
+        "//service/publish",
+        "//communication/serialization",
+    ] + DEPS
+)
+
+java_test(
+    name = "publishjetty_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.publishservicejetty",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":publishjetty",
+        "//service/publish:publish_test_fixtures",
+        "//util/common",
+        "//util/future",
+        "//util/collection",
+        "//util/javaparser",
+        "//serialization/traverser",
+        "//engine/core",
+        "//feature/injection",
+        "//feature/execution",
+        "//service/provided",
+        "//service/required",
+        "//service/publish",
+        "//communication/serialization",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ],
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
+
+
