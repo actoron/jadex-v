@@ -1,4 +1,5 @@
-image: eclipse-temurin:21-jdk-alpine
+#image: eclipse-temurin:21-jdk-alpine
+image: eclipse-temurin:21-jdk-noble
 
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
@@ -89,7 +90,7 @@ deployZip:
 deployCentral:
   stage: deploy
   script:
-    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo
+    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo updateTag
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
