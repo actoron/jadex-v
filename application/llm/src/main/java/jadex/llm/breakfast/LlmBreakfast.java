@@ -18,7 +18,7 @@ import jadex.providedservice.annotation.Service;
 public class LlmBreakfast
 {
 	@Service
-	static interface IToaster extends IDaemonComponent
+	public static interface IToaster extends IDaemonComponent
 	{
 		static class Toast
 		{
@@ -53,7 +53,7 @@ public class LlmBreakfast
 	}
 
 	@Service
-	static interface ICoffeeMaker extends IDaemonComponent
+	public static interface ICoffeeMaker extends IDaemonComponent
 	{
 		record Coffee(String type, String size) {}
 		
