@@ -1,3 +1,6 @@
+load("//feature/configurator:feature.bzl", "feature")
+feature(name = "providedservicebpmn")
+
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 #load(":deps.bzl", "DEPS")
@@ -27,3 +30,5 @@ java_library(
     ] 
     #+ DEPS,
 )
+
+

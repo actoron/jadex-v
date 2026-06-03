@@ -654,24 +654,28 @@ window.app.subscribe(state => {
    EXPORT
 ========================================================= */
 document.getElementById("export-btn").onclick = () => {
-
   const state = window.app.state;
-  const allActive = new Set([...state.enabled, ...state.implied]);
+
+  const allActive = new Set([
+    ...state.enabled,
+    ...state.implied
+  ]);
 
   const version =
     document.getElementById("artifact-version")?.value?.trim()
     || "5.0-beta1";
 
-  // --- take only last path segment ---
-  const toArtifact = (path) =>
-    path.split("/").pop();
-
   const activeFeatures = state.features
     .filter(f => allActive.has(f.id));
 
-  const featureArtifacts = activeFeatures
-    .map(f => toArtifact(f.path))
-    .filter(Boolean);
+  // --- use feature NAME as artifact id (your requirement) ---
+  const featureArtifacts = [
+    ...new Set(
+      activeFeatures
+        .map(f => f.name)
+        .filter(Boolean)
+    )
+  ];
 
   const featureNames = [...state.enabled]
     .map(id => state.features.find(f => f.id === id)?.name || id);
@@ -714,7 +718,7 @@ document.getElementById("export-btn").onclick = () => {
   lines.push("");
   lines.push("dependencies {");
 
-  // --- FIXED JAR/ARTIFACT FORMAT ---
+  // --- internal feature deps ---
   if (featureArtifacts.length === 0) {
     lines.push("    // no features selected");
   } else {

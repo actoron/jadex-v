@@ -25,6 +25,7 @@ pkg_tar(
 oci_image(
     name = "helloworld_image",
     base = "@distroless_java21",
+    tags = ["manual"],
     tars = [":app_layer"],
     entrypoint = [
         "java",
@@ -37,6 +38,7 @@ oci_load(
     name = "helloworld_tar",
     image = ":helloworld_image",
     repo_tags = ["helloworld:latest"],
+    tags = ["manual"],
 )
 
 java_library(
