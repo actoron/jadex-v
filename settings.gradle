@@ -167,6 +167,7 @@ includeBuild('application/bdi'){name='application-bdi'}
 includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 includeBuild('application/bt'){name='application-bt'}
+includeBuild('application/llm'){name='application-llm'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}
@@ -177,4 +178,3 @@ includeBuild('benchmark/bt'){name='benchmark-bt'}
 includeBuild('benchmark/llm'){name='benchmark-llm'}
 includeBuild('benchmark/thirdparty'){name='benchmark-thirdparty'}
 includeBuild('benchmark'){name='benchmark'}
-

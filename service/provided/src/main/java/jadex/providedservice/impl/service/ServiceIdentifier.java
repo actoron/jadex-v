@@ -168,7 +168,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 		catch(Exception e)
 		{
 			//e.printStackTrace();
-			System.out.println("Error while getting groups, no security feature available: " + e.getMessage());
+//			System.out.println("Error while getting groups, no security feature available: " + e.getMessage());
 		}
 		
 		return ret;

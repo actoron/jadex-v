@@ -18,9 +18,6 @@ import javax.swing.SwingUtilities;
 import dev.langchain4j.exception.InternalServerException;
 import dev.langchain4j.exception.RateLimitException;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.google.genai.GoogleGenAiStreamingChatModel;
-import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
-import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
@@ -345,11 +342,14 @@ public class LlmBenchmark
 //			"granite4.1:30b",
 //			"lfm2:24b",
 //			"laguna-xs.2:q4_K_M",
+//			"lfm2.5:8b",
 			"ministral-3:14b",
 			"ministral-3:8b",
 			"ministral-3:3b",
 //			"mistral-small3.2:24b",
 //			"devstral-small-2:24b",
+//			"phi4-mini:3.8b",
+//			"doomgrave/phi-4:14b-tools-Q3_K_S"
 			"qwen3.5:9b",
 			"qwen3.5:4b",
 			"qwen3.5:2b",
@@ -371,7 +371,7 @@ public class LlmBenchmark
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_REMOTE, true);
 		
 //		// Run benchmarks for Local Ai models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.LOCAL_AI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LOCAL_AI, false);
 		
 		// Run benchmarks for available Unsloth models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.UNSLOTH, true);
@@ -513,9 +513,8 @@ public class LlmBenchmark
 			try
 			{
 				// Cloud models -> wait for max 1 minute, otherwise consider it a failure.
-				if(llm instanceof GoogleAiGeminiStreamingChatModel
-					|| llm instanceof MistralAiStreamingChatModel
-					|| llm instanceof GoogleGenAiStreamingChatModel)
+				if(llm.getClass().getName().contains("Google")
+					|| llm.getClass().getName().contains("Mistral"))
 				{
 					results.get(60000);
 				}

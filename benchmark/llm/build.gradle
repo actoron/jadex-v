@@ -30,14 +30,11 @@ dependencies
 	implementation 'org.activecomponents.jadex:providedservice:'+v
 	implementation 'org.activecomponents.jadex:requiredservice:'+v
 	
-	implementation 'org.activecomponents.jadex:application-micro:'+v
+	implementation 'org.activecomponents.jadex:llm:'+v
+	implementation 'org.activecomponents.jadex:application-llm:'+v
 	implementation 'org.activecomponents.jadex:application-bdi:'+v
-	implementation 'org.activecomponents.jadex:application-bdi-service:'+v
 
-    implementation 'dev.langchain4j:langchain4j:1.15.0'
-	implementation 'dev.langchain4j:langchain4j-google-ai-gemini:1.15.0'
-	implementation 'dev.langchain4j:langchain4j-mistral-ai:1.15.0'
-	implementation 'dev.langchain4j:langchain4j-google-genai:1.15.0-beta25'
+    implementation 'dev.langchain4j:langchain4j:1.15.1'
     
 	testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
