@@ -182,7 +182,7 @@ task releaseStagingRepo {
             	
             	def releaseUrl = new URL("https://central.sonatype.com/api/v1/publisher/deployment/${deploymentId}")
             	def releaseConnection = releaseUrl.openConnection() as HttpURLConnection
-            	releaseConnection.setRequestMethod("DELETE")
+            	releaseConnection.setRequestMethod("POST")
             	releaseConnection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((user + ":" + pass).getBytes()))
             	releaseConnection.setDoOutput(true)
 
@@ -234,7 +234,7 @@ task updateTag() {
 		def cmd = git.tag();
 		cmd.setName(jadex_build_version);
 		cmd.setForceUpdate(true);
-		//cmd.call();
+		cmd.call();
 		cmd = git.push();
 		def pushopts = new ArrayList<String>();
 		pushopts.add("ci.skip"); 
@@ -242,7 +242,7 @@ task updateTag() {
 		cmd.setRemote(acc.url);
 		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
 		cmd.setPushTags();
-		//cmd.call();
+		cmd.call();
 	}
 }
 updateTag.mustRunAfter releaseStagingRepo
