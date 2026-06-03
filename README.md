@@ -1,6 +1,18 @@
 # Jadex V
+---
 
-## Description
+![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)
+![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)
+![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)
+
+
+![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)
+![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)
+![Discord](https://img.shields.io/discord/1511822854017253579)
+
+
+
+## Introduction
 
 Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
 
@@ -47,6 +59,8 @@ For more details on environment setup and programming, see [Details about enviro
 - Create a gradle or maven Java project
 - Add the dependencies of features you plan to use
 - Here is a rather minimal example gradle
+- change `JADEX_VERSION` setting to, e.g., latest version from ![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)
+
 
 ```gradle
 plugins {
