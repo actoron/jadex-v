@@ -8,7 +8,7 @@
 
 ![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)
 ![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)
-[![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/xshp8a8q)
+[![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/5vt97NcCNq)
 
 
 
