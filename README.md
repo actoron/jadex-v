@@ -2,13 +2,13 @@
 ---
 
 ![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)
-![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)
-![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)
+[![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)](https://github.com/actoron/jadex-v?tab=GPL-3.0-1-ov-file)
+[![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
 
 
 ![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)
 ![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)
-![Discord](https://img.shields.io/discord/1511822854017253579)
+[![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/xshp8a8q)
 
 
 
@@ -59,7 +59,10 @@ For more details on environment setup and programming, see [Details about enviro
 - Create a gradle or maven Java project
 - Add the dependencies of features you plan to use
 - Here is a rather minimal example gradle
-- change `JADEX_VERSION` setting to, e.g., latest version from ![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)
+- change `JADEX_VERSION` setting to desired version, e.g., latest version from maven central:
+
+[![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
+
 
 
 ```gradle
