@@ -188,10 +188,10 @@ prohibit program termination. This is done via `IComponentManager.get().create.w
 
 You can find a lot of different examples in the application packages:
 
-- [application/micro](application/micro)
-- [application/bdi](application/bdi) and [application/bdi-service](application/bdi-service)
-- [application/bt](application/bt)
-- [application/bpmn](application/bpmn)
+- [application/micro](application/micro/src/main/java/jadex/micro)
+- [application/bdi](application/bdi/src/main/java/jadex/bdi) and [application/bdi-service](application/bdi-service/src/main/java/jadex/bdi)
+- [application/bt](application/bt/src/main/java/jadex/bt)
+- [application/bpmn](application/bpmn/src/main/java/jadex/bpmn)
 
 Check this page for an overview of available [example applications](https://deepwiki.com/actoron/jadex-v/12-example-applications).
 
