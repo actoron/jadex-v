@@ -1,27 +1,35 @@
 # Jadex V
 ---
 
-![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)
+[![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)](https://github.com/actoron/jadex-v)
 [![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)](https://github.com/actoron/jadex-v?tab=GPL-3.0-1-ov-file)
 [![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/actoron/jadex-v)
 
-![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)
-![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)
+[![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
+[![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)](https://github.com/actoron/jadex-v)
 [![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/5vt97NcCNq)
 
 
 
 ## Introduction
 
-Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
+Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease.
 
+The versatility and customizability is shown by an extensive set of [example applications](https://deepwiki.com/actoron/jadex-v/12-example-applications).
 
 ## Features
+
+By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
+
+Check this page for [details about the feature system](https://deepwiki.com/actoron/jadex-v/2.2-feature-system).
+
 
 ### Concurrency Support
 
 Jadex V embraces the Actor model, offering a straightforward and robust approach to concurrent programming. Each actor, or Jadex component, operates independently, providing a natural metaphor for concurrency. Leveraging Java virtual threads, Jadex ensures highly efficient execution, making it suitable for demanding applications.
+
+Check this page for [details about the execution model](https://deepwiki.com/actoron/jadex-v/2.3-execution-model).
 
 Key points:
 - Actors as concurrency metaphor
@@ -31,6 +39,8 @@ Key points:
 
 Building upon the Actor model, Jadex introduces the concept of active components with an embedded reasoning engine. This empowers developers to define behavior dynamically, facilitating the utilization of various engines such as micro, BDI, and BPMN. Notably, Jadex eliminates the need to pre-start a platform for actor execution, streamlining the development process.
 
+Check this page for [details about the available agent paradigms](https://deepwiki.com/actoron/jadex-v/3-agent-paradigms).
+
 Key points:
 - Support for multiple engines
 - Seamless interaction among component types
@@ -39,6 +49,9 @@ Key points:
 ### Distributed Service Infrastructure
 
 Facilitating interaction among active components, Jadex employs service interfaces for communication. Each component can provide and invoke services, locally or remotely, with service discovery managed by an integrated registry. This ensures smooth communication and effortless scalability, bolstered by built-in communication security measures.
+
+Check these pages for [details about the service system](https://deepwiki.com/actoron/jadex-v/4-service-system)
+and [details about communication and networking](https://deepwiki.com/actoron/jadex-v/5-communication-and-networking).
 
 Key points:
 - Service-oriented interaction model
@@ -50,7 +63,12 @@ Key points:
 
 For many applications, having a virtual environment where active components can operate is beneficial. Jadex provides a lightweight, ready-to-use solution for environment construction. The environment manages all objects, including component representatives (typically called avatars).
 Domain-specific environment actions can be defined, and components are notified about objects within their field of vision. Additionally, components can observe specific environment objects and receive updates when changes occur.
-For more details on environment setup and programming, see [Details about environment setup and programming](environment.md).
+
+Check this page for [details about simulation and environment](https://deepwiki.com/actoron/jadex-v/6-simulation-and-environment).
+
+Key points:
+- Observable environment objects and vision range handling
+- Managed environment actions
 
 ## Installation
 
@@ -170,11 +188,12 @@ prohibit program termination. This is done via `IComponentManager.get().create.w
 
 You can find a lot of different examples in the application packages:
 
-- application/micro
-- application/bdi and bdi-service
-- application/bpmn
-- application/bt
+- [application/micro](application/micro)
+- [application/bdi](application/bdi) and [application/bdi-service](application/bdi-service)
+- [application/bt](application/bt)
+- [application/bpmn](application/bpmn)
 
+Check this page for an overview of available [example applications](https://deepwiki.com/actoron/jadex-v/12-example-applications).
 
 ## Authors
 
@@ -182,7 +201,7 @@ Kai Jander
 Alexander Pokahr  
 Lars Braubach  
 
-This project is supported by [www.actoron.com](http://www.actoron.com)
+This project is supported by [www.actoron.com](https://www.actoron.com).
 
 
 
