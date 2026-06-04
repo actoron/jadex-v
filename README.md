@@ -4,7 +4,7 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)
 [![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)](https://github.com/actoron/jadex-v?tab=GPL-3.0-1-ov-file)
 [![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
-
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/actoron/jadex-v)
 
 ![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)
 ![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)
