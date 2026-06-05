@@ -115,7 +115,7 @@ public abstract class LlmBlocksworldBaseAgent	extends BlocksworldAgent	implement
 			think.setSelected(false);
 			JCheckBox	sendimage	= new JCheckBox("Image");
 			sendimage.setToolTipText("Include an image of the current world state in the prompt.");
-			sendimage.setSelected(true);
+//			sendimage.setSelected(true);
 			JComboBox<String>	prompt	= new JComboBox<>(new String[] {
 				"Move the red block onto the green one.",
 				"Put all blocks in the bucket.",
@@ -221,8 +221,8 @@ public abstract class LlmBlocksworldBaseAgent	extends BlocksworldAgent	implement
 				prompt.setEnabled(false);
 				send.setEnabled(false);
 				
-				System.out.println("Context size: "+
-					((Provider)provider.getSelectedItem()).getContextSize((String) model.getSelectedItem()));
+//				System.out.println("Context size: "+
+//					((Provider)provider.getSelectedItem()).getContextSize((String) model.getSelectedItem()));
 				
 				// Generate base64 encoded image of current world state
 				Container	worlds	= (Container)gui.getContentPane().getComponent(0);

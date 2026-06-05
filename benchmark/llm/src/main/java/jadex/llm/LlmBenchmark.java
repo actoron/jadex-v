@@ -342,7 +342,7 @@ public class LlmBenchmark
 //			"granite4.1:30b",
 //			"lfm2:24b",
 //			"laguna-xs.2:q4_K_M",
-//			"lfm2.5:8b",
+			"lfm2.5:8b",
 			"ministral-3:14b",
 			"ministral-3:8b",
 			"ministral-3:3b",

@@ -82,6 +82,8 @@ public class LlmBreakfast
 
 		String prompt = "I'd like healthy breakfast.";
 //		String prompt = "I'd like an unhealthy breakfast.";
+		
+		System.out.println("User: " + prompt+"\n");
 
 		StreamingChatModel llm = LlmHelper.createChatModel();
 
@@ -91,6 +93,6 @@ public class LlmBreakfast
 			
 		results.get();
 		IComponentManager.get().waitForLastComponentTerminated();
-		System.exit(0);
+		System.out.println("==============");
 	}
 }

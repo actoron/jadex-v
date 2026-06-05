@@ -140,57 +140,22 @@ public class LlmHelper
 		Map.of(
 			Provider.OLLAMA_LOCAL, 
 				
-				// Best models for blocksworld and breakfast
-//				"ministral-3:3b"	// fast and efficient, but no thinking
-//				"ministral-3:8b"
-//				"ministral-3:14b"
-//				"devstral-small-2:24b"
-//				"gpt-oss:20b"	// no image input
+				// thinking
 				"qwen3.5:9b"
-//				"qwen3.6:27b"
-//				"qwen3.6:35b"
-//				"qwen3:4b"	// no coffee :-(, fails on  blocksworld
-//				"nemotron-cascade-2:30b"	// slow
-//				"gemma4:31b"
-//				"gemma4:26b"
-				
-				// Succeeds sometimes on breakfast
-//				.modelName("nemotron-3-nano:30b")
-//				.modelName("mistral-small3.2:24b")
-//				"nemotron-3-nano:4b"
-//				"granite4:3b"
-//				"granite3.2-vision:2b"
-//				.modelName("freakycoder123/phi4-fc:latest")
-							
-				// Fails on breakfast
-//				"qwen3.5:4b"
-//				"qwen3.5:2b"
+
+				// no thinking
 //				"qwen3.5:0.8b"
-//				"gemma4:e4b"
 //				"gemma4:e2b"
-//				.modelName("mistral:7b-instruct")
-//				.modelName("qwen3:0.6b")
-//				.modelName("60MPH/astral3-tools:12b")
-//				.modelName("comethrusws/sage-reasoning:8b")
-//				.modelName("cogito:8b")
-//				.modelName("magistral:24b")
-//				.modelName("nemotron-mini:4b")
-//				.modelName("llama3-groq-tool-use:8b")
-//				.modelName("mistral-nemo:12b-instruct-2407-q4_K_M")
-//				.modelName("ministral-3:14b")
-//				.modelName("llama3.1:8b-instruct-q4_K_M")
-//				.modelName("functiongemma:latest")
-//				.modelName("lfm2.5-thinking:1.2b")
-//				.modelName("granite4:350m")
-//				.modelName("phi4-mini:3.8b")
-//				.modelName("command-r7b:latest")
-//				.modelName("patrickwarren2692/gemma-3-27b-it-abliterated-GGUF:latest")
-//				.modelName("lfm2:24b")
+//				"ministral-3:3b"
+//				"granite4.1:3b"
+//				"phi4-mini:3.8b"
+//				"ministral-3:14b"
 			));
 	
 	public static StreamingChatModel createChatModel()
 	{
 		return createChatModel(null, null, null);
+//		return createChatModel(null, null, false);
 	}
 	
 	protected static int	fetchMistralContextSize(String model)
