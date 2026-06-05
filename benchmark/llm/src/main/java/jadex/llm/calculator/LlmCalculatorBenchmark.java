@@ -13,7 +13,7 @@ public class LlmCalculatorBenchmark
 	static int	called	= 0;
 	
 	@Service
-	static interface ICalculator	extends IDaemonComponent
+	public static interface ICalculator	extends IDaemonComponent
 	{
 		@Tool("Calculate the square root of a real number")
 		IFuture<Double> sqrt(double a);
