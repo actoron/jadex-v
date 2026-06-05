@@ -247,7 +247,6 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			+ "4. For missing information, take arbitrary decisions yourself and do not ask the user.\n"
 			+ "5. Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.\n"
 			+ "6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.\n"
-//		  	+ "7. Use argument names as given in the function properties.\n"
 		));
 	}
 	
@@ -608,7 +607,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 							isvoid && result==null ? "done": result instanceof String ? (String) result : Json.toJson(result));
 				}
 				
-				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
+				addChatFragment(ChatFragment.Type.TOOL_RESULT, "\n"+msg.toString(), null);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				if(llm instanceof OllamaStreamingChatModel)
 				{
@@ -658,7 +657,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					.isError(true)
 					.text(ex.toString())
 					.build();
-				addChatFragment(ChatFragment.Type.TOOL_RESULT, msg.toString(), null);
+				addChatFragment(ChatFragment.Type.TOOL_RESULT, "\n"+msg.toString(), null);
 				// Hack!!! currently important fields aren't passed back by ollama mapping (bug), so we add them manually here
 				if(llm instanceof OllamaStreamingChatModel)
 				{
