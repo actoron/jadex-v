@@ -301,10 +301,12 @@ task createZip(type: Zip) {
     destinationDirectory = file('deploy')
     includeEmptyDirs = false
     
+    def include_apps	= ["micro", "bdi", "bdi-service", "bt"]
     from(sourceSets.main.output) {
         //gradle.includedBuilds.each { build ->
         //    from("${build.projectDir}/build/libs") {
-		    from("application/micro/build/libs") {
+        include_apps.each { app ->
+		    from("application/${app}/build/libs") {
                 include '**/*.jar'
                 exclude '**/*-sources.jar'
                 exclude '**/*-javadoc.jar'
@@ -312,7 +314,7 @@ task createZip(type: Zip) {
                 eachFile { f -> f.path = "lib/${f.name}" }
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             }
-        //}
+        }
     }
 
     def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
