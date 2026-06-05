@@ -1,0 +1,51 @@
+plugins 
+{
+    id 'java-library'
+}
+
+description = 'Jadex Application Launcher GUI'
+
+group = 'org.activecomponents.jadex'
+
+if(System.getProperty("PUBLISH_SCRIPT_PATH"))
+	apply from: System.getProperty("PUBLISH_SCRIPT_PATH")
+
+java
+{
+	sourceCompatibility = '1.21'
+}
+
+repositories
+{
+    mavenCentral()
+}
+
+dependencies
+{
+	def v = System.getProperty('JADEX_VERSION')?:'+'
+	implementation 'org.activecomponents.jadex:application-micro:' + v
+	implementation 'org.activecomponents.jadex:application-bdi:' + v
+	implementation 'org.activecomponents.jadex:application-bdi-service:' + v
+	implementation 'org.activecomponents.jadex:application-bt:' + v
+}
+
+task copyDependencies {
+    doLast {
+        copy {
+            configurations.runtimeClasspath.each { File file ->
+                  if (!file.absolutePath.startsWith(project.rootDir.absolutePath)) {
+                    if (file.name.endsWith('.jar'))
+                        from file.getParent()
+                }
+            } 
+            into 'build/libs/external-dependencies'
+        }
+    }
+    outputs.upToDateWhen { false }
+}
+build.dependsOn(copyDependencies)
+
+task runLauncher(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'jadex.launcher.ApplicationLauncher'
+}

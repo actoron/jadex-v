@@ -168,6 +168,7 @@ includeBuild('application/bdi-service'){name='application-bdi-service'}
 includeBuild('application/bpmn'){name='application-bpmn'}
 includeBuild('application/bt'){name='application-bt'}
 includeBuild('application/llm'){name='application-llm'}
+includeBuild('application/launcher'){name='application-launcher'}
 
 includeBuild('benchmark/core'){name='benchmark-core'}
 includeBuild('benchmark/execution'){name='benchmark-execution'}

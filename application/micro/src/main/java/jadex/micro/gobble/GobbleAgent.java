@@ -181,7 +181,7 @@ public class GobbleAgent implements IGobbleGuiService
 	 */
 	public static void main(String[] args) throws InterruptedException 
 	{
-		IComponentManager.get().create(new GobbleAgent()).get();
+		IComponentManager.get().create(new GobbleAgent(), "Gobble").get();
 		
 		IComponentManager.get().waitForLastComponentTerminated();
 	}

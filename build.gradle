@@ -297,11 +297,13 @@ task createZip(type: Zip) {
 	def v = getVar("JADEX_VERSION")
 	logger.lifecycle "Jadex Build Version " + v
 
-    archiveFileName = 'jadex-'+v+'.zip'
+    def dirName = 'jadex-examples-'+v
+    archiveFileName = dirName+'.zip'
     destinationDirectory = file('deploy')
     includeEmptyDirs = false
     
-    def include_apps	= ["micro", "bdi", "bdi-service", "bt"]
+    //def include_apps	= ["micro", "bdi", "bdi-service", "bt"]
+    def include_apps	= ["launcher"]
     from(sourceSets.main.output) {
         //gradle.includedBuilds.each { build ->
         //    from("${build.projectDir}/build/libs") {
@@ -311,22 +313,22 @@ task createZip(type: Zip) {
                 exclude '**/*-sources.jar'
                 exclude '**/*-javadoc.jar'
                 into 'lib' 
-                eachFile { f -> f.path = "lib/${f.name}" }
+                eachFile { f -> f.path = "${dirName}/lib/${f.name}" }
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             }
         }
     }
 
-    def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
-    def scriptFile = file(new File(System.getProperty("java.io.tmpdir"), 'startHelloWorld.sh'))
+    def scriptContent = '#!/bin/bash\njava -cp "lib/*" jadex.launcher.ApplicationLauncher'
+    def scriptFile = file(new File(System.getProperty("java.io.tmpdir"), 'launchExamples.sh'))
     scriptFile.text = scriptContent
     scriptFile.setExecutable(true)
 
-    def batContent = '@java -cp "lib/*" jadex.micro.helloworld.HelloWorldAgent'
-    def batFile = file(new File(System.getProperty("java.io.tmpdir"), 'startHelloWorld.bat'))
+    def batContent = '@java -cp "lib/*" jadex.launcher.ApplicationLauncher'
+    def batFile = file(new File(System.getProperty("java.io.tmpdir"), 'launchExamples.bat'))
     batFile.text = batContent
     
-    into('') {
+    into(dirName) {
         from scriptFile
         from batFile
     }

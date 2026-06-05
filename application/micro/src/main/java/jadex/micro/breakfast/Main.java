@@ -19,23 +19,27 @@ public class Main
 		long start = System.currentTimeMillis();
 		
 		// Synchronous (i.e. blocking) lambda agent.
+		System.out.println("Frying bacon...");
 		IFuture<String> eggs = IComponentManager.get().run(agent ->
 		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
-			System.out.println("Eggs ready");
-			return "Eggs ready";
+			agent.getFeature(IExecutionFeature.class).waitForDelay(7000).get();
+			System.out.println("Bacon ready");
+			return "Bacon ready";
 		});
 		
 		// Asynchronous lambda agent.
+		System.out.println("Frying eggs...");
 		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
-			agent.getFeature(IExecutionFeature.class).waitForDelay(7000)
-				.thenApply(done -> "Bacon ready")
+			agent.getFeature(IExecutionFeature.class).waitForDelay(5000)
+				.thenApply(done -> "Eggs ready")
 				.then(System.out::println));
 		
 		// Explicit class using manual result.
+		System.out.println("Making coffee...");
 		IFuture<String> coffee = IComponentManager.get().run(new CoffeeMaker());
 				
 		// Explicit class using injection result.
+		System.out.println("Toasting bread...");
 		IFuture<String> toast = IComponentManager.get().run(new Toaster());
 		
 		
