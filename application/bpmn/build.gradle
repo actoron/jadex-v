@@ -48,6 +48,7 @@ test
 processResources {
     from ('src/main/java') {
         include '**/*.bpmn'
+        include '**/*.md'
     }
 }
 

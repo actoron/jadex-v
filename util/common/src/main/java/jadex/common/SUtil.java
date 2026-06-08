@@ -6357,4 +6357,27 @@ public class SUtil
 		name = name.replaceAll("([a-z])([A-Z]+)", "$1_$2").toLowerCase();
 		return name;
 	}
+
+	/**
+	 *  Convert a snake_case name to CamelCase.
+	 *  @param name The name.
+	 *  @param upper If true, the first letter is also upper case (e.g. for class names), otherwise lower case (e.g. for method names).
+	 */
+	public static String toCamelCase(String name, boolean upper)
+	{
+		StringBuilder sb = new StringBuilder(name.length());
+		for(char c: name.toCharArray())
+		{
+			if(c=='_')
+			{
+				upper = true;
+			}
+			else
+			{
+				sb.append(upper ? Character.toUpperCase(c) : c);
+				upper = false;
+			}
+		}
+		return sb.toString();
+	}
 }

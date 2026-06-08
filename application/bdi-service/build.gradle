@@ -23,6 +23,7 @@ repositories
 processResources {
     from ('src/main/java') {
         include '**/*.png'
+        include '**/*.md'
     }
 }
 

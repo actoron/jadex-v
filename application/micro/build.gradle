@@ -58,6 +58,7 @@ processResources {
         include '**/*.js'
         include '**/*.css'
         include '**/*.ttf'
+        include '**/*.md'
     }
 }
 

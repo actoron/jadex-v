@@ -33,7 +33,7 @@ import jadex.injection.annotation.OnStart;
  *  by recursively applying means-end-reasoning.
  */
 @BDIAgent
-public class SokratesV3Agent
+public class SokratesAgent
 {
 	//-------- attributes --------
 	
@@ -285,7 +285,7 @@ public class SokratesV3Agent
 
 	public static void main(String[] args)
 	{
-		IComponentManager.get().create(new SokratesV3Agent()).get();
+		IComponentManager.get().create(new SokratesAgent()).get();
 		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }

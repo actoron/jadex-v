@@ -7,10 +7,14 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
@@ -25,6 +29,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
+import jadex.common.SScan;
+import jadex.common.SUtil;
+
 /**
  * GUI application launcher for starting various Jadex applications.
  * Applications are started via reflection, invoking their main() method directly.
@@ -32,37 +39,123 @@ import javax.swing.table.DefaultTableModel;
 @SuppressWarnings("serial")
 public class ApplicationLauncher extends JFrame
 {
-    record ApplicationConfig(String name, Class<?> mainClass, String description, String source) {}
+    record ApplicationConfig(String name, Class<?> mainClass, String description, String source) implements Comparable<ApplicationConfig>
+    {	
+    	@Override
+    	public int compareTo(ApplicationConfig o)
+		{
+			return this.name.compareTo(o.name);
+		}
+    }
     private static final Insets COMPACT_BUTTON_MARGIN = new Insets(1, 6, 1, 6);
     
     private JTable appTable;
     private List<ApplicationConfig> applications;
 
     public ApplicationLauncher() {
-        super("Jadex Application Launcher");
-        initializeApplications();
+        super("Jadex Example Application Launcher");
+        this.applications	= scanForApplications();
         setupUI();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    private void initializeApplications() {
-        applications = new ArrayList<>();
+    protected List<ApplicationConfig> scanForApplications() {
+    	List<ApplicationConfig>	applications = new ArrayList<>();
         
-        // Micro Applications
-        applications.add(new ApplicationConfig(
-            "Micro - Breakfast",
-            jadex.micro.breakfast.Main.class,
-            "Shows various ways to start agents.",
-            "application/micro/src/main/java/jadex/micro/breakfast/Main.java"
-        ));
-        applications.add(new ApplicationConfig(
-            "Micro - Gobble",
-            jadex.micro.gobble.GobbleAgent.class,
-            "Variation of Tic Tac Toe as web app.",
-            "application/micro/src/main/java/jadex/micro/gobble/GobbleAgent.java"
-        ));
+        // Scan for README.md files in the classpath and add them as applications
+        final String	README	= "README.md";
+        URL[] urls = SUtil.getClasspathURLs(getClass().getClassLoader(), true).toArray(new URL[0]);
+        String[]	files	= SScan.scanForFiles(urls, file -> file.toString().endsWith(README));
+        Stream.of(files).forEach(readme ->
+        {
+        	String	package_path;
+        	String	contents	= null;
+        	
+        	// Handle files (e.g. build in IDE)
+        	File	freadme	= new File(readme);
+        	if(freadme.exists())
+			{
+        		// Normalize Windows path
+        		String	path	= freadme.getAbsolutePath().replace('\\', '/');
+        		// Split between classpath location and package path
+        		package_path	= path.substring(path.lastIndexOf("/jadex/")+1, path.length() - README.length() -1);
+        		
+        		// Fetch readme contents
+        		try
+        		{
+        			contents = java.nio.file.Files.readString(freadme.toPath());
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+        	
+			// Handle JARs
+			else
+			{
+				// path is already classpath relative - just remove the README part
+				package_path	= readme.substring(0, readme.length() - README.length() -1);
+				
+				// Fetch readme contents
+				URL readmeUrl = getClass().getResource("/"+readme);
+				try(InputStream	is	= readmeUrl.openStream())
+				{
+					contents = new String(is.readAllBytes());
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
 
-        // BDI Applications
+//			System.out.println("Found README: "+package_path);
+			String	app	= package_path.substring(package_path.lastIndexOf('/') + 1);
+			String	project	= package_path.split("/")[1];
+			String	src_path	= "application/"+project+"/src/main/java/"+package_path;
+			String	display_name	= SUtil.toCamelCase(project, true) + " - " + SUtil.toCamelCase(app, true);
+			
+			// Find first non-blank, non-header line in the README as description (or fallback if not found)
+			String	description	= Stream.of(contents.split("\n"))
+					.map(String::trim)
+					.filter(line -> !line.isEmpty() && !line.startsWith("#") && !line.startsWith("Main class:"))
+					.findFirst()
+					.orElse(null);
+			
+			// Find main class in readme
+			String	main	= Stream.of(contents.split("\n"))
+					.map(String::trim)
+					.filter(line -> line.startsWith("Main class:"))
+					.findFirst()
+					.orElse(null);
+			// Find link part after "Main class:" and try to load it
+			Class<?> clazz = null;
+			if(main!=null)
+			{
+				main = package_path.replace('/', '.') + "." +
+					main.substring(main.indexOf("(")+1, main.indexOf(".java)")).trim();
+//				System.out.println("Looking for main class: "+main);
+				try
+				{
+					clazz = Class.forName(main);
+				}
+				catch(ClassNotFoundException e)
+				{
+					System.err.println("Could not find main class "+main+" for application "+display_name);
+				}
+			}
+			
+			applications.add(new ApplicationConfig(
+				display_name,
+				clazz,
+				description,
+				src_path
+			));
+        });
+        
+        // Sort applications alphabetically by name
+        applications.sort(null);
+        return applications;
     }
 
     private void setupUI() {
@@ -85,7 +178,7 @@ public class ApplicationLauncher extends JFrame
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBorder(BorderFactory.createTitledBorder("Available Applications"));
         
-        String[] columnNames = {"Name", "Description", "Action", "Source"};
+        String[] columnNames = {"Name", "Description", "Action", "Docs"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -108,8 +201,8 @@ public class ApplicationLauncher extends JFrame
         appTable.setRowHeight(25);
         appTable.getColumnModel().getColumn(0).setPreferredWidth(150);
         appTable.getColumnModel().getColumn(1).setPreferredWidth(350);
-        appTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-        appTable.getColumnModel().getColumn(3).setPreferredWidth(80);
+        appTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        appTable.getColumnModel().getColumn(3).setPreferredWidth(100);
 
         // Add per-row Start and Source buttons using custom renderer/editor
         appTable.getColumnModel().getColumn(2).setCellRenderer(new ButtonRenderer());
