@@ -333,7 +333,11 @@ public class LlmBenchmark
 		// Run benchmarks for local Ollama models
 		List<String>	include_models	= Arrays.asList(
 			"gemma4:e2b",
+			"gemma4:e2b-it-qat",
 			"gemma4:e4b",
+			"gemma4:e4b-it-qat",
+			"gemma4:12b",
+			"gemma4:12b-it-qat",
 //			"gemma4:26b",
 //			"gemma4:31b",
 			"gpt-oss:20b",
