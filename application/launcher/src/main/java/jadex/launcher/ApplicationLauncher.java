@@ -59,12 +59,12 @@ public class ApplicationLauncher extends JFrame
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    protected List<ApplicationConfig> scanForApplications() {
+    protected static List<ApplicationConfig> scanForApplications() {
     	List<ApplicationConfig>	applications = new ArrayList<>();
         
         // Scan for README.md files in the classpath and add them as applications
         final String	README	= "README.md";
-        URL[] urls = SUtil.getClasspathURLs(getClass().getClassLoader(), true).toArray(new URL[0]);
+        URL[] urls = SUtil.getClasspathURLs(ApplicationLauncher.class.getClassLoader(), true).toArray(new URL[0]);
         String[]	files	= SScan.scanForFiles(urls, file -> file.toString().endsWith(README));
         Stream.of(files).forEach(readme ->
         {
@@ -98,7 +98,7 @@ public class ApplicationLauncher extends JFrame
 				package_path	= readme.substring(0, readme.length() - README.length() -1);
 				
 				// Fetch readme contents
-				URL readmeUrl = getClass().getResource("/"+readme);
+				URL readmeUrl = ApplicationLauncher.class.getResource("/"+readme);
 				try(InputStream	is	= readmeUrl.openStream())
 				{
 					contents = new String(is.readAllBytes());
@@ -109,7 +109,7 @@ public class ApplicationLauncher extends JFrame
 				}
 			}
 
-			System.out.println("Found README: "+package_path);
+//			System.out.println("Found README: "+package_path);
 			String	app	= package_path.substring(package_path.lastIndexOf('/') + 1);
 			String	project	= package_path.split("/")[1];
 			String	src_path	= "application/"+project+"/src/main/java/"+package_path;
@@ -134,7 +134,7 @@ public class ApplicationLauncher extends JFrame
 			{
 				main = package_path.replace('/', '.') + "." +
 					main.substring(main.indexOf("(")+1, main.indexOf(".java)")).trim();
-				System.out.println("Looking for main class: "+main);
+//				System.out.println("Looking for main class: "+main);
 				try
 				{
 					clazz = Class.forName(main);

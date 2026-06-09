@@ -12,7 +12,7 @@ public class ApplicationLauncherTest
 	@Test
 	public void testMainClasses()
 	{
-		new ApplicationLauncher().scanForApplications()
+		ApplicationLauncher.scanForApplications()
 			.forEach(app ->
 		{
 			assertNotNull(app.description(), app.name());
