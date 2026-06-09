@@ -109,7 +109,7 @@ public class ApplicationLauncher extends JFrame
 				}
 			}
 
-//			System.out.println("Found README: "+package_path);
+			System.out.println("Found README: "+package_path);
 			String	app	= package_path.substring(package_path.lastIndexOf('/') + 1);
 			String	project	= package_path.split("/")[1];
 			String	src_path	= "application/"+project+"/src/main/java/"+package_path;
@@ -134,7 +134,7 @@ public class ApplicationLauncher extends JFrame
 			{
 				main = package_path.replace('/', '.') + "." +
 					main.substring(main.indexOf("(")+1, main.indexOf(".java)")).trim();
-//				System.out.println("Looking for main class: "+main);
+				System.out.println("Looking for main class: "+main);
 				try
 				{
 					clazz = Class.forName(main);
