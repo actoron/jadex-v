@@ -387,9 +387,8 @@ task deployZip() {
  * Requires GITHUB_TOKEN environment variable with permissions to create releases in actoron/jadex-v repository.
  */
 task createGHRelease() {
-//    group = "publishing"
-//    dependsOn updateTag, createZip
-    dependsOn createZip
+    group = "publishing"
+    dependsOn updateTag, createZip
     
     doLast {
         def github_token = getVar('GITHUB_TOKEN');
@@ -406,15 +405,15 @@ task createGHRelease() {
    			else {
    				logger.lifecycle "No previous tag found: "+proc.errorStream.text;
    			}
-   		}        
-        System.exit(0);
+   		}
+   		
         def gh = new org.kohsuke.github.GitHubBuilder().withOAuthToken(github_token).build();
         def gh_repo = gh.getRepository("actoron/jadex-v");
         def gh_release = gh_repo.createRelease(version)
         	.name("Jadex " + version)
-        	.body(previous!=null ? "**Full Changelog**: https://github.com/actoron/jadex-v/compare/${previous}...${version}": "")
+        	.body("**Full Changelog**: https://github.com/actoron/jadex-v/compare/${previous}...${version}")
         	.draft(true)
-        	.prerelease(version.contains("beta") || version.contains("alpha") || version.contains("snapshot"))
+//        	.prerelease(version.contains("beta") || version.contains("alpha") || version.contains("snapshot"))
         	.create();
         gh_release.uploadAsset(new File("deploy/jadex-examples-"+version+".zip"), "application/zip");
     }

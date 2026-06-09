@@ -101,19 +101,3 @@ deployCentral:
   when: manual
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
-
-# for testing GH release creation without publishing to central
-createGHRelease:
-  stage: build
-  script:
-    - ./gradlew createGHRelease
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
-  when: manual
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
-
