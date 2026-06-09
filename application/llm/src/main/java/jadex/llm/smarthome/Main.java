@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.core.IComponentManager;
@@ -24,8 +24,8 @@ public class Main
 		IComponentManager.get().create(new Alarm(), "Alarm").get();
 		
 		// Create the LLM agent that will control the smart home
-//		StreamingChatModel	model	= LlmHelper.createChatModel();	// Default Ollama model
-		StreamingChatModel	model	= LlmHelper.Provider.OLLAMA_REMOTE.createChatModel("gemma4:26b-a4b-it-q4_K_M", false);
+		StreamingChatModel	model	= LlmHelper.createChatModel();	// Default Ollama model
+//		StreamingChatModel	model	= LlmHelper.Provider.OLLAMA_REMOTE.createChatModel("gemma4:26b-a4b-it-q4_K_M", false);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-2.5-flash", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-3-flash-preview", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.MISTRAL_AI.createChatModel("mistral-large-2512", false);

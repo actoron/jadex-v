@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import java.util.ArrayList;
 import java.util.List;

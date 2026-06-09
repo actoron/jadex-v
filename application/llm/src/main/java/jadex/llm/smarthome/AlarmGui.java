@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,7 +11,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import jadex.future.ISubscriptionIntermediateFuture;
-import jadex.llm.house_monitoring.IAlarmService.AlarmState;
+import jadex.llm.smarthome.IAlarmService.AlarmState;
 
 /**
  * Panel that visualizes the current alarm state.

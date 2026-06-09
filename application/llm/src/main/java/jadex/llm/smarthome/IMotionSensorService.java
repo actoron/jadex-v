@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import jadex.future.IFuture;
 import jadex.providedservice.annotation.Service;

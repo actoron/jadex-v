@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import jadex.common.SUtil;
 import jadex.core.IComponent;

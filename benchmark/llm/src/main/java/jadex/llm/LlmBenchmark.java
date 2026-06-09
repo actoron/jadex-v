@@ -340,13 +340,17 @@ public class LlmBenchmark
 			"gemma4:12b-it-qat",
 //			"gemma4:26b",
 //			"gemma4:31b",
-			"gpt-oss:20b",
-			"granite4.1:3b",
-			"granite4.1:8b",
-//			"granite4.1:30b",
+			
+			// Non-image models
+//			"gpt-oss:20b",
+//			"granite4.1:3b",
+//			"granite4.1:8b",
+////			"granite4.1:30b",
+//			"lfm2.5:8b",
+
 //			"lfm2:24b",
 //			"laguna-xs.2:q4_K_M",
-			"lfm2.5:8b",
+			
 			"ministral-3:14b",
 			"ministral-3:8b",
 			"ministral-3:3b",

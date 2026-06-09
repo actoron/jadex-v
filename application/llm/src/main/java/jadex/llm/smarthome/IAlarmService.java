@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import dev.langchain4j.agent.tool.Tool;
 import jadex.future.IFuture;

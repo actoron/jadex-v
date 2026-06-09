@@ -1,4 +1,4 @@
-package jadex.llm.house_monitoring;
+package jadex.llm.smarthome;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -24,6 +24,10 @@ import jadex.providedservice.annotation.ProvideService;
 @ProvideService(tags = "%{\"name=\"+$component.getId().getLocalName()}")
 public class Camera	implements ICameraService
 {
+	/** Base directory for caching generated images. */
+	// Start from jadex main dir to allow starting in application/llm and benchmark/llm
+	protected static final String BASEDIR = "../../application/llm/generated_images";
+	
 	/** The current prompt. */
 	protected String	prompt	= "a house at night";
 	
@@ -62,7 +66,7 @@ public class Camera	implements ICameraService
 	 */
 	protected static BufferedImage getSecurityCameraImage(String prompt) throws Exception
 	{
-		File	basedir	= new File("./generated_images");
+		File	basedir	= new File(BASEDIR);
 		basedir.mkdirs();
 		File	imagefile = new File(basedir, prompt.replaceAll("[^a-zA-Z0-9._ -]", "_")+".jpg");
 		
@@ -126,7 +130,7 @@ public class Camera	implements ICameraService
 	 */
 	public static String[] getCachedPrompts()
 	{
-		File	basedir	= new File("./generated_images");
+		File	basedir	= new File(BASEDIR);
 		if(basedir.exists() && basedir.isDirectory())
 		{
 			return java.util.Arrays.stream(basedir.listFiles((dir, name) -> name.endsWith(".jpg")))
