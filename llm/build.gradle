@@ -53,7 +53,7 @@ dependencies
     //implementation 'dev.langchain4j:langchain4j-google-genai:1.15.0-beta25'
 	runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 
-    // for house_monitoring rule system scheduler
+    // for rule system scheduler
     //implementation 'org.quartz-scheduler:quartz:2.5.2'
     implementation 'com.cronutils:cron-utils:9.2.1'    
     
