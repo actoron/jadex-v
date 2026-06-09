@@ -139,6 +139,25 @@ def benchmark_sort_key(name: str) -> tuple:
     return (0,) + tuple(invert_part(part) for part in canonical.split("_"))
 
 
+def benchmark_success_sort_names(benchmark_frames: dict[str, pd.DataFrame]) -> list[str]:
+    """Sort benchmark names by mean success rate descending.
+
+    Ties are resolved with benchmark_sort_key for deterministic output.
+    """
+
+    def mean_success(name: str) -> float:
+        df = benchmark_frames.get(name)
+        if df is None or "Success Rate Num" not in df.columns or df.empty:
+            return float("-inf")
+        value = pd.to_numeric(df["Success Rate Num"], errors="coerce").mean()
+        return float(value) if pd.notna(value) else float("-inf")
+
+    return sorted(
+        benchmark_frames.keys(),
+        key=lambda name: (-mean_success(name), benchmark_sort_key(name)),
+    )
+
+
 def classify_deployment_type(provider_name: str) -> str:
     candidate = str(provider_name).strip().lower()
     if "local" in candidate or "ollama" in candidate:
@@ -321,7 +340,8 @@ def build_summary(df: pd.DataFrame, benchmark_name: str) -> str:
 
 def build_top_sections(benchmark_frames: dict[str, pd.DataFrame]) -> list[str]:
     sections = []
-    for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
+    for benchmark_name in benchmark_success_sort_names(benchmark_frames):
+        df = benchmark_frames[benchmark_name]
         benchmark_display = display_benchmark_name(benchmark_name)
         top5 = (
             df.sort_values(["Success Rate Num", "Avg Time"], ascending=[False, True])
@@ -543,7 +563,10 @@ def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame]
     plot_df = pd.DataFrame(family_benchmark_data)
     
     # Get unique benchmarks and families
-    benchmarks = sorted(plot_df["Benchmark"].unique(), key=benchmark_sort_key)
+    ordered_benchmark_names = benchmark_success_sort_names(benchmark_frames)
+    benchmark_display_order = [display_benchmark_name(name) for name in ordered_benchmark_names]
+    benchmark_set = set(plot_df["Benchmark"].unique())
+    benchmarks = [name for name in benchmark_display_order if name in benchmark_set]
     families = sorted(plot_df["Model Family Display"].unique())
     
     # Use the same default seaborn palette as the runtime vs. success rate scatter chart
@@ -644,10 +667,11 @@ def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame]
 def build_deployment_summary(benchmark_frames: dict[str, pd.DataFrame], deployment_type: str) -> str:
     filtered_frames = {
         benchmark_name: df[df["Deployment Type"] == deployment_type].copy()
-        for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0]))
+        for benchmark_name, df in benchmark_frames.items()
         if "Deployment Type" in df.columns
     }
     filtered_frames = {benchmark_name: df for benchmark_name, df in filtered_frames.items() if not df.empty}
+    ordered_benchmarks = benchmark_success_sort_names(filtered_frames)
 
     lines = []
     lines.append(f"# {deployment_type} analysis across all benchmarks")
@@ -662,9 +686,10 @@ def build_deployment_summary(benchmark_frames: dict[str, pd.DataFrame], deployme
     overview_rows = []
     thinking_rows = []
     model_benchmark_rows = []
-    benchmark_display_names = [display_benchmark_name(name) for name in sorted(filtered_frames, key=benchmark_sort_key)]
+    benchmark_display_names = [display_benchmark_name(name) for name in ordered_benchmarks]
 
-    for benchmark_name, df in sorted(filtered_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
+    for benchmark_name in ordered_benchmarks:
+        df = filtered_frames[benchmark_name]
         benchmark_display = display_benchmark_name(benchmark_name)
         success = df["Success Rate Num"] if "Success Rate Num" in df.columns else pd.Series([])
         thinking_df = df[df["Thinking Bool"]] if "Thinking Bool" in df.columns else df.iloc[0:0]
@@ -783,9 +808,11 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     overview_rows = []
     thinking_rows = []
     model_benchmark_rows = []
-    benchmark_display_names = [display_benchmark_name(name) for name in sorted(benchmark_frames, key=benchmark_sort_key)]
+    ordered_benchmarks = benchmark_success_sort_names(benchmark_frames)
+    benchmark_display_names = [display_benchmark_name(name) for name in ordered_benchmarks]
 
-    for benchmark_name, df in sorted(benchmark_frames.items(), key=lambda item: benchmark_sort_key(item[0])):
+    for benchmark_name in ordered_benchmarks:
+        df = benchmark_frames[benchmark_name]
         benchmark_display = display_benchmark_name(benchmark_name)
         success = df["Success Rate Num"] if "Success Rate Num" in df.columns else pd.Series([])
         thinking_df = df[df["Thinking Bool"]] if "Thinking Bool" in df.columns else df.iloc[0:0]
@@ -1015,7 +1042,7 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     lines.append("")
     lines.append("- [Cloud analysis](cloud_analysis.md)")
     lines.append("- [Local analysis](local_analysis.md)")
-    for benchmark_name in sorted(benchmark_frames, key=benchmark_sort_key):
+    for benchmark_name in ordered_benchmarks:
         lines.append(f"- [{benchmark_name} analysis]({benchmark_name}/analysis.md)")
 
     return "\n".join(lines)
