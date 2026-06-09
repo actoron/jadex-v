@@ -91,7 +91,7 @@ deployZip:
 deployCentral:
   stage: deploy
   script:
-    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo updateTag
+    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo updateTag createGHRelease
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
