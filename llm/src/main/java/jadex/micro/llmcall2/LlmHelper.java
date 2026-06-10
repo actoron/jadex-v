@@ -431,12 +431,12 @@ public class LlmHelper
 	public static boolean isThinking(StreamingChatModel llm)
 	{
 		ITerminableIntermediateFuture<ChatFragment>	fut	= IComponentManager.get()
-			.runAsync(new LlmChatAgent(llm, "Are you thinking?"));
-//		LlmChatAgent.printResults(fut);
-		String response = LlmChatAgent.getResponse(fut);
+			.runAsync(new LlmChatAgent(llm, "Perform some chain-of-thoughts reasoning and then answer with the final result."));
+		LlmChatAgent.printResults(fut);
+//		String response = LlmChatAgent.getResponse(fut);
 		String thinking = LlmChatAgent.getThinking(fut);
-		System.out.println("Thinking: "+thinking);
-		System.out.println("Response: "+response);
+//		System.out.println("Thinking: "+"\033[3m"+thinking+"\033[0m");
+//		System.out.println("Response: "+response);
 		return thinking!=null && !thinking.isEmpty();
 	}
 	
