@@ -12,6 +12,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -26,7 +28,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -58,12 +62,14 @@ public class ApplicationLauncher extends JFrame
     private static final Insets COMPACT_BUTTON_MARGIN = new Insets(0, 0, 0, 0);
     
     private JTable appTable;
+    private JTextArea consoleArea;
     private List<ApplicationConfig> applications;
 
     public ApplicationLauncher() {
         super("Jadex Example Application Launcher");
         this.applications	= scanForApplications();
         setupUI();
+        installConsoleRedirection();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
@@ -228,77 +234,32 @@ public class ApplicationLauncher extends JFrame
         JScrollPane scrollPane = new JScrollPane(appTable);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
 
-        // add table panel to main
-        mainPanel.add(tablePanel, BorderLayout.CENTER);
+        // Bottom console area for captured stdout/stderr from started apps.
+        consoleArea = new JTextArea();
+        consoleArea.setEditable(false);
+        consoleArea.setLineWrap(true);
+        consoleArea.setWrapStyleWord(true);
+        JScrollPane consoleScrollPane = new JScrollPane(consoleArea);
+        consoleScrollPane.setBorder(BorderFactory.createTitledBorder("Console"));
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tablePanel, consoleScrollPane);
+        splitPane.setResizeWeight(0.75);
+        splitPane.setDividerLocation(420);
+
+        // add split pane to main
+        mainPanel.add(splitPane, BorderLayout.CENTER);
 
         setContentPane(mainPanel);
     }
 
-    private void startApplicationAtRow(int row) {
-        if (row < 0 || row >= applications.size()) {
-            JOptionPane.showMessageDialog(this, "Invalid application selection.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+    private void installConsoleRedirection() {
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
 
-        try {
-            ApplicationConfig app = applications.get(row);
-
-            // Prevent double-start: check action column state
-            DefaultTableModel model = (DefaultTableModel) appTable.getModel();
-            Object actionVal = model.getValueAt(row, 2);
-            if (!"Start".equals(actionVal)) {
-                // already running or not startable
-                return;
-            }
-
-            // mark running in the table (on EDT)
-            final DefaultTableModel fmodel = model;
-            SwingUtilities.invokeLater(() -> fmodel.setValueAt("Running...", row, 2));
-
-            // Load the class dynamically and invoke main method
-            new Thread(() -> {
-                try {
-                    java.lang.reflect.Method mainMethod = app.mainClass().getMethod("main", String[].class);
-                    mainMethod.invoke(null, (Object) new String[]{});
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    // restore button state on EDT when main() returns
-                    SwingUtilities.invokeLater(() -> fmodel.setValueAt("Start", row, 2));
-                }
-            }).start();
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error starting application: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-
-    private void openSourceAtRow(int row) {
-        if (row < 0 || row >= applications.size()) {
-            JOptionPane.showMessageDialog(this, "Invalid application selection.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        ApplicationConfig app = applications.get(row);
-        String url = "https://github.com/actoron/jadex-v/blob/main/" + app.source();
-
-        if (!Desktop.isDesktopSupported()) {
-            JOptionPane.showMessageDialog(this, "Opening the browser is not supported on this system.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            Desktop.getDesktop().browse(URI.create(url));
-        } catch (IOException | RuntimeException e) {
-            JOptionPane.showMessageDialog(this, "Error opening source URL: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        PrintStream redirectedOut = new PrintStream(new ConsoleOutputStream(consoleArea, originalOut), true);
+        PrintStream redirectedErr = new PrintStream(new ConsoleOutputStream(consoleArea, originalErr), true);
+        System.setOut(redirectedOut);
+        System.setErr(redirectedErr);
     }
 
     // Renderer for the Action column that displays a Start button
@@ -403,6 +364,107 @@ public class ApplicationLauncher extends JFrame
         public void actionPerformed(ActionEvent e) {
             fireEditingStopped();
             openSourceAtRow(currentRow);
+        }
+    }
+
+    private static class ConsoleOutputStream extends OutputStream {
+        private final JTextArea target;
+        private final PrintStream fallback;
+
+        private ConsoleOutputStream(JTextArea target, PrintStream fallback) {
+            this.target = target;
+            this.fallback = fallback;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            fallback.write(b);
+            appendToConsole(String.valueOf((char) b));
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            fallback.write(b, off, len);
+            appendToConsole(new String(b, off, len));
+        }
+
+        @Override
+        public void flush() throws IOException {
+            fallback.flush();
+        }
+
+        private void appendToConsole(String text) {
+            SwingUtilities.invokeLater(() -> {
+                target.append(text);
+                target.setCaretPosition(target.getDocument().getLength());
+            });
+        }
+    }
+
+    private void startApplicationAtRow(int row) {
+        if (row < 0 || row >= applications.size()) {
+            JOptionPane.showMessageDialog(this, "Invalid application selection.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            ApplicationConfig app = applications.get(row);
+
+            // Prevent double-start: check action column state
+            DefaultTableModel model = (DefaultTableModel) appTable.getModel();
+            Object actionVal = model.getValueAt(row, 2);
+            if (!"Start".equals(actionVal)) {
+                // already running or not startable
+                return;
+            }
+
+            // mark running in the table (on EDT)
+            final DefaultTableModel fmodel = model;
+            SwingUtilities.invokeLater(() -> fmodel.setValueAt("Running...", row, 2));
+
+            // Load the class dynamically and invoke main method
+            new Thread(() -> {
+                try {
+                    java.lang.reflect.Method mainMethod = app.mainClass().getMethod("main", String[].class);
+                    mainMethod.invoke(null, (Object) new String[]{});
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // restore button state on EDT when main() returns
+                    SwingUtilities.invokeLater(() -> fmodel.setValueAt("Start", row, 2));
+                }
+            }).start();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error starting application: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void openSourceAtRow(int row) {
+        if (row < 0 || row >= applications.size()) {
+            JOptionPane.showMessageDialog(this, "Invalid application selection.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ApplicationConfig app = applications.get(row);
+        String url = "https://github.com/actoron/jadex-v/blob/main/" + app.source();
+
+        if (!Desktop.isDesktopSupported()) {
+            JOptionPane.showMessageDialog(this, "Opening the browser is not supported on this system.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().browse(URI.create(url));
+        } catch (IOException | RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Error opening source URL: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 
