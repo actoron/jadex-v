@@ -161,8 +161,8 @@ public class CleanerAgent
 		// Open a window showing the agent's perceptions
 		if(sensorgui)
 		{
-			new SensorGui(agent.getComponentHandle()).setVisible(true);
 			SwingUtilities.invokeLater(() -> new BDIViewer(agent.getComponentHandle()).setVisible(true));
+			new SensorGui(agent.getComponentHandle());
 		}
 		
 		agent.getFeature(IBDIAgentFeature.class).dispatchTopLevelGoal(new PerformLookForWaste());

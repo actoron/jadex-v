@@ -1,4 +1,4 @@
-# Jadex University Application
+# Jadex University Example
 
 A BDI agent deciding how to get to Univeristy.
 

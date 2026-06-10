@@ -37,17 +37,17 @@ public class SensorGui
 	 */
 	public SensorGui(IComponentHandle handle)
 	{
-		String id = handle.getPojoHandle(CleanerAgent.class).getCleaner().get().getId();
+		String id = handle.getId().getLocalName();
 		
 		// Open window on swing thread
 		SwingUtilities.invokeLater(()->
 		{
-			this.frame	= new JFrame(id);
+			this.frame	= new JFrame("Sensor Gui: "+id);
 			final JPanel map = new SensorPanel(handle);
 
 			frame.getContentPane().add(BorderLayout.CENTER, map);
 			frame.setSize(300, 300);
-			frame.setLocation(SGUI.calculateMiddlePosition(frame));
+//			frame.setLocation(SGUI.calculateMiddlePosition(frame));
 			frame.setVisible(true);
 			
 			// Repaint every 50 ms.
