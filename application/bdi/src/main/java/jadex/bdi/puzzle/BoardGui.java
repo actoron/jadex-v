@@ -9,9 +9,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import jadex.common.SGUI;
-import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IThrowingConsumer;
 
 /**
  *  The board gui.
@@ -64,7 +62,7 @@ public class BoardGui extends JFrame
 		{
 			public void windowClosing(WindowEvent e)
 			{
-				agent.scheduleStep( (IThrowingConsumer<IComponent>)(a -> a.terminate()))
+				agent.terminate()
 					.catchEx(ex -> ex.printStackTrace());
 			}
 		});
