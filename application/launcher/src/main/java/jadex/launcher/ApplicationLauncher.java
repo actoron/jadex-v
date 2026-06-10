@@ -1,8 +1,10 @@
 package jadex.launcher;
 
 import java.awt.BorderLayout;
+//import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -27,7 +29,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableModel;
+
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.jthemedetecor.OsThemeDetector;
 
 import jadex.common.SScan;
 import jadex.common.SUtil;
@@ -47,7 +55,7 @@ public class ApplicationLauncher extends JFrame
 			return this.name.compareTo(o.name);
 		}
     }
-    private static final Insets COMPACT_BUTTON_MARGIN = new Insets(1, 6, 1, 6);
+    private static final Insets COMPACT_BUTTON_MARGIN = new Insets(0, 0, 0, 0);
     
     private JTable appTable;
     private List<ApplicationConfig> applications;
@@ -159,7 +167,7 @@ public class ApplicationLauncher extends JFrame
     }
 
     private void setupUI() {
-        setSize(600, 400);
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -169,14 +177,15 @@ public class ApplicationLauncher extends JFrame
 
         // Top panel with title (controls moved into table area)
         JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        JLabel titleLabel = new JLabel("Select an application to start:");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel titleLabel = new JLabel("Select an application to start or view online docs:");
+        Font currentFont = titleLabel.getFont();
+        titleLabel.setFont(currentFont.deriveFont(currentFont.getSize() * 1.25f).deriveFont(Font.BOLD));
         topPanel.add(titleLabel, BorderLayout.WEST);
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // Middle panel with applications table
         JPanel tablePanel = new JPanel(new BorderLayout());
-        tablePanel.setBorder(BorderFactory.createTitledBorder("Available Applications"));
+//        tablePanel.setBorder(BorderFactory.createTitledBorder("Available Applications"));
         
         String[] columnNames = {"Name", "Description", "Action", "Docs"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
@@ -197,12 +206,18 @@ public class ApplicationLauncher extends JFrame
         }
 
         appTable = new JTable(tableModel);
+        appTable.setTableHeader(null);
         appTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        appTable.setRowHeight(25);
+        appTable.setRowSelectionAllowed(false);
+        appTable.setColumnSelectionAllowed(false);
+        appTable.setCellSelectionEnabled(false);
+        appTable.setFocusable(false);
+        appTable.setRowHeight(45);
+        appTable.setIntercellSpacing(new Dimension(24, 24));
         appTable.getColumnModel().getColumn(0).setPreferredWidth(150);
-        appTable.getColumnModel().getColumn(1).setPreferredWidth(350);
-        appTable.getColumnModel().getColumn(2).setPreferredWidth(100);
-        appTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        appTable.getColumnModel().getColumn(1).setPreferredWidth(450);
+        appTable.getColumnModel().getColumn(2).setPreferredWidth(75);
+        appTable.getColumnModel().getColumn(3).setPreferredWidth(75);
 
         // Add per-row Start and Source buttons using custom renderer/editor
         appTable.getColumnModel().getColumn(2).setCellRenderer(new ButtonRenderer());
@@ -291,6 +306,7 @@ public class ApplicationLauncher extends JFrame
         public ButtonRenderer() {
             setOpaque(true);
             setMargin(COMPACT_BUTTON_MARGIN);
+//            setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         }
 
         @Override
@@ -309,6 +325,7 @@ public class ApplicationLauncher extends JFrame
         public SourceButtonRenderer() {
             setOpaque(true);
             setMargin(COMPACT_BUTTON_MARGIN);
+//            setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         }
 
         @Override
@@ -328,6 +345,7 @@ public class ApplicationLauncher extends JFrame
         public ButtonEditor() {
             button.addActionListener(this);
             button.setMargin(COMPACT_BUTTON_MARGIN);
+//            button.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         }
 
         @Override
@@ -365,6 +383,7 @@ public class ApplicationLauncher extends JFrame
         public SourceButtonEditor() {
             button.addActionListener(this);
             button.setMargin(COMPACT_BUTTON_MARGIN);
+//            button.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
         }
 
         @Override
@@ -389,6 +408,19 @@ public class ApplicationLauncher extends JFrame
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+        	if(OsThemeDetector.getDetector().isDark()) {
+        		FlatDarkLaf.setup();
+        		UIManager.put("Button.background", new ColorUIResource(60, 63, 65));
+        		UIManager.put("Button.foreground", new ColorUIResource(220, 220, 220));
+        	} else {
+        		FlatLightLaf.setup();
+        		UIManager.put("Button.background", new ColorUIResource(220, 220, 220));
+        		UIManager.put("Button.foreground", new ColorUIResource(30, 30, 30));
+        	}
+//            UIManager.put("Button.arc", 999);
+            UIManager.put("Table.showHorizontalLines", true);
+            UIManager.put("Table.showVerticalLines", false);
+
             ApplicationLauncher launcher = new ApplicationLauncher();
             launcher.setVisible(true);
         });

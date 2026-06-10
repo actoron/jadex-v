@@ -28,6 +28,10 @@ dependencies
 	implementation 'org.activecomponents.jadex:application-bdi:' + v
 	implementation 'org.activecomponents.jadex:application-bdi-service:' + v
 	implementation 'org.activecomponents.jadex:application-bt:' + v
+
+	implementation 'com.formdev:flatlaf:3.7.1'
+	implementation 'org.openani.jsystemthemedetector:jSystemThemeDetector:3.9'
+	runtimeOnly 'org.slf4j:slf4j-simple:2.0.18'
 	
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
