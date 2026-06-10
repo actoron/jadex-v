@@ -11,6 +11,7 @@ import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 
@@ -160,5 +161,15 @@ public class UniversityAgent
 //			System.out.println("Taking "+goal.getType());
 			System.out.println("Taking "+((TakeXGoal)((IGoal)plan.getReason()).getPojo()).getType());
 		}
+	}
+
+	/**
+	 *  Start the example with random beliefs.
+	 */
+	public static void main(String[] args) 
+	{
+		IComponentManager.get().create(new UniversityAgent(Math.random()>0.5, Math.random()>0.5)).get();
+		
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
