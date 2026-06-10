@@ -1,6 +1,6 @@
 # ![Icon](university_icon.png) Jadex University Example
 
-A BDI agent deciding how to get to Univeristy.
+A BDI agent deciding how to get to university.
 
 The example is taken from the book:
 * *Developing Intelligent Agent Systems* by Michael Winikoff and Lin Padgham, 2004.

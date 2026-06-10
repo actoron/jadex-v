@@ -1,4 +1,4 @@
-# ![Icon](ui/images/cleanerworld20x20.png) Jadex BDI Cleanerworld Example
+# ![Icon](ui/images/cleaner.png) Jadex BDI Cleanerworld Example
 
 An autonomous cleaning robot designed with beliefs, goals and plans.
 

@@ -6,9 +6,13 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BaseMultiResolutionImage;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -62,7 +67,8 @@ public class ApplicationLauncher extends JFrame
 		}
     }
     private static final Insets COMPACT_BUTTON_MARGIN = new Insets(0, 0, 0, 0);
-    private static final Icon EMPTY_ICON = new ImageIcon(new java.awt.image.BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_ARGB));
+    private static final int ICON_SIZE = 20;
+    private static final Icon EMPTY_ICON = new ImageIcon(new java.awt.image.BufferedImage(ICON_SIZE, ICON_SIZE, java.awt.image.BufferedImage.TYPE_INT_ARGB));
     
     private JTable appTable;
     private JTextArea consoleArea;
@@ -227,13 +233,7 @@ public class ApplicationLauncher extends JFrame
         };
 
         for (ApplicationConfig app : applications) {
-            Icon appIcon = EMPTY_ICON;
-            if (app.icon() != null) {
-                URL iconUrl = ApplicationLauncher.class.getResource(app.icon());
-                if (iconUrl != null) {
-                    appIcon = new ImageIcon(iconUrl);
-                }
-            }
+            Icon appIcon = app.icon() != null ? loadApplicationIcon(app.icon()) : EMPTY_ICON;
             tableModel.addRow(new Object[]{
                 appIcon,
                 app.name(),
@@ -296,13 +296,58 @@ public class ApplicationLauncher extends JFrame
         System.setErr(redirectedErr);
     }
 
+    /**
+     * Loads an icon and derives a multi-resolution icon for common DPI scales.
+     */
+    private static Icon loadApplicationIcon(String iconPath) {
+        URL hiDpiUrl = ApplicationLauncher.class.getResource(iconPath);
+        if (hiDpiUrl != null) {
+            try {
+                BufferedImage source = ImageIO.read(hiDpiUrl);
+                if (source != null) {
+                    return createMultiDpiIcon(source);
+                }
+            } catch (IOException e) {
+                System.err.println("Could not load icon: " + iconPath);
+                e.printStackTrace();
+            }
+        }
+
+        System.err.println("Could not find icon: " + iconPath);
+        return EMPTY_ICON;
+    }
+
+    private static Icon createMultiDpiIcon(BufferedImage source) {
+        double[] scales = {1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0};
+        BufferedImage[] variants = new BufferedImage[scales.length];
+        for (int i = 0; i < scales.length; i++) {
+            int size = Math.max(1, (int) Math.round(ICON_SIZE * scales[i]));
+            variants[i] = scaleImage(source, size, size);
+        }
+        return new ImageIcon(new BaseMultiResolutionImage(variants));
+    }
+
+    private static BufferedImage scaleImage(BufferedImage source, int width, int height) {
+        BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = scaled.createGraphics();
+        try {
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.drawImage(source, 0, 0, width, height, null);
+        } finally {
+            g2.dispose();
+        }
+        return scaled;
+    }
+
     // Renderer for the Icon column that displays a fixed 20x20 icon
     private static class IconRenderer extends JLabel implements javax.swing.table.TableCellRenderer {
         public IconRenderer() {
             setOpaque(false);
             setHorizontalAlignment(CENTER);
             setVerticalAlignment(CENTER);
-            setPreferredSize(new Dimension(20, 20));
+            setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
         }
 
         @Override
@@ -318,17 +363,17 @@ public class ApplicationLauncher extends JFrame
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(20, 20);
+            return new Dimension(ICON_SIZE, ICON_SIZE);
         }
 
         @Override
         public Dimension getMinimumSize() {
-            return new Dimension(20, 20);
+            return new Dimension(ICON_SIZE, ICON_SIZE);
         }
 
         @Override
         public Dimension getMaximumSize() {
-            return new Dimension(20, 20);
+            return new Dimension(ICON_SIZE, ICON_SIZE);
         }
     }
 
