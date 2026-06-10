@@ -1,4 +1,4 @@
-# Jadex Puzzle Application
+# ![Icon](images/puzzle20x20.png) Jadex Puzzle Application
 
 Solve a puzzle using goal/plan-decomposition.
 

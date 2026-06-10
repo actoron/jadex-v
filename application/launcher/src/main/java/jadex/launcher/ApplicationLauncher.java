@@ -23,6 +23,8 @@ import java.util.stream.Stream;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -51,7 +53,7 @@ import jadex.common.SUtil;
 @SuppressWarnings("serial")
 public class ApplicationLauncher extends JFrame
 {
-    record ApplicationConfig(String name, Class<?> mainClass, String description, String source) implements Comparable<ApplicationConfig>
+    record ApplicationConfig(String name, Class<?> mainClass, String description, String source, String icon) implements Comparable<ApplicationConfig>
     {	
     	@Override
     	public int compareTo(ApplicationConfig o)
@@ -60,6 +62,7 @@ public class ApplicationLauncher extends JFrame
 		}
     }
     private static final Insets COMPACT_BUTTON_MARGIN = new Insets(0, 0, 0, 0);
+    private static final Icon EMPTY_ICON = new ImageIcon(new java.awt.image.BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_ARGB));
     
     private JTable appTable;
     private JTextArea consoleArea;
@@ -132,7 +135,10 @@ public class ApplicationLauncher extends JFrame
 			// Find first non-blank, non-header line in the README as description (or fallback if not found)
 			String	description	= Stream.of(contents.split("\n"))
 					.map(String::trim)
-					.filter(line -> !line.isEmpty() && !line.startsWith("#") && !line.startsWith("Main class:"))
+					.filter(line -> !line.isEmpty()
+						&& !line.startsWith("#")
+						&& !line.startsWith("Main class:")
+						&& !line.startsWith("![Icon]("))
 					.findFirst()
 					.orElse(null);
 			
@@ -159,11 +165,21 @@ public class ApplicationLauncher extends JFrame
 				}
 			}
 			
+			// Find icon in readme
+			final String	ICON_MARKER	= "![Icon](";
+			String	icon	= Stream.of(contents.split("\n"))
+					.map(String::trim)
+					.filter(line -> line.contains(ICON_MARKER))
+					.map(line -> "/"+package_path+"/"+line.substring(line.indexOf(ICON_MARKER)+ICON_MARKER.length(), line.indexOf(")")).trim())
+					.findFirst()
+					.orElse(null);
+			
 			applications.add(new ApplicationConfig(
 				display_name,
 				clazz,
 				description,
-				src_path
+				src_path,
+				icon
 			));
         });
         
@@ -193,17 +209,33 @@ public class ApplicationLauncher extends JFrame
         JPanel tablePanel = new JPanel(new BorderLayout());
 //        tablePanel.setBorder(BorderFactory.createTitledBorder("Available Applications"));
         
-        String[] columnNames = {"Name", "Description", "Action", "Docs"};
+        String[] columnNames = {"Icon", "Name", "Description", "Action", "Docs"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 // button columns are editable to host the button editors
-                return column == 2 || column == 3;
+                return column == 3 || column == 4;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) {
+                    return Icon.class;
+                }
+                return String.class;
             }
         };
 
         for (ApplicationConfig app : applications) {
+            Icon appIcon = EMPTY_ICON;
+            if (app.icon() != null) {
+                URL iconUrl = ApplicationLauncher.class.getResource(app.icon());
+                if (iconUrl != null) {
+                    appIcon = new ImageIcon(iconUrl);
+                }
+            }
             tableModel.addRow(new Object[]{
+                appIcon,
                 app.name(),
                 app.description(),
                 "Start",
@@ -220,16 +252,18 @@ public class ApplicationLauncher extends JFrame
         appTable.setFocusable(false);
         appTable.setRowHeight(45);
         appTable.setIntercellSpacing(new Dimension(24, 24));
-        appTable.getColumnModel().getColumn(0).setPreferredWidth(150);
-        appTable.getColumnModel().getColumn(1).setPreferredWidth(450);
-        appTable.getColumnModel().getColumn(2).setPreferredWidth(75);
+        appTable.getColumnModel().getColumn(0).setPreferredWidth(45);
+        appTable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        appTable.getColumnModel().getColumn(2).setPreferredWidth(405);
         appTable.getColumnModel().getColumn(3).setPreferredWidth(75);
+        appTable.getColumnModel().getColumn(4).setPreferredWidth(75);
 
         // Add per-row Start and Source buttons using custom renderer/editor
-        appTable.getColumnModel().getColumn(2).setCellRenderer(new ButtonRenderer());
-        appTable.getColumnModel().getColumn(2).setCellEditor(new ButtonEditor());
-        appTable.getColumnModel().getColumn(3).setCellRenderer(new SourceButtonRenderer());
-        appTable.getColumnModel().getColumn(3).setCellEditor(new SourceButtonEditor());
+        appTable.getColumnModel().getColumn(0).setCellRenderer(new IconRenderer());
+        appTable.getColumnModel().getColumn(3).setCellRenderer(new ButtonRenderer());
+        appTable.getColumnModel().getColumn(3).setCellEditor(new ButtonEditor());
+        appTable.getColumnModel().getColumn(4).setCellRenderer(new SourceButtonRenderer());
+        appTable.getColumnModel().getColumn(4).setCellEditor(new SourceButtonEditor());
 
         JScrollPane scrollPane = new JScrollPane(appTable);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
@@ -260,6 +294,42 @@ public class ApplicationLauncher extends JFrame
         PrintStream redirectedErr = new PrintStream(new ConsoleOutputStream(consoleArea, originalErr), true);
         System.setOut(redirectedOut);
         System.setErr(redirectedErr);
+    }
+
+    // Renderer for the Icon column that displays a fixed 20x20 icon
+    private static class IconRenderer extends JLabel implements javax.swing.table.TableCellRenderer {
+        public IconRenderer() {
+            setOpaque(false);
+            setHorizontalAlignment(CENTER);
+            setVerticalAlignment(CENTER);
+            setPreferredSize(new Dimension(20, 20));
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof Icon) {
+                setIcon((Icon) value);
+            } else {
+                setIcon(null);
+            }
+            return this;
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(20, 20);
+        }
+
+        @Override
+        public Dimension getMinimumSize() {
+            return new Dimension(20, 20);
+        }
+
+        @Override
+        public Dimension getMaximumSize() {
+            return new Dimension(20, 20);
+        }
     }
 
     // Renderer for the Action column that displays a Start button
@@ -329,7 +399,7 @@ public class ApplicationLauncher extends JFrame
             fireEditingStopped();
             // start the application for this row if still startable
             DefaultTableModel model = (DefaultTableModel) appTable.getModel();
-            Object actionVal = model.getValueAt(currentRow, 2);
+            Object actionVal = model.getValueAt(currentRow, 3);
             if ("Start".equals(actionVal)) {
                 startApplicationAtRow(currentRow);
             }
@@ -413,7 +483,7 @@ public class ApplicationLauncher extends JFrame
 
             // Prevent double-start: check action column state
             DefaultTableModel model = (DefaultTableModel) appTable.getModel();
-            Object actionVal = model.getValueAt(row, 2);
+            Object actionVal = model.getValueAt(row, 3);
             if (!"Start".equals(actionVal)) {
                 // already running or not startable
                 return;
@@ -421,7 +491,7 @@ public class ApplicationLauncher extends JFrame
 
             // mark running in the table (on EDT)
             final DefaultTableModel fmodel = model;
-            SwingUtilities.invokeLater(() -> fmodel.setValueAt("Running...", row, 2));
+            SwingUtilities.invokeLater(() -> fmodel.setValueAt("Running...", row, 3));
 
             // Load the class dynamically and invoke main method
             new Thread(() -> {
@@ -432,7 +502,7 @@ public class ApplicationLauncher extends JFrame
                     e.printStackTrace();
                 } finally {
                     // restore button state on EDT when main() returns
-                    SwingUtilities.invokeLater(() -> fmodel.setValueAt("Start", row, 2));
+                    SwingUtilities.invokeLater(() -> fmodel.setValueAt("Start", row, 3));
                 }
             }).start();
 

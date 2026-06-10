@@ -1,4 +1,4 @@
-# Jadex Gobble Application
+# ![Icon](gobble_icon.png) Jadex Gobble Application
 
 A web based variation of Tic Tac Toe.
 

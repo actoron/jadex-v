@@ -1,4 +1,4 @@
-# Jadex University Example
+# ![Icon](university_icon.png) Jadex University Example
 
 A BDI agent deciding how to get to Univeristy.
 

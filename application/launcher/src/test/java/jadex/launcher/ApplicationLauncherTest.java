@@ -17,6 +17,10 @@ public class ApplicationLauncherTest
 		{
 			assertNotNull(app.description(), app.name());
 			assertNotNull(app.mainClass(), app.name());
+			
+			// Check if the icon resource can be found, if specified.
+			if(app.icon()!=null)
+				assertNotNull(ApplicationLauncher.class.getResource(app.icon()), app.name());
 		});
 	}
 }
