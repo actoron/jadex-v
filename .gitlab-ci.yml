@@ -1,10 +1,12 @@
-#image: eclipse-temurin:21-jdk-alpine
-image: eclipse-temurin:21-jdk-noble
+image: eclipse-temurin:21-jdk-alpine
+
+variables:
+  BAZELISK_VERSION: "latest"
 
 before_script:
-  - GRADLE_USER_HOME="$(pwd)/.gradle"
-  - export GRADLE_USER_HOME
-  - apt update && apt install -y git
+  - apk add --no-cache bash curl
+  - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
+  - chmod +x /usr/local/bin/bazel
 
 stages:
   - build
@@ -14,90 +16,94 @@ stages:
 
 build:
   stage: build
-  script: 
-    - cat build.gradle
-    - ./gradlew --build-cache assemble
+  script:
+    - bazel build //...
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
     paths:
-      - '**/build'
-      - .gradle
+      - .bazel
+      - ~/.cache/bazel
 
 test:
   stage: test
-  script: ./gradlew test
+  script:
+    - bazel test //...
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - '**/build'
-      - .gradle
+      - .bazel
+      - ~/.cache/bazel
 
 benchmark:
   stage: benchmark
   script:
-    - ./benchmark.sh
-  #timeout: 48h
-  # needs: ["build"]
+    - bazel test //benchmark/... --test_output=errors
   allow_failure: true
   cache:
     - key: "$CI_COMMIT_REF_NAME"
       policy: pull
       paths:
-        - '**/build'
-        - .gradle
-    
-    # cache benchmark values to check against previous vals (pct)
+        - .bazel
+        - ~/.cache/bazel
+
     - key: benchmarks-$CI_COMMIT_REF_SLUG
       paths:
-        - benchmark/*/.benchmark_gradle
-      # also store benchmark data on failed job
-      when: 'always'
+        - benchmark/*/.benchmark_bazel
+      when: always
   rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
-  tags: [benchmark]
+    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+  tags:
+    - benchmark
 
-purge_benchmarks:
-  stage: benchmark
-  script: ./gradlew benchmark:purge
-  cache:
-    - key: "$CI_COMMIT_REF_NAME"
-      policy: pull
-      paths:
-        - '**/build'
-        - .gradle
-    
-    # cache benchmark values to check against previous vals (pct)
-    - key: benchmarks-$CI_COMMIT_REF_SLUG
-      paths:
-        - benchmark/*/.benchmark_gradle
-  when: manual
-  tags: [benchmark]
-  
-deployZip:
-  stage: deploy
-  script:
-    - ./gradlew deployZip
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
+# purge_benchmarks:
+#  stage: benchmark
+#  script:
+#    - bazel run //benchmark:purge
+#  cache:
+#    - key: "$CI_COMMIT_REF_NAME"
+#      policy: pull
+#      paths:
+#        - .bazel
+#        - ~/.cache/bazel
+#
+#    - key: benchmarks-$CI_COMMIT_REF_SLUG
+#      paths:
+#        - benchmark/*/.benchmark_bazel
+#  when: manual
+#  tags:
+#    - benchmark
 
-deployCentral:
-  stage: deploy
-  script:
-    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo updateTag createGHRelease
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
-  when: manual
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
+# deployZip:
+#  stage: deploy
+#  script:
+#    - bazel build //:deployZip
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: pull
+#    paths:
+#      - .bazel
+#      - ~/.cache/bazel
+#  rules:
+#    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+
+#deployCentral:
+#  stage: deploy
+#  script:
+#    - bazel run //:publish
+#  cache:
+#    key: "$CI_COMMIT_REF_NAME"
+#    policy: pull
+#    paths:
+#      - .bazel
+#      - ~/.cache/bazel
+#  rules:
+#    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+
+
+
+
+
+
+

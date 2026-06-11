@@ -21,7 +21,7 @@ java_library(
         "//feature/execution",
         "//feature/injection",
         "//engine/bt",
-        "//feature/simulation",
+        # "//feature/simulation", # mastersimfeature has memory leak
         "//monitoring/logbase",
         "//service/provided",
         "//service/required",

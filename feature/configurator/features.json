@@ -9,7 +9,7 @@
         "category": "application",
         "description": "",
         "path": "application/bdi",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -31,7 +31,7 @@
         "category": "application",
         "description": "",
         "path": "application/bdi-service",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -60,7 +60,7 @@
         "category": "application",
         "description": "",
         "path": "application/bpmn",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -81,7 +81,7 @@
         "category": "application",
         "description": "",
         "path": "application/bt",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -111,7 +111,7 @@
         "category": "application",
         "description": "",
         "path": "application/micro",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -157,7 +157,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/bdi",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -173,7 +173,7 @@
           "environment/environment"
         ],
         "external_deps": [
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -182,7 +182,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/bpmn",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -195,7 +195,7 @@
           "feature/result"
         ],
         "external_deps": [
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -204,7 +204,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/bt",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -220,7 +220,7 @@
           "environment/environment"
         ],
         "external_deps": [
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -229,7 +229,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/core",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -249,7 +249,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/execution",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -261,7 +261,7 @@
           "util/future"
         ],
         "external_deps": [
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -270,7 +270,7 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/micro",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -283,7 +283,7 @@
           "util/future"
         ],
         "external_deps": [
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -292,17 +292,17 @@
         "category": "benchmark",
         "description": "",
         "path": "benchmark/thirdparty",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
           "benchmark/core"
         ],
         "external_deps": [
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "javax.json:javax.json-api:1.1.4",
           "net.sf.ingenias:jade:4.3",
           "org.glassfish:javax.json:1.1.4",
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       }
@@ -314,11 +314,11 @@
     "type": "or",
     "features": [
       {
-        "name": "engine",
+        "name": "bpmn",
         "category": "bpmn",
         "description": "",
         "path": "engine/bpmn/engine",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -335,11 +335,11 @@
         "external_deps": []
       },
       {
-        "name": "model",
+        "name": "modelbpmn",
         "category": "bpmn",
         "description": "",
         "path": "engine/bpmn/model",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -353,11 +353,11 @@
         "external_deps": []
       },
       {
-        "name": "providedservice",
+        "name": "providedservicebpmn",
         "category": "bpmn",
         "description": "",
         "path": "engine/bpmn/providedservice",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -378,11 +378,11 @@
         "external_deps": []
       },
       {
-        "name": "requiredservice",
+        "name": "requiredservicebpmn",
         "category": "bpmn",
         "description": "",
         "path": "engine/bpmn/requiredservice",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -414,7 +414,7 @@
         "category": "communication",
         "description": "",
         "path": "communication/messaging",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -435,7 +435,7 @@
         "category": "communication",
         "description": "",
         "path": "communication/networking",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -454,7 +454,7 @@
         "category": "communication",
         "description": "",
         "path": "communication/remoteservice",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -474,7 +474,7 @@
         "category": "communication",
         "description": "",
         "path": "communication/serialization",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -497,7 +497,7 @@
         "category": "engine",
         "description": "",
         "path": "engine/bdi",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -516,7 +516,7 @@
         "category": "engine",
         "description": "",
         "path": "engine/bt",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -539,7 +539,7 @@
         "category": "engine",
         "description": "",
         "path": "engine/core",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -557,11 +557,11 @@
     "type": "or",
     "features": [
       {
-        "name": "envi",
+        "name": "environment",
         "category": "environment",
-        "description": "Environment module for agents Handles runtime abstraction and environment interactions",
+        "description": "",
         "path": "environment/environment",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -584,7 +584,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/autostart",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -604,7 +604,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/configurator",
-        "kind": "feature",
+        "type": "feature",
         "deps": [],
         "external_deps": []
       },
@@ -613,7 +613,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/execution",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -629,7 +629,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/featuretest",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -637,8 +637,8 @@
           "util/future"
         ],
         "external_deps": [
+          "@maven//:org_junit_jupiter_junit_jupiter_api",
           "@maven//:org_junit_platform_junit_platform_commons",
-          "org.junit.jupiter:junit-jupiter-api:5.10.0",
           "org.junit.platform:junit-platform-suite-api:1.10.0"
         ]
       },
@@ -647,7 +647,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/injection",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -667,7 +667,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/result",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/future",
           "engine/core"
@@ -679,7 +679,7 @@
         "category": "feature",
         "description": "",
         "path": "feature/simulation",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "feature/execution",
@@ -696,11 +696,11 @@
     "type": "or",
     "features": [
       {
-        "name": "lib",
+        "name": "libmicro",
         "category": "micro",
         "description": "",
         "path": "micro/lib",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -722,11 +722,11 @@
     "type": "or",
     "features": [
       {
-        "name": "log4j",
+        "name": "fluentd",
         "category": "monitoring",
         "description": "",
-        "path": "monitoring/log4j",
-        "kind": "feature",
+        "path": "monitoring/fluentd",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -735,6 +735,42 @@
           "monitoring/logbase"
         ],
         "external_deps": [
+          "org.fluentd:fluent-logger:0.3.4"
+        ]
+      },
+      {
+        "name": "graylog",
+        "category": "monitoring",
+        "description": "",
+        "path": "monitoring/graylog",
+        "type": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "feature/execution",
+          "util/future",
+          "monitoring/logbase"
+        ],
+        "external_deps": [
+          "org.graylog2:gelfclient:1.5.1",
+          "org.graylog2:gelfj:1.1.16"
+        ]
+      },
+      {
+        "name": "log4j",
+        "category": "monitoring",
+        "description": "",
+        "path": "monitoring/log4j",
+        "type": "feature",
+        "deps": [
+          "util/common",
+          "engine/core",
+          "feature/execution",
+          "util/future",
+          "monitoring/logbase"
+        ],
+        "external_deps": [
+          "org.apache.logging.log4j:log4j-api:3.0.0-beta2",
           "org.apache.logging.log4j:log4j-core:3.0.0-beta2"
         ]
       },
@@ -743,7 +779,7 @@
         "category": "monitoring",
         "description": "",
         "path": "monitoring/logbase",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core"
@@ -755,7 +791,7 @@
         "category": "monitoring",
         "description": "",
         "path": "monitoring/opentelemetry",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "engine/core",
@@ -782,7 +818,7 @@
         "category": "serialization",
         "description": "",
         "path": "serialization/binary",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection",
@@ -795,7 +831,7 @@
         "category": "serialization",
         "description": "",
         "path": "serialization/json",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection",
@@ -810,7 +846,7 @@
         "category": "serialization",
         "description": "",
         "path": "serialization/traverser",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection"
@@ -829,7 +865,7 @@
         "category": "service",
         "description": "",
         "path": "service/provided",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/collection",
@@ -847,7 +883,7 @@
         "category": "service",
         "description": "",
         "path": "service/publish",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -877,11 +913,11 @@
         ]
       },
       {
-        "name": "publishjetty",
+        "name": "publishservicejetty",
         "category": "service",
         "description": "",
         "path": "service/publishjetty",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -913,7 +949,7 @@
         "category": "service",
         "description": "",
         "path": "service/registry",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -940,7 +976,7 @@
         "category": "service",
         "description": "",
         "path": "service/required",
-        "kind": "feature",
+        "type": "feature",
         "deps": [
           "util/common",
           "util/future",
@@ -966,7 +1002,7 @@
         "category": "util",
         "description": "",
         "path": "util/bean",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common"
         ],
@@ -977,7 +1013,7 @@
         "category": "util",
         "description": "",
         "path": "util/bytecode",
-        "kind": "library",
+        "type": "type",
         "deps": [
           "util/common",
           "util/collection",
@@ -994,7 +1030,7 @@
         "category": "util",
         "description": "",
         "path": "util/classreader",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection"
@@ -1006,7 +1042,7 @@
         "category": "util",
         "description": "",
         "path": "util/collection",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common"
         ],
@@ -1017,7 +1053,7 @@
         "category": "util",
         "description": "",
         "path": "util/common",
-        "kind": "library",
+        "type": "library",
         "deps": [],
         "external_deps": []
       },
@@ -1026,7 +1062,7 @@
         "category": "util",
         "description": "",
         "path": "util/future",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection"
@@ -1038,7 +1074,7 @@
         "category": "util",
         "description": "",
         "path": "util/idgenerator",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection"
@@ -1052,7 +1088,7 @@
         "category": "util",
         "description": "",
         "path": "util/javaparser",
-        "kind": "library",
+        "type": "library",
         "deps": [
           "util/common",
           "util/collection"
@@ -1064,7 +1100,7 @@
         "category": "util",
         "description": "",
         "path": "util/nativetools",
-        "kind": "library",
+        "type": "library",
         "deps": [],
         "external_deps": [
           "net.java.dev.jna:jna:5.13.0"

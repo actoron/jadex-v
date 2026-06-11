@@ -4,7 +4,7 @@ load("//feature/configurator:feature.bzl", "feature")
 # Handles runtime abstraction and environment interactions
 
 feature(
-    name = "envi",
+    name = "environment",
 )
 
 load("@rules_java//java:defs.bzl", "java_library")

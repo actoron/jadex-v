@@ -45,3 +45,4 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_console",
     ],
 )
+

@@ -184,7 +184,7 @@ def parse_feature(build_file_path: str):
         "name":        attrs.get("name"),
         "category":    attrs.get("category"),
         "description": attrs.get("description", ""),
-        "kind":        attrs.get("kind"),
+        "type":        attrs.get("type"),
     }
 
 
@@ -423,7 +423,7 @@ def collect_features(root: str, maven_index: dict) -> dict:
             "category":     parent_category,
             "description":  comment,
             "path":         rel_dir,
-            "kind":         "feature",
+            "type":         "feature",
             "deps":         internal_deps,
             "external_deps": external_deps,
         }
@@ -431,7 +431,7 @@ def collect_features(root: str, maven_index: dict) -> dict:
         if meta:
             module["name"]     = meta.get("name")     or module["name"]
             module["category"] = meta.get("category") or module["category"]
-            module["kind"]     = meta.get("kind")      or "feature"
+            module["type"]     = meta.get("type")      or "feature"
             if meta.get("description"):
                 module["description"] = meta["description"]
 
