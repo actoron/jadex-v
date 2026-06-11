@@ -141,8 +141,12 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 									})
 										.catchEx(ex ->
 									{
-										// Just terminate -> exception should be handled by caller 
-										fself.doTerminate();									
+										// Might be terminated from outside -> caller gets ComponentTerminatedException
+										if(!fself.isTerminated())
+										{
+											// Just terminate -> exception should be handled by caller
+											fself.doTerminate();
+										}
 									});
 								}
 							}

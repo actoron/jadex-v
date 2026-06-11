@@ -4,14 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -127,19 +128,25 @@ public class BDIViewer extends JFrame
         return table;
     }
 
-    private Timer startAutoRefresh() 
+    private void	startAutoRefresh() 
     {
-        Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(new TimerTask() 
-        {
-            @Override
-            public void run() 
-            {
-                SwingUtilities.invokeLater(BDIViewer.this::refreshTables);
-            }
-        }, 0, 100);
+        Timer timer = new Timer(100, ev -> BDIViewer.this.refreshTables());
         
-        return timer;
+		// Kill agent on window close.
+		addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				agent.terminate();
+			}
+		});
+		
+		// Close window on agent kill.
+		agent.waitForTermination().then(b -> SwingUtilities.invokeLater(()->
+		{
+			timer.stop();
+			dispose();
+		}));
     }
 
     private void refreshTables() 

@@ -7,6 +7,7 @@ import javax.swing.SwingUtilities;
 
 import jadex.common.ICommand;
 import jadex.common.SUtil;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.execution.IExecutionFeature;
@@ -87,7 +88,14 @@ public class ComponentFutureFunctionality extends FutureFunctionality
 	@Override
 	public void scheduleBackward(ICommand<Void> code)
 	{
-		provider.scheduleStep(() -> code.execute(null));
+		try
+		{
+			provider.scheduleStep(() -> code.execute(null));
+		}
+		catch(ComponentTerminatedException ex)
+		{
+			// ignore
+		}
 	}
 
 	public Object handleResult(Object val) throws Exception

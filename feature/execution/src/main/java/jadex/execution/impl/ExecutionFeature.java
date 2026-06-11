@@ -767,7 +767,15 @@ public class ExecutionFeature	implements IExecutionFeature, IInternalExecutionFe
 			for(WaitTask tti: entries)
 			{
 				if(ex==null)
-					ex	= new ComponentTerminatedException(getComponent().getId());
+					ex	= new ComponentTerminatedException(getComponent().getId())
+					{
+						@Override
+						public void printStackTrace()
+						{
+							Thread.dumpStack();
+							super.printStackTrace();
+						}
+					};
 				tti.getFuture().setExceptionIfUndone(ex);
 				tti.cancel();
 			}

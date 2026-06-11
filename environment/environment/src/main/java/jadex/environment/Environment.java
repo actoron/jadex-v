@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -33,7 +31,6 @@ import jadex.future.ITerminableFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableFuture;
 import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.math.IVector1;
 import jadex.math.IVector2;
@@ -152,15 +149,15 @@ public class Environment
 		}
 	}
 	
-	@OnEnd
-	protected void end(Exception e)
-	{
-		System.out.println("end: "+agent.getId()+" "+e);
-		if(e!=null)
-		{
-			e.printStackTrace();
-		}
-	}
+//	@OnEnd
+//	protected void end(Exception e)
+//	{
+//		System.out.println("end: "+agent.getId()+" "+e);
+//		if(e!=null)
+//		{
+//			e.printStackTrace();
+//		}
+//	}
 	
 	//-------- The agent methods --------
 	
@@ -487,8 +484,9 @@ public class Environment
 			notifyVision();
 			
 			agent.getFeature(IExecutionFeature.class).waitForDelay(internalGetStepDelay())
-				.then(v -> performStep(time))
-				.catchEx(ex -> ex.printStackTrace());
+				.then(v -> performStep(time));
+				// Can only be component terminated before timer due.
+//				.catchEx(ex -> ex.printStackTrace());
 		}
 		catch(Exception e)
 		{

@@ -424,12 +424,20 @@ public class EnvironmentGui	extends JFrame
 		});
 		timer.start();
 		
+		env.getComponentHandle().waitForTermination()
+			.then(b -> SwingUtilities.invokeLater(() ->
+		{
+			timer.stop();
+			dispose();
+		}));
+		
 		// Exit program on window close.
 		addWindowListener(new WindowAdapter()
 		{
 			public void windowClosing(WindowEvent e)
 			{
-				System.exit(0);
+				timer.stop();
+				env.getComponentHandle().terminate();
 			}
 		});
 	}

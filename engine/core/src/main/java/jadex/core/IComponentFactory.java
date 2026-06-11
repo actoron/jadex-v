@@ -131,7 +131,8 @@ public interface IComponentFactory
 		}
 		else
 		{
-			iter	= Arrays.asList(cids);
+			// terminate in inverse order to handle dependencies better
+			iter	= Arrays.asList(cids).reversed();
 		}
 		
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();

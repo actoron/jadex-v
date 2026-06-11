@@ -24,10 +24,10 @@ public class Main
 		env.createWorld().get();
 		String envid = Environment.add(env);
 		
-		app.create(new CleanerAgent(envid));
+		app.create(new CleanerAgent(envid), "Cleaner");
 		
 		//EnvironmentGui.create(envid); // old Swing ui
-		EnvGui.create(envid, env.getStepsPerSecond().get()); // new libgdx ui
+		EnvGui.create(envid); // new libgdx ui
 		
 		app.waitForLastComponentTerminated();
 	}

@@ -11,8 +11,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import jadex.bdi.cleanerworld.cleaner.CleanerAgent;
-import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
 
 
@@ -66,10 +64,16 @@ public class SensorGui
 			{
 				public void windowClosing(WindowEvent e)
 				{
-					// todo!
-					//lifecycle.terminate();
+					handle.terminate();
 				}
 			});
+			
+			// Close window on agent kill.
+			handle.waitForTermination().then(b -> SwingUtilities.invokeLater(()->
+			{
+				timer.stop();
+				frame.dispose();
+			}));
 		});
 		
 //		// Close window on agent kill.

@@ -18,18 +18,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -50,6 +53,11 @@ import com.jthemedetecor.OsThemeDetector;
 
 import jadex.common.SScan;
 import jadex.common.SUtil;
+import jadex.core.Application;
+import jadex.core.ComponentTerminatedException;
+import jadex.core.IComponentListener;
+import jadex.core.IComponentManager;
+import jadex.core.IComponentManager.ComponentEventType;
 
 /**
  * GUI application launcher for starting various Jadex applications.
@@ -72,11 +80,13 @@ public class ApplicationLauncher extends JFrame
     
     private JTable appTable;
     private JTextArea consoleArea;
-    private List<ApplicationConfig> applications;
+    private List<ApplicationConfig> configs;
+    private Map<ApplicationConfig, Application> apps = new LinkedHashMap<>();
 
     public ApplicationLauncher() {
         super("Jadex Example Application Launcher");
-        this.applications	= scanForApplications();
+        this.configs	= scanForApplications();
+        this.apps		= new LinkedHashMap<>();
         setupUI();
         installConsoleRedirection();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -232,7 +242,7 @@ public class ApplicationLauncher extends JFrame
             }
         };
 
-        for (ApplicationConfig app : applications) {
+        for (ApplicationConfig app : configs) {
             Icon appIcon = app.icon() != null ? loadApplicationIcon(app.icon()) : EMPTY_ICON;
             tableModel.addRow(new Object[]{
                 appIcon,
@@ -260,8 +270,8 @@ public class ApplicationLauncher extends JFrame
 
         // Add per-row Start and Source buttons using custom renderer/editor
         appTable.getColumnModel().getColumn(0).setCellRenderer(new IconRenderer());
-        appTable.getColumnModel().getColumn(3).setCellRenderer(new ButtonRenderer());
-        appTable.getColumnModel().getColumn(3).setCellEditor(new ButtonEditor());
+        appTable.getColumnModel().getColumn(3).setCellRenderer(new StartButtonRenderer());
+        appTable.getColumnModel().getColumn(3).setCellEditor(new StartButtonEditor());
         appTable.getColumnModel().getColumn(4).setCellRenderer(new SourceButtonRenderer());
         appTable.getColumnModel().getColumn(4).setCellEditor(new SourceButtonEditor());
 
@@ -378,8 +388,8 @@ public class ApplicationLauncher extends JFrame
     }
 
     // Renderer for the Action column that displays a Start button
-    private static class ButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
-        public ButtonRenderer() {
+    private static class StartButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
+        public StartButtonRenderer() {
             setOpaque(true);
             setMargin(COMPACT_BUTTON_MARGIN);
 //            setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
@@ -391,7 +401,7 @@ public class ApplicationLauncher extends JFrame
             String text = value == null ? "Start" : value.toString();
             setText(text);
             // disable when not "Start"
-            setEnabled("Start".equals(text));
+            setEnabled("Start".equals(text) || "Stop".equals(text));
             return this;
         }
     }
@@ -414,11 +424,11 @@ public class ApplicationLauncher extends JFrame
     }
 
     // Editor for the Action column that reacts to button presses
-    private class ButtonEditor extends AbstractCellEditor implements javax.swing.table.TableCellEditor, ActionListener {
+    private class StartButtonEditor extends AbstractCellEditor implements javax.swing.table.TableCellEditor, ActionListener {
         private final JButton button = new JButton("Start");
         private int currentRow = -1;
 
-        public ButtonEditor() {
+        public StartButtonEditor() {
             button.addActionListener(this);
             button.setMargin(COMPACT_BUTTON_MARGIN);
 //            button.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
@@ -429,7 +439,7 @@ public class ApplicationLauncher extends JFrame
             currentRow = row;
             String text = value == null ? "Start" : value.toString();
             button.setText(text);
-            button.setEnabled("Start".equals(text));
+            button.setEnabled("Start".equals(text) || "Stop".equals(text));
             return button;
         }
 
@@ -447,7 +457,9 @@ public class ApplicationLauncher extends JFrame
             Object actionVal = model.getValueAt(currentRow, 3);
             if ("Start".equals(actionVal)) {
                 startApplicationAtRow(currentRow);
-            }
+            } else if ("Stop".equals(actionVal)) {
+				stopApplicationAtRow(currentRow);
+			}
         }
     }
 
@@ -516,56 +528,135 @@ public class ApplicationLauncher extends JFrame
         }
     }
 
-    private void startApplicationAtRow(int row) {
-        if (row < 0 || row >= applications.size()) {
+    private void startApplicationAtRow(int row)
+    {
+        if (row < 0 || row >= configs.size()) 
+        {
             JOptionPane.showMessageDialog(this, "Invalid application selection.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            	"Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        try {
-            ApplicationConfig app = applications.get(row);
+        ApplicationConfig config = configs.get(row);
 
-            // Prevent double-start: check action column state
-            DefaultTableModel model = (DefaultTableModel) appTable.getModel();
-            Object actionVal = model.getValueAt(row, 3);
-            if (!"Start".equals(actionVal)) {
-                // already running or not startable
-                return;
-            }
-
-            // mark running in the table (on EDT)
-            final DefaultTableModel fmodel = model;
-            SwingUtilities.invokeLater(() -> fmodel.setValueAt("Running...", row, 3));
-
-            // Load the class dynamically and invoke main method
-            new Thread(() -> {
-                try {
-                    java.lang.reflect.Method mainMethod = app.mainClass().getMethod("main", String[].class);
-                    mainMethod.invoke(null, (Object) new String[]{});
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    // restore button state on EDT when main() returns
-                    SwingUtilities.invokeLater(() -> fmodel.setValueAt("Start", row, 3));
-                }
-            }).start();
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error starting application: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+        // Prevent double-start: check action column state
+        DefaultTableModel model = (DefaultTableModel) appTable.getModel();
+        Object actionVal = model.getValueAt(row, 3);
+        if (!"Start".equals(actionVal))
+        {
+            // already running or not startable
+            return;
         }
+
+        // mark running in the table (on EDT)
+        final DefaultTableModel fmodel = model;
+        fmodel.setValueAt("Starting...", row, 3);
+
+        IComponentManager.get().addComponentListener(new IComponentListener()
+        {
+			@Override
+			public void applicationAdded(Application app)
+			{
+				SwingUtilities.invokeLater(() ->
+				{
+					apps.put(config, app);
+					IComponentManager.get().removeComponentListener(this, ComponentEventType.APPLICATION_ADDED);
+					fmodel.setValueAt("Stop", row, 3);
+				});
+			}
+			@Override
+			public void applicationRemoved(Application app)
+			{
+				SwingUtilities.invokeLater(() ->
+				{
+					if(apps.get(config) == app)
+					{
+						apps.remove(config);
+						IComponentManager.get().removeComponentListener(this, ComponentEventType.APPLICATION_REMOVED);
+						fmodel.setValueAt("Start", row, 3);
+					}
+				});
+			}
+		}, ComponentEventType.APPLICATION_ADDED, ComponentEventType.APPLICATION_REMOVED);
+        
+        // Invoke main method per reflection
+        new Thread(() ->
+        {
+            try
+            {
+                config.mainClass().getMethod("main", String[].class)
+                	.invoke(null, (Object) new String[0]);
+            }
+            catch(Throwable ex)
+			{
+            	SwingUtilities.invokeLater(() ->
+				{
+					Throwable fex = ex;
+					if(fex instanceof InvocationTargetException)
+					{
+						fex	= ((InvocationTargetException) ex).getCause();
+					}
+					
+					if(fex instanceof ComponentTerminatedException && fmodel.getValueAt(row, 3).equals("Start"))
+					{
+						// ignore exception during stop
+					}
+					else
+					{
+						JOptionPane.showMessageDialog(this, "Failed to start application: " + fex,
+							"Error", JOptionPane.ERROR_MESSAGE);
+					}
+				});
+			}
+            finally
+            {
+                // restore button state when main() returns
+            	// fallback when no Application is used in example
+                SwingUtilities.invokeLater(() ->
+                {
+                	if(fmodel.getValueAt(row, 3).equals("Starting..."))
+                	{
+						fmodel.setValueAt("Start", row, 3);
+					}
+                });
+            }
+        }).start();
     }
+    
+    private void stopApplicationAtRow(int row)
+	{
+		if (row < 0 || row >= configs.size()) 
+		{
+			JOptionPane.showMessageDialog(this, "Invalid application selection.",
+				"Error", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		ApplicationConfig config = configs.get(row);
+		Application app = apps.get(config);
+		if(app!=null)
+		{
+			app.terminate().catchEx(ex ->
+			{
+				SwingUtilities.invokeLater(() ->
+				{
+					JOptionPane.showMessageDialog(this, "Failed to stop application: " + ex.getMessage(),
+						"Error", JOptionPane.ERROR_MESSAGE);
+					DefaultTableModel model = (DefaultTableModel) appTable.getModel();
+					model.setValueAt("Start", row, 3);
+				});
+			});
+		}
+	}
 
     private void openSourceAtRow(int row) {
-        if (row < 0 || row >= applications.size()) {
+        if (row < 0 || row >= configs.size()) {
             JOptionPane.showMessageDialog(this, "Invalid application selection.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        ApplicationConfig app = applications.get(row);
+        ApplicationConfig app = configs.get(row);
         String url = "https://github.com/actoron/jadex-v/blob/main/" + app.source();
 
         if (!Desktop.isDesktopSupported()) {
