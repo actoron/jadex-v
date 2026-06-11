@@ -1,4 +1,4 @@
-image: eclipse-temurin:21-jdk-alpine
+image: eclipse-temurin:21-jdk
 
 variables:
   BAZELISK_VERSION: "latest"
