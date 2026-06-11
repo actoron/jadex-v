@@ -16,8 +16,8 @@ import jadex.bdi.annotation.GoalTargetCondition;
 import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.Trigger;
 import jadex.bdi.impl.goal.ICandidateInfo;
+import jadex.core.Application;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
@@ -136,7 +136,8 @@ public class SokratesMLRAgent
 
 	public static void main(String[] args)
 	{
-		IComponentManager.get().create(new SokratesMLRAgent()).get();
-		IComponentManager.get().waitForLastComponentTerminated();
+		Application	app = new Application("Puzzle");
+		app.create(new SokratesMLRAgent()).get();
+		app.waitForLastComponentTerminated();
 	}
 }

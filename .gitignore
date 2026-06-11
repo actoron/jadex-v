@@ -38,3 +38,4 @@ jadex-deploy-vars.sh
 /benchmark/llm/analysis_output
 /benchmark/llm/*.csv
 /deploy
+/application/llm/generated_images

@@ -3,7 +3,7 @@ package jadex.bdi.cleanerworld;
 import jadex.bdi.cleanerworld.cleaner.CleanerAgent;
 import jadex.bdi.cleanerworld.environment.CleanerworldEnvironment;
 import jadex.bdi.cleanerworld.ui.EnvGui;
-import jadex.core.IComponentManager;
+import jadex.core.Application;
 import jadex.environment.Environment;
 
 /**
@@ -18,16 +18,17 @@ public class Main
 	public static void main(String[] args)
 	{
 		int fps = 30; // steps / frames per second
+		Application	app = new Application("Cleanerworld");
 		
-		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
+		CleanerworldEnvironment env = app.create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
 		env.createWorld().get();
 		String envid = Environment.add(env);
 		
-		IComponentManager.get().create(new CleanerAgent(envid));
+		app.create(new CleanerAgent(envid));
 		
 		//EnvironmentGui.create(envid); // old Swing ui
 		EnvGui.create(envid, env.getStepsPerSecond().get()); // new libgdx ui
 		
-		IComponentManager.get().waitForLastComponentTerminated();
+		app.waitForLastComponentTerminated();
 	}
 }

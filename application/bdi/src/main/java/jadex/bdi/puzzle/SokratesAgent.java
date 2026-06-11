@@ -20,8 +20,8 @@ import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanFailed;
 import jadex.bdi.annotation.PlanPassed;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.Application;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.future.DelegationResultListener;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -285,7 +285,8 @@ public class SokratesAgent
 
 	public static void main(String[] args)
 	{
-		IComponentManager.get().create(new SokratesAgent()).get();
-		IComponentManager.get().waitForLastComponentTerminated();
+		Application	app = new Application("Puzzle");
+		app.create(new SokratesAgent()).get();
+		app.waitForLastComponentTerminated();
 	}
 }

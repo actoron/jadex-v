@@ -10,8 +10,8 @@ import jadex.bdi.annotation.Plan;
 import jadex.bdi.annotation.PlanBody;
 import jadex.bdi.annotation.PlanPrecondition;
 import jadex.bdi.annotation.Trigger;
+import jadex.core.Application;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 
@@ -26,12 +26,10 @@ public class UniversityAgent
 	@Inject
 	protected IComponent agent;
 	
-	/** Belief if it is currently raining. */
-//	@Belief
+	/** "Belief" if it is currently raining. */
 	protected boolean raining;
 	
-	/** Belief if wait time is not too long. */
-//	@Belief
+	/** "Belief" if wait time is not too long. */
 	protected boolean waiting;
 	
 	/** The top-level goal to come to the university. */
@@ -168,8 +166,8 @@ public class UniversityAgent
 	 */
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create(new UniversityAgent(Math.random()>0.5, Math.random()>0.5)).get();
-		
-		IComponentManager.get().waitForLastComponentTerminated();
+		Application	app = new Application("University");
+		app.create(new UniversityAgent(Math.random()>0.5, Math.random()>0.5)).get();
+		app.waitForLastComponentTerminated();
 	}
 }
