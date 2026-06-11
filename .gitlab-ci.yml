@@ -4,9 +4,11 @@ variables:
   BAZELISK_VERSION: "latest"
 
 before_script:
-  - apk add --no-cache bash curl
+  - apt-get update
+  - apt-get install -y curl
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
+  - bazel version
 
 stages:
   - build
