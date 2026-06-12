@@ -39,7 +39,6 @@ import jadex.environment.EnvironmentEvent;
 import jadex.environment.PerceptionProcessor;
 import jadex.environment.SpaceObject;
 import jadex.execution.ComponentMethod;
-import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
