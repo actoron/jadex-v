@@ -56,8 +56,8 @@ benchmark:
       paths:
         - benchmark/*/.benchmark_bazel
       when: always
-  rules:
-    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+  #rules:
+  #  - if: '$CI_COMMIT_REF_SLUG =~ /main/'
   tags:
     - benchmark
 
