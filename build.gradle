@@ -329,10 +329,15 @@ task createZip(type: Zip) {
     def batFile = file(new File(System.getProperty("java.io.tmpdir"), 'launchExamples.bat'))
     batFile.text = batContent
     
-    into(dirName) {
-        from scriptFile
-        from batFile
-    }
+	into(dirName) {
+		from(scriptFile) {
+			// Preserve executable bit inside zip for Unix-like systems.
+			eachFile { details ->
+				details.mode = 0755
+			}
+		}
+		from batFile
+	}
 }
 
 task deployZip() {
@@ -415,7 +420,7 @@ task createGHRelease() {
         	.draft(true)
 //        	.prerelease(version.contains("beta") || version.contains("alpha") || version.contains("snapshot"))
         	.create();
-        gh_release.uploadAsset(new File("deploy/jadex-examples-"+version+".zip"), "application/zip");
+        gh_release.uploadAsset(new File("deploy/jadex-example-applications.zip"), "application/zip");
     }
 }
 
