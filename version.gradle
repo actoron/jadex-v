@@ -72,15 +72,16 @@ Integer getLatestVersion(versionprefix)
 				println 'checking tag> ' + tag;
 				if(tag.contains("tag: "+versionprefix))
 				{
-					tag	= tag.substring(("tag: "+versionprefix).length())
-					if(tag.indexOf("-")!=-1)	// Strip version branch names in tag
-						tag	= tag.substring(0, tag.indexOf("-"));
+					tag	= tag.substring(tag.indexOf("tag: "+versionprefix)+("tag: "+versionprefix).length()).trim()
+					if(tag.indexOf("-")!=-1)	// Strip suffix from tag
+						tag	= tag.substring(0, tag.indexOf("-")).trim();
 					if(tag.indexOf(",")!=-1)	// Strip git branch names after tag
-						tag	= tag.substring(0, tag.indexOf(","));
+						tag	= tag.substring(0, tag.indexOf(",")).trim();
 					
-					println 'version part of tag is> ' + tag;
+					println 'version part of tag is> "' + tag + '"'
 					
-					if(tag.matches("\\d+"))	// Skip tags not conforming to <major>.<minor>.<patch> or <major>.<minor>.<patch>-<branch>-<branchpatch>
+					// Only consider tags conforming to <prefix><number> or <prefix><number>-<suffix>
+					if(tag.matches("\\d+"))
 					{
 					 	vnum = vnum!=null ? Math.max(vnum, tag as Integer) : tag as Integer;
 					}
