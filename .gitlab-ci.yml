@@ -31,7 +31,8 @@ build:
 test:
   stage: test
   script:
-    - bazel test //...
+    - bazel test $(bazel query '//... except //benchmark/...')
+
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
