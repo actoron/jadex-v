@@ -103,3 +103,17 @@ deployCentral:
   when: manual
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
+
+createGHRelease:
+  stage: deploy
+  script:
+    - ./gradlew createGHRelease
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - '**/build'
+      - .gradle
+  when: manual
+  rules:
+    - if: $CI_COMMIT_REF_SLUG=~"main"
