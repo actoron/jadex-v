@@ -4,7 +4,9 @@ image: eclipse-temurin:21-jdk-noble
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME
-  - apt update && apt install -y git
+  - apt update && apt install -y git xvfb
+  - Xvfb :99 &
+  - export DISPLAY=:99
 
 stages:
   - build
