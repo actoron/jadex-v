@@ -407,14 +407,14 @@ task createGHRelease() {
    			proc.waitFor();
    			if (proc.exitValue() == 0) {
    				// Find next best tag describing the state just before the current version.
-		   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc ->
-		   			proc.waitFor();
-		   			if (proc.exitValue() == 0) {
-		   				previous = proc.text.trim();
+		   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc1 ->
+		   			proc1.waitFor();
+		   			if (proc1.exitValue() == 0) {
+		   				previous = proc1.text.trim();
 		   				logger.lifecycle "Previous tag: " + previous;
 		   			}
 		   			else {
-		   				logger.lifecycle "No previous tag found: "+proc.errorStream.text;
+		   				logger.lifecycle "No previous tag found: "+proc1.errorStream.text;
 		   			}
 		   		}
    			}
