@@ -234,6 +234,7 @@ task updateTag() {
 		
 		def cmd = git.tag();
 		cmd.setName(jadex_build_version);
+		cmd.setMessage("Released Jadex "+jadex_build_version);
 		cmd.setForceUpdate(true);
 		cmd.call();
 		cmd = git.push();
