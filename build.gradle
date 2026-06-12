@@ -403,7 +403,7 @@ task createGHRelease() {
         // Get previous tag for changelog link
         def previous = null;
         // Fetch history of tags to find previous one
-   		Runtime.getRuntime().exec("git fetch remote").with { proc ->
+   		Runtime.getRuntime().exec("git fetch origin").with { proc ->
    			proc.waitFor();
    			if (proc.exitValue() == 0) {
    				// Find next best tag describing the state just before the current version.
