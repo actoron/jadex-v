@@ -420,7 +420,7 @@ task createGHRelease() {
         	.draft(true)
 //        	.prerelease(version.contains("beta") || version.contains("alpha") || version.contains("snapshot"))
         	.create();
-        gh_release.uploadAsset(new File("deploy/jadex-example-applications.zip"), "application/zip");
+        gh_release.uploadAsset("jadex-example-applications.zip", new FileInputStream(new File("deploy/jadex-examples-${version}.zip")), "application/zip");
     }
 }
 
