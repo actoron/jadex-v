@@ -243,7 +243,7 @@ task updateTag() {
 		cmd.setRemote(acc.url);
 		cmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(acc.user, acc.password))
 		cmd.setPushTags();
-		cmd.call();
+		//cmd.call();
 	}
 }
 updateTag.mustRunAfter releaseStagingRepo
@@ -393,7 +393,7 @@ task deployZip() {
  */
 task createGHRelease() {
     group = "publishing"
-    dependsOn /*updateTag,*/ createZip
+    dependsOn updateTag createZip
     
     doLast {
         def github_token = getVar('GITHUB_TOKEN');
