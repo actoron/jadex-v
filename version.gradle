@@ -70,7 +70,7 @@ Integer getLatestVersion(versionprefix)
 			for(String tag: tags)
 			{
 				println 'checking tag> ' + tag;
-				if(tag.startsWith("tag: "+versionprefix))
+				if(tag.contains("tag: "+versionprefix))
 				{
 					tag	= tag.substring(("tag: "+versionprefix).length())
 					if(tag.indexOf("-")!=-1)	// Strip version branch names in tag
