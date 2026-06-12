@@ -7,10 +7,6 @@ before_script:
   - apt update && apt install -y git xvfb libxtst6 libxi6
   - Xvfb :99 &
   - export DISPLAY=:99
-  - git tag -d 5.0-beta4
-  - git tag -d 5.0-beta5
-  - git tag -d 5.0-beta6
-  - git tag -d 5.0-beta7
 
 stages:
   - build
