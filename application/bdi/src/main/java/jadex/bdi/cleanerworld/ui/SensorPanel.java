@@ -13,6 +13,7 @@ import jadex.bdi.cleanerworld.environment.Chargingstation;
 import jadex.bdi.cleanerworld.environment.Cleaner;
 import jadex.bdi.cleanerworld.environment.Waste;
 import jadex.bdi.cleanerworld.environment.Wastebin;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
 import jadex.math.IVector2;
 
@@ -44,8 +45,8 @@ class SensorPanel extends JPanel
 	 */
 	protected void	paintComponent(Graphics g)
 	{
-//		try
-//		{
+		try
+		{
 			GuiData	data = fetchGuiData();
 			
 			// Paint background (dependent on daytime).
@@ -138,10 +139,11 @@ class SensorPanel extends JPanel
 				g.drawLine(p.x-7, p.y, p.x+7, p.y);
 				g.drawLine(p.x, p.y-7, p.x, p.y+7);
 			}
-//		}
-//		catch(ComponentTerminatedException e)
-//		{	
-//		}
+		}
+		catch(ComponentTerminatedException e)
+		{
+			// Ignore -> race condition between termination and repainting.
+		}
 	}
 	
 	//-------- helper methods --------

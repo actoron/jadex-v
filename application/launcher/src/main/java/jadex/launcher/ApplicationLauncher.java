@@ -559,9 +559,12 @@ public class ApplicationLauncher extends JFrame
 			{
 				SwingUtilities.invokeLater(() ->
 				{
-					apps.put(config, app);
-					IComponentManager.get().removeComponentListener(this, ComponentEventType.APPLICATION_ADDED);
-					fmodel.setValueAt("Stop", row, 3);
+					if(config.name().contains(app.getName()))
+					{
+						apps.put(config, app);
+						IComponentManager.get().removeComponentListener(this, ComponentEventType.APPLICATION_ADDED);
+						fmodel.setValueAt("Stop", row, 3);
+					}
 				});
 			}
 			@Override
