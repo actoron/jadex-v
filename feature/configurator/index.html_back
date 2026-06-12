@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Feature Configurator</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+/* ── shared panel chrome ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #fafafa;
+  min-width: 80px;
+}
+
+/* ── resize handle ── */
+.resizer {
+  flex-shrink: 0;
+  width: 5px;
+  height: 100vh;
+  background: #e0e0e0;
+  cursor: col-resize;
+  position: relative;
+  transition: background .15s;
+  z-index: 10;
+}
+.resizer:hover, .resizer.dragging { background: #aac4e0; }
+.resizer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  background: #c0c0c0;
+}
+.resizer:hover::after, .resizer.dragging::after { background: #6fa8d0; }
+
+.panel-header {
+  flex-shrink: 0;
+  padding: 10px 10px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: .04em;
+  color: #888;
+  text-transform: uppercase;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+/* ── buttons ── */
+button {
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #444;
+}
+button:hover { background: #f0f0f0; }
+button:active { background: #e8e8e8; }
+
+/* ── group / feature list ── */
+.category { margin-bottom: 12px; }
+
+.category-header {
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  user-select: none;
+  padding: 5px 6px;
+  border-radius: 6px;
+  gap: 4px;
+}
+.category-header:hover { background: #efefef; }
+
+.category-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.category-name { font-size: 11px; font-weight: bold; color: #444; }
+.category-desc { font-size: 10px; font-weight: normal; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+
+.group-type-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: normal;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.group-type-badge.or  { background: #e8f5e9; color: #2e7d32; }
+.group-type-badge.xor { background: #fff3e0; color: #e65100; }
+.group-type-badge.and { background: #e8eaf6; color: #283593; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+  cursor: default;
+}
+.item:hover { background: #ececec; }
+.item.implied { opacity: .85; }
+
+.item input[type=radio]           { accent-color: #e65100; flex-shrink: 0; }
+.item input[type=checkbox]        { flex-shrink: 0; }
+.item input[type=checkbox].and-check     { accent-color: #283593; cursor: not-allowed; pointer-events: none; }
+.item input[type=checkbox].implied-check { accent-color: #f57f17; cursor: not-allowed; pointer-events: none; }
+
+.name { cursor: pointer; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name:hover { text-decoration: underline; }
+
+.badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 999px;
+  background: #ddd; color: #444; flex-shrink: 0;
+}
+.badge.feature { background: #dff1ff; color: #005b99; }
+.badge.library  { background: #eee;    color: #666; }
+
+.implied-badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 999px;
+  background: #fff8e1; color: #f57f17; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── libraries panel ── */
+.lib-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.lib-item:hover { background: #ececec; }
+.lib-item.active .lib-name { color: #005b99; font-weight: 500; }
+.lib-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #ddd; }
+.lib-dot.implied { background: #f57f17; }
+.lib-cat { font-size: 9px; color: #bbb; flex-shrink: 0; }
+
+/* ── ext deps panel ── */
+.ext-dep-item {
+  font-family: monospace;
+  font-size: 10px;
+  color: #333;
+  padding: 3px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+  line-height: 1.6;
+}
+.ext-dep-item:hover { background: #ececec; }
+.ext-empty { font-size: 11px; color: #bbb; padding: 6px; }
+
+.export-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #b0bec5;
+  background: #e3f2fd;
+  color: #0d47a1;
+  cursor: pointer;
+  text-align: center;
+}
+.export-btn:hover { background: #bbdefb; }
+
+/* ── detail panel ── */
+detail-panel {
+  overflow: auto;
+  padding: 18px 20px;
+  background: white;
+}
+
+.box {
+  max-width: 860px;
+}
+
+.empty-detail { color: #aaa; font-size: 13px; padding: 8px 0; }
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px 12px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+.lbl { font-weight: 600; color: #666; font-size: 12px; display: flex; align-items: center; }
+.code { font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; }
+.list { margin: 0; padding-left: 16px; }
+.section { margin-top: 20px; }
+.section h3 { font-size: 13px; font-weight: 600; color: #444; margin: 0 0 6px; }
+
+/* ── export modal overlay ── */
+.modal-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  width: 580px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.modal h3 { margin: 0; font-size: 14px; }
+.modal pre {
+  flex: 1;
+  overflow: auto;
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div class="panel" id="features-panel">
+  <div class="panel-header">
+    <span>Feature groups and features</span>
+  </div>
+  <div class="panel-scroll" id="features-scroll"></div>
+</div>
+
+<div class="resizer" id="rs-0"></div>
+
+<div class="panel" id="libraries-panel">
+  <div class="panel-header">
+    <span>Libraries</span>
+    <span id="lib-count" style="font-weight:normal;color:#bbb;font-size:10px;"></span>
+  </div>
+  <div class="panel-scroll" id="libraries-scroll"></div>
+</div>
+
+<div class="resizer" id="rs-1"></div>
+
+<div class="panel" id="extdeps-panel">
+  <div class="panel-header">
+    <span>External deps</span>
+    <span id="ext-count" style="font-weight:normal;color:#bbb;font-size:10px;"></span>
+  </div>
+  <div class="panel-scroll" id="extdeps-scroll">
+    <div class="ext-empty">No features selected.</div>
+  </div>
+  <div style="padding:8px;">
+    <button class="export-btn" id="export-btn">Export Gradle build file…</button>
+  </div>
+</div>
+
+<div class="resizer" id="rs-2"></div>
+
+<detail-panel></detail-panel>
+
+<!-- export modal lives here, hidden by default -->
+<div id="export-modal" style="display:none; position:fixed; inset:0; z-index:200;">
+  <div class="modal-bg">
+    <div class="modal">
+      <h3>Gradle export</h3>
+      <pre id="export-content"></pre>
+      <div class="modal-footer">
+        <button id="copy-export">Copy</button>
+        <button id="close-export">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+class App {
+  constructor() {
+    this.state = {
+      tree: {},
+      features: [],
+      selected: null,
+      enabled: new Set(),
+      implied: new Set(),
+      collapsed: new Set(),
+    };
+    this.listeners = new Set();
+  }
+
+  get featurePaths() {
+    return new Set(this.state.features.map(f => f.id));
+  }
+
+  _collectImplied(activeIds) {
+    const paths = this.featurePaths;
+    const implied = new Set();
+    const queue = [...activeIds];
+    const visited = new Set(activeIds);
+    while (queue.length) {
+      const id = queue.shift();
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.deps || [])) {
+        if (paths.has(dep) && !visited.has(dep)) {
+          visited.add(dep);
+          if (!activeIds.has(dep)) implied.add(dep);
+          queue.push(dep);
+        }
+      }
+    }
+    return implied;
+  }
+
+  _requiredBy(id, activeIds) {
+    return new Set(
+      this.state.features
+        .filter(f => activeIds.has(f.id) && (f.deps || []).includes(id))
+        .map(f => f.id)
+    );
+  }
+
+  collectTransitiveExternalDeps() {
+    const allActive = new Set([...this.state.enabled, ...this.state.implied]);
+    const coords = new Set();
+    for (const id of allActive) {
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.external_deps || [])) coords.add(dep);
+    }
+    return [...coords].sort();
+  }
+
+  /* All internal deps (bazel paths) of the active feature set that are NOT themselves features */
+  collectInternalBuildDeps() {
+    const allActive = new Set([...this.state.enabled, ...this.state.implied]);
+    const paths = this.featurePaths;
+    const deps = new Set();
+    for (const id of allActive) {
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.deps || [])) {
+        if (!paths.has(dep)) deps.add(dep);
+      }
+    }
+    return [...deps].sort();
+  }
+
+  setState(patch) {
+    this.state = { ...this.state, ...patch };
+    this.listeners.forEach(fn => fn(this.state));
+  }
+
+  subscribe(fn) {
+    this.listeners.add(fn);
+    fn(this.state);
+    return () => this.listeners.delete(fn);
+  }
+
+  groupType(category) {
+    const g = this.state.tree[category];
+    return g ? (g.type || "or") : "or";
+  }
+
+  toggleFeature(id) {
+    const feature = this.state.features.find(f => f.id === id);
+    if (!feature) return;
+
+    const type = this.groupType(feature.category);
+    let enabled = new Set(this.state.enabled);
+    const allActive = new Set([...enabled, ...this.state.implied]);
+
+    if (type === "xor") {
+      const siblings = this.state.features
+        .filter(f => f.category === feature.category && f.kind !== "library")
+        .map(f => f.id);
+      const wasEnabled = enabled.has(id);
+      siblings.forEach(sid => enabled.delete(sid));
+      if (!wasEnabled) enabled.add(id);
+
+    } else if (type === "and") {
+      const siblings = this.state.features
+        .filter(f => f.category === feature.category && f.kind !== "library")
+        .map(f => f.id);
+      const allOn = siblings.every(sid => enabled.has(sid));
+      if (allOn) {
+        for (const sid of siblings) {
+          const rb = this._requiredBy(sid, allActive);
+          const outside = [...rb].filter(r => !siblings.includes(r));
+          if (outside.length) {
+            alert(`Cannot deactivate: "${this.state.features.find(f=>f.id===sid)?.name}" is required by: ${outside.join(", ")}`);
+            return;
+          }
+        }
+        siblings.forEach(sid => enabled.delete(sid));
+      } else {
+        siblings.forEach(sid => enabled.add(sid));
+      }
+
+    } else {
+      if (enabled.has(id)) {
+        const rb = this._requiredBy(id, allActive);
+        const blockers = [...rb].filter(r => enabled.has(r));
+        if (blockers.length) {
+          alert(`Cannot deactivate: "${feature.name}" is required by: ${blockers.map(r => this.state.features.find(f=>f.id===r)?.name||r).join(", ")}`);
+          return;
+        }
+        enabled.delete(id);
+      } else {
+        enabled.add(id);
+      }
+    }
+
+    const implied = this._collectImplied(enabled);
+    this.setState({ enabled, implied });
+  }
+
+  toggleCategory(cat) {
+    const collapsed = new Set(this.state.collapsed);
+    collapsed.has(cat) ? collapsed.delete(cat) : collapsed.add(cat);
+    this.setState({ collapsed });
+  }
+
+  select(id) { this.setState({ selected: id }); }
+
+  _recomputeImplied() {
+    this.setState({ implied: this._collectImplied(this.state.enabled) });
+  }
+}
+
+window.app = new App();
+
+/* =========================================================
+   LOAD DATA
+========================================================= */
+fetch("features.json")
+  .then(r => r.json())
+  .then(data => {
+    const tree = {};
+    const flat = [];
+    for (const [catKey, group] of Object.entries(data)) {
+      const g = Array.isArray(group)
+        ? { name: catKey, description: "", type: "or", features: group }
+        : group;
+      tree[catKey] = g;
+      for (const item of (g.features || [])) {
+        flat.push({
+          id: item.path,
+          name: item.name,
+          category: item.category || catKey,
+          description: item.description || "",
+          path: item.path,
+          kind: item.kind || "feature",
+          deps: item.deps || [],
+          external_deps: item.external_deps || [],
+        });
+      }
+    }
+    window.app.setState({ tree, features: flat });
+    window.app._recomputeImplied();
+  });
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function mavenToGradle(coord) {
+  const p = coord.split(":");
+  return p.length >= 3 ? `implementation("${p[0]}:${p[1]}:${p[2]}")` : coord;
+}
+
+/* =========================================================
+   FEATURES PANEL
+========================================================= */
+window.app.subscribe(state => {
+  const scroll = document.getElementById("features-scroll");
+  if (!scroll) return;
+
+  scroll.innerHTML = Object.entries(state.tree).map(([catKey, group]) => {
+    const collapsed = state.collapsed.has(catKey);
+    const type = group.type || "or";
+    const label = group.name || catKey;
+    const desc = group.description || "";
+
+    const featureItems = (group.features || []).filter(i => i.kind !== "library");
+    if (featureItems.length === 0) return "";
+
+    return `
+      <div class="category">
+        <div class="category-header" data-cat="${catKey}">
+          <div class="category-header-left">
+            <span class="category-name">${label}</span>
+            ${desc ? `<span class="category-desc">${desc}</span>` : ""}
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <span class="group-type-badge ${type}">${type}</span>
+            <span style="font-size:10px;color:#aaa;">${collapsed ? "▶" : "▼"}</span>
+          </div>
+        </div>
+        ${collapsed ? "" : `
+          <div class="features">
+            ${featureItems.map(item => {
+              const itemId = item.path;
+              const checked = state.enabled.has(itemId);
+              const isImplied = state.implied.has(itemId);
+              let inp = "";
+              if (isImplied) {
+                inp = `<input type="checkbox" class="implied-check" data-id="${itemId}" checked />`;
+              } else if (type === "xor") {
+                inp = `<input type="radio" name="xor-${catKey}" data-id="${itemId}" ${checked?"checked":""} />`;
+              } else if (type === "and") {
+                inp = `<input type="checkbox" class="and-check" data-id="${itemId}" ${checked?"checked":""} />`;
+              } else {
+                inp = `<input type="checkbox" data-id="${itemId}" ${checked?"checked":""} />`;
+              }
+              return `
+                <div class="item ${isImplied?"implied":""}">
+                  ${inp}
+                  <span class="name" data-select="${itemId}">${item.name}</span>
+                  ${isImplied
+                    ? `<span class="implied-badge">implied</span>`
+                    : `<span class="badge feature">feature</span>`}
+                </div>`;
+            }).join("")}
+          </div>`}
+      </div>`;
+  }).join("");
+
+  /* events */
+  scroll.querySelectorAll(".category-header").forEach(el =>
+    el.onclick = () => window.app.toggleCategory(el.dataset.cat));
+
+  scroll.querySelectorAll("input[type=checkbox]:not(.and-check):not(.implied-check)").forEach(el =>
+    el.onchange = () => window.app.toggleFeature(el.dataset.id));
+
+  scroll.querySelectorAll("input[type=radio]").forEach(el =>
+    el.onclick = e => { window.app.toggleFeature(el.dataset.id); e.preventDefault(); });
+
+  scroll.querySelectorAll(".and-check").forEach(el =>
+    el.parentElement.onclick = () => window.app.toggleFeature(el.dataset.id));
+
+  scroll.querySelectorAll("[data-select]").forEach(el =>
+    el.onclick = e => { e.stopPropagation(); window.app.select(el.dataset.select); });
+});
+
+/* =========================================================
+   LIBRARIES PANEL
+========================================================= */
+window.app.subscribe(state => {
+  const scroll = document.getElementById("libraries-scroll");
+  const countEl = document.getElementById("lib-count");
+  if (!scroll) return;
+
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const libs = state.features.filter(f => f.kind === "library");
+  const activeLibs = libs.filter(f => allActive.has(f.id));
+
+  countEl.textContent = activeLibs.length ? `${activeLibs.length} active` : "";
+
+  if (libs.length === 0) {
+    scroll.innerHTML = `<div class="ext-empty">No libraries.</div>`;
+    return;
+  }
+
+  // Group by category
+  const bycat = {};
+  for (const lib of libs) {
+    if (!bycat[lib.category]) bycat[lib.category] = [];
+    bycat[lib.category].push(lib);
+  }
+
+  scroll.innerHTML = Object.entries(bycat).map(([cat, items]) => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:bold;color:#bbb;padding:3px 6px 2px;text-transform:uppercase;letter-spacing:.04em;">${cat}</div>
+      ${items.map(lib => {
+        const isActive = allActive.has(lib.id);
+        return `
+          <div class="lib-item ${isActive?"active":""}" data-select="${lib.id}">
+            <div class="lib-dot ${isActive?"implied":""}"></div>
+            <span class="lib-name">${lib.name}</span>
+          </div>`;
+      }).join("")}
+    </div>`).join("");
+
+  scroll.querySelectorAll("[data-select]").forEach(el =>
+    el.onclick = () => window.app.select(el.dataset.select));
+});
+
+/* =========================================================
+   EXT DEPS PANEL
+========================================================= */
+window.app.subscribe(state => {
+  const scroll = document.getElementById("extdeps-scroll");
+  const countEl = document.getElementById("ext-count");
+  if (!scroll) return;
+
+  const coords = window.app.collectTransitiveExternalDeps();
+  countEl.textContent = coords.length ? `${coords.length}` : "";
+
+  const activeCount = state.enabled.size + state.implied.size;
+  if (activeCount === 0) {
+    scroll.innerHTML = `<div class="ext-empty">No features selected.</div>`;
+  } else if (coords.length === 0) {
+    scroll.innerHTML = `<div class="ext-empty">No external dependencies.</div>`;
+  } else {
+    scroll.innerHTML = coords.map(dep =>
+      `<div class="ext-dep-item">${mavenToGradle(dep)}</div>`
+    ).join("");
+  }
+});
+
+/* =========================================================
+   EXPORT
+========================================================= */
+document.getElementById("export-btn").onclick = () => {
+  const state = window.app.state;
+  const allActive = new Set([...state.enabled, ...state.implied]);
+
+  const featureNames = [...state.enabled]
+    .map(id => state.features.find(f => f.id === id)?.name || id);
+  const impliedNames = [...state.implied]
+    .map(id => state.features.find(f => f.id === id)?.name || id);
+  const externalCoords = window.app.collectTransitiveExternalDeps();
+  const internalDeps = window.app.collectInternalBuildDeps();
+
+  const lines = [];
+  lines.push("// ── Generated by Feature Configurator ──");
+  lines.push("//");
+  lines.push("// Selected features:");
+  featureNames.forEach(n => lines.push(`//   • ${n}`));
+  if (impliedNames.length) {
+    lines.push("//");
+    lines.push("// Implied (pulled in via dependencies):");
+    impliedNames.forEach(n => lines.push(`//   · ${n}`));
+  }
+  if (internalDeps.length) {
+    lines.push("//");
+    lines.push("// Internal build dependencies:");
+    internalDeps.forEach(d => lines.push(`//   ${d}`));
+  }
+  lines.push("");
+  lines.push("dependencies {");
+  if (externalCoords.length === 0) {
+    lines.push("    // no external dependencies");
+  } else {
+    externalCoords.forEach(dep => lines.push(`    ${mavenToGradle(dep)}`));
+  }
+  lines.push("}");
+
+  const text = lines.join("\n");
+  document.getElementById("export-content").textContent = text;
+  document.getElementById("export-modal").style.display = "block";
+};
+
+document.getElementById("close-export").onclick = () => {
+  document.getElementById("export-modal").style.display = "none";
+};
+
+document.getElementById("copy-export").onclick = () => {
+  const text = document.getElementById("export-content").textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("copy-export");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 1500);
+  });
+};
+
+document.getElementById("export-modal").onclick = e => {
+  if (e.target === document.getElementById("export-modal") ||
+      e.target.classList.contains("modal-bg")) {
+    document.getElementById("export-modal").style.display = "none";
+  }
+};
+
+/* =========================================================
+   DETAIL PANEL
+========================================================= */
+class DetailPanel extends HTMLElement {
+  connectedCallback() {
+    this.unsubscribe = window.app.subscribe(state => this.render(state));
+  }
+  disconnectedCallback() { this.unsubscribe?.(); }
+
+  render(state) {
+    const feature = state.features.find(f => f.id === state.selected);
+    if (!feature) {
+      this.innerHTML = `<div class="empty-detail">Select a feature or library to see details.</div>`;
+      return;
+    }
+
+    const catKey = Object.keys(state.tree).find(k =>
+      (state.tree[k].features || []).some(f => f.path === feature.id));
+    const group = catKey ? state.tree[catKey] : null;
+    const groupType = group ? (group.type || "or") : "or";
+    const groupName = group ? (group.name || catKey) : feature.category;
+
+    const isEnabled = state.enabled.has(feature.id);
+    const isImplied = state.implied.has(feature.id);
+    const allActive = new Set([...state.enabled, ...state.implied]);
+
+    const requiredBy = state.features
+      .filter(f => allActive.has(f.id) && (f.deps || []).includes(feature.id))
+      .map(f => f.name);
+
+    const paths = window.app.featurePaths;
+    const featureDeps = (feature.deps || []).filter(d => paths.has(d));
+    const buildDeps   = (feature.deps || []).filter(d => !paths.has(d));
+
+    this.innerHTML = `
+      <div class="box">
+        <h2 style="margin:0 0 4px;font-size:18px;">${feature.name}</h2>
+        <p style="margin:0 0 12px;color:#777;font-size:13px;">${feature.description || "No description."}</p>
+
+        <div class="meta-grid">
+          <div class="lbl">Group</div>
+          <div>${groupName} <span class="group-type-badge ${groupType}" style="margin-left:4px;">${groupType}</span></div>
+
+          <div class="lbl">Kind</div>
+          <div><span class="badge ${feature.kind}">${feature.kind}</span></div>
+
+          <div class="lbl">Path</div>
+          <div class="code">${feature.path}</div>
+
+          <div class="lbl">Status</div>
+          <div>
+            ${isImplied
+              ? `<span class="implied-badge">implied by dependency</span>`
+              : isEnabled
+                ? `<span style="color:#2e7d32;font-weight:600;font-size:12px;">✓ enabled</span>`
+                : `<span style="color:#bbb;font-size:12px;">disabled</span>`}
+          </div>
+
+          ${requiredBy.length ? `
+            <div class="lbl">Required by</div>
+            <div>${requiredBy.map(n=>`<span class="implied-badge" style="margin-right:3px;">${n}</span>`).join("")}</div>
+          ` : ""}
+        </div>
+
+        ${featureDeps.length ? `
+          <div class="section">
+            <h3>Feature dependencies</h3>
+            <ul class="list">
+              ${featureDeps.map(dep => {
+                const df = state.features.find(f => f.id === dep);
+                const active = allActive.has(dep);
+                return `<li class="code" style="font-size:12px;color:${active?"#2e7d32":"#c62828"};">
+                  ${df ? df.name : dep} ${active ? "✓" : "✗ not active"}
+                </li>`;
+              }).join("")}
+            </ul>
+          </div>` : ""}
+
+        ${buildDeps.length ? `
+          <div class="section">
+            <h3>Build dependencies</h3>
+            <ul class="list">
+              ${buildDeps.map(d=>`<li class="code" style="font-size:11px;">${d}</li>`).join("")}
+            </ul>
+          </div>` : ""}
+
+        ${feature.external_deps.length ? `
+          <div class="section">
+            <h3>Maven dependencies <span style="font-size:11px;font-weight:normal;color:#aaa;">(this feature only)</span></h3>
+            <ul class="list">
+              ${feature.external_deps.map(dep=>`
+                <li class="code" style="font-size:11px;">${mavenToGradle(dep)}</li>`).join("")}
+            </ul>
+          </div>` : ""}
+      </div>`;
+  }
+}
+customElements.define("detail-panel", DetailPanel);
+
+/* =========================================================
+   PANEL RESIZE
+   panels = [features, libraries, extdeps, detail]
+   resizers sit between them; each resizer adjusts the two
+   panels on either side as % of total container width.
+========================================================= */
+(function() {
+  const PANELS = ["features-panel", "libraries-panel", "extdeps-panel", "detail-panel"];
+  const RESIZER_IDS = ["rs-0", "rs-1", "rs-2"];
+
+  // initial widths in percent (must sum to 100 minus resizer slivers which are negligible)
+  let widths = [20, 20, 20, 40];
+
+  function applyWidths() {
+    PANELS.forEach((id, i) => {
+      const el = document.getElementById(id) || document.querySelector("detail-panel");
+      if (el) el.style.width = widths[i] + "%";
+    });
+  }
+
+  // Detail panel is a custom element — querySelector by tag
+  function getPanel(i) {
+    if (i < 3) return document.getElementById(PANELS[i]);
+    return document.querySelector("detail-panel");
+  }
+
+  RESIZER_IDS.forEach((rsId, rIdx) => {
+    const rs = document.getElementById(rsId);
+    if (!rs) return;
+
+    let startX, startLeft, startRight;
+
+    rs.addEventListener("mousedown", e => {
+      e.preventDefault();
+      startX = e.clientX;
+      startLeft = widths[rIdx];
+      startRight = widths[rIdx + 1];
+      rs.classList.add("dragging");
+
+      const totalW = document.body.getBoundingClientRect().width;
+
+      function onMove(e) {
+        const dx = e.clientX - startX;
+        const dPct = (dx / totalW) * 100;
+        const newLeft  = Math.max(5, startLeft  + dPct);
+        const newRight = Math.max(5, startRight - dPct);
+        // keep total unchanged
+        const overflow = (newLeft + newRight) - (startLeft + startRight);
+        if (Math.abs(overflow) < 0.01) {
+          widths[rIdx]     = newLeft;
+          widths[rIdx + 1] = newRight;
+          applyWidths();
+        } else {
+          // clamp: one side hit min
+          if (newLeft < 5) {
+            widths[rIdx] = 5;
+            widths[rIdx + 1] = startLeft + startRight - 5;
+          } else {
+            widths[rIdx] = startLeft + startRight - 5;
+            widths[rIdx + 1] = 5;
+          }
+          applyWidths();
+        }
+      }
+
+      function onUp() {
+        rs.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  });
+
+  // apply initial widths once DOM is ready
+  applyWidths();
+})();
+
+</script>
+</body>
+</html>
