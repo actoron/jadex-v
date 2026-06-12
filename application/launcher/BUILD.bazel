@@ -30,3 +30,20 @@ java_binary(
         ":launcher-gui",
     ],
 )
+
+#genrule(
+#    name = "launcher_zip",
+#    srcs = [":launcher_deploy.jar"],
+#    outs = ["launcher.zip"],
+#    cmd = """
+#      set -e
+#      TMP=$$(mktemp -d)
+#      OUT=$$TMP/jadex-examples
+#      mkdir -p $$OUT
+#
+#      cp $(location :launcher_deploy.jar) $$OUT/launcher.jar
+#
+#      zip -j $@ $$OUT/launcher.jar
+#      rm -rf $$TMP
+#    """,
+#)

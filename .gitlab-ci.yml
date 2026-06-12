@@ -5,7 +5,7 @@ variables:
 
 before_script:
   - apt-get update
-  - apt-get install -y curl build-essential python3
+  - apt-get install -y curl build-essential python3 sshpass
   - python3 --version
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
@@ -104,6 +104,28 @@ benchmark:
 #      - ~/.cache/bazel
 #  rules:
 #    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+
+deployZip:
+  stage: deploy
+  script:
+    - bazel build //application/launcher:launcher_deploy.jar
+    - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
+    - USER=$(echo $dl_host | sed 's|ssh://\([^:]*\):.*|\1|')
+    - PASSWORD=$(echo $dl_host | sed 's|ssh://[^:]*:\([^;@]*\).*|\1|')
+    - HOST=$(echo $dl_host | sed 's|.*@\([^:]*\).*|\1|')
+    - PORT=$(echo $dl_host | sed 's|.*:\([0-9]*\)$|\1|')
+    - sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no -p $PORT $USER@$HOST "rm -rf /www/releases/$JADEX_VERSION && mkdir /www/releases/$JADEX_VERSION"
+    - sshpass -p "$PASSWORD" scp -P $PORT $JAR $USER@$HOST:/www/releases/$JADEX_VERSION/
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - .bazel
+      - ~/.cache/bazel
+  rules:
+    - if: '$JADEX_VERSION' #'$CI_COMMIT_BRANCH == "main" &&
+  #rules:
+  #  - if: '$CI_COMMIT_BRANCH == "main"'
 
 
 
