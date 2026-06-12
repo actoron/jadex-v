@@ -9,6 +9,7 @@
 [![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
 [![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)](https://github.com/actoron/jadex-v)
 [![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/5vt97NcCNq)
+[![GitHub Release](https://img.shields.io/github/v/release/actoron/jadex-v?label=download%20examples%20(zip)&color=4FBA12)](https://github.com/actoron/jadex-v/releases/latest/download/jadex-example-applications.zip)
 
 
 
