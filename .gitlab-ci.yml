@@ -11,8 +11,8 @@ before_script:
 stages:
   - build
   - test
-  - benchmark
   - deploy
+  - benchmark
 
 build:
   stage: build
@@ -94,21 +94,6 @@ deployCentral:
   stage: deploy
   script:
     - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo updateTag createGHRelease
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
-  when: manual
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
-
-# For testing
-createGHRelease:
-  stage: build
-  script:
-    - ./gradlew createGHRelease
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
