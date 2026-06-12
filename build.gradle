@@ -401,27 +401,28 @@ task createGHRelease() {
         def version	= getVar("JADEX_VERSION");
         
         // Get previous tag for changelog link
-        def previous = null;
-        // Fetch history of tags to find previous one
-   		Runtime.getRuntime().exec("git fetch origin").with { proc ->
-   			proc.waitFor();
-   			if (proc.exitValue() == 0) {
-   				// Find next best tag describing the state just before the current version.
-		   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc1 ->
-		   			proc1.waitFor();
-		   			if (proc1.exitValue() == 0) {
-		   				previous = proc1.text.trim();
-		   				logger.lifecycle "Previous tag: " + previous;
-		   			}
-		   			else {
-		   				logger.lifecycle "No previous tag found: "+proc1.errorStream.text;
-		   			}
-		   		}
-   			}
-   			else {
-   				logger.lifecycle "Couldn't fetch history: "+proc.errorStream.text;
-   			}
-   		}
+        def previous	= getVar("JADEX_PREVIOUS_VERSION");
+        if (previous == null) {
+	        // Try to fetch history of tags (required on CI) to find previous one
+	        // cf. https://stackoverflow.com/questions/6802145 (use depth so it works even if the repo is non-shallow)
+	   		Runtime.getRuntime().exec("git fetch --tags --depth=2147483647").with { proc ->
+	   			proc.waitFor();
+	   		}
+			// Find next best tag describing the state just before the current version.
+	   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc ->
+	   			proc.waitFor();
+	   			if (proc.exitValue() == 0) {
+	   				previous = proc.text.trim();
+	   				logger.lifecycle "Previous tag: " + previous;
+	   			}
+	   			else {
+	   				logger.lifecycle "No previous tag found: "+proc.errorStream.text;
+	   			}
+	   		}
+	   	}
+	   	else {
+	   	    logger.lifecycle "Previous version provided: " + previous;
+	   	}
    		
         def gh = new org.kohsuke.github.GitHubBuilder().withOAuthToken(github_token).build();
         def gh_repo = gh.getRepository("actoron/jadex-v");

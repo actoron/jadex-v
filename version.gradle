@@ -31,6 +31,7 @@ Object fetchNextBuildNameFromGitTag(jversionpre)
 		def jversion = jversionpre + vnum;
 		println "Latest version is "+jversion;
         if(!isHead(jversion)) {
+        	System.setProperty("JADEX_PREVIOUS_VERSION", jversion);
         	vnum++;
         	jversion = jversionpre+vnum;
         }
