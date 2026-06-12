@@ -234,7 +234,7 @@ task updateTag() {
 		
 		def cmd = git.tag();
 		cmd.setName(jadex_build_version);
-		cmd.setMessage("Released Jadex "+jadex_build_version);
+		//cmd.setMessage("Released Jadex "+jadex_build_version);
 		cmd.setForceUpdate(true);
 		cmd.call();
 		cmd = git.push();
@@ -402,14 +402,24 @@ task createGHRelease() {
         
         // Get previous tag for changelog link
         def previous = null;
-   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc ->
+        // Fetch history of tags to find previous one
+   		Runtime.getRuntime().exec("git fetch remote").with { proc ->
    			proc.waitFor();
    			if (proc.exitValue() == 0) {
-   				previous = proc.text.trim();
-   				logger.lifecycle "Previous tag: " + previous;
+   				// Find next best tag describing the state just before the current version.
+		   		Runtime.getRuntime().exec("git describe --tags --abbrev=0 ${version}~").with { proc ->
+		   			proc.waitFor();
+		   			if (proc.exitValue() == 0) {
+		   				previous = proc.text.trim();
+		   				logger.lifecycle "Previous tag: " + previous;
+		   			}
+		   			else {
+		   				logger.lifecycle "No previous tag found: "+proc.errorStream.text;
+		   			}
+		   		}
    			}
    			else {
-   				logger.lifecycle "No previous tag found: "+proc.errorStream.text;
+   				logger.lifecycle "Couldn't fetch history: "+proc.errorStream.text;
    			}
    		}
    		
