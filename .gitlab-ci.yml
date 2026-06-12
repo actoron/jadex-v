@@ -104,8 +104,9 @@ deployCentral:
   rules:
     - if: $CI_COMMIT_REF_SLUG=~"main"
 
+# For testing
 createGHRelease:
-  stage: deploy
+  stage: build
   script:
     - ./gradlew createGHRelease
   cache:

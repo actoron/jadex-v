@@ -393,7 +393,7 @@ task deployZip() {
  */
 task createGHRelease() {
     group = "publishing"
-    dependsOn updateTag createZip
+    dependsOn updateTag, createZip
     
     doLast {
         def github_token = getVar('GITHUB_TOKEN');
