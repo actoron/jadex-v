@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 
 import jadex.core.Application;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
 import jadex.core.IComponentManager.ComponentEventType;
@@ -72,7 +73,15 @@ public class ApplicationLauncherTest
 			{
 				Thread.sleep(1000);
 			}
-			app.terminate().get(TIMEOUT);
+			
+			try
+			{
+				app.terminate().get(TIMEOUT);
+			}
+			catch(ComponentTerminatedException cte)
+			{
+				// Ignore -> race condition between app self termination when done external termination.
+			}
 		}
 	}
 }
