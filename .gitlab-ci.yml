@@ -1,11 +1,10 @@
 #image: eclipse-temurin:21-jdk-alpine
-#image: eclipse-temurin:21-jdk-noble
-image: eclipse-temurin:21-jdk
+image: eclipse-temurin:21-jdk-noble
 
 before_script:
   - GRADLE_USER_HOME="$(pwd)/.gradle"
   - export GRADLE_USER_HOME
-  - apt update && apt install -y git xvfb
+  - apt update && apt install -y git xvfb libxtst6
   - Xvfb :99 &
   - export DISPLAY=:99
 
