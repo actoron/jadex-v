@@ -424,7 +424,7 @@ public class EnvironmentGui	extends JFrame
 		});
 		timer.start();
 		
-		env.getComponentHandle().waitForTermination()
+		env.getComponentHandle().get().waitForTermination()
 			.then(b -> SwingUtilities.invokeLater(() ->
 		{
 			timer.stop();
@@ -437,7 +437,7 @@ public class EnvironmentGui	extends JFrame
 			public void windowClosing(WindowEvent e)
 			{
 				timer.stop();
-				env.getComponentHandle().terminate();
+				env.getComponentHandle().then(comp -> comp.terminate());
 			}
 		});
 	}

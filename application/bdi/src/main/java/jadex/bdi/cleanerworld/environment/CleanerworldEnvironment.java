@@ -300,8 +300,8 @@ public class CleanerworldEnvironment extends Environment
 	 *  Get the agent handle
 	 */
 	@ComponentMethod
-	public IComponentHandle getComponentHandle()
+	public IFuture<IComponentHandle> getComponentHandle()
 	{
-		return agent.getComponentHandle();
+		return new Future<>(agent.getComponentHandle());
 	}
 }
