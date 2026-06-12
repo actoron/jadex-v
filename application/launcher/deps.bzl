@@ -11,11 +11,9 @@ def _maven_to_bazel(coord):
     return "@maven//:" + group + "_" + artifact
     
 MAVEN_DEPS = [
-    'dev.langchain4j:langchain4j-core:1.15.1',
-    'dev.langchain4j:langchain4j:1.15.1',
-    'com.badlogicgames.gdx:gdx:1.12.1',
-    'com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.1',
-    'com.badlogicgames.gdx:gdx-platform:1.12.1:natives-desktop',
+    'com.formdev:flatlaf:3.7.1',
+    'org.openani.jsystemthemedetector:jSystemThemeDetector:3.9',
+    'org.slf4j:slf4j-simple:2.0.18',
 ]
 
 DEPS = [_maven_to_bazel(artifact) for artifact in MAVEN_DEPS]  

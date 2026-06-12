@@ -1,0 +1,32 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "application-launcher")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_binary")
+
+load(":deps.bzl", "DEPS")
+
+java_library(
+    name = "launcher-gui",
+    srcs = glob(["src/main/java/**/*.java",]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = [
+        "//util/common",
+        "//engine/core",
+        "//application/micro",
+        "//application/bdi",
+        "//application/bdi-service",
+        "//application/bt",
+    ] 
+    + DEPS,
+)
+
+java_binary(
+    name = "launcher",
+    main_class = "jadex.launcher.ApplicationLauncher",
+    runtime_deps = [
+        ":launcher-gui",
+    ],
+)

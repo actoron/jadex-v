@@ -3,6 +3,7 @@ package jadex.networking.impl.resolve;
 import jadex.networking.impl.NetworkFeature;
 
 import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
@@ -36,13 +37,15 @@ public class DnsResolver implements IResolver
             for (InetAddress addr : addrs)
             {
                 if (addr instanceof Inet4Address)
-                    ret.add(new TcpV4Endpoint((Inet4Address) addr, NetworkFeature.DEFAULT_TCP_PORT));
+                    ret.add(new TcpV4Endpoint((Inet4Address) addr));
+                else if (addr instanceof Inet6Address)
+                    ret.add(new TcpV6Endpoint((Inet6Address) addr));
             }
         }
         catch (UnknownHostException e)
         {
         }
-
         return ret;
     }
 }
+
