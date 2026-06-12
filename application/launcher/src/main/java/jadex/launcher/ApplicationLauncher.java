@@ -54,7 +54,6 @@ import com.jthemedetecor.OsThemeDetector;
 import jadex.common.SScan;
 import jadex.common.SUtil;
 import jadex.core.Application;
-import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentListener;
 import jadex.core.IComponentManager;
 import jadex.core.IComponentManager.ComponentEventType;
@@ -600,11 +599,7 @@ public class ApplicationLauncher extends JFrame
 						fex	= ((InvocationTargetException) ex).getCause();
 					}
 					
-					if(fex instanceof ComponentTerminatedException && fmodel.getValueAt(row, 3).equals("Start"))
-					{
-						// ignore exception during stop
-					}
-					else
+					if(fmodel.getValueAt(row, 3).equals("Starting..."))
 					{
 						JOptionPane.showMessageDialog(this, "Failed to start application: " + fex,
 							"Error", JOptionPane.ERROR_MESSAGE);
