@@ -113,6 +113,22 @@ deployZip:
     - echo "JADEX_VERSION=$JADEX_VERSION"
     - env | grep JADEX || true
 
+    - dl_host="${ORG_GRADLE_PROJECT_dl_host:-}"
+    - echo "dl_host=$dl_host"
+
+    - url="${dl_host#ssh://}"
+    - SSH_USER="${url%%:*}"
+    - url="${url#*:}"
+    - SSH_PASSWORD="${url%%@*}"
+    - url="${url#*@}"
+    - SSH_HOST="${url%%:*}"
+    - SSH_PORT="${url##*:}"
+
+    - echo "SSH_USER=$SSH_USER"
+    - echo "SSH_HOST=$SSH_HOST"
+    - echo "SSH_PORT=$SSH_PORT"
+    - echo "PASSWORD_LENGTH=${#SSH_PASSWORD}"
+
     - bazel build //application/launcher:launcher_deploy.jar
     - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
 
