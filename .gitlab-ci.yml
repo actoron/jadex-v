@@ -4,6 +4,8 @@ variables:
   BAZELISK_VERSION: "latest"
 
 before_script:
+  - . ./env.sh
+  - echo "JADEX_VERSION=$JADEX_VERSION"
   - apt-get update
   - apt-get install -y curl build-essential python3 sshpass
   - python3 --version
@@ -108,6 +110,8 @@ benchmark:
 deployZip:
   stage: deploy
   script:
+    - echo "JADEX_VERSION=$JADEX_VERSION"
+    - env | grep JADEX
     - bazel build //application/launcher:launcher_deploy.jar
     - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
     - USER=$(echo $dl_host | sed 's|ssh://\([^:]*\):.*|\1|')
@@ -122,8 +126,8 @@ deployZip:
     paths:
       - .bazel
       - ~/.cache/bazel
-  rules:
-    - if: '$JADEX_VERSION' #'$CI_COMMIT_BRANCH == "main" &&
+  #rules:
+  #  - if: '$JADEX_VERSION' #'$CI_COMMIT_BRANCH == "main" &&
   #rules:
   #  - if: '$CI_COMMIT_BRANCH == "main"'
 
