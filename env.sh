@@ -26,6 +26,11 @@ get_var() {
     printf '%s' "$val"
 }
 
+dl_host="$(get_var dl_host)"
+sigKey="$(get_var sigKey)"
+signingPassword="$(get_var signingPassword)"
+repocentral="$(get_var repocentral)"
+
 JADEX_VERSION_PREFIX="$(get_var JADEX_VERSION_PREFIX)"
 JADEX_VERSION_PREFIX="5.0-beta-test" # for testing only, remove later
 
