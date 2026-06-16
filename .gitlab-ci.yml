@@ -131,7 +131,6 @@ deployZip:
         -P "$SSH_PORT" \
         "$JAR" \
         "$SSH_USER@$SSH_HOST:/www/releases/$JADEX_VERSION/"
-
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
