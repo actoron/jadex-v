@@ -111,19 +111,27 @@ deployZip:
   stage: deploy
   script:
     - echo "PASSWORD_LENGTH=${#SSH_PASSWORD}"
+
     - bazel build //application/launcher:launcher_deploy.jar
-    - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
+
+    - BAZEL_BIN=$(bazel info bazel-bin)
+    - JAR="$BAZEL_BIN/application/launcher/launcher_deploy.jar"
+    - echo "JAR path: $JAR"
+    - ls -l "$JAR"
+
     - |
       sshpass -p "$SSH_PASSWORD" ssh \
         -o StrictHostKeyChecking=no \
         -p "$SSH_PORT" \
         "$SSH_USER@$SSH_HOST" \
         "rm -rf /www/releases/$JADEX_VERSION && mkdir -p /www/releases/$JADEX_VERSION"
+
     - |
       sshpass -p "$SSH_PASSWORD" scp \
         -P "$SSH_PORT" \
         "$JAR" \
         "$SSH_USER@$SSH_HOST:/www/releases/$JADEX_VERSION/"
+
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
