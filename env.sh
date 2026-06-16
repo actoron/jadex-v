@@ -4,6 +4,7 @@
 # sigKey: GPG-Private-Key
 # signingPassword:  Passwort für den GPG-Key
 # repocentral: Central Repository-URL
+# dl_host: SSH-Deploy-Ziel, Format: ssh://user:url-encoded-password[;fingerprint=xx-xx-...]@host:port
 
 #!/usr/bin/env bash
 
@@ -209,6 +210,83 @@ if [ -n "$repocentral" ]; then
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# SSH deploy URL parsing (dl_host)
+#
+# Format: ssh://user:url-encoded-password[;fingerprint=xx-xx-...]@host:port
+#
+# Das Passwort ist URL-encoded (z.B. "/" als "%2F") und muss vor der
+# Verwendung mit sshpass/ssh/scp decodiert werden. Der optionale
+# ";fingerprint=..."-Teil gehört NICHT zum Passwort.
+# ---------------------------------------------------------------------------
+
+url_decode() {
+    local data="${1//+/ }"
+    printf '%b' "${data//%/\\x}"
+}
+
+parse_ssh_url_with_credentials() {
+    local input="$1"
+
+    SSH_USER=""
+    SSH_PASSWORD=""
+    SSH_HOST=""
+    SSH_PORT=""
+    SSH_FINGERPRINT=""
+
+    if [ -z "$input" ]; then
+        echo "parse_ssh_url_with_credentials: empty URL given" >&2
+        return 1
+    fi
+
+    local url="${input#ssh://}"
+    if [ "$url" = "$input" ]; then
+        echo "parse_ssh_url_with_credentials: URL must start with ssh:// (got: $input)" >&2
+        return 1
+    fi
+
+    if [[ "$url" != *"@"* ]]; then
+        echo "parse_ssh_url_with_credentials: missing '@' in URL" >&2
+        return 1
+    fi
+
+    local userinfo="${url%%@*}"
+    local hostport="${url#*@}"
+
+    SSH_USER="${userinfo%%:*}"
+    local rest="${userinfo#*:}"
+
+    local password_raw="$rest"
+    if [[ "$rest" == *";"* ]]; then
+        password_raw="${rest%%;*}"
+        local fp_part="${rest#*;}"
+        if [[ "$fp_part" == fingerprint=* ]]; then
+            local fp="${fp_part#fingerprint=}"
+            SSH_FINGERPRINT="${fp//-/:}"
+        fi
+    fi
+    SSH_PASSWORD="$(url_decode "$password_raw")"
+
+    SSH_HOST="${hostport%%:*}"
+    SSH_PORT="${hostport##*:}"
+
+    if [ -z "$SSH_USER" ] || [ -z "$SSH_HOST" ] || [ -z "$SSH_PORT" ]; then
+        echo "parse_ssh_url_with_credentials: failed to fully parse URL" >&2
+        return 1
+    fi
+
+    export SSH_USER SSH_PASSWORD SSH_HOST SSH_PORT SSH_FINGERPRINT
+    return 0
+}
+
+dl_host="$(get_var dl_host)"
+
+if [ -n "$dl_host" ]; then
+    parse_ssh_url_with_credentials "$dl_host" || true
+else
+    echo "no dl_host found" >&2
+fi
+
 echo "version:${JADEX_VERSION:-}|" >&2
 
 echo >&2
@@ -223,7 +301,11 @@ for var in \
     signingPassword \
     centralUser \
     centralPassword \
-    REPO_CENTRAL_URL
+    REPO_CENTRAL_URL \
+    SSH_USER \
+    SSH_HOST \
+    SSH_PORT \
+    SSH_FINGERPRINT
 do
     printf '%s=%s\n' "$var" "${!var:-<not set>}"
 done >&2

@@ -110,41 +110,21 @@ benchmark:
 deployZip:
   stage: deploy
   script:
-    - echo "JADEX_VERSION=$JADEX_VERSION"
-    - env | grep JADEX || true
-
-    - dl_host="${ORG_GRADLE_PROJECT_dl_host:-}"
-    - echo "dl_host=$dl_host"
-
-    - url="${dl_host#ssh://}"
-    - SSH_USER="${url%%:*}"
-    - url="${url#*:}"
-    - SSH_PASSWORD="${url%%@*}"
-    - url="${url#*@}"
-    - SSH_HOST="${url%%:*}"
-    - SSH_PORT="${url##*:}"
-
-    - echo "SSH_USER=$SSH_USER"
-    - echo "SSH_HOST=$SSH_HOST"
-    - echo "SSH_PORT=$SSH_PORT"
+    - source jadex-build-env.sh
     - echo "PASSWORD_LENGTH=${#SSH_PASSWORD}"
-
     - bazel build //application/launcher:launcher_deploy.jar
     - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
-
     - |
       sshpass -p "$SSH_PASSWORD" ssh \
         -o StrictHostKeyChecking=no \
         -p "$SSH_PORT" \
         "$SSH_USER@$SSH_HOST" \
         "rm -rf /www/releases/$JADEX_VERSION && mkdir -p /www/releases/$JADEX_VERSION"
-
     - |
       sshpass -p "$SSH_PASSWORD" scp \
         -P "$SSH_PORT" \
         "$JAR" \
         "$SSH_USER@$SSH_HOST:/www/releases/$JADEX_VERSION/"
-
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
