@@ -110,7 +110,6 @@ benchmark:
 deployZip:
   stage: deploy
   script:
-    - source jadex-build-env.sh
     - echo "PASSWORD_LENGTH=${#SSH_PASSWORD}"
     - bazel build //application/launcher:launcher_deploy.jar
     - JAR=$(bazel cquery --output=files //application/launcher:launcher_deploy.jar)
