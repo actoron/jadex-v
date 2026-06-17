@@ -3,6 +3,7 @@ package jadex.bt.cleanerworld.environment;
 import java.util.HashSet;
 import java.util.Set;
 
+import jadex.core.IComponentHandle;
 import jadex.core.annotation.NoCopy;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentTask;
@@ -268,4 +269,12 @@ public class CleanerworldEnvironment extends Environment
 		return res;
 	}
 	
+	/**
+	 *  Get the agent handle
+	 */
+	@ComponentMethod
+	public IFuture<IComponentHandle> getComponentHandle()
+	{
+		return new Future<>(agent.getComponentHandle());
+	}
 }

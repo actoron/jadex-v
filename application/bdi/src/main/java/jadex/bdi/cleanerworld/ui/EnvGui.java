@@ -2,8 +2,6 @@ package jadex.bdi.cleanerworld.ui;
 
 import java.util.Set;
 
-import javax.swing.SwingUtilities;
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -349,13 +347,7 @@ public class EnvGui extends ApplicationAdapter
         config.setTitle("Cleaner World");
         config.setWindowedMode(800, 600);
         config.setForegroundFPS(fps);
-        Lwjgl3Application	app	= new Lwjgl3Application(new EnvGui(env), config);
-        
-		env.getComponentHandle().get().waitForTermination()
-			.then(b -> SwingUtilities.invokeLater(() ->
-		{
-			app.exit();
-		}));
+        new Lwjgl3Application(new EnvGui(env), config);
     }
 }
 

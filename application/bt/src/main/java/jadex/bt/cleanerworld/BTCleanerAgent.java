@@ -32,8 +32,8 @@ import jadex.bt.nodes.SelectorNode;
 import jadex.bt.nodes.SequenceNode;
 import jadex.bt.state.ExecutionContext;
 import jadex.bt.tool.BTViewer;
+import jadex.core.Application;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 import jadex.environment.Environment;
 import jadex.environment.EnvironmentEvent;
 import jadex.environment.PerceptionProcessor;
@@ -495,8 +495,11 @@ public class BTCleanerAgent implements IBTProvider
 		// Open a window showing the agent's perceptions
 		if(ui)
 		{
-			new SensorGui(agent.getComponentHandle()).setVisible(true);
-			SwingUtilities.invokeLater(() -> new BTViewer(agent.getComponentHandle(), 0).setVisible(true));
+			SwingUtilities.invokeLater(() -> 
+			{
+				new BTViewer(agent.getComponentHandle(), 0).setVisible(true);
+				new SensorGui(agent.getComponentHandle());
+			});
 		}
 	}
 	
@@ -595,15 +598,16 @@ public class BTCleanerAgent implements IBTProvider
 		//IComponentManager.get().getFeature(ILoggingFeature.class).setDefaultSystemLoggingLevel(Level.INFO);
 		
 		int fps = 5; // steps / frames per second
-		CleanerworldEnvironment env = IComponentManager.get().create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
+		Application	app = new Application("Cleanerworld");
+		CleanerworldEnvironment env = app.create(new CleanerworldEnvironment(fps)).get().getPojoHandle(CleanerworldEnvironment.class);
 		env.createWorld().get();
 		String envid = Environment.add(env);
 		
-		IComponentManager.get().create(new BTCleanerAgent(envid));
+		app.create(new BTCleanerAgent(envid), "BT Cleaner");
 		
 		//EnvironmentGui.create(envid); // old Swing ui
-		EnvGui.create(envid, env.getStepsPerSecond().get()); // new libgdx ui
+		EnvGui.create(envid); // new libgdx ui
 		
-		IComponentManager.get().waitForLastComponentTerminated();
+		app.waitForLastComponentTerminated();
 	}
 }

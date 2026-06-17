@@ -1,20 +1,21 @@
 package jadex.bt.tool;
 
-import java.util.TimerTask;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import jadex.bt.IBTAgentFeature;
-import jadex.bt.NodeListener;
 import jadex.bt.impl.BTAgentFeature;
 import jadex.bt.nodes.Node;
 import jadex.bt.state.ExecutionContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
-import jadex.core.IThrowingFunction;
+import jadex.core.INoCopyStep;
 
+@SuppressWarnings("serial")
 public class BTViewer extends JFrame 
 {
 	protected IComponentHandle agent;
@@ -32,9 +33,9 @@ public class BTViewer extends JFrame
 	{
 	    this.agent = agent;
 	    setTitle("Behavior Tree Viewer " + agent.getId().getLocalName());
-	    setSize(800, 600);
-	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    setLocationRelativeTo(null);
+	    setSize(1000, 750);
+//	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//	    setLocationRelativeTo(null);
 
 	    this.root = new TreeNode(getRoot(), getExecutionContext());
 	    this.btpanel = new BehaviorTreePanel(root);
@@ -57,11 +58,13 @@ public class BTViewer extends JFrame
 			}
 		});*/
 
-		Timer timer = startAutoRefresh();
+		Timer	timer	= startAutoRefresh();
 
-		if(closedelay >= 0)
+		// Close window on agent kill.
+		agent.waitForTermination().then(b -> 
 		{
-			Runnable dispose = () -> 
+			timer.stop();
+			if(closedelay >= 0)
 			{
 				Timer t = new Timer(3000, e -> 
 				{
@@ -71,43 +74,38 @@ public class BTViewer extends JFrame
 				});
 				t.setRepeats(false);
 				t.start();
-			};
-			agent.waitForTermination().then(found ->
+			}
+			else
 			{
-				dispose.run();
-			}).catchEx(ex -> 
-			{
-				dispose.run();
-			});
-		}
+				dispose();
+			}
+		});
 	}
 	
 	private Node<?> getRoot()
 	{
-		return agent.scheduleStep((IThrowingFunction<IComponent, Node<IComponent>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getBehaviorTree()).get();
+		return agent.scheduleStep((INoCopyStep<Node<IComponent>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getBehaviorTree()).get();
 	}
 	
 	private ExecutionContext<?> getExecutionContext()
 	{
-		return agent.scheduleStep((IThrowingFunction<IComponent, ExecutionContext<?>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getExecutionContext()).get();
+		return agent.scheduleStep((INoCopyStep<ExecutionContext<?>>)a -> ((BTAgentFeature)a.getFeature(IBTAgentFeature.class)).getExecutionContext()).get();
 	}
 	
-	private Timer startAutoRefresh() 
+	private Timer	startAutoRefresh() 
     {
-		Timer timer = new Timer(100, e -> 
+        Timer timer = new Timer(100, ev -> refreshView());
+        timer.start();
+        
+		// Kill agent on window close.
+		addWindowListener(new WindowAdapter()
 		{
-			try 
+			public void windowClosing(WindowEvent e)
 			{
-				refreshView();
-			} 
-			catch (Exception ex) 
-			{
-				((Timer)e.getSource()).stop();
+				agent.terminate();
 			}
 		});
-		timer.setInitialDelay(0);
-		timer.start();
-
+		
 		return timer;
     }
 	
