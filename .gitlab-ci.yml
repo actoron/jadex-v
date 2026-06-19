@@ -4,17 +4,18 @@ variables:
   BAZELISK_VERSION: "latest"
 
 before_script:
+  before_script:
   - apt-get update
   - apt-get install -y curl build-essential python3 sshpass git
-  - python3 --version
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
-  - export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+  - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
   - export PATH="$JAVA_HOME/bin:$PATH"
+  - echo "JAVA_HOME=$JAVA_HOME"
+  - "$JAVA_HOME/bin/java" -version
   - mkdir -p /opt/java
   - ln -sf "$JAVA_HOME" /opt/java/openjdk
   - . ./env.sh
-  - echo "JADEX_VERSION=$JADEX_VERSION"
   - bazel version
 
 stages:
