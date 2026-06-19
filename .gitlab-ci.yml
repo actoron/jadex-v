@@ -10,8 +10,8 @@ before_script:
   - chmod +x /usr/local/bin/bazel
   - echo "JAVA_HOME=$JAVA_HOME"
   - echo "common --repo_env=JAVA_HOME=$JAVA_HOME" > .bazelrc
+  - echo "common --repo_env=PATH=$PATH" >> .bazelrc
   - cat .bazelrc
-  - java -version
   - . ./env.sh
   - bazel version
 
