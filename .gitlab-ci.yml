@@ -8,9 +8,7 @@ before_script:
   - apt-get install -y curl build-essential python3 sshpass git
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
-  - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
-  - export PATH="$JAVA_HOME/bin:$PATH"
-  - echo "JAVA_HOME=$JAVA_HOME"
+  - echo "JAVA_HOME=$JAVA_HOME"        # Bereits korrekt gesetzt vom Image
   - mkdir -p /opt/java
   - ln -sf "$JAVA_HOME" /opt/java/openjdk
   - . ./env.sh
