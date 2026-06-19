@@ -13,7 +13,7 @@ before_script:
   - java -version
   - javac -version
   - . ./env.sh
-  - bazel version
+  - bazel version 
 
 stages:
   - build
