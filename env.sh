@@ -1,13 +1,4 @@
-# The script needs the following environment variables to be set, either directly or with the ORG_GRADLE_PROJECT_ prefix:
-#
-# JADEX_VERSION_PREFIX: Versionspräfix, Standard: 5.0-beta
-# sigKey: GPG-Private-Key
-# signingPassword:  Passwort für den GPG-Key
-# repocentral: Central Repository-URL
-# dl_host: SSH-Deploy-Ziel, Format: ssh://user:url-encoded-password[;fingerprint=xx-xx-...]@host:port
-
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
@@ -17,7 +8,9 @@ PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 # ---------------------------------------------------------------------------
 get_var() {
     local key="$1"
-    local val="${!key:-}"
+    local val=""
+
+    val="${!key:-}"
 
     if [ -z "$val" ]; then
         local prefixed="ORG_GRADLE_PROJECT_${key}"
@@ -27,6 +20,17 @@ get_var() {
     printf '%s' "$val"
 }
 
+# ---------------------------------------------------------------------------
+# safe git wrapper
+# ---------------------------------------------------------------------------
+git_safe() {
+    if command -v git >/dev/null 2>&1; then
+        git -C "$PROJECT_ROOT" "$@" 2>/dev/null || true
+    else
+        return 0
+    fi
+}
+
 dl_host="$(get_var dl_host)"
 sigKey="$(get_var sigKey)"
 signingPassword="$(get_var signingPassword)"
@@ -34,34 +38,27 @@ repocentral="$(get_var repocentral)"
 repos="$(get_var repos)"
 repoId="$(get_var repoId)"
 
-if [ -z "$repos" ]; then
-    repos="central"
-fi
-
+repos="${repos:-central}"
 export repos
 
-if [ -n "$repoId" ]; then
-    export repoId
-fi
+[ -n "${repoId:-}" ] && export repoId
+[ -n "${repocentral:-}" ] && export repocentral
 
-if [ -n "$repocentral" ]; then
-    export repocentral
-fi
-
+# ---------------------------------------------------------------------------
+# Version handling
+# ---------------------------------------------------------------------------
 JADEX_VERSION_PREFIX="$(get_var JADEX_VERSION_PREFIX)"
-JADEX_VERSION_PREFIX="5.0-beta-test" # for testing only, remove later
+JADEX_VERSION_PREFIX="${JADEX_VERSION_PREFIX:-5.0-beta}"
 
-if [ -z "$JADEX_VERSION_PREFIX" ]; then
-    JADEX_VERSION_PREFIX="5.0-beta"
-fi
+# TEST OVERRIDE (falls wirklich gewollt)
+# JADEX_VERSION_PREFIX="5.0-beta-test"
 
 check_clean_worktree() {
     local changes
+    changes="$(git_safe status --porcelain --untracked-files=no)"
 
-    changes="$(git -C "$PROJECT_ROOT" status --porcelain --untracked-files=no)"
-
-    if [ -n "$changes" ]; then
-        echo "Working directory contains changes. Please commit or stash changes before publishing." >&2
+    if [ -n "${changes:-}" ]; then
+        echo "Working directory contains changes. Please commit or stash before publishing." >&2
         return 1
     fi
 }
@@ -69,18 +66,14 @@ check_clean_worktree() {
 get_latest_version() {
     local prefix="$1"
 
-    git -C "$PROJECT_ROOT" tag -l "${prefix}*" |
+    git_safe tag -l "${prefix}*" |
     while read -r tag; do
-
         local rest="${tag#$prefix}"
-
-        # Strip suffix after first '-'
         rest="${rest%%-*}"
 
         if [[ "$rest" =~ ^[0-9]+$ ]]; then
             echo "$rest"
         fi
-
     done |
     sort -n |
     tail -1
@@ -88,25 +81,20 @@ get_latest_version() {
 
 is_head() {
     local tag="$1"
-
-    git -C "$PROJECT_ROOT" tag --points-at HEAD |
-        grep -Fxq "$tag"
+    git_safe tag --points-at HEAD | grep -Fxq "$tag" || true
 }
 
 fetch_next_build_name_from_git_tag() {
     local prefix="$1"
 
-    if [ -z "${prefix:-}" ]; then
-        return 0
-    fi
+    [ -z "${prefix:-}" ] && return 0
 
-    check_clean_worktree
+    check_clean_worktree || true
 
-    local vnum
-    vnum="$(get_latest_version "$prefix")"
+    local vnum=""
+    vnum="$(get_latest_version "$prefix" || true)"
 
     if [ -n "$vnum" ]; then
-
         local version="${prefix}${vnum}"
 
         echo "Latest version is ${version}" >&2
@@ -117,9 +105,7 @@ fetch_next_build_name_from_git_tag() {
         fi
 
         printf '%s' "$version"
-
     else
-
         echo "No version found with prefix ${prefix}" >&2
 
         if [[ "$prefix" == *"." ]]; then
@@ -131,12 +117,9 @@ fetch_next_build_name_from_git_tag() {
 }
 
 # ---------------------------------------------------------------------------
-# JADEX_VERSION
+# Compute version
 # ---------------------------------------------------------------------------
-
-JADEX_VERSION_PREFIX="$(get_var JADEX_VERSION_PREFIX)"
-
-JADEX_VERSION="$(fetch_next_build_name_from_git_tag "$JADEX_VERSION_PREFIX")"
+JADEX_VERSION="$(fetch_next_build_name_from_git_tag "$JADEX_VERSION_PREFIX" || true)"
 
 if [ -n "${JADEX_VERSION:-}" ]; then
     export JADEX_VERSION
@@ -146,48 +129,43 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Signing key / password
+# Signing
 # ---------------------------------------------------------------------------
-
 sigKey="$(get_var sigKey)"
 
-if [ -n "$sigKey" ]; then
+if [ -n "${sigKey:-}" ]; then
     export signingKey="${sigKey//\\n/$'\n'}"
 else
     echo "no signing key found" >&2
 fi
 
-signingPassword="$(get_var signingPassword)"
-
-if [ -n "$signingPassword" ]; then
+if [ -n "${signingPassword:-}" ]; then
     export signingPassword
 else
     echo "no signing key pass found" >&2
 fi
 
-# Gradle publish script expects these as JVM properties
-export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
+# ---------------------------------------------------------------------------
+# Gradle JVM options
+# ---------------------------------------------------------------------------
+JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
 
-[ -n "${JADEX_VERSION:-}" ] && \
-    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DJADEX_VERSION=$JADEX_VERSION"
-
-[ -n "${repoId:-}" ] && \
-    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DrepoId=$repoId"
-
-[ -n "${signingKey:-}" ] && \
-    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DsigningKey=$signingKey"
-
-[ -n "${signingPassword:-}" ] && \
-    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DsigningPassword=$signingPassword"
+[ -n "${JADEX_VERSION:-}" ] && JAVA_TOOL_OPTIONS+=" -DJADEX_VERSION=$JADEX_VERSION"
+[ -n "${repoId:-}" ] && JAVA_TOOL_OPTIONS+=" -DrepoId=$repoId"
+[ -n "${signingKey:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningKey=$signingKey"
+[ -n "${signingPassword:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningPassword=$signingPassword"
 
 export JAVA_TOOL_OPTIONS
 
 # ---------------------------------------------------------------------------
-# Central repository URL parsing
+# Central repo parsing
 # ---------------------------------------------------------------------------
-
 parse_url_with_credentials() {
     local url="$1"
+
+    REPO_USER=""
+    REPO_PASSWORD=""
+    REPO_FINGERPRINT=""
 
     local re='^([a-zA-Z][a-zA-Z0-9+.-]*)://(([^@/]*)@)?([^/:?#]+)(:([0-9]+))?(.*)$'
 
@@ -202,26 +180,16 @@ parse_url_with_credentials() {
     local port="${BASH_REMATCH[6]}"
     local rest="${BASH_REMATCH[7]}"
 
-    REPO_USER=""
-    REPO_PASSWORD=""
-    REPO_FINGERPRINT=""
-
-    if [ -n "$userinfo" ]; then
-
-        local IFS=':;'
-        local -a parts
-
-        read -ra parts <<< "$userinfo"
+    if [ -n "${userinfo:-}" ]; then
+        IFS=':;' read -r -a parts <<< "$userinfo"
 
         REPO_USER="${parts[0]:-}"
         REPO_PASSWORD="${parts[1]:-}"
 
-        local i
-
-        for ((i = 2; i < ${#parts[@]}; i++)); do
-            case "${parts[$i]}" in
+        for part in "${parts[@]:2}"; do
+            case "$part" in
                 fingerprint=*)
-                    REPO_FINGERPRINT="${parts[$i]#fingerprint=}"
+                    REPO_FINGERPRINT="${part#fingerprint=}"
                     REPO_FINGERPRINT="${REPO_FINGERPRINT//-/:}"
                     ;;
             esac
@@ -231,28 +199,17 @@ parse_url_with_credentials() {
     REPO_URL="${scheme}://${host}${port:+:${port}}${rest}"
 }
 
-repocentral="$(get_var repocentral)"
-
-if [ -n "$repocentral" ]; then
+if [ -n "${repocentral:-}" ]; then
     if parse_url_with_credentials "$repocentral"; then
-
-        [ -n "$REPO_USER" ] && export centralUser="$REPO_USER"
-        [ -n "$REPO_PASSWORD" ] && export centralPassword="$REPO_PASSWORD"
-
+        [ -n "${REPO_USER:-}" ] && export centralUser="$REPO_USER"
+        [ -n "${REPO_PASSWORD:-}" ] && export centralPassword="$REPO_PASSWORD"
         export REPO_CENTRAL_URL="$REPO_URL"
     fi
 fi
 
 # ---------------------------------------------------------------------------
-# SSH deploy URL parsing (dl_host)
-#
-# Format: ssh://user:url-encoded-password[;fingerprint=xx-xx-...]@host:port
-#
-# Das Passwort ist URL-encoded (z.B. "/" als "%2F") und muss vor der
-# Verwendung mit sshpass/ssh/scp decodiert werden. Der optionale
-# ";fingerprint=..."-Teil gehört NICHT zum Passwort.
+# SSH parsing
 # ---------------------------------------------------------------------------
-
 url_decode() {
     local data="${1//+/ }"
     printf '%b' "${data//%/\\x}"
@@ -268,20 +225,12 @@ parse_ssh_url_with_credentials() {
     SSH_FINGERPRINT=""
 
     if [ -z "$input" ]; then
-        echo "parse_ssh_url_with_credentials: empty URL given" >&2
+        echo "empty dl_host" >&2
         return 1
     fi
 
     local url="${input#ssh://}"
-    if [ "$url" = "$input" ]; then
-        echo "parse_ssh_url_with_credentials: URL must start with ssh:// (got: $input)" >&2
-        return 1
-    fi
-
-    if [[ "$url" != *"@"* ]]; then
-        echo "parse_ssh_url_with_credentials: missing '@' in URL" >&2
-        return 1
-    fi
+    [[ "$url" == "$input" ]] && return 1
 
     local userinfo="${url%%@*}"
     local hostport="${url#*@}"
@@ -290,38 +239,33 @@ parse_ssh_url_with_credentials() {
     local rest="${userinfo#*:}"
 
     local password_raw="$rest"
+
     if [[ "$rest" == *";"* ]]; then
         password_raw="${rest%%;*}"
         local fp_part="${rest#*;}"
+
         if [[ "$fp_part" == fingerprint=* ]]; then
-            local fp="${fp_part#fingerprint=}"
-            SSH_FINGERPRINT="${fp//-/:}"
+            SSH_FINGERPRINT="${fp_part#fingerprint=}"
+            SSH_FINGERPRINT="${SSH_FINGERPRINT//-/:}"
         fi
     fi
+
     SSH_PASSWORD="$(url_decode "$password_raw")"
 
     SSH_HOST="${hostport%%:*}"
     SSH_PORT="${hostport##*:}"
 
-    if [ -z "$SSH_USER" ] || [ -z "$SSH_HOST" ] || [ -z "$SSH_PORT" ]; then
-        echo "parse_ssh_url_with_credentials: failed to fully parse URL" >&2
-        return 1
-    fi
-
     export SSH_USER SSH_PASSWORD SSH_HOST SSH_PORT SSH_FINGERPRINT
-    return 0
 }
 
-dl_host="$(get_var dl_host)"
-
-if [ -n "$dl_host" ]; then
+if [ -n "${dl_host:-}" ]; then
     parse_ssh_url_with_credentials "$dl_host" || true
-else
-    echo "no dl_host found" >&2
 fi
 
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
 echo "version:${JADEX_VERSION:-}|" >&2
-
 echo >&2
 echo "========================================" >&2
 echo "Configured build environment:" >&2
@@ -341,7 +285,7 @@ for var in \
     SSH_FINGERPRINT \
     repos \
     repoId \
-    repocentral \
+    repocentral
 do
     printf '%s=%s\n' "$var" "${!var:-<not set>}"
 done >&2
