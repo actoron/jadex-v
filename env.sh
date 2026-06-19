@@ -148,14 +148,14 @@ fi
 # ---------------------------------------------------------------------------
 # Gradle JVM options
 # ---------------------------------------------------------------------------
-JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
-
-[ -n "${JADEX_VERSION:-}" ] && JAVA_TOOL_OPTIONS+=" -DJADEX_VERSION=$JADEX_VERSION"
-[ -n "${repoId:-}" ] && JAVA_TOOL_OPTIONS+=" -DrepoId=$repoId"
-[ -n "${signingKey:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningKey=$signingKey"
-[ -n "${signingPassword:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningPassword=$signingPassword"
-
-export JAVA_TOOL_OPTIONS
+#JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
+#
+#[ -n "${JADEX_VERSION:-}" ] && JAVA_TOOL_OPTIONS+=" -DJADEX_VERSION=$JADEX_VERSION"
+#[ -n "${repoId:-}" ] && JAVA_TOOL_OPTIONS+=" -DrepoId=$repoId"
+#[ -n "${signingKey:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningKey=$signingKey"
+#[ -n "${signingPassword:-}" ] && JAVA_TOOL_OPTIONS+=" -DsigningPassword=$signingPassword"
+#
+#export JAVA_TOOL_OPTIONS
 
 # ---------------------------------------------------------------------------
 # Central repo parsing
