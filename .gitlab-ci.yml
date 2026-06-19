@@ -1,4 +1,10 @@
-image: eclipse-temurin:21-jdk
+image: amazoncorretto:21
+
+variables:
+  BAZELISK_VERSION: "latest"
+
+before_script:
+image: amazoncorretto:21
 
 variables:
   BAZELISK_VERSION: "latest"
@@ -8,12 +14,14 @@ before_script:
   - apt-get install -y curl build-essential python3 sshpass git
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
-  - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
+  - export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto
   - export PATH="$JAVA_HOME/bin:$PATH"
   - java -version
   - javac -version
+  - rm -rf /opt/java/openjdk
+  - ln -s "$JAVA_HOME" /opt/java/openjdk
   - . ./env.sh
-  - bazel version 
+  - bazel version
 
 stages:
   - build
