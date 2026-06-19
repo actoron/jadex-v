@@ -9,10 +9,9 @@ before_script:
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
   - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
-  - echo "JAVA_HOME=$JAVA_HOME"
-  - rm -rf /opt/java/openjdk
-  - mkdir -p /opt/java/openjdk
-  - cp -r "$JAVA_HOME/"* /opt/java/openjdk/
+  - export PATH="$JAVA_HOME/bin:$PATH"
+  - java -version
+  - javac -version
   - . ./env.sh
   - bazel version
 
