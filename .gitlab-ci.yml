@@ -24,7 +24,7 @@ stages:
 build:
   stage: build
   script:
-    - bazel build //...
+    - bazel build //... --action_env=PATH --action_env=JAVA_HOME
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -35,7 +35,7 @@ build:
 test:
   stage: test
   script:
-    - bazel test $(bazel query '//... except //benchmark/...')
+    - bazel test $(bazel query '//... except //benchmark/...') --action_env=PATH --action_env=JAVA_HOME
 
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -47,7 +47,7 @@ test:
 benchmark:
   stage: benchmark
   script:
-    - bazel test //benchmark/... --test_output=errors
+    - bazel test //benchmark/... --test_output=errors --action_env=PATH --action_env=JAVA_HOME
   allow_failure: true
   cache:
     - key: "$CI_COMMIT_REF_NAME"
