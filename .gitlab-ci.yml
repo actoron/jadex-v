@@ -8,10 +8,11 @@ before_script:
   - apt-get install -y curl build-essential python3 sshpass git
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
+  - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
   - echo "JAVA_HOME=$JAVA_HOME"
-  - echo "common --repo_env=JAVA_HOME=$JAVA_HOME" > .bazelrc
-  - echo "common --repo_env=PATH=$PATH" >> .bazelrc
-  - cat .bazelrc
+  - rm -rf /opt/java/openjdk
+  - mkdir -p /opt/java/openjdk
+  - cp -r "$JAVA_HOME/"* /opt/java/openjdk/
   - . ./env.sh
   - bazel version
 
