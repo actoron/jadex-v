@@ -1,19 +1,27 @@
-image: eclipse-temurin:21-jdk
+image: ubuntu:22.04
 
 variables:
   BAZELISK_VERSION: "latest"
+  JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
+
+stages:
+  - build
+  - test
+  - benchmark
+  - deploy
 
 before_script:
   - apt-get update
-  - apt-get install -y curl git python3 sshpass build-essential
+  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
-  - export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+  - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
   - export PATH="$JAVA_HOME/bin:$PATH"
+  - which java
   - java -version
   - javac -version
   - jar --version
-  - . ./env.sh
+  - echo $JAVA_HOME
 
 stages:
   - build
@@ -24,7 +32,7 @@ stages:
 build:
   stage: build
   script:
-    - bazel build //... --action_env=PATH --action_env=JAVA_HOME
+    - bazel build //...
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
@@ -35,7 +43,7 @@ build:
 test:
   stage: test
   script:
-    - bazel test $(bazel query '//... except //benchmark/...') --action_env=PATH --action_env=JAVA_HOME
+    - bazel test $(bazel query '//... except //benchmark/...')
 
   cache:
     key: "$CI_COMMIT_REF_NAME"
@@ -47,7 +55,7 @@ test:
 benchmark:
   stage: benchmark
   script:
-    - bazel test //benchmark/... --test_output=errors --action_env=PATH --action_env=JAVA_HOME
+    - bazel test //benchmark/... --test_output=errors
   allow_failure: true
   cache:
     - key: "$CI_COMMIT_REF_NAME"
