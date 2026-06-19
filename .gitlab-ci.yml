@@ -8,9 +8,12 @@ before_script:
   - apt-get install -y curl git python3 sshpass build-essential
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
+  - export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+  - export PATH="$JAVA_HOME/bin:$PATH"
   - java -version
   - javac -version
-  - bazel version
+  - jar --version
+  - . ./env.sh
 
 stages:
   - build
