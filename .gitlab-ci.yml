@@ -7,7 +7,7 @@ before_script:
   - . ./env.sh
   - echo "JADEX_VERSION=$JADEX_VERSION"
   - apt-get update
-  - apt-get install -y curl build-essential python3 sshpass
+  - apt-get install -y curl build-essential python3 sshpass git
   - python3 --version
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
@@ -80,19 +80,6 @@ benchmark:
 #  when: manual
 #  tags:
 #    - benchmark
-
-# deployZip:
-#  stage: deploy
-#  script:
-#    - bazel build //:deployZip
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: pull
-#    paths:
-#      - .bazel
-#      - ~/.cache/bazel
-#  rules:
-#    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
 
 #deployCentral:
 #  stage: deploy
