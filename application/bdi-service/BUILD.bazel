@@ -25,6 +25,6 @@ java_library(
         "//serialization/traverser",
         "//environment/environment",
         "//application/bdi",
-        "//application/micro",
+        "//application/micro:micro_lib",
     ] + DEPS,
 )

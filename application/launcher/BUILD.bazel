@@ -15,10 +15,12 @@ java_library(
     deps = [
         "//util/common",
         "//engine/core",
-        "//application/micro",
+        #"//application/micro",
+        "//application/micro:micro_lib",
         "//application/bdi",
         "//application/bdi-service",
-        "//application/bt",
+        #"//application/bt",
+        "//application/bt:bt_lib",
     ] 
     + DEPS,
 )

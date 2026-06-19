@@ -2,6 +2,7 @@ load("//feature/configurator:feature.bzl", "feature")
 feature(name = "publishservicejetty")
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
+load("//:maven_artifact.bzl", "maven_publish_jars")
 
 load(":deps.bzl", "DEPS")
 
@@ -60,6 +61,11 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+maven_publish_jars(
+    name = "publishjetty_publish",
+    target = ":publishjetty",
 )
 
 

@@ -31,6 +31,22 @@ dl_host="$(get_var dl_host)"
 sigKey="$(get_var sigKey)"
 signingPassword="$(get_var signingPassword)"
 repocentral="$(get_var repocentral)"
+repos="$(get_var repos)"
+repoId="$(get_var repoId)"
+
+if [ -z "$repos" ]; then
+    repos="central"
+fi
+
+export repos
+
+if [ -n "$repoId" ]; then
+    export repoId
+fi
+
+if [ -n "$repocentral" ]; then
+    export repocentral
+fi
 
 JADEX_VERSION_PREFIX="$(get_var JADEX_VERSION_PREFIX)"
 JADEX_VERSION_PREFIX="5.0-beta-test" # for testing only, remove later
@@ -148,6 +164,23 @@ if [ -n "$signingPassword" ]; then
 else
     echo "no signing key pass found" >&2
 fi
+
+# Gradle publish script expects these as JVM properties
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
+
+[ -n "${JADEX_VERSION:-}" ] && \
+    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DJADEX_VERSION=$JADEX_VERSION"
+
+[ -n "${repoId:-}" ] && \
+    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DrepoId=$repoId"
+
+[ -n "${signingKey:-}" ] && \
+    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DsigningKey=$signingKey"
+
+[ -n "${signingPassword:-}" ] && \
+    JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -DsigningPassword=$signingPassword"
+
+export JAVA_TOOL_OPTIONS
 
 # ---------------------------------------------------------------------------
 # Central repository URL parsing
@@ -305,7 +338,10 @@ for var in \
     SSH_USER \
     SSH_HOST \
     SSH_PORT \
-    SSH_FINGERPRINT
+    SSH_FINGERPRINT \
+    repos \
+    repoId \
+    repocentral \
 do
     printf '%s=%s\n' "$var" "${!var:-<not set>}"
 done >&2
