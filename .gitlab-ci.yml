@@ -10,8 +10,8 @@ variables:
   BAZELISK_VERSION: "latest"
 
 before_script:
-  - apt-get update
-  - apt-get install -y curl build-essential python3 sshpass git
+  - yum update -y || dnf update -y
+  - yum install -y curl git python3 || dnf install -y curl git python3
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
   - export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto
