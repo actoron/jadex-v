@@ -29,7 +29,7 @@ public class BTViewer extends JFrame
 		this(agent, -1);
 	}
 
-	public BTViewer(IComponentHandle agent, long closedelay) 
+	public BTViewer(IComponentHandle agent, int closedelay) 
 	{
 	    this.agent = agent;
 	    setTitle("Behavior Tree Viewer " + agent.getId().getLocalName());
@@ -64,9 +64,9 @@ public class BTViewer extends JFrame
 		agent.waitForTermination().then(b -> 
 		{
 			timer.stop();
-			if(closedelay >= 0)
+			if(closedelay > 0)
 			{
-				Timer t = new Timer(3000, e -> 
+				Timer t = new Timer(closedelay, e -> 
 				{
 					if(timer!=null)
 						timer.stop();
