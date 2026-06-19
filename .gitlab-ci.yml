@@ -9,7 +9,9 @@ before_script:
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
   - echo "JAVA_HOME=$JAVA_HOME"
-  - echo "common --repo_env=JAVA_HOME=/opt/java/openjdk" > .bazelrc
+  - echo "common --repo_env=JAVA_HOME=$JAVA_HOME" > .bazelrc
+  - cat .bazelrc
+  - java -version
   - . ./env.sh
   - bazel version
 
