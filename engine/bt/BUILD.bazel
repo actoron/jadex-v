@@ -2,20 +2,30 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+] + DEPS
+
 java_library(
     name = "bt",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = ["//util/common:common",
-        "//util/collection:collection",
-        "//serialization/traverser",
-        "//util/future",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-    ] + DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "bt_publish",
+    target = ":bt",
+    deps = ALL_DEPS,
 )
 
 java_test(

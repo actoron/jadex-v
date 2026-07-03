@@ -1,11 +1,11 @@
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(
-    type = "library",
-)
+feature(type = "library",)
 
 load("@rules_java//java:defs.bzl", "java_library")
 load(":deps.bzl", "DEPS")
+
+load("//:maven_artifact.bzl", "maven_publish_jars")
 
 java_library(
     name = "nativetools",
@@ -13,5 +13,11 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
+    deps = DEPS,
+)
+
+maven_publish_jars(
+    name = "nativetools_publish",
+    target = ":nativetools",
     deps = DEPS,
 )

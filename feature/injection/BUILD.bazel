@@ -2,19 +2,30 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+] + DEPS
+
+
 java_library(
     name = "injection",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common",
-        "//util/future",
-        "//util/collection",
-        "//engine/core",
-        "//feature/execution",
-    ] + DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "injection_publish",
+    target = ":injection",
+    deps = ALL_DEPS,
 )
 
 java_library(
@@ -25,15 +36,10 @@ java_library(
     javacopts = ["--release", "21"],
     deps = [
         ":injection",
-        "//util/common",
-        "//util/future",
-        "//util/collection",
-        "//engine/core",
-        "//feature/execution",
-        "//benchmark/core",
+        "//benchmark/core:benchmark-core",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",
-    ] + DEPS,
+    ] + ALL_DEPS,
 )
 
 java_test(
@@ -51,7 +57,7 @@ java_test(
         "//util/common",
         "//util/future",
         "//feature/result",
-        "//benchmark/core",
+        "//benchmark/core:benchmark-core",
         "//engine/core",
         "//feature/execution",
         "@maven//:org_junit_jupiter_junit_jupiter_api",

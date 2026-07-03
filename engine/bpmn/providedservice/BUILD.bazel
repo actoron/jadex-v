@@ -5,30 +5,39 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 #load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//engine/core",
+    "//util/future",
+    "//util/javaparser",
+    "//util/classreader",
+    "//serialization/traverser",
+    "//util/idgenerator",
+    "//util/bytecode",
+    "//feature/execution",
+    "//engine/bpmn/model",
+    "//feature/injection",
+    "//communication/serialization",
+    "//service/provided:providedservice",
+    "//engine/bpmn/engine",
+] #+ DEPS
+
 java_library(
-    name = "providedservice",
+    name = "providedservicebpmn",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = [
-        "//util/common",
-        "//util/collection",
-        "//engine/core",
-        "//util/future",
-        "//util/javaparser",
-        "//util/classreader",
-        "//serialization/traverser",
-        "//util/idgenerator",
-        "//util/bytecode",
-        "//feature/execution",
-        "//engine/bpmn/model",
-        "//feature/injection",
-        "//communication/serialization",
-        "//service/provided",
-        "//engine/bpmn/engine",
-    ] 
-    #+ DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "providedservicebpmn_publish",
+    target = ":providedservicebpmn",
+    deps = ALL_DEPS,
 )
 
 

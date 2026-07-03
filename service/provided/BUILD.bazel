@@ -1,14 +1,14 @@
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "providedservice")
+
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
 # load(":deps.bzl", "TEST_DEPS")
 
-java_library(
-    name = "provided",
-    srcs = glob(["src/main/java/**/*.java"]),
-    resources = glob(["src/main/resources/**"], allow_empty = True,),
-    visibility = ["//visibility:public"],
-    javacopts = ["--release", "21"],
-    deps = [
+ALL_DEPS = [
         "//util/common",
         "//util/collection",
         "//util/javaparser",
@@ -17,7 +17,15 @@ java_library(
         "//engine/core",
         "//feature/execution",
         "//feature/injection",
-    ],
+    ]
+
+java_library(
+    name = "providedservice",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = ALL_DEPS,
 )
 
 java_test(
@@ -30,19 +38,20 @@ java_test(
         "--fail-if-no-tests",
     ],
     deps = [
-        ":provided",
-        "//util/future",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-        "//util/common",
+        ":providedservice",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",
-    ],
+    ] + ALL_DEPS,
     runtime_deps = [
         "@maven//:org_junit_jupiter_junit_jupiter_engine",
         "@maven//:org_junit_platform_junit_platform_suite_engine",
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+maven_publish_jars(
+    name = "providedservice_publish",
+    target = ":providedservice",
+    deps = ALL_DEPS,
 )

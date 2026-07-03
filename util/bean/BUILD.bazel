@@ -1,10 +1,14 @@
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(
-    type = "library",
-)
+feature(type = "library",)
 
 load("@rules_java//java:defs.bzl", "java_library")
+
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+]
 
 java_library(
     name = "bean",
@@ -12,7 +16,10 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common",
-    ],
+    deps = ALL_DEPS,
+)
+maven_publish_jars(
+    name = "bean_publish",
+    target = ":bean",
+    deps = ALL_DEPS,
 )

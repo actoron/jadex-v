@@ -11,21 +11,30 @@ load("@rules_java//java:defs.bzl", "java_library")
 
 #load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+] #+ DEPS
+
 java_library(
     name = "environment",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**", "src/main/java/**/*.png"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = [
-        "//util/common:common",
-        "//util/collection:collection",
-        "//util/future",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-    ] 
-    #+ DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "environment_publish",
+    target = ":environment",
+    deps = ALL_DEPS,
 )
 
 

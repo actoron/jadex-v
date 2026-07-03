@@ -6,6 +6,13 @@ feature(
 
 load("@rules_java//java:defs.bzl", "java_library")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+] #+ DEPS
+
 java_library(
     name = "javaparser",
     srcs = glob(["src/main/java/**/*.java", "src/generated/javacc/**/*.java",
@@ -13,6 +20,11 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = ["//util/common:common", 
-        "//util/collection:collection"],
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "javaparser_publish",
+    target = ":javaparser",
+    deps = ALL_DEPS,
 )

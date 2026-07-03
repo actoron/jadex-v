@@ -1,13 +1,25 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+] #+ DEPS
+
 java_library(
     name = "simulation",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = ["//util/common:common",
-        "//feature/execution:execution",
-        "//util/future:future",
-        "//engine/core:core",],
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "simulation_publish",
+    target = ":simulation",
+    deps = ALL_DEPS,
 )

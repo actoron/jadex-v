@@ -2,17 +2,27 @@ load("@rules_java//java:defs.bzl", "java_library")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//engine/core",
+    "//feature/execution",
+    "//util/future",
+    "//monitoring/logbase"
+] + DEPS
+
 java_library(
     name = "log4j",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common:common",
-        "//engine/core",
-        "//feature/execution",
-        "//util/future",
-        "//monitoring/logbase"
-    ] + DEPS
+    deps = ALL_DEPS
+)
+
+maven_publish_jars(
+    name = "log4j_publish",
+    target = ":log4j",
+    deps = ALL_DEPS,
 )

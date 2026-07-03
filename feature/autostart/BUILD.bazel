@@ -2,6 +2,18 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_plugin")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+    "//util/javaparser",
+    "//serialization/traverser"
+] + DEPS
+
 java_plugin(
     name = "auto_service_plugin",
     processor_class = "com.google.auto.service.processor.AutoServiceProcessor",
@@ -18,14 +30,13 @@ java_library(
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
     plugins = [":auto_service_plugin"],
-    deps = ["//util/common",
-        "//util/future",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-        "//util/javaparser",
-        "//serialization/traverser",
-        ] + DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "autostart_publish",
+    target = ":autostart",
+    deps = ALL_DEPS,
 )
 
 java_test(

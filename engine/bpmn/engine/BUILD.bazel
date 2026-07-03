@@ -5,24 +5,33 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 #load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+    "//util/javaparser",
+    "//util/classreader",
+    "//util/bytecode",
+    "//serialization/traverser",
+    "//engine/bpmn/model"
+] #+ DEPS
+
 java_library(
     name = "engine",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["-source", "21", "-target", "21"],
-    deps = [
-        "//util/common",
-        "//util/collection",
-        "//util/future",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-        "//util/javaparser",
-        "//util/classreader",
-        "//util/bytecode",
-        "//serialization/traverser",
-        "//engine/bpmn/model"
-    ] 
-    #+ DEPS,
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "engine_publish",
+    target = ":engine",
+    deps = ALL_DEPS,
 )

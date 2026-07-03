@@ -1,8 +1,8 @@
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(name = "application-bdi")
+feature(name = "application-llm")
 
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load(":deps.bzl", "DEPS")
 
@@ -16,12 +16,22 @@ ALL_DEPS = [
     "//engine/core",
     "//feature/execution",
     "//feature/injection",
-    "//engine/bdi",
-    "//environment/environment",
+    "//feature/result",
+    "//feature/autostart",
+    "//monitoring/logbase",
+    "//service/provided:providedservice",
+    "//service/required:requiredservice",
+    "//service/publish:publishservice",
+    "//service/publishjetty",
+    "//llm",
+    "//micro/lib",
+    "//application/bdi:application-bdi",
+    "//engine/bt",
+    # "//feature/simulation", # mastersimfeature has memory leak
 ] + DEPS
 
 java_library(
-    name = "application-bdi",
+    name = "application-llm",
     srcs = glob(["src/main/java/**/*.java",]),
     resources = glob(["src/main/resources/**", "src/main/java/**/*.md", "src/main/java/**/*.png"], allow_empty = True,),
     visibility = ["//visibility:public"],
@@ -30,7 +40,8 @@ java_library(
 )
 
 maven_publish_jars(
-    name = "application-bdi_publish",
-    target = ":application-bdi",
+    name = "llm_publish",
+    target = ":application-llm",
     deps = ALL_DEPS,
 )
+

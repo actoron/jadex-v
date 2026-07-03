@@ -10,6 +10,27 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/classreader",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+    "//feature/result",
+    #"//feature/simulation",
+    #"//llm",
+    "//monitoring/logbase",
+    "//service/provided:providedservice",
+    "//service/required:requiredservice",
+    "//service/publish:publishservice",
+    "//service/publishjetty",
+    "//micro/lib"
+] + DEPS
+
 java_binary(
     name = "helloworld",
     main_class = "jadex.micro.helloworld.HelloWorldAgent",
@@ -47,25 +68,7 @@ java_library(
     resources = glob(["src/main/resources/**", "src/main/java/**/*.md", "src/main/java/**/*.png"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common",
-        "//util/collection",
-        "//util/classreader",
-        "//util/future",
-        "//feature/autostart",
-        "//engine/core",
-        "//feature/execution",
-        "//feature/injection",
-        "//feature/result",
-        #"//feature/simulation",
-        "//llm",
-        "//monitoring/logbase",
-        "//service/provided",
-        "//service/required",
-        "//service/publish",
-        "//service/publishjetty",
-        "//micro/lib"
-    ] + DEPS,
+    deps = ALL_DEPS,
 )
 
 java_library(
@@ -87,9 +90,9 @@ java_library(
         #"//feature/simulation",
         #"//llm",
         "//monitoring/logbase",
-        "//service/provided",
-        "//service/required",
-        "//service/publish",
+        "//service/provided:providedservice",
+        "//service/required:requiredservice",
+        "//service/publish:publishservice",
         "//service/publishjetty",
         "//micro/lib"
     ] + DEPS,
@@ -120,9 +123,9 @@ java_test(
         "//feature/simulation",
         "//llm",
         "//monitoring/logbase",
-        "//service/provided",
-        "//service/required",
-        "//service/publish",
+        "//service/provided:providedservice",
+        "//service/required:requiredservice",
+        "//service/publish:publishservice",
         "//service/publishjetty",
         "//micro/lib",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
@@ -134,6 +137,12 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+maven_publish_jars(
+    name = "micro_publish",
+    target = ":micro",
+    deps = ALL_DEPS,
 )
 
 

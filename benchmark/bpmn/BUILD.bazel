@@ -23,7 +23,7 @@ java_test(
         "//monitoring/logbase",
         "//util/collection:collection",
         "//feature/execution",
-        "//benchmark/core",
+        "//benchmark/core:benchmark-core",
         "//engine/bpmn/engine",
         "//util/future",
         "//feature/result",

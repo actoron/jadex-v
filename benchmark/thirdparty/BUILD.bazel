@@ -31,7 +31,7 @@ java_test(
         "@bazel_tools//tools/java/runfiles",
         "//util/common",
         "//util/future",
-        "//benchmark/core",  
+        "//benchmark/core:benchmark-core",  
         ":jason", 
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",

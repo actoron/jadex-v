@@ -1,12 +1,18 @@
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(
-    type = "library",
-)
+feature(type = "library",)
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
 #load(":deps.bzl", "DEPS")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//serialization/traverser",
+]
 
 java_library(
     name = "binary",
@@ -14,11 +20,7 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common",
-        "//util/collection",
-        "//serialization/traverser",
-    ],
+    deps = ALL_DEPS,
 )
 
 java_test(
@@ -45,4 +47,10 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+maven_publish_jars(
+    name = "binary_publish",
+    target = ":binary",
+    deps = ALL_DEPS,
 )

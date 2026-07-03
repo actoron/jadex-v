@@ -23,7 +23,7 @@ java_test(
         "//monitoring/opentelemetry",
         "//util/collection:collection",
         "//feature/execution",
-        "//benchmark/core",
+        "//benchmark/core:benchmark-core",
         "//util/future",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",
