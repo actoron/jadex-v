@@ -1,8 +1,12 @@
+
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(name = "application-llm")
+feature(name = "application-micro-nfp")
 
-load("@rules_java//java:defs.bzl", "java_library", "java_test")
+load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_binary")
+
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 load(":deps.bzl", "DEPS")
 
@@ -17,21 +21,22 @@ ALL_DEPS = [
     "//feature/execution",
     "//feature/injection",
     "//feature/result",
-    "//feature/autostart",
+    #"//feature/simulation",
+    #"//llm",
     "//monitoring/logbase",
+    "//monitoring/log4j",
+    "//monitoring/graylog",
+    "//monitoring/fluentd",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
     "//service/publish:publishservice",
     "//service/publishjetty",
-    "//llm",
-    "//micro/lib",
-    "//application/bdi:application-bdi",
-    "//engine/bt",
-    # "//feature/simulation", # mastersimfeature has memory leak
+    "//service/nfproperty",
+    "//micro/lib"
 ] + DEPS
 
 java_library(
-    name = "application-llm",
+    name = "micro-nfp",
     srcs = glob(["src/main/java/**/*.java",]),
     resources = glob(["src/main/resources/**", "src/main/java/**/*.md", "src/main/java/**/*.png"], allow_empty = True,),
     visibility = ["//visibility:public"],
@@ -40,8 +45,10 @@ java_library(
 )
 
 maven_publish_jars(
-    name = "application-llm_publish",
-    target = ":application-llm",
+    name = "application-micro-nfp_publish",
+    target = ":micro-nfp",
     deps = ALL_DEPS,
 )
 
+
+    

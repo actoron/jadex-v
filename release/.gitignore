@@ -1,0 +1,7 @@
+release/staging/
+release/out/
+release/*.zip
+jadex-key.asc
+jadex-keypass.txt
+jadex-token.txt
+

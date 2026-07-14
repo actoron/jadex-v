@@ -2,6 +2,8 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
 java_library(
     name = "opentelemetry",
     srcs = glob(["src/main/java/**/*.java"]),
@@ -14,5 +16,10 @@ java_library(
         "//util/future",
         "//monitoring/logbase"
     ] + DEPS
+)
+
+maven_publish_jars(
+    name = "opentelemetry_publish",
+    target = ":opentelemetry",
 )
 

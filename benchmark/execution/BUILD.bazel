@@ -6,6 +6,19 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 #load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common:common",
+    "//engine/core",
+    "//monitoring/logbase",
+    "//monitoring/opentelemetry",
+    "//util/collection:collection",
+    "//feature/execution",
+    "//benchmark/core:benchmark-core",
+    "//util/future",
+] #+ DEPS
+
 java_test(
     name = "execution_test",
     srcs = glob(["src/test/java/**/*.java"]),
@@ -17,22 +30,29 @@ java_test(
         "--include-classname", ".*",
     ],
     deps = [
-        "//util/common:common",
-        "//engine/core",
-        "//monitoring/logbase",
-        "//monitoring/opentelemetry",
-        "//util/collection:collection",
-        "//feature/execution",
-        "//benchmark/core:benchmark-core",
-        "//util/future",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",
-    ],
+    ] + ALL_DEPS,
     runtime_deps = [
         "@maven//:org_junit_jupiter_junit_jupiter_engine",
         "@maven//:org_junit_platform_junit_platform_suite_engine",
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+java_library(
+    name = "benchmark-execution",
+    srcs = [], #glob(["src/test/java/**/*.java"]),
+    #resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    #deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "benchmark-execution_publish",
+    target = ":benchmark-execution",
+    deps = ALL_DEPS,
 )
 

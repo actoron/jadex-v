@@ -6,6 +6,8 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 #load(":deps.bzl", "DEPS")
 
+load("//:maven_artifact.bzl", "maven_publish_jars")
+
 java_test(
     name = "bdi_test",
     srcs = glob(["src/test/java/**/*.java"]),
@@ -38,4 +40,18 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+java_library(
+    name = "benchmark-bdi",
+    srcs = [], #glob(["src/test/java/**/*.java"]),
+    #resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    #deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "benchmark-bdi_publish",
+    target = ":benchmark-bdi",
 )

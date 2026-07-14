@@ -140,7 +140,7 @@ java_test(
 )
 
 maven_publish_jars(
-    name = "micro_publish",
+    name = "application-micro_publish",
     target = ":micro",
     deps = ALL_DEPS,
 )

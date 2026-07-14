@@ -28,7 +28,7 @@ java_library(
 )
 
 maven_publish_jars(
-    name = "model_publish",
+    name = "modelbpmn_publish",
     target = ":model",
     deps = ALL_DEPS,
 )

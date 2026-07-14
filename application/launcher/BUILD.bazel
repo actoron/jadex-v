@@ -37,7 +37,7 @@ java_binary(
 )
 
 maven_publish_jars(
-    name = "launcher_publish",
+    name = "application-launcher_publish",
     target = ":launcher-gui",
     deps = ALL_DEPS,
 )

@@ -47,16 +47,12 @@ def _derive_artifact_name(ctx):
     return name
 
 def _derive_group(ctx):
-    """
-    Leitet groupId aus dem Package-Pfad ab.
-    //util/common:common_publish  →  generated.util
-    //common:common_publish       →  generated
-    """
-    pkg = ctx.label.package          # "util/common" oder "common"
-    parts = pkg.split("/")
-    if len(parts) > 1:
-        return "generated." + ".".join(parts[:-1])
-    return "generated"
+    #pkg = ctx.label.package         
+    #parts = pkg.split("/")
+    #if len(parts) > 1:
+    #    return "generated." + ".".join(parts[:-1])
+    #return "generated"
+    return "org.activecomponents.jadex"
 
 # ---------------------------------------------------------------------------
 # GAV-Auflösung
