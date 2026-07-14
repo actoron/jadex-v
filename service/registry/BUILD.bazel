@@ -2,25 +2,7 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load(":deps.bzl", "DEPS")
 
-load("//:maven_artifact.bzl", "maven_publish_jars")
-
-ALL_DEPS = [
-    "//util/common",
-    "//util/future",
-    "//engine/core",
-    "//feature/execution",
-    "//communication/serialization",
-    "//util/collection",
-    "//micro/lib",
-    "//util/classreader",
-    "//feature/injection",
-    "//service/provided:providedservice",
-    "//service/required:requiredservice",
-    "//feature/autostart",
-    "//communication/remoteservice",
-    "//communication/messaging",
-    "//service/publish:publishservice",
-] + DEPS
+load("//:maven_artifacts.bzl", "maven_publish_jars")
 
 java_library(
     name = "registry",
@@ -28,11 +10,28 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = ALL_DEPS,
+    deps = [
+        "//util/common",
+        "//util/future",
+        "//engine/core",
+        "//feature/execution",
+        "//communication/serialization",
+        "//util/collection",
+        "//micro/lib",
+        "//util/classreader",
+        "//feature/injection",
+        "//service/provided:providedservice",
+        "//service/required:requiredservice",
+        "//feature/autostart",
+        "//communication/remoteservice",
+        "//communication/messaging",
+        "//service/publish:publishservice",
+    ] + DEPS
 )
 
 maven_publish_jars(
     name = "registry_publish",
     target = ":registry",
-    deps = ALL_DEPS,
+    deps = DEPS
 )
+

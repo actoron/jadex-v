@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 STAGING="${1:-release/staging}"
 SMOKE_DIR="release/smoke-test"
@@ -31,7 +31,8 @@ echo "  Version:      $JADEX_VERSION"
 echo "  Staging-Repo: $STAGING_REPO_URL"
 
 WORK_DIR=$(mktemp -d)
-trap 'rm -rf "$WORK_DIR"' EXIT
+echo "work directory: $WORK_DIR"
+#trap 'rm -rf "$WORK_DIR"' EXIT
 
 cp -r "$SMOKE_DIR/src" "$WORK_DIR/"
 sed \

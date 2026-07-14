@@ -1,11 +1,17 @@
 load("//feature/configurator:feature.bzl", "feature")
 
-feature(
-    type = "library",
-)
+feature(type = "library",)
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 # load(":deps.bzl", "TEST_DEPS")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    #"//util/classreader",
+]
 
 java_library(
     name = "future",
@@ -13,10 +19,7 @@ java_library(
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
     javacopts = ["--release", "21"],
-    deps = [
-        "//util/common:common",
-        "//util/collection:collection",
-    ],
+    deps = ALL_DEPS,
 )
 
 java_test(
@@ -39,4 +42,10 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
     ],
+)
+
+maven_publish_jars(
+    name = "future_publish",
+    target = ":future",
+    deps = ALL_DEPS,
 )

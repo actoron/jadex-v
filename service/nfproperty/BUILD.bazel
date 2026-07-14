@@ -1,0 +1,59 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "nfproperty")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+# load(":deps.bzl", "TEST_DEPS")
+
+ALL_DEPS = [
+        "//util/common",
+        "//util/collection",
+        "//util/javaparser",
+        "//util/future",
+        "//serialization/traverser",
+        "//engine/core",
+        "//feature/execution",
+        "//feature/injection",
+        "//service/provided:providedservice",
+        "//service/required:requiredservice",
+    ]
+
+java_library(
+    name = "nfproperty",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = ALL_DEPS,
+)
+
+#java_test(
+#    name = "nfproperty_test",
+#    srcs = glob(["src/test/java/**/*.java"]),
+#    main_class = "org.junit.platform.console.ConsoleLauncher",
+#    use_testrunner = False,
+#    args = [
+#        "--select-package", "jadex.providedservice",
+#        "--fail-if-no-tests",
+#    ],
+#    deps = [
+#        ":nfproperty",
+#        "@maven//:org_junit_jupiter_junit_jupiter_api",
+#        "@maven//:org_junit_platform_junit_platform_suite_api",
+#    ] + ALL_DEPS,
+#    runtime_deps = [
+#        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+#        "@maven//:org_junit_platform_junit_platform_suite_engine",
+#        "@maven//:org_junit_platform_junit_platform_launcher",
+#        "@maven//:org_junit_platform_junit_platform_console",
+#    ],
+#)
+
+maven_publish_jars(
+    name = "nfproperty_publish",
+    target = ":nfproperty",
+    deps = ALL_DEPS,
+)

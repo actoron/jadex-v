@@ -452,7 +452,7 @@ public class NFPropertyFeature implements ILifecycle, INFPropertyFeature
 	 */
 	public IFuture<INFPropertyMetaInfo> getNFPropertyMetaInfo(String name)
 	{
-		return getNFPropertyMetaInfo(name);
+		return getComponentPropertyProvider().getNFPropertyMetaInfo(name);
 	}
 	
 	/**

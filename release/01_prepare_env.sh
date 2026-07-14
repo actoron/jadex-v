@@ -119,7 +119,9 @@ fetch_next_build_name_from_git_tag() {
 # ---------------------------------------------------------------------------
 # Compute version
 # ---------------------------------------------------------------------------
-JADEX_VERSION="$(fetch_next_build_name_from_git_tag "$JADEX_VERSION_PREFIX" || true)"
+if [ -z "${JADEX_VERSION:-}" ]; then
+    JADEX_VERSION="$(fetch_next_build_name_from_git_tag "$JADEX_VERSION_PREFIX" || true)"
+fi
 
 if [ -n "${JADEX_VERSION:-}" ]; then
     export JADEX_VERSION

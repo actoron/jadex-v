@@ -10,7 +10,7 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 load(":deps.bzl", "DEPS")
 
-load("//:maven_artifact.bzl", "maven_publish_jars")
+load("//:maven_artifacts.bzl", "maven_publish_jars")
 
 ALL_DEPS = [
     "//util/common",

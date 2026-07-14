@@ -4,7 +4,7 @@ feature(type = "library",)
 
 load("@rules_java//java:defs.bzl", "java_library")
 
-load("//:maven_artifact.bzl", "maven_publish_jars")
+load("//:maven_artifacts.bzl", "maven_publish_jars")
 
 ALL_DEPS = [
     "//util/common",

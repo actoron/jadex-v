@@ -237,11 +237,11 @@ public class TagProperty extends AbstractNFProperty<Collection<String>, Void>
 			{
 				tag = component.getId().getGlobalProcessIdentifier().host();
 			}
-			else if(PID.equals(tag) || PID.equals(tag))
+			else if(PID.equals(tag))
 			{
 				tag = ""+component.getId().getGlobalProcessIdentifier().pid();
 			}
-			else if(APPID.equals(tag) || APPID.equals(tag))
+			else if(APPID.equals(tag))
 			{
 				tag = component.getAppId();
 			}

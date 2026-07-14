@@ -15,9 +15,9 @@ gpg \
     --batch \
     --yes \
     --pinentry-mode loopback \
-    --passphrase-file jadex-keypass.txt \
+    --passphrase-file release/jadex-keypass.txt \
     --import \
-    jadex-key.asc
+    release/jadex-key.asc
 
 # Agent neu laden, damit die Konfiguration aktiv ist
 gpgconf --homedir "$GNUPGHOME" --kill gpg-agent
@@ -35,7 +35,7 @@ do
         --batch \
         --yes \
         --pinentry-mode loopback \
-        --passphrase-file jadex-keypass.txt \
+        --passphrase-file release/jadex-keypass.txt \
         --armor \
         --detach-sign \
         "$file"

@@ -59,17 +59,18 @@ def _derive_group(ctx):
 # ---------------------------------------------------------------------------
 
 def internal_dep_to_gav(label):
-    #pkg = label.package              # "util/common"
-    #artifact = pkg.split("/")[-1]    # "common"
-
     artifact = label.name
+    version = JADEX_VERSION or "5.0-beta4"
 
-    version = JADEX_VERSION or "5.0.0-beta1"
-
-    return "{}:{}:{}".format("org.activecomponents.jadex", artifact, version)
+    return {
+        "group": "org.activecomponents.jadex",
+        "artifact": artifact,
+        "version": version,
+        "classifier": None,
+    }
 
 def path_to_gav(path):
-    """Maven-Jar-Pfad im Cache → GAV."""
+    """Maven-Jar-Pfad im Cache → GAV + optional classifier."""
     marker = "/maven2/"
     idx = path.find(marker)
     if idx < 0:
@@ -78,38 +79,75 @@ def path_to_gav(path):
     rel = path[idx + len(marker):]
     parts = rel.split("/")
 
-    # org/eclipse/jetty/jetty-server/11.0.26/jetty-server-11.0.26.jar
     if len(parts) < 4:
         return None
 
     artifact = parts[-3]
     version = parts[-2]
+    filename = parts[-1]
+
     group = ".".join(parts[:-3])
 
     if not group:
         return None
 
-    return "{}:{}:{}".format(group, artifact, version)
+    # z.B.
+    # gdx-platform-1.12.1-natives-desktop.jar
+    # -> natives-desktop
+    prefix = artifact + "-" + version
+    classifier = None
+
+    if filename.startswith(prefix + "-"):
+        classifier = filename[len(prefix) + 1:]
+        if classifier.endswith(".jar"):
+            classifier = classifier[:-4]
+
+    return {
+        "group": group,
+        "artifact": artifact,
+        "version": version,
+        "classifier": classifier,
+    }
 
 def maven_dep_to_gav(dep):
-    """Versucht GAV aus dem JavaInfo-Pfad eines externen Deps zu lesen."""
     if JavaInfo not in dep:
         return None
+
+    label = str(dep.label)
+
+    gav = None
+
     for f in dep[JavaInfo].compile_jars.to_list():
         gav = path_to_gav(f.path)
         if gav:
-            return gav
+            break
+
+    if gav:
+        # classifier aus Label ableiten
+        name = dep.label.name
+
+        if name.endswith("_natives_desktop"):
+            gav["classifier"] = "natives-desktop"
+
+        return gav
+
     return None
 
 def resolve_deps(ctx):
-    """Gibt alle Dep-GAVs als dict zurück (GAV → True)."""
-    deps = {}
+    deps = []
+
     for dep in ctx.attr.deps:
         gav = maven_dep_to_gav(dep)
-        if not gav:
-            gav = internal_dep_to_gav(dep.label)
+
         if gav:
-            deps[gav] = True
+            print("DEP MAVEN:", gav)
+            deps.append(gav)
+        else:
+            internal = internal_dep_to_gav(dep.label)
+            print("DEP INTERNAL:", internal)
+            if internal:
+                deps.append(internal)
+
     return deps
 
 # ---------------------------------------------------------------------------
@@ -175,17 +213,22 @@ def generate_pom(ctx, java_info):
     # ---------------- DEPENDENCIES ----------------
     if deps:
         xml.append("  <dependencies>")
-        for gav in sorted(deps.keys()):
-            parts = gav.split(":")
-            if len(parts) != 3:
-                continue
+
+        for dep in deps:
             xml += [
                 "    <dependency>",
-                "      <groupId>{}</groupId>".format(parts[0]),
-                "      <artifactId>{}</artifactId>".format(parts[1]),
-                "      <version>{}</version>".format(parts[2]),
-                "    </dependency>",
+                "      <groupId>{}</groupId>".format(dep["group"]),
+                "      <artifactId>{}</artifactId>".format(dep["artifact"]),
+                "      <version>{}</version>".format(dep["version"]),
             ]
+
+            if dep["classifier"]:
+                xml.append(
+                    "      <classifier>{}</classifier>".format(dep["classifier"])
+                )
+
+            xml.append("    </dependency>")
+
         xml.append("  </dependencies>")
 
     xml.append("</project>")
