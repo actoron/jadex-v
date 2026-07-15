@@ -95,6 +95,7 @@ benchmark:
 deployCentral:
   stage: deploy
   script:
+    - bazel build //...  
 #    - release/01_prepare_env.sh
     - release/02_create_staging.sh
     - release/03_sign.sh
