@@ -4,29 +4,86 @@ set -euo pipefail
 STAGING="release/staging"
 
 GNUPGHOME=$(mktemp -d)
-trap 'rm -rf "$GNUPGHOME"' EXIT
+KEY_FILE=""
+PASSPHRASE_FILE=""
 
-# Loopback-Pinentry erlauben
+cleanup() {
+    rm -rf "$GNUPGHOME"
+
+    [[ -n "$KEY_FILE" && -f "$KEY_FILE" ]] && rm -f "$KEY_FILE"
+    [[ -n "$PASSPHRASE_FILE" && -f "$PASSPHRASE_FILE" ]] && rm -f "$PASSPHRASE_FILE"
+}
+
+trap cleanup EXIT
+
+# ---------------------------------------------------------------------------
+# Allow loopback pinentry
+# ---------------------------------------------------------------------------
+
 echo "allow-loopback-pinentry" > "$GNUPGHOME/gpg-agent.conf"
 
-# Schlüssel importieren
+# ---------------------------------------------------------------------------
+# Determine key source
+# ---------------------------------------------------------------------------
+
+if [[ -n "${ORG_GRADLE_PROJECT_sigKey:-}" ]]; then
+    KEY_FILE=$(mktemp)
+    printf '%s\n' "$ORG_GRADLE_PROJECT_sigKey" > "$KEY_FILE"
+    echo "Using signing key from ORG_GRADLE_PROJECT_sigKey"
+
+elif [[ -n "${sigKey:-}" ]]; then
+    KEY_FILE=$(mktemp)
+    printf '%s\n' "$sigKey" > "$KEY_FILE"
+    echo "Using signing key from sigKey"
+
+else
+    KEY_FILE="release/jadex-key.asc"
+    echo "Using signing key from $KEY_FILE"
+fi
+
+# ---------------------------------------------------------------------------
+# Determine passphrase source
+# ---------------------------------------------------------------------------
+
+if [[ -n "${ORG_GRADLE_PROJECT_signingPassword:-}" ]]; then
+    PASSPHRASE_FILE=$(mktemp)
+    printf '%s' "$ORG_GRADLE_PROJECT_signingPassword" > "$PASSPHRASE_FILE"
+    echo "Using signing password from ORG_GRADLE_PROJECT_signingPassword"
+
+elif [[ -n "${signingPassword:-}" ]]; then
+    PASSPHRASE_FILE=$(mktemp)
+    printf '%s' "$signingPassword" > "$PASSPHRASE_FILE"
+    echo "Using signing password from signingPassword"
+
+else
+    PASSPHRASE_FILE="release/jadex-keypass.txt"
+    echo "Using signing password from $PASSPHRASE_FILE"
+fi
+
+# ---------------------------------------------------------------------------
+# Import key
+# ---------------------------------------------------------------------------
+
 gpg \
     --homedir "$GNUPGHOME" \
     --batch \
     --yes \
     --pinentry-mode loopback \
-    --passphrase-file release/jadex-keypass.txt \
+    --passphrase-file "$PASSPHRASE_FILE" \
     --import \
-    release/jadex-key.asc
+    "$KEY_FILE"
 
-# Agent neu laden, damit die Konfiguration aktiv ist
+# Reload agent so configuration becomes active
 gpgconf --homedir "$GNUPGHOME" --kill gpg-agent
 
-# Alle Maven-Artefakte signieren
+# ---------------------------------------------------------------------------
+# Sign all Maven artifacts
+# ---------------------------------------------------------------------------
+
 find "$STAGING" \
     -type f \
-    \( -name "*.jar" -o -name "*.pom" \) \
-    | while read -r file
+    \( -name "*.jar" -o -name "*.pom" \) |
+while read -r file
 do
     echo "Signing $file"
 
@@ -35,18 +92,22 @@ do
         --batch \
         --yes \
         --pinentry-mode loopback \
-        --passphrase-file release/jadex-keypass.txt \
+        --passphrase-file "$PASSPHRASE_FILE" \
         --armor \
         --detach-sign \
         "$file"
 done
 
+# ---------------------------------------------------------------------------
+# Generate checksums
+# ---------------------------------------------------------------------------
+
 find "$STAGING" \
     -type f \
-    \( -name "*.jar" -o -name "*.pom" -o -name "*.asc" \) \
-    | while read -r file
+    \( -name "*.jar" -o -name "*.pom" -o -name "*.asc" \) |
+while read -r file
 do
-    md5sum "$file" | awk '{print $1}' > "$file.md5"
+    md5sum  "$file" | awk '{print $1}' > "$file.md5"
     sha1sum "$file" | awk '{print $1}' > "$file.sha1"
 done
 
