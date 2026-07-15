@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 
 #BAZEL_OUT="${1:-bazel-bin}"
 #BAZEL_OUT="${1:-.bazel/bin}"
