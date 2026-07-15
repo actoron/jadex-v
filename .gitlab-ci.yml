@@ -22,7 +22,7 @@ before_script:
   - javac -version
   - jar --version
   - echo $JAVA_HOME
-  - . ./env.sh
+  - . .release/01_prepare_env.sh
 
 stages:
   - build
@@ -92,18 +92,22 @@ benchmark:
 #  tags:
 #    - benchmark
 
-#deployCentral:
-#  stage: deploy
-#  script:
-#    - bazel run //:publish
-#  cache:
-#    key: "$CI_COMMIT_REF_NAME"
-#    policy: pull
-#    paths:
-#      - .bazel
-#      - ~/.cache/bazel
+deployCentral:
+  stage: deploy
+  script:
+#    - release/01_prepare_env.sh
+    - release/02_create_staging.sh
+    - release/03_sign.sh
+    - release/04_smoke_test.sh
+    - release/05_upload.sh --automatic
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - .bazel
+      - ~/.cache/bazel
 #  rules:
-#    - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+#    - if: '$CI_COMMIT_BRANCH == "main"'
 
 deployZip:
   stage: deploy
@@ -129,6 +133,8 @@ deployZip:
   #  - if: '$JADEX_VERSION' #'$CI_COMMIT_BRANCH == "main" &&
   #rules:
   #  - if: '$CI_COMMIT_BRANCH == "main"'
+
+
 
 
 

@@ -5,6 +5,12 @@ STAGING="release/staging"
 BUNDLE="release/bundle.zip"
 TOKEN_FILE="release/jadex-token.txt"
 
+PUBLISHING_TYPE="USER_MANAGED"
+
+if [[ "${1:-}" == "--automatic" ]]; then
+    PUBLISHING_TYPE="AUTOMATIC"
+fi
+
 tag_release() {
     local version="${JADEX_VERSION:-}"
 
@@ -83,12 +89,21 @@ AUTH=$(printf "%s:%s" "$CENTRAL_USER" "$CENTRAL_PASSWORD" | base64 -w0)
 
 echo "Uploading bundle..."
 
+UPLOAD_URL="https://central.sonatype.com/api/v1/publisher/upload"
+
+if [[ "$PUBLISHING_TYPE" == "AUTOMATIC" ]]; then
+    UPLOAD_URL="${UPLOAD_URL}?publishingType=AUTOMATIC"
+    echo "Publishing mode: automatic"
+else
+    echo "Publishing mode: manual"
+fi
+
 DEPLOYMENT_ID=$(
 curl -fsS \
     --request POST \
     --header "Authorization: Bearer $AUTH" \
     --form "bundle=@${BUNDLE}" \
-    "https://central.sonatype.com/api/v1/publisher/upload"
+    "$UPLOAD_URL"
 )
 
 echo "Deployment ID: $DEPLOYMENT_ID"
