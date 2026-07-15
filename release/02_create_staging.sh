@@ -7,6 +7,15 @@ BAZEL_OUT="${1:-$(bazel info bazel-bin)}"
 RELEASE="${2:-release}"
 STAGING="$RELEASE/staging"
 
+echo "=== bazel-bin ==="
+bazel info bazel-bin
+
+echo "=== poms ==="
+find "$(bazel info bazel-bin)" -name "*.pom" | head -20
+
+echo "=== jars ==="
+find "$(bazel info bazel-bin)" -name "*.jar" | head -20
+
 mkdir -p "$RELEASE"
 
 rm -f "$RELEASE/bundle.zip"
