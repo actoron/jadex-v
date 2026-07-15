@@ -6,7 +6,7 @@ RELEASE="${2:-release}"
 STAGING="$RELEASE/staging"
 
 echo "=== bazel-bin ==="
-echo "$BAZEL_OUT"
+echo "$BAZEL_OUT" 
 
 echo "=== poms ==="
 find -L "$BAZEL_OUT" -name "*.pom" 2>/dev/null | head -20 || true
