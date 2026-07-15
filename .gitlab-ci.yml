@@ -11,7 +11,7 @@ stages:
 
 before_script:
   - apt-get update
-  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip
+  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip maven
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
   - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
