@@ -28,12 +28,20 @@ echo "allow-loopback-pinentry" > "$GNUPGHOME/gpg-agent.conf"
 
 if [[ -n "${ORG_GRADLE_PROJECT_sigKey:-}" ]]; then
     KEY_FILE=$(mktemp)
-    printf '%s\n' "$ORG_GRADLE_PROJECT_sigKey" > "$KEY_FILE"
+
+    printf '%b' \
+        "${ORG_GRADLE_PROJECT_sigKey#GPG_SIGNING_KEY=}" \
+        > "$KEY_FILE"
+
     echo "Using signing key from ORG_GRADLE_PROJECT_sigKey"
 
 elif [[ -n "${sigKey:-}" ]]; then
     KEY_FILE=$(mktemp)
-    printf '%s\n' "$sigKey" > "$KEY_FILE"
+
+    printf '%b' \
+        "${sigKey#GPG_SIGNING_KEY=}" \
+        > "$KEY_FILE"
+
     echo "Using signing key from sigKey"
 
 else
