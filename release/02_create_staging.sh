@@ -9,10 +9,10 @@ echo "=== bazel-bin ==="
 echo "$BAZEL_OUT"
 
 echo "=== poms ==="
-find -L "$BAZEL_OUT" -name "*.pom" | head -20
+find -L "$BAZEL_OUT" -name "*.pom" 2>/dev/null | head -20 || true
 
 echo "=== jars ==="
-find -L "$BAZEL_OUT" -name "*.jar" | head -20
+find -L "$BAZEL_OUT" -name "*.jar" 2>/dev/null | head -20 || true
 
 mkdir -p "$RELEASE"
 
@@ -37,7 +37,7 @@ extract_xml() {
 #
 # Parent POM (hardcoded, wie vorher bei Gradle nur fuer jadex-v als Ganzes)
 #
-first_pom=$(find -L "$BAZEL_OUT" -name "*.pom" | head -n 1)
+first_pom=$(find -L "$BAZEL_OUT" -name "*.pom" | head -n 1 || true)
 if [[ -z "$first_pom" ]]; then
   echo "ERROR: no *.pom found under $BAZEL_OUT"
   exit 1
