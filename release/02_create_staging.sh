@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+find_bazel_bin() {
+    local pom
+
+    pom=$(find . -type f -name "*.pom" | head -n 1 || true)
+
+    if [[ -z "$pom" ]]; then
+        echo "ERROR: no *.pom found"
+        exit 1
+    fi
+
+    dirname "$(dirname "$pom")"
+}
+
 #BAZEL_OUT="${1:-bazel-bin}"
-BAZEL_OUT="${1:-.bazel/bin}"
+#BAZEL_OUT="${1:-.bazel/bin}"
+BAZEL_OUT="${1:-$(find_bazel_bin)}"
 RELEASE="${2:-release}"
 STAGING="$RELEASE/staging"
 
