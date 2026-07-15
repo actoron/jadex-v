@@ -27,7 +27,6 @@ before_script:
 stages:
   - build
   - test
-  - benchmark
   - deploy
 
 build:
@@ -54,7 +53,7 @@ test:
       - ~/.cache/bazel
 
 benchmark:
-  stage: benchmark
+  stage: test
   script:
     - bazel test //benchmark/... --test_output=errors
   allow_failure: true

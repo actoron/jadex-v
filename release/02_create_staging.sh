@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-#BAZEL_OUT="${1:-bazel-bin}"
-#BAZEL_OUT="${1:-.bazel/bin}"
 BAZEL_OUT="${1:-$(bazel info bazel-bin)}"
 RELEASE="${2:-release}"
 STAGING="$RELEASE/staging"
 
 echo "=== bazel-bin ==="
-bazel info bazel-bin
+echo "$BAZEL_OUT"
 
 echo "=== poms ==="
-find "$(bazel info bazel-bin)" -name "*.pom" | head -20
+find -L "$BAZEL_OUT" -name "*.pom" | head -20
 
 echo "=== jars ==="
-find "$(bazel info bazel-bin)" -name "*.jar" | head -20
+find -L "$BAZEL_OUT" -name "*.jar" | head -20
 
 mkdir -p "$RELEASE"
 
@@ -28,12 +26,12 @@ echo "Source:  $BAZEL_OUT"
 echo "Target:  $STAGING"
 
 extract_xml() {
-local file="$1"
-local tag="$2"
+  local file="$1"
+  local tag="$2"
 
-xmllint --xpath \
-"string(/*[local-name()='project']/*[local-name()='$tag'])" \
-"$file"
+  xmllint --xpath \
+    "string(/*[local-name()='project']/*[local-name()='$tag'])" \
+    "$file"
 }
 
 #
@@ -41,8 +39,8 @@ xmllint --xpath \
 #
 first_pom=$(find -L "$BAZEL_OUT" -name "*.pom" | head -n 1)
 if [[ -z "$first_pom" ]]; then
-echo "ERROR: no *.pom found under $BAZEL_OUT"
-exit 1
+  echo "ERROR: no *.pom found under $BAZEL_OUT"
+  exit 1
 fi
 
 PARENT_GROUP="org.activecomponents.jadex"
@@ -114,74 +112,74 @@ EOF
 
 find -L "$BAZEL_OUT" -name "*.pom" | while read -r pom
 do
-echo
-echo "Processing $pom"
+  echo
+  echo "Processing $pom"
 
-group=$(extract_xml "$pom" "groupId")
-artifact=$(extract_xml "$pom" "artifactId")
-version=$(extract_xml "$pom" "version")
+  group=$(extract_xml "$pom" "groupId")
+  artifact=$(extract_xml "$pom" "artifactId")
+  version=$(extract_xml "$pom" "version")
 
-if [[ -z "$group" || -z "$artifact" || -z "$version" ]]; then
-echo "ERROR: Missing GAV in $pom"
-exit 1
-fi
+  if [[ -z "$group" || -z "$artifact" || -z "$version" ]]; then
+    echo "ERROR: Missing GAV in $pom"
+    exit 1
+  fi
 
-echo "  GAV: $group:$artifact:$version"
+  echo "  GAV: $group:$artifact:$version"
 
-group_path="${group//./\/}"
+  group_path="${group//./\/}"
 
-target="$STAGING/$group_path/$artifact/$version"
-mkdir -p "$target"
+  target="$STAGING/$group_path/$artifact/$version"
+  mkdir -p "$target"
 
-source_dir=$(dirname "$pom")
+  source_dir=$(dirname "$pom")
 
-#
-# Main jar
-#
-jar=$(find "$source_dir" \
+  #
+  # Main jar
+  #
+  jar=$(find "$source_dir" \
+      -maxdepth 1 \
+      \( -name "lib${artifact}.jar" -o -name "${artifact}.jar" \) \
+      | head -n 1 || true)
+
+  if [[ -n "$jar" ]]; then
+    cp "$jar" "$target/${artifact}-${version}.jar"
+  else
+    echo "  WARNING: no main jar found"
+  fi
+
+
+  #
+  # Sources
+  #
+  sources=$(find "$source_dir" \
     -maxdepth 1 \
-    \( -name "lib${artifact}.jar" -o -name "${artifact}.jar" \) \
+    -name "${artifact}-sources.jar" \
     | head -n 1 || true)
 
-if [[ -n "$jar" ]]; then
-cp "$jar" "$target/${artifact}-${version}.jar"
-else
-echo "  WARNING: no main jar found"
-fi
+  if [[ -n "$sources" ]]; then
+    cp "$sources" \
+      "$target/${artifact}-${version}-sources.jar"
+  fi
 
 
-#
-# Sources
-#
-sources=$(find "$source_dir" \
-  -maxdepth 1 \
-  -name "${artifact}-sources.jar" \
-  | head -n 1 || true)
+  #
+  # Javadoc
+  #
+  javadoc=$(find "$source_dir" \
+    -maxdepth 1 \
+    -name "${artifact}-javadoc.jar" \
+    | head -n 1 || true)
 
-if [[ -n "$sources" ]]; then
-cp "$sources" \
-"$target/${artifact}-${version}-sources.jar"
-fi
-
-
-#
-# Javadoc
-#
-javadoc=$(find "$source_dir" \
-  -maxdepth 1 \
-  -name "${artifact}-javadoc.jar" \
-  | head -n 1 || true)
-
-if [[ -n "$javadoc" ]]; then
-cp "$javadoc" \
-"$target/${artifact}-${version}-javadoc.jar"
-fi
+  if [[ -n "$javadoc" ]]; then
+    cp "$javadoc" \
+      "$target/${artifact}-${version}-javadoc.jar"
+  fi
 
 
-#
-# POM
-#
-cp "$pom" "$target/${artifact}-${version}.pom"
+  #
+  # POM
+  #
+  cp "$pom" "$target/${artifact}-${version}.pom"
 
 done
 
