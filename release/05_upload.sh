@@ -43,6 +43,7 @@ tag_release() {
 
     git tag -a "$version" -m "Release $version"
 
+
     echo "Pushing tag $version"
 
     if [[ -n "${GIT_PUSH_TOKEN:-}" ]]; then
