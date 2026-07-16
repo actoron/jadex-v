@@ -4,6 +4,12 @@ variables:
   BAZELISK_VERSION: "latest"
   JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
 
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
 stages:
   - build
   - test
