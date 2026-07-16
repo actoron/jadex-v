@@ -63,6 +63,10 @@ tag_release() {
         echo "Using git push user: $GIT_PUSH_USER"
 
         origin_url="$(git remote get-url origin)"
+        # remove existing credentials from CI checkout URL
+        origin_url="$(echo "$origin_url" | sed -E 's#https://[^@]+@#https://#')"
+
+        echo "Using clean origin: $origin_url"
 
         case "$origin_url" in
             https://*)
