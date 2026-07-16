@@ -45,7 +45,24 @@ tag_release() {
 
     echo "Pushing tag $version"
 
-    git push origin "refs/tags/$version"
+    if [[ -n "${GIT_PUSH_TOKEN:-}" ]]; then
+        echo "Using GIT_PUSH_TOKEN for authentication"
+
+        origin_url="$(git remote get-url origin)"
+
+        case "$origin_url" in
+            https://*)
+                auth_url="${origin_url/https:\/\//https:\/\/oauth2:${GIT_PUSH_TOKEN}@}"
+                git push "$auth_url" "refs/tags/$version"
+                ;;
+            *)
+                echo "Origin is not HTTPS ($origin_url). Falling back to normal git push."
+                git push origin "refs/tags/$version"
+                ;;
+        esac
+    else
+        git push origin "refs/tags/$version"
+    fi
 
     echo "Release tag $version published."
 }
