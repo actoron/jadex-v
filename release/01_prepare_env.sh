@@ -50,7 +50,7 @@ export repos
 JADEX_VERSION_PREFIX="$(get_var JADEX_VERSION_PREFIX)"
 JADEX_VERSION_PREFIX="${JADEX_VERSION_PREFIX:-5.0-beta}"
 
-# TEST OVERRIDE (falls wirklich gewollt)
+# TEST OVERRIDE 
 # JADEX_VERSION_PREFIX="5.0-beta-test"
 
 check_clean_worktree() {
@@ -87,32 +87,13 @@ is_head() {
 fetch_next_build_name_from_git_tag() {
     local prefix="$1"
 
-    [ -z "${prefix:-}" ] && return 0
+    local vnum
+    vnum=$(get_latest_version "$prefix")
 
-    check_clean_worktree || true
-
-    local vnum=""
-    vnum="$(get_latest_version "$prefix" || true)"
-
-    if [ -n "$vnum" ]; then
-        local version="${prefix}${vnum}"
-
-        echo "Latest version is ${version}" >&2
-
-        if ! is_head "$version"; then
-            vnum=$((vnum + 1))
-            version="${prefix}${vnum}"
-        fi
-
-        printf '%s' "$version"
+    if [[ -z "$vnum" ]]; then
+        echo "${prefix}1"
     else
-        echo "No version found with prefix ${prefix}" >&2
-
-        if [[ "$prefix" == *"." ]]; then
-            printf '%s0' "$prefix"
-        else
-            printf '%s1' "$prefix"
-        fi
+        echo "${prefix}$((vnum + 1))"
     fi
 }
 

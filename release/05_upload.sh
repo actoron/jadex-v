@@ -24,27 +24,20 @@ tag_release() {
         return 1
     fi
 
-    branch=$(git branch --show-current)
-
-    if [[ -z "$branch" ]]; then
-        echo "Detached HEAD - refusing to create tag."
-        return 1
-    fi
-
     if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
         echo "Tag $version already exists."
         return
     fi
 
-    echo "Creating git tag $version on branch $branch"
+    echo "Creating git tag $version"
 
     git tag -a "$version" -m "Release $version"
 
-    echo
-    echo "Release tagged."
-    echo
-    echo "To publish the tag:"
-    echo "    git push origin $branch --follow-tags"
+    echo "Pushing tag $version"
+
+    git push origin "$version"
+
+    echo "Release tag $version published."
 }
 
 if [[ ! -d "$STAGING" ]]; then
