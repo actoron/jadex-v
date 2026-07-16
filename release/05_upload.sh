@@ -8,9 +8,13 @@ TOKEN_FILE="release/jadex-token.txt"
 PUBLISHING_TYPE="USER_MANAGED"
 
 if [[ "${1:-}" == "--automatic" ]]; then
-    PUBLISHING_TYPE="AUTOMATIC" 
+    PUBLISHING_TYPE="AUTOMATIC"
 fi
 
+
+# ---------------------------------------------------------------------------
+# Create and push git release tag
+# ---------------------------------------------------------------------------
 tag_release() {
     local version="${JADEX_VERSION:-}"
 
@@ -24,9 +28,10 @@ tag_release() {
         return 1
     fi
 
-    if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
-        echo "Tag $version already exists."
-        return
+    # Check remote tag
+    if git ls-remote --exit-code --tags origin "$version" >/dev/null 2>&1; then
+        echo "Remote tag $version already exists."
+        return 1
     fi
 
     echo "Configuring git identity"
@@ -40,21 +45,47 @@ tag_release() {
 
     echo "Pushing tag $version"
 
-    git push origin "$version"
+    git push origin "refs/tags/$version"
 
     echo "Release tag $version published."
 }
 
+
+# ---------------------------------------------------------------------------
+# Check staging
+# ---------------------------------------------------------------------------
 if [[ ! -d "$STAGING" ]]; then
     echo "ERROR: Staging directory '$STAGING' not found."
     exit 1
 fi
 
-# Load credentials from environment or token file
+
+# ---------------------------------------------------------------------------
+# Check version before upload
+# ---------------------------------------------------------------------------
+if [[ -z "${JADEX_VERSION:-}" ]]; then
+    echo "ERROR: JADEX_VERSION not set."
+    exit 1
+fi
+
+echo "Checking if version $JADEX_VERSION was already released..."
+
+if git ls-remote --exit-code --tags origin "$JADEX_VERSION" >/dev/null 2>&1; then
+    echo "ERROR: Git tag $JADEX_VERSION already exists."
+    exit 1
+fi
+
+echo "Version $JADEX_VERSION is available."
+
+
+# ---------------------------------------------------------------------------
+# Load credentials
+# ---------------------------------------------------------------------------
 if [[ -z "${CENTRAL_USER:-}" || -z "${CENTRAL_PASSWORD:-}" ]]; then
 
-    # Fallback auf die in env.sh verwendeten Variablennamen
+    # Fallback auf env.sh Variablennamen
     if [[ -n "${centralUser:-}" && -n "${centralPassword:-}" ]]; then
+
         CENTRAL_USER="$centralUser"
         CENTRAL_PASSWORD="$centralPassword"
 
@@ -63,15 +94,16 @@ if [[ -z "${CENTRAL_USER:-}" || -z "${CENTRAL_PASSWORD:-}" ]]; then
         echo "Using credentials from centralUser/centralPassword"
 
     else
+
         if [[ ! -f "$TOKEN_FILE" ]]; then
-            echo "ERROR: No credentials found (CENTRAL_USER/CENTRAL_PASSWORD, centralUser/centralPassword or $TOKEN_FILE)."
+            echo "ERROR: No credentials found."
             exit 1
         fi
 
         TOKEN=$(<"$TOKEN_FILE")
 
         if [[ "$TOKEN" != *:* ]]; then
-            echo "ERROR: Invalid token format in '$TOKEN_FILE'. Expected user:password."
+            echo "ERROR: Invalid token format."
             exit 1
         fi
 
@@ -81,9 +113,14 @@ if [[ -z "${CENTRAL_USER:-}" || -z "${CENTRAL_PASSWORD:-}" ]]; then
         export CENTRAL_USER CENTRAL_PASSWORD
 
         echo "Using credentials from $TOKEN_FILE"
+
     fi
 fi
 
+
+# ---------------------------------------------------------------------------
+# Create bundle
+# ---------------------------------------------------------------------------
 echo "Creating deployment bundle..."
 
 rm -f "$BUNDLE"
@@ -95,6 +132,10 @@ rm -f "$BUNDLE"
 
 echo "Bundle created: $BUNDLE"
 
+
+# ---------------------------------------------------------------------------
+# Upload to Central
+# ---------------------------------------------------------------------------
 AUTH=$(printf "%s:%s" "$CENTRAL_USER" "$CENTRAL_PASSWORD" | base64 -w0)
 
 echo "Uploading bundle..."
@@ -108,6 +149,7 @@ else
     echo "Publishing mode: manual"
 fi
 
+
 DEPLOYMENT_ID=$(
 curl -fsS \
     --request POST \
@@ -116,9 +158,15 @@ curl -fsS \
     "$UPLOAD_URL"
 )
 
+
 echo "Deployment ID: $DEPLOYMENT_ID"
 
+
+# ---------------------------------------------------------------------------
+# Wait for publication
+# ---------------------------------------------------------------------------
 echo "Waiting for publication..."
+
 
 while true
 do
@@ -129,28 +177,41 @@ do
         --header "Authorization: Bearer $AUTH" \
         "https://central.sonatype.com/api/v1/publisher/status?id=${DEPLOYMENT_ID}")
 
-    STATE=$(echo "$STATUS" | grep -o '"deploymentState":"[^"]*"' | cut -d'"' -f4)
+
+    STATE=$(echo "$STATUS" \
+        | grep -o '"deploymentState":"[^"]*"' \
+        | cut -d'"' -f4)
+
 
     echo "$STATE"
 
+
     case "$STATE" in
+
         VALIDATED)
             echo "Waiting for manual publish in Central..."
             ;;
+
         PUBLISHING)
             echo "Publishing..."
             ;;
+
         PUBLISHED)
             echo "Release published."
+
             tag_release
+
             exit 0
             ;;
+
         FAILED)
             echo "$STATUS"
             exit 1
             ;;
+
         *)
             echo "Current state: $STATE"
             ;;
+
     esac
 done
