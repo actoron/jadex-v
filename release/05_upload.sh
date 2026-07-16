@@ -48,20 +48,47 @@ tag_release() {
     if [[ -n "${GIT_PUSH_TOKEN:-}" ]]; then
         echo "Using GIT_PUSH_TOKEN for authentication"
 
+        # Project Access Tokens:
+        # - normaler Username ist oauth2
+        # - gitlab-ci-token gehört zum CI_JOB_TOKEN und soll hier nicht verwendet werden
+
+        GIT_PUSH_USER="${GIT_PUSH_USER:-oauth2}"
+
+        if [[ "$GIT_PUSH_USER" == "gitlab-ci-token" ]]; then
+            echo "Ignoring gitlab-ci-token as GIT_PUSH_USER, using oauth2 instead."
+            GIT_PUSH_USER="oauth2"
+        fi
+
+        echo "Using git push user: $GIT_PUSH_USER"
+
         origin_url="$(git remote get-url origin)"
 
         case "$origin_url" in
             https://*)
-                auth_url="${origin_url/https:\/\//https:\/\/oauth2:${GIT_PUSH_TOKEN}@}"
-                git push "$auth_url" "refs/tags/$version"
+                auth_url="${origin_url/https:\/\//https:\/\/${GIT_PUSH_USER}:${GIT_PUSH_TOKEN}@}"
+
+                if ! git push "$auth_url" "refs/tags/$version"; then
+                    echo "ERROR: Failed to push tag using GIT_PUSH_TOKEN"
+                    return 1
+                fi
                 ;;
             *)
                 echo "Origin is not HTTPS ($origin_url). Falling back to normal git push."
-                git push origin "refs/tags/$version"
+
+                if ! git push origin "refs/tags/$version"; then
+                    echo "ERROR: Failed to push tag"
+                    return 1
+                fi
                 ;;
         esac
+
     else
-        git push origin "refs/tags/$version"
+        echo "No GIT_PUSH_TOKEN set, using normal git authentication"
+
+        if ! git push origin "refs/tags/$version"; then
+            echo "ERROR: Failed to push tag"
+            return 1
+        fi
     fi
 
     echo "Release tag $version published."
