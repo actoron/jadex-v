@@ -8,7 +8,7 @@ TOKEN_FILE="release/jadex-token.txt"
 PUBLISHING_TYPE="USER_MANAGED"
 
 if [[ "${1:-}" == "--automatic" ]]; then
-    PUBLISHING_TYPE="AUTOMATIC"
+    PUBLISHING_TYPE="AUTOMATIC" 
 fi
 
 tag_release() {
