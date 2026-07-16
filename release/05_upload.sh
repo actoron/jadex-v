@@ -29,6 +29,11 @@ tag_release() {
         return
     fi
 
+    echo "Configuring git identity"
+
+    git config user.name "jadex-release-bot"
+    git config user.email "release-bot@activecomponents.org"
+
     echo "Creating git tag $version"
 
     git tag -a "$version" -m "Release $version"
