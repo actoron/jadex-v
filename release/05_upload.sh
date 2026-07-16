@@ -52,26 +52,38 @@ if [[ ! -d "$STAGING" ]]; then
     exit 1
 fi
 
-# Load credentials from token file if not already provided
+# Load credentials from environment or token file
 if [[ -z "${CENTRAL_USER:-}" || -z "${CENTRAL_PASSWORD:-}" ]]; then
-    if [[ ! -f "$TOKEN_FILE" ]]; then
-        echo "ERROR: CENTRAL_USER/CENTRAL_PASSWORD not set and token file '$TOKEN_FILE' not found."
-        exit 1
+
+    # Fallback auf die in env.sh verwendeten Variablennamen
+    if [[ -n "${centralUser:-}" && -n "${centralPassword:-}" ]]; then
+        CENTRAL_USER="$centralUser"
+        CENTRAL_PASSWORD="$centralPassword"
+
+        export CENTRAL_USER CENTRAL_PASSWORD
+
+        echo "Using credentials from centralUser/centralPassword"
+
+    else
+        if [[ ! -f "$TOKEN_FILE" ]]; then
+            echo "ERROR: No credentials found (CENTRAL_USER/CENTRAL_PASSWORD, centralUser/centralPassword or $TOKEN_FILE)."
+            exit 1
+        fi
+
+        TOKEN=$(<"$TOKEN_FILE")
+
+        if [[ "$TOKEN" != *:* ]]; then
+            echo "ERROR: Invalid token format in '$TOKEN_FILE'. Expected user:password."
+            exit 1
+        fi
+
+        CENTRAL_USER="${TOKEN%%:*}"
+        CENTRAL_PASSWORD="${TOKEN#*:}"
+
+        export CENTRAL_USER CENTRAL_PASSWORD
+
+        echo "Using credentials from $TOKEN_FILE"
     fi
-
-    TOKEN=$(cat "$TOKEN_FILE")
-
-    if [[ "$TOKEN" != *:* ]]; then
-        echo "ERROR: Invalid token format in '$TOKEN_FILE'. Expected user:password."
-        exit 1
-    fi
-
-    CENTRAL_USER="${TOKEN%%:*}"
-    CENTRAL_PASSWORD="${TOKEN#*:}"
-
-    export CENTRAL_USER CENTRAL_PASSWORD
-
-    echo "Using credentials from $TOKEN_FILE"
 fi
 
 echo "Creating deployment bundle..."
