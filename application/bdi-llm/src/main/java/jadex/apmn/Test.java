@@ -1,5 +1,6 @@
 package jadex.apmn;
 
+import apmn.AgentBuilder;
 import apmn.model.MApmnModel;
 import apmn.model.edge.MEdge;
 import apmn.model.node.MAgentStarterNode;
@@ -12,7 +13,18 @@ public class Test
     public static void main(String[] args)
     {
         MApmnModel model = new MApmnModel();
-        MAgentStarterNode node1 = new MAgentStarterNode(AgentActor.class);
+        AgentBuilder builder = new AgentBuilder();
+        try
+        {
+            builder.createAgent();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+        Class<?> clazz = builder.getClass();
+
+        MAgentStarterNode node1 = new MAgentStarterNode(clazz);
         node1.setId("node1");
         model.addNode(node1);
         MPrintNode node2 = new MPrintNode();

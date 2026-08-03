@@ -44,7 +44,7 @@ public class AgentActor
     @OnStart
     public void body()
     {
-        startProcess.set("Hello AgentStarter");
+        this.startProcess.set("Hello AgentStarter");
         System.out.println("body end: " + getClass().getName());
     }
 
@@ -55,7 +55,7 @@ public class AgentActor
         goal.setText("finis");
     }
 
-    @Plan(trigger = @Trigger(goalfinisheds = MissionGoal.class))
+    @Plan(trigger=@Trigger(goalfinisheds = MissionGoal.class))
     protected void finished(MissionGoal goal, IComponent comp)
     {
         System.out.println("finis: " + goal.getText());

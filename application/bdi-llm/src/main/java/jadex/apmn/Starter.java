@@ -1,7 +1,12 @@
 package jadex.apmn;
 
+import jadex.bdi.annotation.BDIAgent;
+import jadex.bdi.annotation.Goal;
+import jadex.bdi.annotation.Goals;
 import jadex.common.SUtil;
+import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
+import jadex.future.IFuture;
 import jadex.transformation.jsonserializer.JsonTraverser;
 
 import java.io.File;
@@ -40,7 +45,10 @@ public class Starter
             throw new RuntimeException(e);
         }
 
-        IComponentManager.get().create(new AgentActor());
+        System.out.println("Annotation before agent: " + AgentActor.class.isAnnotationPresent(BDIAgent.class));
+        IFuture<IComponentHandle> agent = IComponentManager.get().create(new AgentActor());
+        System.out.println("Annotations after agent: " +  agent.get().getClass().isAnnotationPresent(BDIAgent.class));
+
         IComponentManager.get().waitForLastComponentTerminated();
     }
 }

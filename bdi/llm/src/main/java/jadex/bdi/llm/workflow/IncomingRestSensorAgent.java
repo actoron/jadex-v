@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 @ProvideService(type = IJsonEventProvider.class, tags = { "$pojo.eventprovidertag" })
-@Publish(publishid="http://${host}:${port}/", publishtarget = IJsonSensorService.class)
+@Publish(publishid="http://${host}:${port}/")//, publishtarget = IJsonSensorService.class)
 public class IncomingRestSensorAgent implements IJsonSensorService, IJsonEventProvider
 {
     private Set<SubscriptionIntermediateFuture<Map<String, Object>>> subscriptions = new HashSet<>();

@@ -46,6 +46,7 @@ dependencies
     implementation group: 'com.google.guava', name: 'guava', version: '33.4.0-jre' +v
     implementation group: 'com.github.javafaker', name: 'javafaker', version: '1.0.2' +v
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.21.1' +v
+    implementation 'net.bytebuddy:byte-buddy:1.17.8'
 
 }
 
@@ -67,7 +68,7 @@ task runWorkflow(type: JavaExec) {
 
 task runApmn(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'jadex.apmn.AgentActor'
+    mainClass = 'jadex.apmn.Example'
 }
 
 task runStarter(type: JavaExec) {

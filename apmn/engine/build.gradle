@@ -43,6 +43,8 @@ dependencies
 	implementation 'org.activecomponents.jadex:publishservice:'+v
 	implementation 'org.activecomponents.jadex:publishservicejetty:'+v
 
+	implementation 'net.bytebuddy:byte-buddy:1.17.8'
+
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
 }
