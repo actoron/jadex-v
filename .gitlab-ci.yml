@@ -14,10 +14,13 @@ stages:
   - build
   - test
   - deploy
+  - benchmark
 
 before_script:
   - apt-get update
-  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip maven
+  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip maven xvfb libxtst6 libxi6
+  - Xvfb :99 &
+  - export DISPLAY=:99
   - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
   - chmod +x /usr/local/bin/bazel
   - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
@@ -28,6 +31,12 @@ before_script:
   - jar --version
   - echo $JAVA_HOME
   - . release/01_prepare_env.sh
+
+stages:
+  - build
+  - test
+  - deploy
+  - benchmark
 
 build:
   stage: build

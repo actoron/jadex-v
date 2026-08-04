@@ -13,12 +13,14 @@ import jadex.bt.cleanerworld.environment.Chargingstation;
 import jadex.bt.cleanerworld.environment.Cleaner;
 import jadex.bt.cleanerworld.environment.Waste;
 import jadex.bt.cleanerworld.environment.Wastebin;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
 import jadex.math.IVector2;
 
 /**
  *  Panel for showing the cleaner world view as provided by sensor.
  */
+@SuppressWarnings("serial")
 class SensorPanel extends JPanel
 {
 	//-------- attributes --------
@@ -43,8 +45,8 @@ class SensorPanel extends JPanel
 	 */
 	protected void	paintComponent(Graphics g)
 	{
-//		try
-//		{
+		try
+		{
 			GuiData	data = fetchGuiData();
 			
 			// Paint background (dependent on daytime).
@@ -64,7 +66,7 @@ class SensorPanel extends JPanel
 				g.fillOval(p.x-w, p.y-h, w*2, h*2);
 				g.setColor(new Color(50, 50, 50, 180));
 				g.fillOval(p.x-3, p.y-3, 7, 7);
-				g.drawString(cleaner.getId(),
+				g.drawString("Cleaner "+cleaner.getId(),
 					p.x+5, p.y-5);
 				g.drawString("battery: " + (int)(cleaner.getChargestate()*100.0) + "%",
 					p.x+5, p.y+5);
@@ -81,7 +83,7 @@ class SensorPanel extends JPanel
 			g.fillOval(p.x-w, p.y-h, w*2, h*2);
 			g.setColor(Color.black);	// Agent
 			g.fillOval(p.x-3, p.y-3, 7, 7);
-			g.drawString(data.self.getId().toString(),
+			g.drawString("Cleaner "+data.self.getId().toString(),
 				p.x+5, p.y-5);
 			g.drawString("battery: " + (int)(data.self.getChargestate()*100.0) + "%",
 				p.x+5, p.y+5);
@@ -105,7 +107,7 @@ class SensorPanel extends JPanel
 				p = onScreenLocation(station.getLocation(), bounds);
 				g.drawRect(p.x-10, p.y-10, 20, 20);
 				g.setColor(data.daytime ? Color.black : Color.white);
-				g.drawString(station.getId(), p.x+14, p.y+5);
+				g.drawString("Chargingstation "+station.getId(), p.x+14, p.y+5);
 			}
 
 			// Paint waste bins.
@@ -115,7 +117,7 @@ class SensorPanel extends JPanel
 				p = onScreenLocation(bin.getLocation(), bounds);
 				g.drawOval(p.x-10, p.y-10, 20, 20);
 				g.setColor(data.daytime ? Color.black : Color.white);
-				g.drawString(bin.getId()+" ("+bin.getWastes().length+"/"+bin.getCapacity()+")", p.x+14, p.y+5);
+				g.drawString("Wastebin "+bin.getId()+" ("+bin.getWastes().length+"/"+bin.getCapacity()+")", p.x+14, p.y+5);
 			}
 
 			// Paint waste.
@@ -137,10 +139,11 @@ class SensorPanel extends JPanel
 				g.drawLine(p.x-7, p.y, p.x+7, p.y);
 				g.drawLine(p.x, p.y-7, p.x, p.y+7);
 			}
-//		}
-//		catch(ComponentTerminatedException e)
-//		{	
-//		}
+		}
+		catch(ComponentTerminatedException e)
+		{	
+			// Ignore race condition when agent is terminated but paint is still called.
+		}
 	}
 	
 	//-------- helper methods --------

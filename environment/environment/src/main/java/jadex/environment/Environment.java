@@ -31,6 +31,7 @@ import jadex.future.ITerminableFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.future.TerminableFuture;
 import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnEnd;
 import jadex.injection.annotation.OnStart;
 import jadex.math.IVector1;
 import jadex.math.IVector2;
@@ -132,7 +133,7 @@ public class Environment
 	@OnStart
 	protected void start()
 	{
-		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(Exception.class, false, (ex, comp) ->
+		ComponentManager.get().getFeature(IErrorHandlingFeature.class).addExceptionHandler(agent.getId(), Exception.class, false, (ex, comp) ->
 		{
 			ex.printStackTrace();
 		});
@@ -149,15 +150,21 @@ public class Environment
 		}
 	}
 	
-//	@OnEnd
-//	protected void end(Exception e)
-//	{
+	@OnEnd
+	protected void end(Exception e)
+	{
 //		System.out.println("end: "+agent.getId()+" "+e);
 //		if(e!=null)
 //		{
 //			e.printStackTrace();
 //		}
-//	}
+		
+		// TODO: how to find all agents of this environment when no app is used?
+		if(agent.getApplication()!=null)
+		{
+			agent.getApplication().terminate();
+		}
+	}
 	
 	//-------- The agent methods --------
 	

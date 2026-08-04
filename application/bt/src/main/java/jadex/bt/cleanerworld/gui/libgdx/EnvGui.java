@@ -130,7 +130,7 @@ public class EnvGui extends ApplicationAdapter
             batch.draw(bintex, pos.x, pos.y);
 
             // Optionally draw bin info (e.g. ID and capacity)
-            String info = bin.getId() + " (" + bin.getWastes().length + "/" + bin.getCapacity() + ")";
+            String info = "Wastebin " + bin.getId() + " (" + bin.getWastes().length + "/" + bin.getCapacity() + ")";
             //BitmapFont font = new BitmapFont();  
             //font.draw(batch, info, pos.x, pos.y - 20);  
             drawText(batch, font, info, pos.x, pos.y, bintex.getWidth(), 10);
@@ -186,7 +186,7 @@ public class EnvGui extends ApplicationAdapter
             //BitmapFont font = new BitmapFont();
             //font.draw(batch, station.getId(), pos.x, pos.y - 20);
             //drawText(batch, font, station.getId(), (float)(pos.x+Math.random()*10), pos.y, stationtex.getWidth(), 10);
-            drawText(batch, font, station.getId(), pos.x, pos.y, stationtex.getWidth(), 10);
+            drawText(batch, font, "Chargingstation "+ station.getId(), pos.x, pos.y, stationtex.getWidth(), 10);
             
             //System.out.println("station: "+pos.x+" "+pos.y);
         }
@@ -218,7 +218,7 @@ public class EnvGui extends ApplicationAdapter
 
 		    batch.begin();
 		    batch.draw(cleanertex, pos.x, pos.y);
-            String info = cleaner.getId() + "\nBattery: " + (int)(cleaner.getChargestate() * 100) + "%" +
+            String info = "Cleaner " + cleaner.getId() + "\nBattery: " + (int)(cleaner.getChargestate() * 100) + "%" +
             	"\nWaste: " + (cleaner.getCarriedWaste() != null ? "Yes" : "No");
             //BitmapFont font = new BitmapFont();
             drawText(batch, font, info, pos.x, pos.y, cleanertex.getWidth(), 10);
@@ -334,10 +334,14 @@ public class EnvGui extends ApplicationAdapter
     {
         batch.dispose();
         background.dispose();
+		env.getComponentHandle().then(comp -> comp.terminate());
     }
 
-    public static void create(String envid, int fps) 
+    public static void create(String envid) 
     {
+    	CleanerworldEnvironment	env = (CleanerworldEnvironment)Environment.get(envid);
+    	int fps = env.getStepsPerSecond().get();
+    	
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Cleaner World");
         config.setWindowedMode(800, 600);

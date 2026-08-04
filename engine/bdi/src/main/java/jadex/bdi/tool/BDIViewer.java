@@ -131,6 +131,7 @@ public class BDIViewer extends JFrame
     private void	startAutoRefresh() 
     {
         Timer timer = new Timer(100, ev -> BDIViewer.this.refreshTables());
+        timer.start();
         
 		// Kill agent on window close.
 		addWindowListener(new WindowAdapter()
