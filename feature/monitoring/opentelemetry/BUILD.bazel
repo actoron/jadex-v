@@ -14,7 +14,7 @@ java_library(
         "//util/common:common",
         "//engine/core",
         "//util/future",
-        "//monitoring/logbase"
+        "//feature/monitoring/logbase",
     ] + DEPS
 )
 

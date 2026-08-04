@@ -21,8 +21,8 @@ java_test(
     deps = [
         "//util/common:common",
         "//engine/core",
-        "//monitoring/logbase",
-        "//monitoring/opentelemetry",
+        "//feature/monitoring/logbase",
+        "//feature/monitoring/opentelemetry",
         "//util/collection:collection",
         "//feature/execution",
         "//feature/injection",

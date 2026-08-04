@@ -22,13 +22,13 @@ ALL_DEPS = [
     "//feature/injection",
     "//feature/result",
     #"//feature/simulation",
-    #"//llm",
-    "//monitoring/logbase",
+    #"//feature/llm",
+    "//feature/monitoring/logbase",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
     "//service/publish:publishservice",
     "//service/publishjetty",
-    "//micro/lib"
+    "//feature/libmicro"
 ] + DEPS
 
 java_binary(
@@ -88,13 +88,13 @@ java_library(
         "//feature/injection",
         "//feature/result",
         #"//feature/simulation",
-        #"//llm",
-        "//monitoring/logbase",
+        #"//feature/llm",
+        "//feature/monitoring/logbase",
         "//service/provided:providedservice",
         "//service/required:requiredservice",
         "//service/publish:publishservice",
         "//service/publishjetty",
-        "//micro/lib"
+        "//feature/libmicro"
     ] + DEPS,
 )
 
@@ -121,13 +121,13 @@ java_test(
         "//feature/injection",
         "//feature/result",
         "//feature/simulation",
-        "//llm",
-        "//monitoring/logbase",
+        "//feature/llm",
+        "//feature/monitoring/logbase",
         "//service/provided:providedservice",
         "//service/required:requiredservice",
         "//service/publish:publishservice",
         "//service/publishjetty",
-        "//micro/lib",
+        "//feature/libmicro",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_platform_junit_platform_suite_api",
     ] + DEPS,

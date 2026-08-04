@@ -15,8 +15,8 @@ ALL_DEPS = [
     "//util/future",
     "//engine/core",
     "//util/idgenerator",
-    "//monitoring/logbase",
-    "//monitoring/opentelemetry",
+    "//feature/monitoring/logbase",
+    "//feature/monitoring/opentelemetry",
 ] + DEPS
 
 java_test(

@@ -11,8 +11,8 @@ load("//:maven_artifacts.bzl", "maven_publish_jars")
 ALL_DEPS = [
     "//util/common:common",
     "//engine/core",
-    "//monitoring/logbase",
-    "//monitoring/opentelemetry",
+    "//feature/monitoring/logbase",
+    "//feature/monitoring/opentelemetry",
     "//util/collection:collection",
     "//feature/execution",
     "//benchmark/core:benchmark-core",

@@ -22,17 +22,17 @@ ALL_DEPS = [
     "//feature/injection",
     "//feature/result",
     #"//feature/simulation",
-    #"//llm",
-    "//monitoring/logbase",
-    "//monitoring/log4j",
-    "//monitoring/graylog",
-    "//monitoring/fluentd",
+    #"//feature/llm",
+    "//feature/monitoring/logbase",
+    "//feature/monitoring/log4j",
+    "//feature/monitoring/graylog",
+    "//feature/monitoring/fluentd",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
     "//service/publish:publishservice",
     "//service/publishjetty",
     "//service/nfproperty",
-    "//micro/lib"
+    "//feature/libmicro"
 ] + DEPS
 
 java_library(

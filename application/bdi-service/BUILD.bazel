@@ -19,7 +19,7 @@ ALL_DEPS = [
     "//service/provided:providedservice",
     "//service/required:requiredservice",
     "//serialization/traverser",
-    "//environment/environment",
+    "//feature/environment",
     "//application/bdi:application-bdi",
     "//application/micro:micro_lib",
 ] + DEPS

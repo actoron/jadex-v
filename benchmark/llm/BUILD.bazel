@@ -15,7 +15,7 @@ ALL_DEPS = [
     "//feature/execution",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
-    "//llm",
+    "//feature/llm",
     "//application/llm:application-llm",
     "//application/bdi:application-bdi",
 ] + DEPS

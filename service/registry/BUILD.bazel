@@ -17,7 +17,7 @@ java_library(
         "//feature/execution",
         "//communication/serialization",
         "//util/collection",
-        "//micro/lib",
+        "//feature/libmicro",
         "//util/classreader",
         "//feature/injection",
         "//service/provided:providedservice",

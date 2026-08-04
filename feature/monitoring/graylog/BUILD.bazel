@@ -9,11 +9,11 @@ ALL_DEPS = [
     "//engine/core",
     "//feature/execution",
     "//util/future",
-    "//monitoring/logbase"
+    "//feature/monitoring/logbase",
 ] + DEPS
 
 java_library(
-    name = "log4j",
+    name = "graylog",
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**"]),
     visibility = ["//visibility:public"],
@@ -22,7 +22,7 @@ java_library(
 )
 
 maven_publish_jars(
-    name = "log4j_publish",
-    target = ":log4j",
+    name = "graylog_publish",
+    target = ":graylog",
     deps = ALL_DEPS,
 )

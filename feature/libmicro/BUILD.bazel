@@ -20,7 +20,7 @@ ALL_DEPS = [
 ] #+ DEPS
 
 java_library(
-    name = "lib",
+    name = "libmicro",
     srcs = glob(["src/main/java/**/*.java",]),
     resources = glob(["src/main/resources/**"], allow_empty = True,),
     visibility = ["//visibility:public"],
@@ -30,6 +30,6 @@ java_library(
 
 maven_publish_jars(
     name = "libmicro_publish",
-    target = ":lib",
+    target = ":libmicro",
     deps = ALL_DEPS,
 )

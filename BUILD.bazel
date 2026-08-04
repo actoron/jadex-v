@@ -183,7 +183,7 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-            ":llm": ["//llm"],
+            ":llm": ["//feature/llm"],
             "//conditions:default": [],
         }) +
         select({
@@ -215,7 +215,7 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-            ":environment": ["//environment/environment"],
+            ":environment": ["//feature/environment"],
             "//conditions:default": [],
         }) +
         select({

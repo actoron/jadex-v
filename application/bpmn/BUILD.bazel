@@ -21,7 +21,7 @@ ALL_DEPS = [
     "//service/provided:providedservice",
     "//engine/bpmn/requiredservice:requiredservicebpmn",
     "//engine/bpmn/providedservice:providedservicebpmn",
-    "//environment/environment",
+    "//feature/environment",
 ] #+ DEPS
 
 java_library(

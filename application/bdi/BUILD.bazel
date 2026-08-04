@@ -17,7 +17,7 @@ ALL_DEPS = [
     "//feature/execution",
     "//feature/injection",
     "//engine/bdi",
-    "//environment/environment",
+    "//feature/environment",
 ] + DEPS
 
 java_library(

@@ -14,7 +14,7 @@ ALL_DEPS = [
         "//feature/execution",
         "//feature/injection",
         "//service/provided:providedservice",
-        "//monitoring/logbase",
+        "//feature/monitoring/logbase",
     ] + DEPS
 
 java_library(

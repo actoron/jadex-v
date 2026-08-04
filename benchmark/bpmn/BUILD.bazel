@@ -22,7 +22,7 @@ java_test(
     deps = [
         "//util/common:common",
         "//engine/core",
-        "//monitoring/logbase",
+        "//feature/monitoring/logbase",
         "//util/collection:collection",
         "//feature/execution",
         "//benchmark/core:benchmark-core",

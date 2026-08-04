@@ -9,7 +9,7 @@ ALL_DEPS = [
     "//engine/core",
     "//feature/execution",
     "//util/future",
-    "//monitoring/logbase"
+    "//feature/monitoring/logbase",
 ] + DEPS
 
 java_library(

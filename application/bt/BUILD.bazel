@@ -18,13 +18,13 @@ ALL_DEPS = [
     "//feature/injection",
     "//engine/bt",
     # "//feature/simulation", # mastersimfeature has memory leak
-    "//monitoring/logbase",
+    "//feature/monitoring/logbase",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
     "//service/publish:publishservice",
     "//service/publishjetty",
-    "//environment/environment",
-    "//monitoring/opentelemetry",
+    "//feature/environment",
+    "//feature/monitoring/opentelemetry",
 ] + DEPS
 
 java_library(
@@ -58,12 +58,12 @@ java_library(
         "//feature/injection",
         "//engine/bt",
         # "//feature/simulation", # mastersimfeature has memory leak
-        "//monitoring/logbase",
+        "//feature/monitoring/logbase",
         "//service/provided:providedservice",
         "//service/required:requiredservice",
         "//service/publish:publishservice",
         "//service/publishjetty",
-        "//environment/environment",
-        #"//monitoring/opentelemetry",
+        "//feature/environment",
+        #"//feature/monitoring/opentelemetry",
     ] + DEPS,
 )
