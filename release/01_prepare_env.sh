@@ -63,19 +63,12 @@ check_clean_worktree() {
     fi
 }
 
-get_latest_version() {
+get_latest_version_from_git() {
     local prefix="$1"
 
     git_safe tag -l "${prefix}*" |
-    while read -r tag; do
-        local rest="${tag#$prefix}"
-        rest="${rest%%-*}"
-
-        if [[ "$rest" =~ ^[0-9]+$ ]]; then
-            echo "$rest"
-        fi
-    done |
-    sort -n |
+    grep -E "^${prefix}[0-9]+$" |
+    sort -V |
     tail -1
 }
 
@@ -84,24 +77,50 @@ is_head() {
     git_safe tag --points-at HEAD | grep -Fxq "$tag" || true
 }
 
-fetch_next_build_name_from_git_tag() {
+fetch_next_build_name() {
     local prefix="$1"
 
-    local vnum
-    vnum=$(get_latest_version "$prefix")
+    local git_v
+    local central_v
+    local latest
 
-    if [[ -z "$vnum" ]]; then
+    git_v=$(get_latest_version_from_git "$prefix" || true)
+    central_v=$(get_latest_version_from_central "$prefix" || true)
+
+    echo "Latest Git version     : ${git_v:-none}" >&2
+    echo "Latest Central version : ${central_v:-none}" >&2
+
+    latest=$(printf "%s\n%s\n" "$git_v" "$central_v" |
+    grep -E "^${prefix}[0-9]+$" |
+    sort -V |
+    tail -1)
+
+    if [[ -z "$latest" ]]; then
         echo "${prefix}1"
     else
-        echo "${prefix}$((vnum + 1))"
+        local num
+        num=$(echo "$latest" | sed "s/^${prefix}//")
+        echo "${prefix}$((num + 1))"
     fi
 }
+
+get_latest_version_from_central() {
+    local prefix="$1"
+
+    curl -fsSL \
+        "https://repo1.maven.org/maven2/org/activecomponents/jadex/jadex-v/maven-metadata.xml" |
+    sed -n 's:.*<version>\(.*\)</version>.*:\1:p' |
+    grep -E "^${prefix}[0-9]+$" |
+    sort -V |
+    tail -1
+}
+#echo "DEBUG before version calculation: JADEX_VERSION=${JADEX_VERSION:-unset}" >&2
 
 # ---------------------------------------------------------------------------
 # Compute version
 # ---------------------------------------------------------------------------
 if [ -z "${JADEX_VERSION:-}" ]; then
-    JADEX_VERSION="$(fetch_next_build_name_from_git_tag "$JADEX_VERSION_PREFIX" || true)"
+    JADEX_VERSION="$(fetch_next_build_name "$JADEX_VERSION_PREFIX" || true)"
 fi
 
 if [ -n "${JADEX_VERSION:-}" ]; then
