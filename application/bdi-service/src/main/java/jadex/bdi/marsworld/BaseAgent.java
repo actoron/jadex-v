@@ -15,7 +15,6 @@ import jadex.environment.Environment;
 import jadex.environment.SpaceObject;
 import jadex.environment.SpaceObjectsEvent;
 import jadex.environment.VisionEvent;
-import jadex.execution.IExecutionFeature;
 import jadex.injection.Val;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;

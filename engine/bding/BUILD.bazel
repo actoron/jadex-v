@@ -1,0 +1,41 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_binary")
+
+#load(":deps.bzl", "DEPS")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+    "//util/javaparser",
+    "//util/classreader",
+    "//util/bytecode",
+] #+ DEPS
+
+java_library(
+    name = "bding",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ALL_DEPS,
+)
+
+java_binary(
+    name = "start_main",
+    srcs = ["src/main/java/jadex/bding/Main.java"],
+    main_class = "jadex.bding.Main",
+    deps = [":bding"] + ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "bding_publish",
+    target = ":bding",
+    deps = ALL_DEPS,
+)
+
+

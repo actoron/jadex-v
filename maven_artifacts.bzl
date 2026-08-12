@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "JavaInfo")
+load("@rules_java//java/common:java_common.bzl", "java_common")
 load("//:deploy_config.bzl", "JADEX_VERSION")  # ← aus env.sh generiert
 
 POM_INFO = {
@@ -47,7 +48,7 @@ def _derive_artifact_name(ctx):
     return name
 
 def _derive_group(ctx):
-    #pkg = ctx.label.package         
+    #pkg = ctx.label.package
     #parts = pkg.split("/")
     #if len(parts) > 1:
     #    return "generated." + ".".join(parts[:-1])
@@ -70,7 +71,13 @@ def internal_dep_to_gav(label):
     }
 
 def path_to_gav(path):
-    """Maven-Jar-Pfad im Cache → GAV + optional classifier."""
+    """Maven-Jar-Pfad im Cache → GAV + optional classifier.
+
+    ACHTUNG: `path` kommt von File.path und kann unter Windows
+    Backslashes enthalten -> vor dem Parsen normalisieren.
+    """
+    path = path.replace("\\", "/")
+
     marker = "/maven2/"
     idx = path.find(marker)
     if idx < 0:
@@ -235,7 +242,7 @@ def generate_pom(ctx, java_info):
     return "\n".join(xml)
 
 # ---------------------------------------------------------------------------
-# Rule-Implementierung
+# Rule-Implementierung (portabel: kein run_shell / kein bash mehr nötig)
 # ---------------------------------------------------------------------------
 
 def _maven_publish_impl(ctx):
@@ -243,37 +250,39 @@ def _maven_publish_impl(ctx):
     name = _derive_artifact_name(ctx)
 
     # --- Sources JAR ---
-    sources = java_info.transitive_source_jars
+    # Statt manuell zu entpacken/neu zu packen (jar cf via bash) nutzen wir
+    # den eingebauten Helper. Der verwendet intern "singlejar", das Bazel
+    # für jede unterstützte Plattform (Linux/macOS/Windows) mitliefert.
     srcjar = ctx.actions.declare_file(name + "-sources.jar")
-    ctx.actions.run_shell(
-        inputs = sources,
-        outputs = [srcjar],
-        arguments = [srcjar.path] + [f.path for f in sources.to_list()],
-        command = """
-set -e
-OUT="$1"; shift
-tmp=$(mktemp -d)
-for f in "$@"; do cp "$f" "$tmp/"; done
-jar cf "$OUT" -C "$tmp" .
-rm -rf "$tmp"
-""",
+    java_common.pack_sources(
+        ctx.actions,
+        output_source_jar = srcjar,
+        source_jars = java_info.transitive_source_jars.to_list(),
+        java_toolchain = ctx.attr._java_toolchain[java_common.JavaToolchainInfo],
     )
 
-    # --- Javadoc Placeholder ---
+    # --- Javadoc Placeholder JAR ---
+    # Auch hier kein "jar cf" per Shell mehr, sondern der von Bazel
+    # mitgelieferte, plattformneutrale "zipper".
+    readme = ctx.actions.declare_file(name + "_javadoc_stub/README.txt")
+    ctx.actions.write(
+        output = readme,
+        content = "Placeholder — no Javadoc generated.\n",
+    )
+
     javadoc = ctx.actions.declare_file(name + "-javadoc.jar")
-    ctx.actions.run_shell(
+    args = ctx.actions.args()
+    args.add("c")
+    args.add(javadoc)
+    args.add("README.txt=" + readme.path)
+
+    ctx.actions.run(
         outputs = [javadoc],
-        arguments = [javadoc.path],
-        command = """
-set -e
-OUT="$1"
-tmp=$(mktemp -d)
-cat > "$tmp/README.txt" <<EOF
-Placeholder — no Javadoc generated.
-EOF
-jar cf "$OUT" -C "$tmp" .
-rm -rf "$tmp"
-""",
+        inputs = [readme],
+        executable = ctx.executable._zipper,
+        arguments = [args],
+        mnemonic = "JavadocPlaceholderJar",
+        progress_message = "Packing javadoc placeholder for %s" % name,
     )
 
     # --- POM ---
@@ -297,5 +306,14 @@ maven_publish_jars = rule(
         "deps": attr.label_list(    # ← explizit für POM-Deps
             providers = [JavaInfo],
         ),
+        "_java_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/jdk:current_java_toolchain"),
+        ),
+        "_zipper": attr.label(
+            default = Label("@bazel_tools//tools/zip:zipper"),
+            executable = True,
+            cfg = "exec",
+        ),
     },
+    toolchains = ["@bazel_tools//tools/jdk:toolchain_type"],
 )

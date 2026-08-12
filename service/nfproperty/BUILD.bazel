@@ -30,27 +30,28 @@ java_library(
     deps = ALL_DEPS,
 )
 
-#java_test(
-#    name = "nfproperty_test",
-#    srcs = glob(["src/test/java/**/*.java"]),
-#    main_class = "org.junit.platform.console.ConsoleLauncher",
-#    use_testrunner = False,
-#    args = [
-#        "--select-package", "jadex.providedservice",
-#        "--fail-if-no-tests",
-#    ],
-#    deps = [
-#        ":nfproperty",
-#        "@maven//:org_junit_jupiter_junit_jupiter_api",
-#        "@maven//:org_junit_platform_junit_platform_suite_api",
-#    ] + ALL_DEPS,
-#    runtime_deps = [
-#        "@maven//:org_junit_jupiter_junit_jupiter_engine",
-#        "@maven//:org_junit_platform_junit_platform_suite_engine",
-#        "@maven//:org_junit_platform_junit_platform_launcher",
-#        "@maven//:org_junit_platform_junit_platform_console",
-#    ],
-#)
+java_test(
+    name = "nfproperty_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.nfproperty",
+        "--fail-if-no-tests",
+        "--include-classname", ".*",
+    ],
+    deps = [
+        ":nfproperty",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + ALL_DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
 
 maven_publish_jars(
     name = "nfproperty_publish",

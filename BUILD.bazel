@@ -171,23 +171,19 @@ java_library(
     name = "feature_bundle",
     deps =
         select({
-            ":autostart": ["//features/autostart"],
+            ":autostart": ["//feature/autostart"],
             "//conditions:default": [],
         }) +
         select({
-            ":result": ["//features/result"],
+            ":result": ["//feature/result"],
             "//conditions:default": [],
         }) +
         select({
-            ":simulation": ["//features/simulation"],
+            ":simulation": ["//feature/simulation"],
             "//conditions:default": [],
         }) +
         select({
             ":llm": ["//feature/llm"],
-            "//conditions:default": [],
-        }) +
-        select({
-            ":micro": ["//engine/micro"],
             "//conditions:default": [],
         }) +
         select({
@@ -199,7 +195,11 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-            ":bpmn": ["//engine/bpmn"],
+            ":bt": ["//engine/core"],
+            "//conditions:default": [],
+        }) +
+        select({
+            ":bpmn": ["//engine/bpmn/engine"],
             "//conditions:default": [],
         }) +
         select({
@@ -219,23 +219,23 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-            ":service_provided": ["//service/service_provided"],
+            ":service_provided": ["//service/provided:providedservice"],
             "//conditions:default": [],
         }) +
         select({
-            ":service_required": ["//service/service_required"],
+            ":service_required": ["//service/required:requiredservice"],
             "//conditions:default": [],
         }) +
         select({
-            ":service_publish": ["//service/service_publish"],
+            ":service_publish": ["//service/publish:publishservice"],
             "//conditions:default": [],
         }) +
         select({
-            ":service_publish_jetty": ["//service/service_publish_jetty"],
+            ":service_publish_jetty": ["//service/publishjetty"],
             "//conditions:default": [],
         }) +
         select({
-            ":service_registry": ["//service/service_registry"],
+            ":service_registry": ["//service/registry"],
             "//conditions:default": [],
         }) +
         select({
@@ -243,11 +243,11 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-            ":application_bdi": ["//application/bdi"],
+            ":application_bdi": ["//application/bdi:application-bdi"],
             "//conditions:default": [],
         }) +
         select({
-            ":application_bt": ["//application/bt"],
+            ":application_bt": ["//application/bt:application-bt"],
             "//conditions:default": [],
         }) +
         select({

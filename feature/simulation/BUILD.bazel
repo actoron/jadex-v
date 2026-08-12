@@ -1,4 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
 load("//:maven_artifacts.bzl", "maven_publish_jars")
 
@@ -17,6 +17,31 @@ java_library(
     javacopts = ["-source", "21", "-target", "21"],
     deps = ALL_DEPS,
 )
+
+java_test(
+    name = "simulation_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.execution",
+        "--fail-if-no-tests",
+        "--include-classname", ".*",
+    ],
+    deps = [
+        ":simulation",
+        "//feature/execution:execution_fixtures",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + ALL_DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
 
 maven_publish_jars(
     name = "simulation_publish",
