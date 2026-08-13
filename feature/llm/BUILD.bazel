@@ -16,7 +16,7 @@ ALL_DEPS = [
     "//engine/core",
     "//feature/execution",
     "//feature/injection",
-    "//feature/simulation",
+    #"//feature/simulation",
     "//feature/monitoring/logbase",
     "//service/provided:providedservice",
     "//service/required:requiredservice",
