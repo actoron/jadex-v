@@ -24,6 +24,7 @@ import jadex.injection.impl.InjectionModel;
 
 public class BDINGAgentFeatureProvider extends ComponentFeatureProvider<IBDINGAgentFeature> implements IComponentLifecycleManager
 {
+
 	public BDINGAgentFeatureProvider()
 	{
 		super();

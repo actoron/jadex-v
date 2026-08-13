@@ -1,56 +1,40 @@
-#!/usr/bin/env python3
-"""
-generate_eclipse_projects.py
-
-Generates Eclipse-compatible .project / .classpath files for every
-java_library / java_test / java_binary Bazel package in a bzlmod
-(MODULE.bazel-based, Bazel 9) workspace, so the resulting folders can be
-opened directly in Eclipse *or* VS Code (via the "Language Support for
-Java" extension, which has a built-in importer for Eclipse-style
-projects) without either IDE needing to understand Bazel at all.
-
-WHY THIS WORKS RELIABLY
-------------------------
-We deliberately do NOT hand-parse BUILD files or deps.bazel with regex.
-Your deps.bazel computes DEPS via a Starlark helper (_maven_to_bazel),
-which only Bazel itself can evaluate correctly. Instead we ask Bazel:
-
-  1. `bazel query --output=xml` for every java_library/java_test/java_binary
-     target -> gives us the fully-resolved srcs/resources/deps/runtime_deps
-     lists (globs and macros already expanded).
-  2. `bazel cquery --output=starlark` (a single batched call) to resolve
-     every @maven//:... target to its real jar file path on disk.
-
-One Eclipse project is generated per Bazel *package* (directory), merging
-its java_library and java_test targets into one project (Eclipse doesn't
-usually need main/test split as separate projects for this use case).
-
-REGENERATION
-------------
-This is designed to be re-run any time BUILD files / deps.bazel / your
-maven artifact list changes. It always overwrites its own output, so
-regenerating is safe and expected -- see the AUTO-GENERATED header it
-writes into every file.
-
-USAGE
------
-    python3 generate_eclipse_projects.py [--workspace DIR] [--jdk 21]
-
-Then in Eclipse:  File > Import > General > Existing Projects into
-Workspace > select your repo root > it will find every generated project.
-
-In VS Code: just open the repo root folder (or add each project folder
-as a workspace folder); the Java extension auto-detects the Eclipse
-project files.
-"""
-
 import argparse
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+
+# Collects (label, seconds) for every timed phase / subprocess call so we
+# can print a "where did the time go" summary at the end of the run.
+_TIMINGS = []
+
+
+class timed:
+    """Context manager: prints start/end + duration for a named phase and
+    records it into _TIMINGS for the final summary table."""
+
+    def __init__(self, label):
+        self.label = label
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        print(f"  >> {self.label} ...", flush=True)
+        return self
+
+    def __exit__(self, *exc):
+        elapsed = time.perf_counter() - self.start
+        _TIMINGS.append((self.label, elapsed))
+        print(f"  << {self.label} -- {elapsed:.2f}s", flush=True)
+        return False
+
+
+def _short_cmd(cmd, maxlen=90):
+    s = " ".join(cmd)
+    return s if len(s) <= maxlen else s[:maxlen] + " ...[truncated]"
 
 # Bazel rule kinds we turn into Eclipse projects.
 SUPPORTED_KINDS = {"java_library", "java_test", "java_binary"}
@@ -80,22 +64,46 @@ GENERATED_DIRS = {
     "bin",
 }
 
+# Above this length we pass query expressions via --query_file instead
+# of as a raw command-line argument, to stay well clear of OS ARG_MAX
+# limits once hundreds of labels get concatenated into one set(...) expr.
+QUERY_FILE_THRESHOLD = 6000
+
+
 def run(cmd, cwd):
-    """Run a subprocess, raise with full stderr on failure."""
+    """Run a subprocess, raise with full stderr on failure. Every call is
+    timed and logged so slow bazel invocations show up immediately."""
+    start = time.perf_counter()
     proc = subprocess.run(
         cmd, cwd=cwd, capture_output=True, text=True
     )
+    elapsed = time.perf_counter() - start
+    _TIMINGS.append((f"subprocess: {_short_cmd(cmd)}", elapsed))
+    print(f"    [{elapsed:7.2f}s] {_short_cmd(cmd)}", flush=True)
+
     if proc.returncode != 0:
         sys.stderr.write(f"$ {' '.join(cmd)}\n")
         sys.stderr.write(proc.stderr)
         raise SystemExit(f"Command failed: {' '.join(cmd)}")
     return proc.stdout
 
-def clean_all_bin_dirs(workspace):
-    """Remove all bin directories from the workspace before Bazel queries."""
-    removed = []
 
-    print(f"  Scanning for bin directories under {workspace} ...", flush=True)
+def clean_workspace(workspace):
+    """
+    Single pass over the tree that removes both stale Eclipse project
+    metadata (.project/.classpath/.settings) and bin/ output
+    directories.
+
+    This used to be two separate os.walk passes (clean_generated_files
+    and clean_all_bin_dirs). Merging them into one halves the time
+    spent just scanning the filesystem before Bazel even runs.
+    """
+    removed_projects = 0
+    removed_classpaths = 0
+    removed_settings = 0
+    removed_bins = 0
+
+    print(f"  Scanning {workspace} for generated metadata and bin/ dirs ...", flush=True)
 
     for dirpath, dirnames, filenames in os.walk(workspace, topdown=True):
         # Never descend into Bazel/VCS trees.
@@ -105,22 +113,54 @@ def clean_all_bin_dirs(workspace):
             and not d.startswith("bazel-")
         ]
 
-        if "bin" not in dirnames:
-            continue
+        if ".project" in filenames:
+            path = os.path.join(dirpath, ".project")
+            print(f"  Removing {os.path.relpath(path, workspace)}", flush=True)
+            try:
+                os.remove(path)
+                removed_projects += 1
+            except OSError as e:
+                print(f"  WARNING: could not remove {path}: {e}")
 
-        bin_dir = os.path.join(dirpath, "bin")
-        print(f"  Removing {os.path.relpath(bin_dir, workspace)} ...", flush=True)
+        if ".classpath" in filenames:
+            path = os.path.join(dirpath, ".classpath")
+            print(f"  Removing {os.path.relpath(path, workspace)}", flush=True)
+            try:
+                os.remove(path)
+                removed_classpaths += 1
+            except OSError as e:
+                print(f"  WARNING: could not remove {path}: {e}")
 
-        try:
-            shutil.rmtree(bin_dir)
-            removed.append(bin_dir)
-        except OSError as e:
-            print(f"  WARNING: could not remove {bin_dir}: {e}", flush=True)
+        if ".settings" in dirnames:
+            path = os.path.join(dirpath, ".settings")
+            print(f"  Removing {os.path.relpath(path, workspace)}", flush=True)
+            try:
+                shutil.rmtree(path)
+                removed_settings += 1
+            except OSError as e:
+                print(f"  WARNING: could not remove {path}: {e}")
+            # Do not descend into the directory we just removed.
+            dirnames.remove(".settings")
 
-        # Do not descend into the directory we just removed.
-        dirnames.remove("bin")
+        if "bin" in dirnames:
+            bin_dir = os.path.join(dirpath, "bin")
+            print(f"  Removing {os.path.relpath(bin_dir, workspace)}", flush=True)
+            try:
+                shutil.rmtree(bin_dir)
+                removed_bins += 1
+            except OSError as e:
+                print(f"  WARNING: could not remove {bin_dir}: {e}")
+            # Do not descend into the directory we just removed.
+            dirnames.remove("bin")
 
-    return removed
+    print(
+        f"  Removed {removed_projects} .project file(s), "
+        f"{removed_classpaths} .classpath file(s), "
+        f"{removed_settings} .settings director{'y' if removed_settings == 1 else 'ies'}, "
+        f"{removed_bins} bin director{'y' if removed_bins == 1 else 'ies'}."
+    )
+
+    return removed_projects, removed_classpaths, removed_settings, removed_bins
 
 
 def bazel_info(key, workspace):
@@ -186,94 +226,272 @@ def guess_jdk_version(javacopts_lists, default_jdk):
                     best = max(best or 0, int(nxt))
     return best or default_jdk
 
+
+def _cquery_jars_raw(labels, workspace):
+    """Run ONE cquery over `labels` (as a set() expression) and return
+    (stdout, returncode, stderr) -- unlike the old version this does NOT
+    decide success/failure itself, so callers can inspect partial
+    results even when --keep_going produced exit code 3."""
+    label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
+    starlark_expr = (
+        "'%s\t%s' % (str(target.label), "
+        "','.join([f.path for f in target.files.to_list()]))"
+    )
+
+    cmd = ["bazel", "cquery"]
+    query_file = None
+
+    if len(label_set_expr) > QUERY_FILE_THRESHOLD:
+        with tempfile.NamedTemporaryFile("w", suffix=".query", delete=False) as f:
+            f.write(label_set_expr)
+            query_file = f.name
+        cmd += [f"--query_file={query_file}"]
+    else:
+        cmd += [label_set_expr]
+
+    # --keep_going: one target in the set having an analysis/config
+    # error must not abort the WHOLE query. Without this, bazel returns
+    # zero results for the entire batch the moment ANY single target in
+    # it is problematic -- which is exactly the "unreliable batching"
+    # behaviour that forced falling back to one-call-per-label before.
+    cmd += ["--output=starlark", "--starlark:expr", starlark_expr, "--keep_going"]
+
+    start = time.perf_counter()
+    try:
+        proc = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True)
+    finally:
+        if query_file:
+            os.unlink(query_file)
+    elapsed = time.perf_counter() - start
+    _TIMINGS.append((f"cquery ({len(labels)} label(s)): {_short_cmd(cmd)}", elapsed))
+    print(
+        f"    [{elapsed:7.2f}s] cquery for {len(labels)} label(s) "
+        f"(exit {proc.returncode})",
+        flush=True,
+    )
+
+    return proc.stdout, proc.returncode, proc.stderr
+
+
+def _resolve_chunk(labels, workspace, execroot, depth=0):
+    """
+    Resolve a batch of maven labels via cquery, recursively bisecting
+    whatever's still missing after each attempt.
+
+    Rationale: if a batched cquery over N labels fails/partially fails
+    because of ONE incompatible label somewhere in the set, splitting
+    the *missing* labels in half and retrying isolates the actual bad
+    apple within a handful of extra calls -- instead of giving up on
+    batching altogether and paying one full bazel invocation (~1s+)
+    for every single one of the (likely hundreds of) labels that would
+    have resolved together just fine.
+    """
+    if not labels:
+        return {}
+
+    stdout, returncode, stderr = _cquery_jars_raw(labels, workspace)
+    jars = _parse_cquery_jar_output(stdout, execroot, labels)
+
+    if returncode not in (0, 3) and not jars:
+        first_err_line = next((l for l in stderr.splitlines() if l.strip()), "")
+        print(f"    NOTE: cquery hard-failed for {len(labels)} label(s): {first_err_line}")
+
+    missing = [l for l in labels if l not in jars]
+
+    if not missing or len(labels) == 1:
+        return jars
+
+    # Stop subdividing once chunks get small: each bisection level costs
+    # its own bazel call, so past this point it's cheaper to just let
+    # resolve_maven_jars's final individual-fallback pass mop them up.
+    if depth >= 5 or len(labels) <= 3:
+        return jars
+
+    mid = len(missing) // 2
+    jars.update(_resolve_chunk(missing[:mid], workspace, execroot, depth + 1))
+    jars.update(_resolve_chunk(missing[mid:], workspace, execroot, depth + 1))
+    return jars
+
+
+def _target_name(label):
+    """Target-name portion of a label (after the last ':'). Used to
+    correlate cquery results back to the labels we asked for: under
+    bzlmod, `str(target.label)` in --output=starlark returns the
+    *canonical* repo-mapped form (e.g. '@@rules_jvm_external+...+
+    maven//:foo') which does NOT string-match the '@maven//:foo' we
+    requested -- the target-name suffix is the one part guaranteed to
+    stay identical."""
+    return label.rsplit(":", 1)[-1]
+
+
+def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
+    """Parse the '<label>\\t<paths>' lines from _cquery_jars_raw into
+    {label: {"jar": ..., "srcjar": ...}}.
+
+    If `requested_labels` is given, results are keyed by the ORIGINAL
+    requested label (matched via target name) instead of whatever form
+    bazel echoed back. Without this, every `label in jars` lookup
+    downstream silently fails under bzlmod's canonical repo names, and
+    every batch looks like a total miss even though bazel resolved
+    everything correctly -- which is exactly what was forcing the
+    bisection all the way down on every single chunk.
+    """
+    name_to_label = {}
+    if requested_labels:
+        for l in requested_labels:
+            name_to_label[_target_name(l)] = l
+
+    jars = {}
+
+    for line in stdout.splitlines():
+        line = line.strip()
+
+        if not line or "\t" not in line:
+            continue
+
+        resolved_label, paths = line.split("\t", 1)
+        key = name_to_label.get(_target_name(resolved_label), resolved_label)
+
+        for rel_path in paths.split(","):
+            rel_path = rel_path.strip()
+
+            if not rel_path.endswith(".jar"):
+                continue
+
+            abs_path = os.path.normpath(os.path.join(execroot, rel_path))
+
+            if not os.path.isfile(abs_path):
+                continue
+
+            src_path = None
+            candidate = abs_path[:-4] + "-sources.jar"
+
+            if os.path.isfile(candidate):
+                src_path = candidate
+
+            jars[key] = {"jar": abs_path, "srcjar": src_path}
+            break
+
+    return jars
+
+
+MAVEN_CHUNK_SIZE = 60
+
+
 def resolve_maven_jars(maven_labels, workspace):
     """
     Resolve @maven//:... labels to actual JAR files.
 
-    Each Maven target is queried individually because batched cquery
-    with set(...) does not reliably return the outputs with the current
-    Bazel/rules_jvm_external setup.
+    Labels are resolved in chunks (MAVEN_CHUNK_SIZE each) via cquery,
+    with automatic recursive bisection of whatever a chunk doesn't
+    resolve (see _resolve_chunk). This means one bad/incompatible
+    target no longer forces one-bazel-call-per-label for everything --
+    only the actual problem labels end up being queried individually,
+    while the bulk resolves together in a handful of batched calls.
     """
     if not maven_labels:
         return {}
 
     execroot = bazel_info("execution_root", workspace)
+    labels_sorted = sorted(maven_labels)
     jars = {}
 
-    print(
-        f"  Resolving {len(maven_labels)} Maven dependency target(s) ..."
-    )
+    chunks = [
+        labels_sorted[i:i + MAVEN_CHUNK_SIZE]
+        for i in range(0, len(labels_sorted), MAVEN_CHUNK_SIZE)
+    ]
 
-    for index, label in enumerate(sorted(maven_labels), 1):
-        print(f"  [{index}/{len(maven_labels)}] {label}")
+    with timed(
+        f"chunked+bisecting cquery for {len(labels_sorted)} maven label(s) "
+        f"({len(chunks)} chunk(s) of up to {MAVEN_CHUNK_SIZE})"
+    ):
+        for i, chunk in enumerate(chunks, 1):
+            print(f"  chunk {i}/{len(chunks)}: {len(chunk)} label(s)")
+            jars.update(_resolve_chunk(chunk, workspace, execroot))
 
-        proc = subprocess.run(
-            [
-                "bazel",
-                "cquery",
-                label,
-                "--output=starlark",
-                "--starlark:expr",
-                "'%s\t%s' % (str(target.label), ','.join([f.path for f in target.files.to_list()]))",
-            ],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-        )
+    missing = [l for l in labels_sorted if l not in jars]
 
-        if proc.returncode != 0:
-            sys.stderr.write(proc.stdout)
-            sys.stderr.write(proc.stderr)
-            print(f"    WARNING: cquery failed for {label}")
-            continue
-
-        for line in proc.stdout.splitlines():
-            line = line.strip()
-
-            if not line or "\t" not in line:
-                continue
-
-            resolved_label, paths = line.split("\t", 1)
-
-            for rel_path in paths.split(","):
-                rel_path = rel_path.strip()
-
-                if not rel_path.endswith(".jar"):
-                    continue
-
-                abs_path = os.path.normpath(
-                    os.path.join(execroot, rel_path)
-                )
-
-                if not os.path.isfile(abs_path):
-                    continue
-
-                src_path = None
-                candidate = abs_path[:-4] + "-sources.jar"
-
-                if os.path.isfile(candidate):
-                    src_path = candidate
-
-                jars[label] = {
-                    "jar": abs_path,
-                    "srcjar": src_path,
-                }
-
-                break
-
-            if label in jars:
-                break
+    if missing:
+        with timed(
+            f"final straggler retries ({len(missing)} label(s), one bazel call EACH)"
+        ):
+            for index, label in enumerate(missing, 1):
+                print(f"  [{index}/{len(missing)}] {label}")
+                single_stdout, _, _ = _cquery_jars_raw([label], workspace)
+                jars.update(_parse_cquery_jar_output(single_stdout, execroot, [label]))
 
     print(
-        f"  Resolved {len(jars)}/{len(maven_labels)} "
+        f"  Resolved {len(jars)}/{len(labels_sorted)} "
         "Maven dependency target(s)."
     )
 
-    for label in sorted(maven_labels):
+    for label in labels_sorted:
         if label not in jars:
             print(f"  WARNING: could not resolve Maven JAR: {label}")
 
     return jars
+
+
+def query_transitive_deps_all(workspace, labels):
+    """
+    Compute the combined transitive dependency graph for every given
+    label in a SINGLE bazel query, instead of one `bazel query
+    deps(label)` per target (which used to mean one full bazel process
+    start -- analysis included -- per java_library/java_test/
+    java_binary in the repo).
+
+    bazel's --output=xml format includes, for every rule node reached
+    by the query, its direct dependency edges as <rule-input>
+    elements. So one `deps(set(all_targets))` query gives us every
+    edge we need in one shot; per-target transitive closures are then
+    computed locally in Python via a plain BFS/DFS over that graph,
+    which is essentially free compared to a bazel invocation.
+    """
+    label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
+    expr = f"deps({label_set_expr})"
+
+    cmd = ["bazel", "query"]
+    query_file = None
+
+    if len(expr) > QUERY_FILE_THRESHOLD:
+        with tempfile.NamedTemporaryFile("w", suffix=".query", delete=False) as f:
+            f.write(expr)
+            query_file = f.name
+        cmd += [f"--query_file={query_file}", "--output=xml", "--noimplicit_deps"]
+    else:
+        cmd += [expr, "--output=xml", "--noimplicit_deps"]
+
+    try:
+        xml_text = run(cmd, cwd=workspace)
+    finally:
+        if query_file:
+            os.unlink(query_file)
+
+    root = ET.fromstring(xml_text)
+    graph = defaultdict(set)
+
+    for rule in root.findall("rule"):
+        name = rule.get("name")
+        for ri in rule.findall("rule-input"):
+            graph[name].add(ri.get("name"))
+
+    return graph
+
+
+def transitive_closure(graph, start):
+    """Plain BFS over the pre-fetched dependency graph -- no subprocess calls."""
+    seen = set()
+    stack = [start]
+
+    while stack:
+        cur = stack.pop()
+        for dep in graph.get(cur, ()):
+            if dep not in seen:
+                seen.add(dep)
+                stack.append(dep)
+
+    return seen
+
 
 def build_project_models(rules, workspace):
     """Build Eclipse project models from Bazel rules."""
@@ -307,52 +525,41 @@ def build_project_models(rules, workspace):
                 elif not dep.startswith("//"):
                     model["other_deps"].add(dep)
 
-    # Now resolve the complete transitive dependency closure.
-    for rule in rules:
-        pkg = label_package(rule["name"])
-        model = projects[pkg]
+    # Now resolve the complete transitive dependency closure -- for
+    # ALL rules at once, via a single bazel query.
+    all_labels = [rule["name"] for rule in rules]
 
-        deps = query_transitive_deps(workspace, rule["name"])
+    with timed(f"bazel deps() query for {len(all_labels)} target(s)"):
+        dep_graph = query_transitive_deps_all(workspace, all_labels)
 
-        for dep in deps:
-            # Maven dependencies must also be included transitively.
-            # This is important for JDT because the generated .classpath
-            # must contain the complete compile classpath, not only the
-            # direct Maven dependencies declared in BUILD.bazel.
-            if dep.startswith("@maven//"):
-                model["maven_deps"].add(dep)
-                continue
+    print(f"  Dependency graph has {len(dep_graph)} node(s) with outgoing edges.")
 
-            dep_pkg = target_to_pkg.get(dep)
+    with timed(f"local BFS closure for {len(rules)} rule(s)"):
+        for rule in rules:
+            pkg = label_package(rule["name"])
+            model = projects[pkg]
 
-            if dep_pkg is None:
-                continue
+            deps = transitive_closure(dep_graph, rule["name"])
 
-            if dep_pkg != pkg:
-                model["internal_deps"].add(dep_pkg)
+            for dep in deps:
+                # Maven dependencies must also be included transitively.
+                # This is important for JDT because the generated .classpath
+                # must contain the complete compile classpath, not only the
+                # direct Maven dependencies declared in BUILD.bazel.
+                if dep.startswith("@maven//"):
+                    model["maven_deps"].add(dep)
+                    continue
+
+                dep_pkg = target_to_pkg.get(dep)
+
+                if dep_pkg is None:
+                    continue
+
+                if dep_pkg != pkg:
+                    model["internal_deps"].add(dep_pkg)
 
     return projects
 
-def query_transitive_deps(workspace, label):
-    """
-    Return all Bazel targets transitively reachable from label.
-    """
-    output = run(
-        [
-            "bazel",
-            "query",
-            f"deps({label})",
-            "--output=label",
-            "--noimplicit_deps",
-        ],
-        cwd=workspace,
-    )
-
-    return {
-        line.strip()
-        for line in output.splitlines()
-        if line.strip()
-    }
 
 def build_target_to_java_package(rules):
     """
@@ -571,6 +778,7 @@ def write_classpath_file(
 
     return missing
 
+
 def write_jdt_prefs(pkg_dir, jdk):
     settings_dir = os.path.join(pkg_dir, ".settings")
     os.makedirs(settings_dir, exist_ok=True)
@@ -582,69 +790,6 @@ org.eclipse.jdt.core.compiler.source={jdk}
 """
     with open(os.path.join(settings_dir, "org.eclipse.jdt.core.prefs"), "w") as f:
         f.write(content)
-
-
-def clean_generated_files(workspace):
-    """Delete all Eclipse/JDT project metadata from the workspace.
-
-    This workspace is fully managed by generate_eclipse_projects.py.
-    Therefore all .project, .classpath and .settings directories are
-    considered generated/stale metadata and are removed before regeneration.
-    """
-    removed_projects = 0
-    removed_classpaths = 0
-    removed_settings = 0
-
-    for dirpath, dirnames, filenames in os.walk(workspace, topdown=True):
-        # Never descend into Bazel/VCS/build trees.
-        dirnames[:] = [
-            d for d in dirnames
-            if d not in (
-                ".git",
-                "bazel-out",
-                "bazel-bin",
-                "bazel-testlogs",
-            )
-            and not d.startswith("bazel-")
-        ]
-
-        if ".project" in filenames:
-            path = os.path.join(dirpath, ".project")
-            print(f"  Removing {os.path.relpath(path, workspace)}")
-            try:
-                os.remove(path)
-                removed_projects += 1
-            except OSError as e:
-                print(f"  WARNING: could not remove {path}: {e}")
-
-        if ".classpath" in filenames:
-            path = os.path.join(dirpath, ".classpath")
-            print(f"  Removing {os.path.relpath(path, workspace)}")
-            try:
-                os.remove(path)
-                removed_classpaths += 1
-            except OSError as e:
-                print(f"  WARNING: could not remove {path}: {e}")
-
-        if ".settings" in dirnames:
-            path = os.path.join(dirpath, ".settings")
-            print(f"  Removing {os.path.relpath(path, workspace)}")
-            try:
-                shutil.rmtree(path)
-                removed_settings += 1
-            except OSError as e:
-                print(f"  WARNING: could not remove {path}: {e}")
-
-            # Do not descend into the directory we just removed.
-            dirnames.remove(".settings")
-
-    print(
-        f"  Removed {removed_projects} .project file(s), "
-        f"{removed_classpaths} .classpath file(s), "
-        f"{removed_settings} .settings director{'y' if removed_settings == 1 else 'ies'}."
-    )
-
-    return removed_projects, removed_classpaths, removed_settings
 
 
 def find_project_dirs(workspace):
@@ -699,6 +844,7 @@ def prune_nested_projects(workspace):
 
     return removed, foreign_conflicts
 
+
 def existing_src_dirs(workspace, pkg_path):
     """Return all conventional source/resource directories that exist."""
     found = []
@@ -709,6 +855,39 @@ def existing_src_dirs(workspace, pkg_path):
             found.append(candidate)
 
     return found
+
+
+def _print_timing_summary(run_start):
+    """Print a 'where did the time go' table: the slowest individual
+    phases/subprocess calls first, plus the grand total wall time."""
+    total = time.perf_counter() - run_start
+
+    print("\n" + "=" * 72)
+    print("TIMING SUMMARY (slowest first)")
+    print("=" * 72)
+
+    if not _TIMINGS:
+        print("  (no timed operations recorded)")
+    else:
+        for label, elapsed in sorted(_TIMINGS, key=lambda t: -t[1])[:25]:
+            pct = (elapsed / total * 100) if total else 0
+            print(f"  {elapsed:8.2f}s  ({pct:5.1f}%)  {label}")
+
+        # Break subprocess calls out separately since a single "phase"
+        # (e.g. resolve maven jars) can be made up of dozens of them --
+        # this shows whether the time is one slow bazel call or many
+        # small ones (i.e. still-too-many-invocations).
+        subproc_time = sum(e for l, e in _TIMINGS if l.startswith(("subprocess:", "cquery")))
+        subproc_count = sum(1 for l, e in _TIMINGS if l.startswith(("subprocess:", "cquery")))
+        if subproc_count:
+            print(
+                f"\n  Total: {subproc_count} bazel subprocess call(s) "
+                f"took {subproc_time:.2f}s combined "
+                f"({subproc_time / total * 100 if total else 0:.1f}% of total)."
+            )
+
+    print(f"\n  TOTAL WALL TIME: {total:.2f}s")
+    print("=" * 72)
 
 
 def main():
@@ -725,22 +904,21 @@ def main():
     if shutil.which("bazel") is None:
         raise SystemExit("bazel not found on PATH")
 
-    if not args.dry_run:
-        print("Removing all previously auto-generated project files (full clean rebuild) ...")
-        removed = clean_generated_files(workspace)
-        print(f"  Removed {len(removed)} previously generated project(s).")
+    run_start = time.perf_counter()
 
     if not args.dry_run:
-        print("Removing all bin directories from workspace ...")
-        removed_bins = clean_all_bin_dirs(workspace)
-        print(f"  Removed {len(removed_bins)} bin director{'y' if len(removed_bins) == 1 else 'ies'}.")
+        with timed("clean workspace (metadata + bin/ dirs)"):
+            clean_workspace(workspace)
 
-    print("Querying Bazel for all java_library/java_test/java_binary targets ...")
-    rules = query_all_java_rules(workspace)
+    with timed("bazel query: enumerate java_* targets"):
+        rules = query_all_java_rules(workspace)
+    print(f"  Found {len(rules)} target(s).")
+
     if not rules:
         raise SystemExit("No matching Java targets found -- nothing to generate")
 
-    projects = build_project_models(rules, workspace)
+    with timed("build project models (deps graph + Maven dep collection)"):
+        projects = build_project_models(rules, workspace)
 
     # Eclipse does not support nested projects by default: a project's
     # folder cannot contain another project's folder. If one Bazel
@@ -774,17 +952,8 @@ def main():
     for model in projects.values():
         all_maven_labels |= model["maven_deps"]
 
-    print(
-        f"Resolving {len(all_maven_labels)} Maven dependency target(s) "
-        "via a single batched cquery ..."
-    )
-
-    maven_jars = resolve_maven_jars(all_maven_labels, workspace)
-
-    print(
-        f"  Resolved {len(maven_jars)}/{len(all_maven_labels)} "
-        "Maven dependency target(s)."
-    )
+    with timed(f"resolve {len(all_maven_labels)} maven jar(s)"):
+        maven_jars = resolve_maven_jars(all_maven_labels, workspace)
 
     for label in sorted(all_maven_labels):
         info = maven_jars.get(label)
@@ -801,31 +970,33 @@ def main():
     generated = 0
     all_missing = defaultdict(list)
 
-    for pkg_path, model in sorted(projects.items()):
-        project_name = project_name_for_package(pkg_path)
-        pkg_dir = os.path.join(workspace, pkg_path)
-        src_dirs = existing_src_dirs(workspace, pkg_path)
-        jdk = guess_jdk_version(model["javacopts"], args.jdk)
+    with timed(f"write {len(projects)} project(s) to disk (.project/.classpath/.settings)"):
+        for pkg_path, model in sorted(projects.items()):
+            project_name = project_name_for_package(pkg_path)
+            pkg_dir = os.path.join(workspace, pkg_path)
+            src_dirs = existing_src_dirs(workspace, pkg_path)
+            jdk = guess_jdk_version(model["javacopts"], args.jdk)
 
-        if model["other_deps"]:
-            print(f"  [{project_name}] skipping non-maven external dep(s): {sorted(model['other_deps'])}")
+            if model["other_deps"]:
+                print(f"  [{project_name}] skipping non-maven external dep(s): {sorted(model['other_deps'])}")
 
-        if args.dry_run:
-            print(f"  would generate: {project_name}  (srcs={src_dirs}, "
-                  f"internal_deps={len(model['internal_deps'])}, maven_deps={len(model['maven_deps'])})")
-            continue
+            if args.dry_run:
+                print(f"  would generate: {project_name}  (srcs={src_dirs}, "
+                      f"internal_deps={len(model['internal_deps'])}, maven_deps={len(model['maven_deps'])})")
+                continue
 
-        write_project_file(pkg_dir, project_name, model["internal_deps"])
-        missing = write_classpath_file(
-            pkg_dir, src_dirs, model["internal_deps"], model["maven_deps"], maven_jars, jdk
-        )
-        write_jdt_prefs(pkg_dir, jdk)
-        if missing:
-            all_missing[project_name] = missing
-        generated += 1
+            write_project_file(pkg_dir, project_name, model["internal_deps"])
+            missing = write_classpath_file(
+                pkg_dir, src_dirs, model["internal_deps"], model["maven_deps"], maven_jars, jdk
+            )
+            write_jdt_prefs(pkg_dir, jdk)
+            if missing:
+                all_missing[project_name] = missing
+            generated += 1
 
     if args.dry_run:
         print(f"\nDry run: {len(projects)} project(s) would be generated.")
+        _print_timing_summary(run_start)
         return
 
     print(f"\nGenerated {generated} Eclipse project(s) under {workspace}")
@@ -842,6 +1013,8 @@ def main():
         "           the Java extension's Eclipse-project importer will pick them up automatically.\n"
         "  Re-run this script any time BUILD files / deps.bazel / maven artifacts change."
     )
+
+    _print_timing_summary(run_start)
 
     """print("\nScanning the full tree for nested project conflicts (Eclipse doesn't allow nested projects) ...")
     removed, foreign_conflicts = prune_nested_projects(workspace)
@@ -860,6 +1033,7 @@ def main():
     if not removed and not foreign_conflicts:
         print("  No nesting conflicts found.")
     """
+
 
 if __name__ == "__main__":
     main()

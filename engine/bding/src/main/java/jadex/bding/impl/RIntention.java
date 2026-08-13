@@ -1,4 +1,5 @@
 package jadex.bding.impl;
+import jadex.future.Future;
 import jadex.future.IFuture;
 import java.util.Set;
 
@@ -27,8 +28,10 @@ public class RIntention
         this.component = component;
     }
 
-    public void execute()
+    public IFuture<Void> execute()
     {
+        Future<Void> ret = new Future<>();
+
         IReasoner reasoner = getComponent().getFeature(IBDINGAgentFeature.class).getReasoner();
 
         //Set<Plan> plans = reasoner.generatePlans(this).get();
@@ -37,9 +40,17 @@ public class RIntention
 
         Plan plan = reasoner.generatePlan(goal).get();
 
-        RPlan rplan = new RPlan(plan, getComponent());
-        
-        rplan.execute();
+        if(plan==null)
+        {
+            ret.setException(new RuntimeException("No plan could be generated for intention"));
+        }
+        else
+        {
+            RPlan rplan = new RPlan(plan, getComponent());
+            rplan.execute();
+        }
+
+        return ret;
     }
 
     public RPlan getPlan() 

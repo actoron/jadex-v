@@ -23,7 +23,10 @@ public class TestFeatureStart
 		protected void onStart(IComponent agent)
 		{
 			//System.out.println("Created dynamic autostart agent: " + agent.getId());
-			latch.countDown();
+            if(latch==null) // can happen in IDE with 'wrong' classpath
+                agent.terminate();
+            else
+			    latch.countDown();
 		}
 	}
 	
