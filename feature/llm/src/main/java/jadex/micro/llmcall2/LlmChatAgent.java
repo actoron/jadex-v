@@ -76,6 +76,18 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	/** Initial prompt for the agent, if any. */
 	String	prompt;
 	
+	String systemprompt = """
+		# Role
+		You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.
+		## Instructions
+		1. Execute tools directly without asking the user for confirmation or missing information.
+		2. Analyze tool replies carefully for results or exceptions before stopping or further planning. 
+		3. Do not stop when a tool call leads to an exception. Instead call the tool with adjusted arguments or call a different tool.
+		4. For missing information, take arbitrary decisions yourself and do not ask the user.
+		5. Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.
+		6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.
+		""";
+
 	/** Initial images for the agent, if any. */
 	RenderedImage[]	images;
 	
@@ -141,6 +153,27 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		this.prompt = prompt;
 		this.images = images;
 	}
+
+	/**
+	 *  Create agent with initial prompt and optional images.
+	 *  When prompt is not null, the agent will terminate when the task is complete.
+	 *  Useful for executing one-shot tasks with {@link IComponentManager#runAsync}.
+	 */
+	public LlmChatAgent(StreamingChatModel llm, String prompt, String systemprompt, RenderedImage... images)
+	{
+		this(llm);
+		this.prompt = prompt;
+		if(systemprompt!=null)
+			this.systemprompt = systemprompt;
+		this.images = images;
+	}
+
+	public LlmChatAgent setSystemPrompt(String systemprompt)
+	{
+		this.systemprompt = systemprompt;
+		return this;
+	}
+
 	
 	//-------- Callable interface --------
 	
@@ -237,17 +270,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	protected void clearHistory()
 	{
 		messages.clear();		
-		messages.add(SystemMessage.from(
-			"# Role\n"
-			+ "You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.\n"
-			+ "## Instructions\n"
-			+ "1. Execute tools directly without asking the user for confirmation or missing information.\n"
-			+ "2. Analyze tool replies carefully for results or exceptions before stopping or further planning. \n"
-			+ "3. Do not stop when a tool call leads to an exception. Instead call the tool with adjusted arguments or call a different tool.\n"
-			+ "4. For missing information, take arbitrary decisions yourself and do not ask the user.\n"
-			+ "5. Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.\n"
-			+ "6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.\n"
-		));
+		messages.add(SystemMessage.from(systemprompt));
 	}
 	
 	/**

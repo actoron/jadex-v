@@ -5,11 +5,12 @@ public class Intention
     protected String name;
     protected String description;
 
-    protected Goal goal; //applicable for goal
+    //protected Goal goal; //applicable for goal
     
-    public Intention(String name)
+    public Intention(String name, String description)
     {
         this.name = name;
+        this.description = description;
     }
 
     public String getName() 
@@ -34,7 +35,13 @@ public class Intention
         return this;
     }
 
-    public Goal getGoal() 
+    @Override
+    public String toString() 
+    {
+        return "Intention [name=" + name + ", description=" + description + "]";
+    }
+
+    /*public Goal getGoal() 
     {
         return goal;
     }
@@ -43,6 +50,7 @@ public class Intention
     {
         this.goal = goal;
         return this;
-    }
+    }*/
+    
     
 }

@@ -1,35 +1,13 @@
 package jadex.bding.impl;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
+import java.lang.reflect.Field;
 
+import jadex.bding.Goal;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IReasoner;
-import jadex.bding.Intention;
-import jadex.bding.impl.BDINGAgent;
-import jadex.bding.Goal;
-import jadex.bding.impl.RGoal;
-import jadex.bding.impl.RIntention;
-import jadex.core.IChangeListener;
+import jadex.bding.annotation.Reasoner;
 import jadex.core.impl.ILifecycle;
-import jadex.execution.IExecutionFeature;
-import jadex.execution.impl.IInternalExecutionFeature;
 import jadex.future.ITerminableFuture;
-import jadex.injection.IInjectionFeature;
-import jadex.injection.impl.IValueFetcherCreator;
-import jadex.injection.impl.InjectionFeature;
-
-import jadex.bding.Plan;
-import jadex.future.IFuture;
-import jadex.future.Future;
 
 
 public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
@@ -45,37 +23,62 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 	public BDINGAgentFeature(BDINGAgent self)
 	{
 		this.self	= self;
-		this.reasoner = new IReasoner()
+		this.reasoner = initReasoner();
+	}
+
+	protected IReasoner initReasoner()
+	{
+		IReasoner ret = null;
+
+		Field rfield = null;
+
+		Object pojo = self.getPojo();
+
+		Class<?> clazz = pojo.getClass();
+
+		while(clazz != null && clazz != Object.class)
 		{
-			@Override
-			public IFuture<Set<Intention>> generateIntentions(RGoal goal)
+			for(Field field : clazz.getDeclaredFields())
 			{
-				return new Future<Set<Intention>>(Collections.emptySet());
+				if(field.isAnnotationPresent(Reasoner.class))
+				{
+					if(rfield != null)
+						throw new RuntimeException("Multiple @Reasoner fields found in "+pojo.getClass().getName());
+
+					field.setAccessible(true);
+					rfield = field;
+				}
 			}
 
-			@Override
-			public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions)
-			{
-				return new Future<Intention>((Intention)null);
-			}
+			clazz = clazz.getSuperclass();
+		}
 
-			@Override
-			public IFuture<Plan> generatePlan(RGoal goal)
+		if(rfield == null)
+		{
+			// Default reasoner
+			ret = new LlmReasoner();
+		}
+		else
+		{
+			try
 			{
-				return new Future<Plan>((Plan)null);
-			}
+				ret = (IReasoner)rfield.get(pojo);
 
-			public IFuture<Boolean> equals(String str1, String str2)
+				if(ret == null)
+					throw new RuntimeException("@Reasoner field is null: "+rfield);
+			}
+			catch(IllegalAccessException e)
 			{
-				return new Future<Boolean>(str1.equals(str2));
+				throw new RuntimeException("Could not access @Reasoner field", e);
 			}
+		}
 
-		};
+		return ret;
 	}
 
 	public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal)
 	{
-		final RGoal rgoal = new RGoal(goal, null, self);
+		final RGoal rgoal = new RGoal(goal, self);
 		
 		rgoal.adopt();
 		

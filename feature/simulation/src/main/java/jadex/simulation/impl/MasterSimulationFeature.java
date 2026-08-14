@@ -52,6 +52,8 @@ public class MasterSimulationFeature	extends ExecutionFeature	implements ISimula
 	public MasterSimulationFeature()
 	{
 		super(new Component(null, null, null));
+
+		System.out.println("MasterSimulationFeature created");
 	}
 	
 	public void scheduleStep(ExecutionFeature exe, Runnable r)

@@ -22,9 +22,10 @@ public class Goal
 
     protected Importance importance;
 
-    public Goal(String name)
+    public Goal(String name, String description)
     {
         this.name = name;
+        this.description = description;
     }
 
     public String getName() 
@@ -102,5 +103,11 @@ public class Goal
     {
         this.importance = importance;
         return this;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "Goal [name=" + name + ", description=" + description + "]";
     }
 }

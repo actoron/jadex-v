@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -346,18 +347,19 @@ public class LlmHelper
 	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
 	{
-		OllamaStreamingChatModelBuilder	llm	= OllamaStreamingChatModel.builder()
+		Map<String, String> headers = new HashMap<>();
+
+		String apiKey = System.getenv("OLLAMA_API_KEY");
+		if(apiKey != null && !apiKey.isBlank())
+			headers.put("X-API-Key", apiKey);
+
+		return OllamaStreamingChatModel.builder()
 			.baseUrl(baseurl)
+			.customHeaders(headers)
 			.modelName(model)
-//			.temperature(0.0)
-//			.logRequests(true)
-//			.logResponses(true)
-			// If there is thinking -> always use it.
-			.returnThinking(true);
-			
-		if(think!=null)
-			llm.think(think);
-		return llm.build();
+			.think(think)
+			.returnThinking(true)
+			.build();
 	}
 	
 	protected static List<String>	fetchGeminiModels()
@@ -496,5 +498,21 @@ public class LlmHelper
 			throw new RuntimeException("Failed to encode component image as JPEG.", e);
 		}
 
+	}
+
+	public static String cleanJsonResponse(String text)
+	{
+		text = text.trim();
+
+		if(text.startsWith("```"))
+		{
+			int newline = text.indexOf('\n');
+			int closing = text.lastIndexOf("```");
+
+			if(newline >= 0 && closing > newline)
+				text = text.substring(newline + 1, closing).trim();
+		}
+
+		return text;
 	}
 }

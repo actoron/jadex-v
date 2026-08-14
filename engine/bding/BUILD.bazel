@@ -1,6 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_library", "java_test", "java_binary")
 
-#load(":deps.bzl", "DEPS")
+load(":deps.bzl", "DEPS")
 
 load("//:maven_artifacts.bzl", "maven_publish_jars")
 
@@ -11,10 +11,13 @@ ALL_DEPS = [
     "//engine/core",
     "//feature/execution",
     "//feature/injection",
+    "//service/provided:providedservice",
+    "//service/required:requiredservice",
     "//util/javaparser",
     "//util/classreader",
     "//util/bytecode",
-] #+ DEPS
+    "//feature/llm",
+] + DEPS
 
 java_library(
     name = "bding",

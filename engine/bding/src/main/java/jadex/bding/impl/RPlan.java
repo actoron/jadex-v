@@ -2,6 +2,7 @@ package jadex.bding.impl;
 
 import jadex.bding.Plan;
 import jadex.core.IComponent;
+import jadex.future.Future;
 import jadex.future.IFuture;
 
 public class RPlan 
@@ -18,10 +19,20 @@ public class RPlan
 
     public IFuture<Void> execute()
     {
-        // todo: execute plan body with parameters
-        getPlan().getBody().execute(getComponent(), null);
+        Future<Void> ret = new Future<>();
 
-        return null;
+        // todo: execute plan body with parameters
+        getPlan().getBody().execute(getComponent(), null).then(res ->
+        {
+            System.out.println("plan execution led to: "+res);
+
+            // todo: update beliefs with results
+
+            ret.setResult(null);
+
+        }).catchEx(ret);
+
+        return ret;
     }
 
     public Plan getPlan() 

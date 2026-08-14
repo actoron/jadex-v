@@ -9,9 +9,10 @@ public class Plan
 
     protected IPlanBody body;
     
-    public Plan(String name, Intention intention)
+    public Plan(String name, String desciption, Intention intention)
     {
         this.name = name;
+        this.description = desciption;
         this.intention = intention;
     }
 
@@ -57,6 +58,12 @@ public class Plan
     {
         this.body = body;
         return this;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "Plan [name=" + name + ", description=" + description + "]";
     }
 
 }

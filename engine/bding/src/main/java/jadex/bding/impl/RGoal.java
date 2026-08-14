@@ -3,17 +3,18 @@ package jadex.bding.impl;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
+import jadex.bding.impl.IntentionHistory.IntentionHistoryEntry;
 import jadex.bding.Goal;
 import jadex.core.IComponent;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
+import jadex.future.Future;
 import jadex.future.IFuture;
-import java.util.List;
 import java.util.Set;
 
 public class RGoal 
 {
-    enum GoalState
+    public enum GoalState
 	{
 		INACTIVE,
 		ACTIVE,
@@ -28,7 +29,7 @@ public class RGoal
 
     protected GoalState state = GoalState.INACTIVE;
 
-    protected IntentionHistory history;
+    protected IntentionHistory history = new IntentionHistory();
 
     protected IComponent component;
 
@@ -37,11 +38,26 @@ public class RGoal
 
     protected Exception exception;
 
-    public RGoal(Goal goal, RIntention intention, IComponent component)
+    public RGoal(Goal goal, IComponent component)
     {
         this.goal = goal;
-        this.intention = intention;
         this.component = component;
+    }
+
+    public Goal getGoal() 
+    {
+        return goal;
+    }
+
+    public RGoal setIntention(RIntention intention) 
+    {
+        this.intention = intention;
+        return this;
+    }
+
+    public RIntention getIntention() 
+    {
+        return intention;
     }
 
     public void adopt()
@@ -49,22 +65,70 @@ public class RGoal
         changeState(GoalState.ACTIVE);
     }
 
-    public void execute()
+    public IFuture<Void> execute()
     {
+        Future<Void> ret = new Future<>();
+
         IReasoner reasoner = getComponent().getFeature(IBDINGAgentFeature.class).getReasoner();
 
-        Set<Intention> intentions = reasoner.generateIntentions(this).get();
-    
-        Intention intention = reasoner.selectIntention(this, intentions).get();
+        do
+        {
+            BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
 
-        RIntention rintention = new RIntention(intention, getComponent());
+            Set<Intention> intentions = reasoner.generateIntentions(this, beliefs).get();
         
-        rintention.execute();
+            Intention intention = reasoner.selectIntention(this, intentions, beliefs).get();
+
+            if(intention==null)
+            {
+                ret.setException(new RuntimeException("No plan could be generated for intention"));
+            }
+            else
+            {
+                if(history.isKnown(intention))
+                {
+                    System.out.println("Intention generation error, known: "+intention);
+                    ret.setException(new RuntimeException("Intention generation error, known: "+intention));
+                }
+
+                RIntention rintention = new RIntention(intention, this, getComponent());
+                setIntention(rintention);
+
+                try
+                {
+                    rintention.execute().get();
+
+                    this.state = evaluateGoalState().get();
+                }
+                catch(Exception e)
+                {
+                    history.addEntry(new IntentionHistoryEntry(rintention));
+                }
+
+                /*rintention.execute().then(Void ->
+                {
+                    System.out.println("Intention executed");
+                }
+                ).catchEx(ex ->
+                {
+                    // intention failed. add to history and generate new intention
+                    history.addEntry(new IntentionHistoryEntry(rintention));
+                });*/
+            }
+        }
+        while(!isFinished(getState()));
+        
+        return ret;
     }
 
     public void drop()
     {
         changeState(GoalState.DROPPED);
+    }
+
+    public GoalState getState() 
+    {
+        return state;
     }
 
     public void changeState(GoalState newstate)
@@ -98,6 +162,39 @@ public class RGoal
     protected IComponent getComponent()
     {
         return component;
+    }
+
+    public IFuture<GoalState> evaluateGoalState()
+    {
+        BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
+        return getComponent().getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
+    }
+
+	/**
+	 *  Test if the element is finished.
+	 */
+	public IFuture<Boolean> isFinished()
+	{
+        Future<Boolean> ret = new Future<>();
+
+        evaluateGoalState().then(state ->
+        {
+            if(state==GoalState.SUCCEEDED || state==GoalState.FAILED || state==GoalState.DROPPED)
+            {
+               ret.setResult(Boolean.TRUE);
+            }
+            else
+            {
+                ret.setResult(Boolean.FALSE);
+            }
+        });
+
+        return ret;
+	}
+
+    protected boolean isFinished(GoalState state)
+    {
+        return state==GoalState.SUCCEEDED || state==GoalState.FAILED || state==GoalState.DROPPED;
     }
 
 }
