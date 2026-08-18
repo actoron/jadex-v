@@ -22,7 +22,7 @@ public class Test
         {
             throw new RuntimeException(e);
         }
-        Class<?> clazz = builder.getClass();
+        Class<?> clazz = builder.getAgentClass();
 
         MAgentStarterNode node1 = new MAgentStarterNode(clazz);
         node1.setId("node1");

@@ -1,0 +1,18 @@
+{
+  "className": "AgentActor",
+  "classType": "BDIAgent",
+  "fields": [
+    {"name": "startProcess", "type": "Val<String>", "annotation": "Belief", "initialValue": "null", "visability": "private"}
+  ],
+  "methods": [
+    {
+      "name": "body", "annotation": "OnStart", "returnType": "void", "handlerKey": "defaultMethod", "visability": "public"
+    },
+    {
+      "name": "printHello", "annotation": "Plan", "returnType": "void", "handlerKey": "defaultPlan", "visability": "protected"
+    },
+    {
+      "name": "finished", "annotation": "Plan", "returnType": "void", "handlerKey": "defaultPlan"
+    }
+  ]
+}

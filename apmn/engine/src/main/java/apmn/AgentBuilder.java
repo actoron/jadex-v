@@ -18,12 +18,15 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 public class AgentBuilder
 {
+    private Class<?> agentClass;
+
     public static void main(String[] args)
     {
         AgentBuilder agentBuilder = new AgentBuilder();
@@ -85,6 +88,9 @@ public class AgentBuilder
                 //Field
                 .defineField("text", fieldType, Visibility.PROTECTED)
                 .annotateField(goalparamAnn)
+//
+//                .defineField("tmp", Object.class, Visibility.PROTECTED)
+//
                 //Constructor
                 .defineConstructor(Visibility.PUBLIC)
                 .withParameter(String.class, "text", 0)
@@ -97,12 +103,24 @@ public class AgentBuilder
                                                 )
                                 )).annotateMethod(goalcreatAnn)
                 //Method checkTarget
+//                .defineMethod("checkTarget", boolean.class, Visibility.PUBLIC)
+//                .intercept(
+//                        MethodCall.invoke(named("get"))
+//                                .onField("text")
+//                                .setsField(named("tmp"))
+//                                .andThen(
+//                                        MethodCall.invoke(Object.class.getMethod("equals", Object.class))
+//                                                .onField("tmp")
+//                                                .with("finished")
+                //Method checkTarget
                 .defineMethod("checkTarget", boolean.class, Visibility.PUBLIC)
                 .intercept(
                         MethodCall.invoke(String.class.getMethod("equals", Object.class))
                                 .on("finished")
                                 .withMethodCall(MethodCall.invoke(named("getText")))
                 )
+
+//                ))
                 .annotateMethod(goaltargAnn)
                 .innerTypeOf(agentActor)
                 .asMemberType();
@@ -166,9 +184,15 @@ public class AgentBuilder
         DynamicType.Unloaded<?> mG = missionGoalBuilder.make();
         DynamicType.Unloaded<?> aA = agentActorBuilder.make();
 
-        DynamicType.Loaded<?> loaded = aA.include(mG).load(Val.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST);
+        DynamicType.Loaded<?> loaded = aA.include(mG).load(Val.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION);
 
-        loaded.saveIn(new File("application/bdi-llm/src/main/java/jadex/apmn"));
-        System.out.println(loaded.getAllLoaded());
+        this.agentClass = loaded.getLoaded();
+
+        loaded.saveIn(new File("application/bdi-llm/build/classes/java/main"));
+    }
+
+    public Class<?> getAgentClass()
+    {
+        return agentClass;
     }
 }
