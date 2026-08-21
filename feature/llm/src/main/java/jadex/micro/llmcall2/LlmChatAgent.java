@@ -61,9 +61,6 @@ import jadex.requiredservice.IRequiredServiceFeature;
  */
 public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>, ILlmChatService
 {
-	/** Helper record for lookup through simple service naming. */
-	public static record ToolRef(ToolSpecification spec, Object service, Method method) {}
-	
 	//-------- attributes --------
 	
 	/** Reference to the agent component itself for scheduling steps and looking up tools. */
@@ -98,7 +95,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	Future<Void> current_call;
 	
 	/** Map for looking up discovered tools by name. */
-	Map<String, ToolRef>	current_tools	= new LinkedHashMap<>();
+	Map<String, ToolRef> current_tools	= new LinkedHashMap<>();
 	
 	/** Token count of the last completed chat interaction. */
 	int last_token_count	= 0;
@@ -410,7 +407,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				    		if(!fragments.isEmpty())
 				    		{
 				    			ChatFragment	last	= fragments.get(fragments.size()-1);
-			    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
+			    				current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n", last_token_count, total_token_count, max_token_count));
 				    		}
 				    		current_loop.setFinished();
 				    	}
@@ -462,7 +459,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			found_services.add(service);
 			
 			// Skip services that are already added as tools, to avoid creating new names when duplicate names exist.
-			if(current_tools.values().stream().anyMatch(tool -> tool!=null && tool.service.equals(service)))
+			if(current_tools.values().stream().anyMatch(tool -> tool!=null && tool.service().equals(service)))
 			{
 				continue;
 			}
@@ -503,7 +500,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						current_tools.put(name, null);
 						
 						ToolRef	new_tool	= appendSuffix(existing);
-						current_tools.put(new_tool.spec.name(), new_tool);
+						current_tools.put(new_tool.spec().name(), new_tool);
 					}
 					
 					// Append suffix to new tool if name already exists.
@@ -521,13 +518,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		for(ToolRef tool: new ArrayList<>(current_tools.values()))
 		{
 			// Remove tools that don't exist anymore
-			if(tool!=null && !found_services.contains(tool.service))
+			if(tool!=null && !found_services.contains(tool.service()))
 			{
-				current_tools.remove(tool.spec.name());
+				current_tools.remove(tool.spec().name());
 			}
 		}
 		
-		return current_tools.values().stream().filter(tool -> tool!=null).map(tool -> tool.spec).toList();
+		return current_tools.values().stream().filter(tool -> tool!=null).map(tool -> tool.spec()).toList();
 	}
 
 	/**
@@ -535,17 +532,17 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	 */
 	protected ToolRef	appendSuffix(ToolRef existing)
 	{
-		String	name = existing.spec.name();
+		String	name = existing.spec().name();
 		while(current_tools.containsKey(name))
 		{
-			name = existing.spec.name()+"_"+UUID.randomUUID().toString().substring(0, 3);
+			name = existing.spec().name()+"_"+UUID.randomUUID().toString().substring(0, 3);
 		}
 		return new ToolRef(ToolSpecification.builder()
 			.name(name)
-			.description(existing.spec.description())
-			.parameters(existing.spec.parameters())
-			.metadata(existing.spec.metadata())
-			.build(), existing.service, existing.method);
+			.description(existing.spec().description())
+			.parameters(existing.spec().parameters())
+			.metadata(existing.spec().metadata())
+			.build(), existing.service(), existing.method());
 	}
 
 	/**
@@ -560,8 +557,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			if(current_tools.get(call.toolExecutionRequest().name())==null)
 				throw new RuntimeException("Tool not found: " + call.toolExecutionRequest().name());
 			
-			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service;
-			Method	m	= current_tools.get(call.toolExecutionRequest().name()).method;
+			IService	service	= (IService) current_tools.get(call.toolExecutionRequest().name()).service();
+			Method	m	= current_tools.get(call.toolExecutionRequest().name()).method();
 			
 			@SuppressWarnings("unchecked")
 			Map<String, Object>	args	= Json.fromJson(call.toolExecutionRequest().arguments(), Map.class);
@@ -718,7 +715,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				// Add line break after changed type, e.g. from thinking to response
 				if(last.type()!=type)
 				{
-					current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n"));
+					current_loop.addIntermediateResult(new ChatFragment(last.type(), "\n", last_token_count, total_token_count, max_token_count));
 				}
 				
 		    	// Add line break after each sentence to keep lines reasonably short
@@ -728,7 +725,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		    		text	= "\n"+text.stripLeading();
 		    	}
 			}
-			current_loop.addIntermediateResult(new ChatFragment(type, text));
+			current_loop.addIntermediateResult(new ChatFragment(type, text, last_token_count, total_token_count, max_token_count));
 		}
 	}
 

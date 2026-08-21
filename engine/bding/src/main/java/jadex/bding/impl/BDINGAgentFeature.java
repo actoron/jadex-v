@@ -1,13 +1,18 @@
 package jadex.bding.impl;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
+import jadex.bding.AgentModel;
 import jadex.bding.Goal;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IReasoner;
+import jadex.bding.annotation.Belief;
+import jadex.bding.annotation.Model;
 import jadex.bding.annotation.Reasoner;
 import jadex.core.impl.ILifecycle;
 import jadex.future.ITerminableFuture;
+import jadex.future.TerminableFuture;
 
 
 public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
@@ -15,7 +20,11 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 	/** The component. */
 	protected BDINGAgent self;
 
+	/** Reasoner bridge to e.g. llm. */
 	protected IReasoner reasoner;
+
+	/** Model with goals, intentions and plans. */
+	protected AgentModel model;
 	
 	/**
 	 *  Create the feature.
@@ -23,12 +32,47 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 	public BDINGAgentFeature(BDINGAgent self)
 	{
 		this.self	= self;
-		this.reasoner = initReasoner();
+		this.reasoner = findValue(Reasoner.class, IReasoner.class);
+		if(reasoner==null)
+			reasoner = new LlmReasoner();
+		this.model = findValue(Model.class, AgentModel.class);
+		if(model==null)
+			model = new AgentModel();
+		initBeliefs();
 	}
 
-	protected IReasoner initReasoner()
+	protected void initBeliefs()
 	{
-		IReasoner ret = null;
+		Object pojo = self.getPojo();
+
+		Class<?> clazz = pojo.getClass();
+
+		while(clazz != null && clazz != Object.class)
+		{
+			for(Field field : clazz.getDeclaredFields())
+			{
+				if(field.isAnnotationPresent(Belief.class))
+				{
+					field.setAccessible(true);
+					
+					Belief ann = field.getAnnotation(Belief.class);
+					String name = ann.name().isEmpty()? field.getName(): ann.name();
+					String desc = ann.description().isEmpty()? null: ann.description();
+
+					if(model.getBelief(name) != null)
+						throw new IllegalArgumentException("Duplicate belief name: " + name);
+
+					new jadex.bding.Belief(name, desc, field, model);
+				}
+			}
+
+			clazz = clazz.getSuperclass();
+		}
+	}
+
+	protected <T> T findValue(Class<? extends Annotation> ann, Class<T> type)
+	{
+		T ret = null;
 
 		Field rfield = null;
 
@@ -40,7 +84,7 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 		{
 			for(Field field : clazz.getDeclaredFields())
 			{
-				if(field.isAnnotationPresent(Reasoner.class))
+				if(field.isAnnotationPresent(ann))
 				{
 					if(rfield != null)
 						throw new RuntimeException("Multiple @Reasoner fields found in "+pojo.getClass().getName());
@@ -53,32 +97,28 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 			clazz = clazz.getSuperclass();
 		}
 
-		if(rfield == null)
-		{
-			// Default reasoner
-			ret = new LlmReasoner();
-		}
-		else
+		if(rfield != null)
 		{
 			try
 			{
-				ret = (IReasoner)rfield.get(pojo);
+				ret = (T)rfield.get(pojo);
 
 				if(ret == null)
-					throw new RuntimeException("@Reasoner field is null: "+rfield);
+					throw new RuntimeException("Field is null: "+rfield);
 			}
 			catch(IllegalAccessException e)
 			{
-				throw new RuntimeException("Could not access @Reasoner field", e);
+				throw new RuntimeException("Could not access field", e);
 			}
 		}
 
 		return ret;
 	}
 
-	public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal)
+	// todo: terminate
+	public ITerminableFuture<Void> dispatchTopLevelGoal(RGoal rgoal)
 	{
-		final RGoal rgoal = new RGoal(goal, self);
+		//final RGoal rgoal = new RGoal(goal, self);
 		
 		rgoal.adopt();
 		
@@ -86,10 +126,31 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 		ITerminableFuture<Void>	ret	= (ITerminableFuture<Void>) rgoal.getFinished();
 		return ret;
 	}
+
+	// todo: terminate
+	public ITerminableFuture<Void> dispatchTopLevelGoal(String usergoal)
+	{
+		TerminableFuture<Void>	ret	= new TerminableFuture<Void>();
+		
+		reasoner.createGoal(usergoal, model).then(rgoal ->
+		{
+			rgoal.adopt();
+			ITerminableFuture<Void>	gret = (ITerminableFuture<Void>)rgoal.getFinished();
+			gret.delegateTo(ret);
+		});
+
+		return ret;
+	}
 	
 	public IReasoner getReasoner()
 	{
 		return reasoner;
+	}
+
+	@Override
+	public AgentModel getModel() 
+	{
+		return model;
 	}
 
 	//-------- ILifecycle interface --------

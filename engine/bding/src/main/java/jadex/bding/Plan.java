@@ -8,12 +8,16 @@ public class Plan
     protected Intention intention;
 
     protected IPlanBody body;
-    
-    public Plan(String name, String desciption, Intention intention)
+
+    protected AgentModel model;
+
+    public Plan(String name, String desciption, Intention intention, AgentModel model)
     {
         this.name = name;
         this.description = desciption;
         this.intention = intention;
+        this.model = model;
+        model.addPlan(this);
     }
 
     public String getName() 
@@ -58,6 +62,11 @@ public class Plan
     {
         this.body = body;
         return this;
+    }
+
+    public AgentModel getModel() 
+    {
+        return model;
     }
 
     @Override

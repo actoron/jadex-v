@@ -6,13 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Marker for a belief.
+ *  Marker for the agent model.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Belief
+public @interface Model
 {
-    public String name() default "";
-
-    public String description() default "";
 }

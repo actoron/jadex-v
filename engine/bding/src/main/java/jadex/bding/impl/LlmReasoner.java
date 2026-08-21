@@ -1,13 +1,22 @@
 package jadex.bding.impl;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+import jadex.bding.AgentModel;
+import jadex.bding.Belief;
+import jadex.bding.ElementType;
+import jadex.bding.Goal;
+import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
+import jadex.bding.Parameter;
 import jadex.bding.Plan;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.bding.impl.RGoal.GoalState;
@@ -18,6 +27,7 @@ import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.micro.llmcall2.ChatFragment;
 import jadex.micro.llmcall2.ILlmChatService;
+import jadex.micro.llmcall2.ILlmChatService2;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -25,13 +35,12 @@ import jadex.requiredservice.ServiceNotFoundException;
 
 public class LlmReasoner implements IReasoner
 {
-    public static String SYSTEMPROMPT = """
+    public static String SYSTEMPROMPT_BDI = """
+        # Role
         You are the reasoning component of a BDI agent.
-
+        
         The agent has goals, intentions, plans and beliefs.
-
         A goal describes a desired state of the world: what the agent wants to achieve.
-
         An intention represents a committed, relatively abstract course of action
         chosen to pursue a goal. It describes what the agent intends to do at a
         strategic level, but not the concrete execution details.
@@ -46,6 +55,7 @@ public class LlmReasoner implements IReasoner
         or the goal has been achieved. Whether an intention or goal has been
         achieved must be evaluated separately.
 
+        ## Instructions
         When generating intentions, consider different meaningful ways of
         pursuing the goal.
 
@@ -58,9 +68,27 @@ public class LlmReasoner implements IReasoner
         - Plan: how that course of action is concretely executed
         """;
 
+    // todo:
+    public static String SYSTEMPROMPT_TOOL = """
+		# Role
+		You are an agent that plans and performs a sequence of tool calls to complete a given task autonomously.
+		## Instructions
+		1. Execute tools directly without asking the user for confirmation or missing information.
+		2. Analyze tool replies carefully for results or exceptions before stopping or further planning. 
+		3. Do not stop when a tool call leads to an exception. Instead call the tool with adjusted arguments or call a different tool.
+		4. For missing information, take arbitrary decisions yourself and do not ask the user.
+		5. Experiment with the available tools to make progress, i.e., execute incomplete plans and try out tools to see what happens.
+		6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.
+		""";
+
     protected IComponent component;
 
     protected String ask(String prompt)
+    {
+        return ask(SYSTEMPROMPT_BDI, prompt);
+    }
+
+    protected String ask(String systemprompt, String prompt)
     {
         IComponent component = IComponentManager.get().getCurrentComponent();
 
@@ -68,9 +96,9 @@ public class LlmReasoner implements IReasoner
 
         try
         {
-            ILlmChatService chatser = rf.getLocalService(ILlmChatService.class);
+            ILlmChatService2 chatser = rf.getLocalService(ILlmChatService2.class);
 
-            ITerminableIntermediateFuture<ChatFragment> res = chatser.chat(SYSTEMPROMPT + "\n\n" + prompt);
+            ITerminableIntermediateFuture<ChatFragment> res = chatser.chat(systemprompt, prompt);
 
             return LlmHelper.cleanJsonResponse(LlmChatAgent.getResponse(res));
         }
@@ -78,6 +106,175 @@ public class LlmReasoner implements IReasoner
         {
             throw new RuntimeException("No LLM chat service available", e);
         }
+    }
+
+    public IFuture<RGoal> createGoal(String usergoal, AgentModel model)
+    {
+        Future<RGoal> ret = new Future<>();
+
+        try
+        {
+            String prompt = """
+                Operationalize the following user goal as a reusable BDI goal.
+
+                User goal:
+                %s
+
+                The agent model currently contains the following known goal types:
+                %s
+
+                The agent has the following known beliefs:
+                %s
+
+                Your task is to determine the most appropriate reusable goal type
+                for the user goal.
+
+                IMPORTANT:
+                - A goal type must describe a reusable kind of goal, not a specific instance.
+                - Do NOT create goal types containing concrete values.
+                - For example, "ReachDestination" is a good goal type, while
+                "ReachBremen" is not.
+                - If an existing goal type matches the user goal, reuse it.
+                - If no existing goal type matches, create a new reusable goal type.
+                - Extract the concrete parameter values from the user goal.
+                - Goal parameters describe what should be achieved.
+                - Do not put current belief values into goal parameters.
+                - Use the known beliefs to understand the domain, but do not modify them.
+
+                For the goal type provide:
+                - name: a short, reusable type name
+                - description: what this kind of goal means in general
+                - parameters: parameters that define a concrete instance of this goal
+                Each parameter must contain:
+                    - name
+                    - description
+                    - type
+
+                Supported parameter types are:
+                - String
+                - Integer
+                - Long
+                - Double
+                - Boolean
+                - Object
+
+                For the concrete goal provide:
+                - parameter values for the selected goal type
+
+                Return ONLY one JSON object in the following format:
+
+                {
+                "goalType": {
+                    "name": "BuyItem",
+                    "description": "Purchase a specified item.",
+                    "parameters": [
+                    {
+                        "name": "item",
+                        "description": "The item to purchase.",
+                        "type": "STRING"
+                    },
+                    {
+                        "name": "maxPrice",
+                        "description": "The maximum amount of money that may be spent.",
+                        "type": "NUMBER"
+                    }
+                    ]
+                },
+                "goal": {
+                    "parameters": {
+                    "item": "coffee",
+                    "maxPrice": 5.0
+                    }
+                }
+                }
+
+                Do not include explanations outside the JSON object.
+                """.formatted(
+                    usergoal,
+                    model.getGoals().toString(),
+                    model.getBeliefs().toString());
+
+            //System.out.println("createGoal: " + prompt);
+
+            String text = ask(prompt);
+            JsonValue val = Json.parse(text);
+            JsonObject obj = val.asObject();
+
+            JsonObject typeobj = obj.get("goalType").asObject();
+            JsonObject goalobj = obj.get("goal").asObject();
+
+            String name = typeobj.getString("name", null);
+            String description = typeobj.getString("description", null);
+
+            if(name == null || name.isBlank())
+                throw new RuntimeException("LLM generated goal type without name.");
+
+            if(description == null || description.isBlank())
+                throw new RuntimeException("LLM generated goal type without description.");
+
+            Goal goaltype = model.getGoal(name);
+
+            if(goaltype == null)
+            {
+                goaltype = new Goal(name, description, model);
+
+                JsonValue parameters = typeobj.get("parameters");
+
+                if(parameters != null && parameters.isArray())
+                {
+                    for(JsonValue pval : parameters.asArray())
+                    {
+                        JsonObject pobj = pval.asObject();
+
+                        String pname = pobj.getString("name", null);
+                        String pdesc = pobj.getString("description", null);
+                        String ptype = pobj.getString("type", "Object");
+
+                        if(pname == null || pname.isBlank())
+                            continue;
+
+                        ElementType type = ElementType.fromString(ptype);
+
+                        goaltype.addParameter(new Parameter(pname, pdesc, type));
+                    }
+                }
+            }
+
+            Map<String, Object> parameters = new LinkedHashMap<>();
+
+            JsonValue pvals = goalobj.get("parameters");
+
+            if(pvals != null && pvals.isObject())
+            {
+                JsonObject ob = pvals.asObject();
+
+                for(String obname : ob.names())
+                {
+                    Parameter parameter = goaltype.getParameters().get(obname);
+
+                    if(parameter == null)
+                        throw new RuntimeException("Unknown parameter '" + obname+ "' for goal type '" + goaltype.getName() + "'");
+
+                    Object value = JsonHelper.jsonToObject(ob.get(obname), parameter.getType().getJavaType());
+
+                    parameters.put(obname, value);
+                }
+            }
+
+            RGoal rgoal = new RGoal(goaltype, parameters);
+
+            System.out.println("Goal type: "+rgoal.getGoal());
+            System.out.println("Goal instance: "+rgoal);
+
+            ret.setResult(rgoal);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            ret.setException(e);
+        }
+
+        return ret;
     }
 
     @Override
@@ -120,7 +317,7 @@ public class LlmReasoner implements IReasoner
                 }
                 ]
                 """.formatted(
-                    beliefs.getJson().toString(),
+                    JsonHelper.toJson(beliefs).toString(),
                     goal.getGoal().getDescription());
 
             System.out.println("generateIntentions: "+prompt);
@@ -138,19 +335,15 @@ public class LlmReasoner implements IReasoner
 
                 if(name == null || name.isBlank())
                 {
-                    System.out.println(
-                        "LLM generated intention without name: "
-                        +name+" "+description);
+                    System.out.println("LLM generated intention without name: " +name+" "+description);
                 }
                 else if(description == null || description.isBlank())
                 {
-                    System.out.println(
-                        "LLM generated intention without description: "
-                        +name+" "+description);
+                    System.out.println("LLM generated intention without description: "+name+" "+description);
                 }
                 else
                 {
-                    intentions.add(new Intention(name, description));
+                    intentions.add(new Intention(name, description, getModel()));
                 }
             }
 
@@ -202,7 +395,7 @@ public class LlmReasoner implements IReasoner
 
                 Return ONLY the number of the selected intention.
                 """.formatted(
-                    beliefs.getJson().toString(),
+                    JsonHelper.toJson(beliefs).toString(),
                     goal.getGoal().getDescription(),
                     candidates);
 
@@ -292,7 +485,7 @@ public class LlmReasoner implements IReasoner
                     "description": "Prepare coffee using the coffee machine"
                 }
                 """.formatted(
-                    beliefs.getJson().toString(),
+                    JsonHelper.toJson(beliefs).toString(),
                     in.getGoal().getGoal().getDescription(),
                     in.getIntention().getName(),
                     in.getIntention().getDescription(),
@@ -326,7 +519,7 @@ public class LlmReasoner implements IReasoner
                 }
 
                 System.out.println("generated plan: "+name+" "+description);
-                ret.setResult(new Plan(name, description, in.getIntention()));
+                ret.setResult(new Plan(name, description, in.getIntention(), getModel()));
             }
         }
         catch(Exception e)
@@ -364,7 +557,7 @@ public class LlmReasoner implements IReasoner
                 SUCCEEDED
                 FAILED
                 """.formatted(
-                    beliefs.getJson().toString(),
+                    JsonHelper.toJson(beliefs).toString(),
                     goal.getGoal().getDescription());
 
             String text = ask(prompt).trim();
@@ -442,7 +635,7 @@ public class LlmReasoner implements IReasoner
 
                 Return ONLY true or false.
                 """.formatted(
-                    beliefs.getJson().toString(),
+                    JsonHelper.toJson(beliefs).toString(),
                     in.getGoal().getGoal().getDescription(),
                     in.getIntention().getName(),
                     in.getIntention().getDescription(),
@@ -457,5 +650,68 @@ public class LlmReasoner implements IReasoner
         }
 
         return ret;
+    }
+
+    protected AgentModel getModel()
+    {
+        IComponent component = IComponentManager.get().getCurrentComponent();
+        IBDINGAgentFeature feat = component.getFeature(IBDINGAgentFeature.class);
+        return feat.getModel();
+    }
+
+    public String getGoalsDescription(AgentModel model)
+    {
+        StringBuilder ret = new StringBuilder();
+
+        for(Goal goal : model.getGoals().values())
+        {
+            ret.append("- ").append(goal.getName());
+
+            if(goal.getDescription() != null && !goal.getDescription().isBlank())
+                ret.append(": ").append(goal.getDescription());
+
+            if(!goal.getParameters().isEmpty())
+            {
+                ret.append("\n  Parameters:");
+
+                for(Parameter parameter : goal.getParameters().values())
+                {
+                    ret.append("\n    - ")
+                    .append(parameter.getName())
+                    .append(" (")
+                    .append(parameter.getType())
+                    .append(")");
+
+                    if(parameter.getDescription() != null
+                        && !parameter.getDescription().isBlank())
+                    {
+                        ret.append(": ")
+                        .append(parameter.getDescription());
+                    }
+                }
+            }
+
+            ret.append("\n");
+        }
+
+        return ret.toString();
+    }
+
+    public String getBeliefsDescription(AgentModel model)
+    {
+        StringBuilder ret = new StringBuilder();
+
+        for(Belief bel : model.getBeliefs().values())
+        {
+            ret.append("- ").append(bel.getName())
+            .append(" (").append(bel.getType()).append(")");
+
+            if(bel.getDescription() != null && !bel.getDescription().isBlank())
+                ret.append(": ").append(bel.getDescription());
+
+            ret.append("\n");
+        }
+
+        return ret.toString();
     }
 }

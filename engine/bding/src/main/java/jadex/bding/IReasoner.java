@@ -19,6 +19,8 @@ import jadex.bding.impl.RGoal.GoalState;
  */
 public interface IReasoner 
 {
+    public IFuture<RGoal> createGoal(String usergoal, AgentModel model);
+
     public IFuture<Set<Intention>> generateIntentions(RGoal goal, BeliefSnapshot beliefs);
 
     public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions, BeliefSnapshot beliefs);
@@ -34,5 +36,4 @@ public interface IReasoner
     public IFuture<Boolean> isSameIntention(Intention in1, Intention in2);
 
     public IFuture<GoalState> evaluateGoalState(RGoal goal, BeliefSnapshot beliefs);
-
 }

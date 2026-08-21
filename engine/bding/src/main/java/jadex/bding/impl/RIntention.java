@@ -5,6 +5,7 @@ import jadex.future.IFuture;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
 import jadex.bding.Plan;
@@ -19,22 +20,21 @@ public class RIntention
 
     protected PlanHistory history;
 
-    protected IComponent component;
-
-    public RIntention(Intention intention, RGoal goal, IComponent component) 
+    public RIntention(Intention intention, RGoal goal) 
     {   
         this.intention = intention;
         this.goal = goal;
-        this.component = component;
     }
 
     public IFuture<Void> execute()
     {
         Future<Void> ret = new Future<>();
 
+        IComponent component = IComponentManager.get().getCurrentComponent();
+
         BeliefSnapshot beliefsbefore = BeliefSnapshot.extract(component);
 
-        IReasoner reasoner = getComponent().getFeature(IBDINGAgentFeature.class).getReasoner();
+        IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
         //Set<Plan> plans = reasoner.generatePlans(this).get();
     
@@ -49,7 +49,7 @@ public class RIntention
         }
         else
         {
-            this.plan = new RPlan(plan, getComponent());
+            this.plan = new RPlan(plan, component);
             this.plan.execute().then(Void ->
             {
                 System.out.println("Plan executed");
@@ -119,13 +119,9 @@ public class RIntention
         this.history = history;
     }
 
-    public IComponent getComponent() 
+    @Override
+    public String toString() 
     {
-        return component;
-    }
-
-    public void setComponent(IComponent component) 
-    {
-        this.component = component;
+        return "RIntention [intention=" + intention.getName() + "]";
     }
 }

@@ -1,5 +1,8 @@
 package jadex.bding;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class Goal 
 {
     public enum Importance
@@ -13,6 +16,8 @@ public class Goal
     protected String name;
     protected String description;
 
+    protected Map<String, Parameter> parameters = new LinkedHashMap<>();
+
     protected String activationWhen;
 
     protected String successWhen;
@@ -22,10 +27,14 @@ public class Goal
 
     protected Importance importance;
 
-    public Goal(String name, String description)
+    protected AgentModel model;
+
+    public Goal(String name, String description, AgentModel model)
     {
         this.name = name;
         this.description = description;
+        this.model = model;
+        model.addGoal(this);
     }
 
     public String getName() 
@@ -48,6 +57,17 @@ public class Goal
     {
         this.description = description;
         return this;
+    }
+
+    public Goal addParameter(Parameter param)
+    {
+        parameters.put(param.getName(), param);
+        return this;
+    }
+
+    public Map<String, Parameter> getParameters()
+    {
+        return parameters;
     }
 
     public String getActivationWhen() 
@@ -105,9 +125,14 @@ public class Goal
         return this;
     }
 
+    public AgentModel getModel() 
+    {
+        return model;
+    }
+
     @Override
     public String toString() 
     {
-        return "Goal [name=" + name + ", description=" + description + "]";
+        return "Goal [name=" + name + ", description=" + description + ", parameters=" + parameters + "]";
     }
 }

@@ -4,9 +4,11 @@ import jadex.core.IComponent;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.micro.llmcall2.LlmChatAgent;
+import jadex.micro.llmcall2.LlmChatAgent2;
 import jadex.micro.llmcall2.LlmHelper;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.bding.annotation.BDINGAgent;
+import jadex.bding.annotation.Model;
 import jadex.bding.annotation.Belief;
 import jadex.bding.annotation.Reasoner;
 import jadex.bding.impl.LlmReasoner;
@@ -93,28 +95,31 @@ public class Main
         @Inject
         protected IComponent agent;
 
-        @Reasoner
-        protected IReasoner reasoner;
+        //@Model
+        //protected AgentModel model;
 
-        @Belief
+        //@Reasoner
+        //protected IReasoner reasoner;
+
+        @Belief(description = "Describes if it is currently raining.")
         protected boolean raining;
 
-        @Belief 
+        @Belief(description = "The amount of money the agent has in euro.") 
         protected double money;
 
-        @Belief
+        @Belief(description = "The current location of the agent.")
         protected String location;
 
-        public UniversityAgent(IReasoner reasoner)
+        public UniversityAgent()
         {
-            this(reasoner, "Hamburg", 20);
+            this("Hamburg", 20);//, null);
         }
 
-        public UniversityAgent(IReasoner reasoner, String location, double money)
+        public UniversityAgent(String location, double money)//, AgentModel model)
         {
-            this.reasoner = reasoner;
             this.location = location;
             this.money = money;
+            //this.model = model;
         }
         
         @OnStart
@@ -122,7 +127,8 @@ public class Main
         {
             System.out.println("Hello from agent " + agent.getId()+" "+agent.getClass().getName());
 
-            agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(new Goal("GotoUni", "Go to City University of Applied Sciences in Bremen."));
+            agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(
+                "Go now to City University of Applied Sciences in Bremen.");
 
             agent.terminate();
         }
@@ -135,9 +141,9 @@ public class Main
 
         StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false);
 
-        ComponentManager.get().create(new LlmChatAgent(llm).setSystemPrompt(LlmReasoner.SYSTEMPROMPT)).get();
+        ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 
-        ComponentManager.get().create(new UniversityAgent(new LlmReasoner())).get();
+        ComponentManager.get().create(new UniversityAgent()).get();
 
         ComponentManager.get().waitForLastComponentTerminated();
     }

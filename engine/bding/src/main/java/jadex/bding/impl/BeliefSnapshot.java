@@ -1,5 +1,7 @@
 package jadex.bding.impl;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.eclipsesource.json.JsonObject;
@@ -8,32 +10,36 @@ import jadex.core.IComponent;
 
 public class BeliefSnapshot
 {
-    protected JsonObject beliefs;
+    protected Map<String, Object> beliefs = new LinkedHashMap<>();
 
-    protected BeliefSnapshot(JsonObject beliefs)
+    public BeliefSnapshot()
     {
-        this.beliefs = beliefs;
+    }
+
+    public BeliefSnapshot(Map<String, Object> beliefs)
+    {
+        this.beliefs.putAll(beliefs);
+    }
+
+    public Object get(String name)
+    {
+        return beliefs.get(name);
+    }
+
+    public Map<String, Object> getBeliefs()
+    {
+        return Collections.unmodifiableMap(beliefs);
     }
 
     public static BeliefSnapshot extract(IComponent component)
     {
-        JsonObject values = BeliefExtractor.extract(component);
-        return new BeliefSnapshot(values);
-    }
-
-    public JsonObject getJson()
-    {
-        return beliefs;
+        return BeliefExtractor.extract(component);
     }
 
     public void inject(IComponent component)
     {
-        BeliefExtractor.inject(component, beliefs);
+        BeliefExtractor.inject(component, this);
     }
 
-    @Override
-    public String toString()
-    {
-        return beliefs.toString();
-    }
 }
+

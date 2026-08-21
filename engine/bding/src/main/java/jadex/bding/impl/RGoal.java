@@ -6,10 +6,14 @@ import jadex.bding.Intention;
 import jadex.bding.impl.IntentionHistory.IntentionHistoryEntry;
 import jadex.bding.Goal;
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 import jadex.future.Future;
 import jadex.future.IFuture;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class RGoal 
@@ -25,23 +29,23 @@ public class RGoal
 
     protected Goal goal;
 
+    protected Map<String, Object> parameters = new LinkedHashMap<>();
+
     protected RIntention intention;
 
     protected GoalState state = GoalState.INACTIVE;
 
     protected IntentionHistory history = new IntentionHistory();
 
-    protected IComponent component;
-
     /** The finished future (if someone waits for the goal). */
 	protected TerminableFuture<Object>	finished;
 
     protected Exception exception;
 
-    public RGoal(Goal goal, IComponent component)
+    public RGoal(Goal goal, Map<String, Object> parameters)
     {
         this.goal = goal;
-        this.component = component;
+        this.parameters = parameters;
     }
 
     public Goal getGoal() 
@@ -69,7 +73,9 @@ public class RGoal
     {
         Future<Void> ret = new Future<>();
 
-        IReasoner reasoner = getComponent().getFeature(IBDINGAgentFeature.class).getReasoner();
+        IComponent component = IComponentManager.get().getCurrentComponent();
+
+        IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
         do
         {
@@ -91,7 +97,7 @@ public class RGoal
                     ret.setException(new RuntimeException("Intention generation error, known: "+intention));
                 }
 
-                RIntention rintention = new RIntention(intention, this, getComponent());
+                RIntention rintention = new RIntention(intention, this);
                 setIntention(rintention);
 
                 try
@@ -159,15 +165,11 @@ public class RGoal
 		return finished;
 	}
 
-    protected IComponent getComponent()
-    {
-        return component;
-    }
-
     public IFuture<GoalState> evaluateGoalState()
     {
+        IComponent component = IComponentManager.get().getCurrentComponent();
         BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
-        return getComponent().getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
+        return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
     }
 
 	/**
@@ -195,6 +197,12 @@ public class RGoal
     protected boolean isFinished(GoalState state)
     {
         return state==GoalState.SUCCEEDED || state==GoalState.FAILED || state==GoalState.DROPPED;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "RGoal [type="+goal.getName()+", parameters=" + parameters + "]";
     }
 
 }

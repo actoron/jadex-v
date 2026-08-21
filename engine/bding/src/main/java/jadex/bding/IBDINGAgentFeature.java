@@ -10,5 +10,9 @@ public interface IBDINGAgentFeature	extends IComponentFeature
 {
     public IReasoner getReasoner();
 
-    public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal);
+    public AgentModel getModel();
+
+    public ITerminableFuture<Void> dispatchTopLevelGoal(String usergoal);
+
+    //public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal);
 }

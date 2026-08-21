@@ -1,15 +1,9 @@
 package jadex.bding.impl;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 
 import jadex.bding.annotation.Belief;
 import jadex.core.IComponent;
@@ -18,22 +12,24 @@ public class BeliefExtractor
 {
     /**
      * Extract all @Belief fields from the agent POJO.
+     *
+     * The returned snapshot contains the actual Java objects.
      */
-    public static JsonObject extract(IComponent component)
+    public static BeliefSnapshot extract(IComponent component)
     {
         Object pojo = component.getPojo();
 
-        JsonObject ret = new JsonObject();
+        Map<String, Object> beliefs = new LinkedHashMap<>();
 
-        extractFields(pojo, ret);
+        extractFields(pojo, beliefs);
 
-        return ret;
+        return new BeliefSnapshot(beliefs);
     }
 
     /**
-     * Recursively extract @Belief fields from the POJO hierarchy.
+     * Extract @Belief fields from the POJO hierarchy.
      */
-    protected static void extractFields(Object pojo, JsonObject target)
+    protected static void extractFields(Object pojo, Map<String, Object> target)
     {
         if(pojo == null)
             return;
@@ -56,141 +52,39 @@ public class BeliefExtractor
 
                     Object value = field.get(pojo);
 
-                    target.add(field.getName(), toJson(value));
+                    target.put(field.getName(), value);
                 }
                 catch(Exception e)
-                {
-                    throw new RuntimeException("Could not extract belief '"+field.getName()+"' from "+pojo.getClass().getName(), e);
-                }
-            }
-
-            clazz = clazz.getSuperclass();
-        }
-    }
-
-    /**
-     * Convert a Java value into a minimal-json value.
-     */
-    protected static JsonValue toJson(Object value)
-    {
-        if(value == null)
-            return Json.NULL;
-
-        if(value instanceof JsonValue json)
-            return json;
-
-        if(value instanceof String str)
-            return Json.value(str);
-
-        if(value instanceof Character character)
-            return Json.value(character.toString());
-
-        if(value instanceof Boolean bool)
-            return Json.value(bool);
-
-        if(value instanceof Integer number)
-            return Json.value(number);
-
-        if(value instanceof Double number)
-            return Json.value(number);
-
-        if(value instanceof Float number)
-            return Json.value(number);
-
-        if(value instanceof Map<?, ?> map)
-        {
-            JsonObject ret = new JsonObject();
-
-            for(Map.Entry<?, ?> entry : map.entrySet())
-            {
-                if(!(entry.getKey() instanceof String key))
                 {
                     throw new RuntimeException(
-                        "Belief map contains non-string key: "
-                        +entry.getKey());
-                }
-
-                ret.add(key, toJson(entry.getValue()));
-            }
-
-            return ret;
-        }
-
-        if(value instanceof Collection<?> collection)
-        {
-            JsonArray ret = new JsonArray();
-
-            for(Object element : collection)
-            {
-                ret.add(toJson(element));
-            }
-
-            return ret;
-        }
-
-        if(value.getClass().isArray())
-        {
-            JsonArray ret = new JsonArray();
-
-            int length = Array.getLength(value);
-
-            for(int i=0; i<length; i++)
-            {
-                ret.add(toJson(Array.get(value, i)));
-            }
-
-            return ret;
-        }
-
-        return beanToJson(value);
-    }
-
-    /**
-     * Convert a simple Java bean / POJO into a JSON object.
-     *
-     * All non-static fields are included.
-     */
-    protected static JsonObject beanToJson(Object bean)
-    {
-        JsonObject ret = new JsonObject();
-
-        Class<?> clazz = bean.getClass();
-
-        while(clazz != null && clazz != Object.class)
-        {
-            for(Field field : clazz.getDeclaredFields())
-            {
-                if(Modifier.isStatic(field.getModifiers()))
-                    continue;
-
-                try
-                {
-                    field.setAccessible(true);
-
-                    Object value = field.get(bean);
-
-                    ret.add(field.getName(), toJson(value));
-                }
-                catch(Exception e)
-                {
-                    throw new RuntimeException("Could not convert field '"+field.getName()+"' of "+bean.getClass().getName()+" to JSON", e);
+                        "Could not extract belief '"
+                        + field.getName()
+                        + "' from "
+                        + pojo.getClass().getName(), e);
                 }
             }
 
             clazz = clazz.getSuperclass();
         }
-
-        return ret;
     }
 
-    public static void inject(IComponent component, JsonObject beliefs)
+    /**
+     * Inject a belief snapshot into the agent POJO.
+     *
+     * The snapshot contains actual Java objects, so no conversion
+     * through JSON is necessary.
+     */
+    public static void inject(IComponent component, BeliefSnapshot beliefs)
     {
         Object pojo = component.getPojo();
 
-        injectFields(pojo, beliefs);
+        injectFields(pojo, beliefs.getBeliefs());
     }
 
-    protected static void injectFields(Object pojo, JsonObject source)
+    /**
+     * Inject belief values into the @Belief fields of the POJO hierarchy.
+     */
+    protected static void injectFields(Object pojo, Map<String, Object> source)
     {
         if(pojo == null)
             return;
@@ -209,24 +103,27 @@ public class BeliefExtractor
 
                 String name = field.getName();
 
-                if(!source.names().contains(name))
+                if(!source.containsKey(name))
                     continue;
 
                 try
                 {
                     field.setAccessible(true);
 
-                    JsonValue value = source.get(name);
+                    Object value = source.get(name);
 
-                    Object converted = fromJson(value, field.getType());
+                    if(value != null
+                        && !isAssignable(field.getType(), value.getClass()))
+                    {
+                        throw new IllegalArgumentException("Value of type "+ value.getClass().getName()
+                            + " cannot be assigned to belief field "+ name + " of type " + field.getType().getName());
+                    }
 
-                    field.set(pojo, converted);
+                    field.set(pojo, value);
                 }
                 catch(Exception e)
                 {
-                    throw new RuntimeException(
-                        "Could not inject belief '" + name
-                        + "' into " + pojo.getClass().getName(), e);
+                    throw new RuntimeException("Could not inject belief '"+ name+ "' into "+ pojo.getClass().getName(), e);
                 }
             }
 
@@ -234,33 +131,24 @@ public class BeliefExtractor
         }
     }
 
-    protected static Object fromJson(JsonValue value, Class<?> type)
+    /**
+     * Check Java assignment compatibility including primitive types.
+     */
+    protected static boolean isAssignable(Class<?> target, Class<?> source)
     {
-        if(value.isNull())
-            return null;
+        if(target.isAssignableFrom(source))
+            return true;
 
-        if(type == String.class)
-            return value.asString();
+        if(!target.isPrimitive())
+            return false;
 
-        if(type == boolean.class || type == Boolean.class)
-            return value.asBoolean();
-
-        if(type == int.class || type == Integer.class)
-            return value.asInt();
-
-        if(type == long.class || type == Long.class)
-            return value.asLong();
-
-        if(type == double.class || type == Double.class)
-            return value.asDouble();
-
-        if(type == float.class || type == Float.class)
-            return (float)value.asDouble();
-
-        if(type == JsonValue.class)
-            return value;
-
-        throw new RuntimeException(
-            "Unsupported belief type: " + type.getName());
+        return (target == boolean.class && source == Boolean.class)
+            || (target == byte.class && source == Byte.class)
+            || (target == short.class && source == Short.class)
+            || (target == int.class && source == Integer.class)
+            || (target == long.class && source == Long.class)
+            || (target == float.class && source == Float.class)
+            || (target == double.class && source == Double.class)
+            || (target == char.class && source == Character.class);
     }
 }
