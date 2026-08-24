@@ -30,6 +30,9 @@ public class ServiceIdentifier implements IServiceIdentifier
 	
 	/** The provider identifier. */
 	protected ComponentIdentifier providerid;
+	
+	/** The provider application identifier, if any. */
+	protected String	appid;
 		
 	/** The service name. */
 	protected String servicename;
@@ -72,7 +75,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	 */
 	private ServiceIdentifier(IComponent provider, Class<?> type, String servicename, ServiceScope scope, Set<String> groupnames, Boolean unrestricted, Collection<String> tags)
 	{
-		this(provider.getId(), new ClassInfo(type), getSuperClasses(type), servicename,
+		this(provider.getId(), provider.getAppId(), new ClassInfo(type), getSuperClasses(type), servicename,
 			scope, groupnames, unrestricted, tags);
 		
 		/*this.providerid = provider.getId();
@@ -94,10 +97,11 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier.
 	 */
-	private ServiceIdentifier(ComponentIdentifier providerid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
+	private ServiceIdentifier(ComponentIdentifier providerid, String appid, ClassInfo type, ClassInfo[] supertypes, String servicename, 
 		ServiceScope scope, Set<String> groupnames, boolean unrestricted, Collection<String> tags)
 	{
 		this.providerid = providerid;
+		this.appid = appid;
 		this.type	= type;
 		this.supertypes = supertypes;
 		this.servicename = servicename;
@@ -177,10 +181,10 @@ public class ServiceIdentifier implements IServiceIdentifier
 	/**
 	 *  Create a new service identifier for a potentially remote component.
 	 */
-	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, Class<?> type, ClassInfo[] supertypes, 
+	public static ServiceIdentifier	createServiceIdentifier(ComponentIdentifier providerid, String appid, Class<?> type, ClassInfo[] supertypes, 
 		String servicename, ServiceScope scope, Set<String> networknames, boolean unrestricted, Collection<String> tags)
 	{
-		ServiceIdentifier sid = new ServiceIdentifier(providerid, new ClassInfo(type), supertypes, servicename, scope, networknames, unrestricted, tags);
+		ServiceIdentifier sid = new ServiceIdentifier(providerid, appid, new ClassInfo(type), supertypes, servicename, scope, networknames, unrestricted, tags);
 		sid.annotations = collectAnnotations(type);
 		return sid;
 	}
@@ -238,6 +242,25 @@ public class ServiceIdentifier implements IServiceIdentifier
 	public ServiceIdentifier	setProviderId(ComponentIdentifier providerid)
 	{
 		this.providerid = providerid;
+		return this;
+	}
+	
+	/**
+	 *  Get the service provider application identifier.
+	 *  @return The provider application id, if any
+	 */
+	public String getAppId()
+	{
+		return appid;
+	}
+	
+	/**
+	 *  Set the provider application id.
+	 *  @param appid The provider application id to set.
+	 */
+	public ServiceIdentifier	setAppId(String appid)
+	{
+		this.appid = appid;
 		return this;
 	}
 	

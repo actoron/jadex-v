@@ -32,6 +32,9 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 	/** Key type for the service id. */
 	public static final String KEY_TYPE_SID = "serviceid";
 	
+	/** Key type for the service app id. */
+	public static final String KEY_TYPE_APPID = "appid";
+	
 	/** Key type for the networks. */
 	public static final String KEY_TYPE_GROUPS = "groups";
 	
@@ -133,6 +136,10 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 		else if(KEY_TYPE_SID.equals(keytype))
 		{
 			ret = new SetWrapper<String>(serv.toString());
+		}
+		else if(KEY_TYPE_APPID.equals(keytype))
+		{
+			ret = new SetWrapper<String>(serv.getAppId());
 		}
 		else if(KEY_TYPE_GROUPS.equals(keytype))
 		{

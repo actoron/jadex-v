@@ -1,10 +1,7 @@
 package jadex.registry.coordinator;
 
-import java.util.Collection;
-import java.util.Set;
 import java.util.StringTokenizer;
 
-import jadex.common.ClassInfo;
 import jadex.common.SReflect;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
@@ -52,9 +49,11 @@ public interface ICoordinatorService
     	String pid = stok.nextToken();
     	String hostname = stok.nextToken();
     	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
+    	// TODO: app id needed for remote invocation?
+    	String appid = null;
     	
     	IServiceIdentifier rrsid = ServiceIdentifier.createServiceIdentifier(
-    		copid, ICoordinatorService.class, null, SReflect.getUnqualifiedClassName(ICoordinatorService.class),
+    		copid, appid, ICoordinatorService.class, null, SReflect.getUnqualifiedClassName(ICoordinatorService.class),
     		ServiceScope.GLOBAL, null, true, null);
     			
     	// Can null when service is local and not available.

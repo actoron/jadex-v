@@ -23,6 +23,10 @@ public class ServiceQuery<T>
 {	
 	//-------- constants --------
 	
+	/* Marker for appid not set. */
+	//Hack!!! should not be public???
+	public static final String APPID_NOT_SET = "__APPID_NOT_SET__";
+	
 	/** Marker for networks not set. */
 	//Hack!!! should not be public??? 
 	public static final String[] GROUPS_NOT_SET = new String[]{"__GROUPS_NOT_SET__"};	// TODO: new String[0] for better performance, but unable to check remotely after marshalling!
@@ -42,6 +46,9 @@ public class ServiceQuery<T>
 	
 	/** The annotation types to match on the service interface or its methods (OR semantics). */
 	protected ClassInfo[] annotations;
+	
+	/** The application id of the service provider. */
+	protected String appid	= APPID_NOT_SET;
 	
 	/** The service provider. (rename serviceowner?) */
 	//protected IComponentIdentifier provider;
@@ -368,6 +375,26 @@ public class ServiceQuery<T>
 	}
 	
 	/**
+	 *  Get the application id to search for
+	 *  Null means all applications.
+	 *  @link #APPID_NOT_SET means not set and will be set to the application id of the query owner.
+	 */
+	public String getAppId()
+	{
+		return appid;
+	}
+	
+	/**
+	 *  Set the application id to search for.
+	 *  @param appid The application id to set or null for all applications.
+	 */
+	public ServiceQuery<T> setAppId(String appid)
+	{
+		this.appid = appid;
+		return this;
+	}
+	
+	/**
 	 *  Checks if service of the query owner should be excluded.
 	 *  
 	 *  @return True, if the services should be excluded.
@@ -483,6 +510,9 @@ public class ServiceQuery<T>
 		
 		if(serviceidentifier != null)
 			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_SID, new String[]{serviceidentifier.toString()}, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_SID)));
+		
+		if(appid != null && !APPID_NOT_SET.equals(appid))
+			ret.add(new Tuple3<String, String[], Boolean>(ServiceKeyExtractor.KEY_TYPE_APPID, new String[]{appid}, getMatchingMode(ServiceKeyExtractor.KEY_TYPE_APPID)));
 		
 		if(annotations != null && annotations.length > 0)
 		{
@@ -730,6 +760,13 @@ public class ServiceQuery<T>
 			ret.append(ret.length()==13?"":", ");
 			ret.append("serviceidentifier=");
 			ret.append(serviceidentifier);
+		}
+		
+		if(!APPID_NOT_SET.equals(appid))
+		{
+			ret.append(ret.length()==13?"":", ");
+			ret.append("appid=");
+			ret.append(appid);
 		}
 		
 		if(multiplicity!=null)
