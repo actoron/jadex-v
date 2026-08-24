@@ -89,8 +89,7 @@ public class Camera	implements ICameraService
 				= OpenAiImageModel.builder()
 				.baseUrl("http://localhost:8888/v1")
 				.apiKey(System.getenv("UNSLOTH_API_KEY"))
-				// currently doesn't support model selection :-(
-				//.modelName("unsloth/FLUX.2-klein-4B-GGUF")
+				.modelName("unsloth/FLUX.2-klein-4B-GGUF")
 				.build();
 			
 			dev.langchain4j.data.image.Image	image	= imagemodel.generate("security camera image of "+prompt).content();
