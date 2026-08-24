@@ -2,6 +2,10 @@ package jadex.bding.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import jadex.bding.AgentModel;
 import jadex.bding.Goal;
@@ -20,6 +24,9 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 	/** The component. */
 	protected BDINGAgent self;
 
+	/** The currently adopted goals. */
+	protected Set<RGoal> goals;
+
 	/** Reasoner bridge to e.g. llm. */
 	protected IReasoner reasoner;
 
@@ -32,6 +39,7 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 	public BDINGAgentFeature(BDINGAgent self)
 	{
 		this.self	= self;
+		this.goals = new HashSet<>();
 		this.reasoner = findValue(Reasoner.class, IReasoner.class);
 		if(reasoner==null)
 			reasoner = new LlmReasoner();
@@ -140,6 +148,29 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 		});
 
 		return ret;
+	}
+
+	@Override
+	public BeliefSnapshot getBeliefs() 
+	{
+		BeliefSnapshot beliefs = BeliefSnapshot.extract(self);
+		return beliefs;
+	}
+
+	@Override
+	public Set<RGoal> getGoals() 
+	{
+		return goals;
+	}
+
+	public void addGoal(RGoal goal)
+	{
+		goals.add(goal);
+	}
+
+	public void removeGoal(RGoal goal)
+	{
+		goals.remove(goal);
 	}
 	
 	public IReasoner getReasoner()

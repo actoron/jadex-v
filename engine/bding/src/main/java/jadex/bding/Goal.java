@@ -1,7 +1,9 @@
 package jadex.bding;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Goal 
 {
@@ -28,6 +30,8 @@ public class Goal
     protected Importance importance;
 
     protected AgentModel model;
+
+    protected Set<Intention> intentions = new HashSet<>();
 
     public Goal(String name, String description, AgentModel model)
     {
@@ -123,6 +127,30 @@ public class Goal
     {
         this.importance = importance;
         return this;
+    }
+
+    public Goal addIntention(Intention intention)
+    {
+        this.intentions.add(intention);
+        return this;
+    }
+
+    public Goal removeIntention(Intention intention)
+    {
+        this.intentions.remove(intention);
+        return this;
+    }
+
+    public Goal setIntentions(Set<Intention> intentions)
+    {
+        this.intentions.clear();
+        this.intentions.addAll(intentions);
+        return this;
+    }
+
+    public Set<Intention> getIntentions()
+    {
+        return this.intentions;
     }
 
     public AgentModel getModel() 

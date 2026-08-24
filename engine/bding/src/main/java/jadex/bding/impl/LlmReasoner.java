@@ -1,7 +1,9 @@
 package jadex.bding.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,6 +11,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+import dev.langchain4j.agent.tool.ToolSpecification;
 import jadex.bding.AgentModel;
 import jadex.bding.Belief;
 import jadex.bding.ElementType;
@@ -18,6 +21,7 @@ import jadex.bding.IReasoner;
 import jadex.bding.Intention;
 import jadex.bding.Parameter;
 import jadex.bding.Plan;
+import jadex.bding.ReasoningEntry;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.bding.impl.RGoal.GoalState;
 import jadex.core.IComponent;
@@ -30,6 +34,7 @@ import jadex.micro.llmcall2.ILlmChatService;
 import jadex.micro.llmcall2.ILlmChatService2;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
+import jadex.micro.llmcall2.ToolRef;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
@@ -81,7 +86,11 @@ public class LlmReasoner implements IReasoner
 		6. If you get stuck in a loop, stop and immediately call a tool or provide a final answer.
 		""";
 
-    protected IComponent component;
+    //protected IComponent component;
+
+    protected List<ReasoningEntry> history = new ArrayList<>();
+
+    protected ReasoningEntry currententry = null;
 
     protected String ask(String prompt)
     {
@@ -106,6 +115,23 @@ public class LlmReasoner implements IReasoner
         {
             throw new RuntimeException("No LLM chat service available", e);
         }
+    }
+
+    @Override
+    public IFuture<ReasoningEntry> getCurrentReasoning() 
+    {
+        return new Future<>(currententry);
+    }
+
+    @Override
+    public IFuture<List<ReasoningEntry>> getReasoningHistory() 
+    {
+        return new Future<>(history);
+    }
+
+    public void addHistoryEntry(ReasoningEntry entry)
+    {
+        history.add(entry);
     }
 
     public IFuture<RGoal> createGoal(String usergoal, AgentModel model)
@@ -196,7 +222,11 @@ public class LlmReasoner implements IReasoner
 
             //System.out.println("createGoal: " + prompt);
 
+            currententry = new ReasoningEntry(System.currentTimeMillis(), "createGoal", prompt, 
+                null, -1, false, null, null);
+
             String text = ask(prompt);
+
             JsonValue val = Json.parse(text);
             JsonObject obj = val.asObject();
 
@@ -266,10 +296,20 @@ public class LlmReasoner implements IReasoner
             System.out.println("Goal type: "+rgoal.getGoal());
             System.out.println("Goal instance: "+rgoal);
 
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                text, System.currentTimeMillis()-currententry.timestamp(), true, rgoal, null);
+            currententry = null;
+            addHistoryEntry(entry);
+
             ret.setResult(rgoal);
         }
         catch(Exception e)
         {
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                e.getMessage(), System.currentTimeMillis()-currententry.timestamp(), false, null, null);
+            currententry = null;
+            addHistoryEntry(entry);
+
             e.printStackTrace();
             ret.setException(e);
         }
@@ -284,6 +324,32 @@ public class LlmReasoner implements IReasoner
 
         try
         {
+            IComponent agent = IComponentManager.get().getCurrentComponent();
+
+            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
+
+            StringBuilder descs = new StringBuilder();
+
+            if(tools!=null)
+            {
+                for(ToolRef tool : tools.values())
+                {
+                    if(tool == null)
+                        continue;
+
+                    ToolSpecification spec = tool.spec();
+
+                    descs.append("- ").append(spec.name());
+
+                    if(spec.description() != null && !spec.description().isBlank())
+                    {
+                        descs.append(": ").append(spec.description());
+                    }
+
+                    descs.append("\n");
+                }
+            }
+
             String prompt = """
                 Generate the most promising intentions for the following goal.
 
@@ -293,14 +359,56 @@ public class LlmReasoner implements IReasoner
                 Goal:
                 %s
 
-                Consider the current beliefs when generating intentions.
+                Available capabilities:
+                %s
+
+                The available capabilities describe actions the agent can potentially
+                perform. Use them when considering which intentions are feasible.
+
+                Consider the current beliefs and available capabilities when generating
+                intentions.
+
+                An intention should represent a plausible and purposeful approach to
+                achieving the goal. It should not merely describe something that is
+                theoretically possible.
+
+                Evaluate possible intentions according to:
+
+                - Feasibility: Can the intention potentially be achieved using the
+                available capabilities, current beliefs, and possible subgoals?
+                - Plausibility: Is this a sensible and realistic approach to achieving
+                the goal?
+                - Efficiency: Is the expected effort, time, cost, or complexity
+                reasonable compared with other plausible approaches?
+                - Relevance: Does the intention directly contribute to achieving the goal?
+                - Proportionality: Is the approach appropriate for the goal?
+
+                Prefer practical, natural, and likely successful approaches.
+
+                Do not generate intentions that are technically possible but obviously
+                impractical, inefficient, or unreasonable when better alternatives exist.
+
+                For example, if the goal is to travel from Hamburg to Bremen, walking
+                should generally not be considered a promising intention if substantially
+                more practical transportation options are available.
+
+                However, do not reject an approach merely because it is unusual.
+                Consider the current beliefs, available capabilities, and the actual
+                circumstances of the goal.
+
+                The intention should describe a relatively abstract course of action,
+                not a concrete executable plan.
+
+                Do not include individual tool calls in the intention description unless
+                the tool-level action itself represents the meaningful high-level approach.
+
+                Generate a small number of genuinely different and promising intentions.
+                Do not generate several intentions that are merely minor variations of
+                the same approach.
 
                 For each intention provide:
                 - name: a short, concise name identifying the intention
                 - description: a brief description of the intended course of action
-
-                The intention should describe a relatively abstract course of action,
-                not a concrete executable plan.
 
                 Return ONLY a JSON array of objects.
                 Do not include explanations.
@@ -318,9 +426,13 @@ public class LlmReasoner implements IReasoner
                 ]
                 """.formatted(
                     JsonHelper.toJson(beliefs).toString(),
-                    goal.getGoal().getDescription());
+                    goal.getGoal().getDescription(),
+                    descs.toString());
 
             System.out.println("generateIntentions: "+prompt);
+
+            currententry = new ReasoningEntry(System.currentTimeMillis(), "generateIntentions", prompt, 
+                null, -1, false, goal, null);
 
             String text = ask(prompt);
 
@@ -348,10 +460,21 @@ public class LlmReasoner implements IReasoner
             }
 
             System.out.println("generated intentions: "+intentions);
+
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                text, System.currentTimeMillis()-currententry.timestamp(), true, goal, null);
+            currententry = null;
+            addHistoryEntry(entry);
+
             ret.setResult(intentions);
         }
         catch(Exception e)
         {
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                e.getMessage(), System.currentTimeMillis()-currententry.timestamp(), false, goal, null);
+            currententry = null;
+            addHistoryEntry(entry);
+
             ret.setException(e);
         }
 
@@ -365,6 +488,8 @@ public class LlmReasoner implements IReasoner
 
         try
         {
+            IComponent agent = IComponentManager.get().getCurrentComponent();
+
             StringBuilder candidates = new StringBuilder();
 
             int i = 0;
@@ -379,6 +504,31 @@ public class LlmReasoner implements IReasoner
                     .append("\n");
             }
 
+            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
+
+            StringBuilder toolDescriptions = new StringBuilder();
+
+            for(ToolRef tool : tools.values())
+            {
+                if(tool == null)
+                    continue;
+
+                ToolSpecification spec = tool.spec();
+
+                toolDescriptions
+                    .append("- ")
+                    .append(spec.name());
+
+                if(spec.description() != null && !spec.description().isBlank())
+                {
+                    toolDescriptions
+                        .append(": ")
+                        .append(spec.description());
+                }
+
+                toolDescriptions.append("\n");
+            }
+
             String prompt = """
                 Select the most promising intention for the following goal.
 
@@ -388,16 +538,47 @@ public class LlmReasoner implements IReasoner
                 Goal:
                 %s
 
+                Available capabilities:
+                %s
+
                 Candidate intentions:
                 %s
 
-                Consider the current beliefs when selecting the intention.
+                Consider the current beliefs, available capabilities, and the goal
+                when selecting the intention.
+
+                Evaluate each candidate intention according to:
+
+                - Feasibility: Can the intention potentially be achieved using the
+                available capabilities, current beliefs, and possible subgoals?
+                - Plausibility: Is it a sensible and realistic approach to the goal?
+                - Efficiency: Is the expected effort, time, cost, or complexity
+                reasonable compared with the alternatives?
+                - Relevance: Does it directly contribute to achieving the goal?
+                - Proportionality: Is the approach appropriate for the goal?
+
+                Prefer intentions that are practical, natural, and likely to succeed.
+
+                An intention does not need to be directly executable by a single
+                tool. It may require multiple tool calls and/or subgoals.
+
+                However, do not select an intention if there is no plausible way
+                to achieve it using the available capabilities and possible
+                subgoals.
+
+                Do not choose an intention merely because it is technically
+                possible if another candidate is clearly more practical or
+                efficient.
 
                 Return ONLY the number of the selected intention.
                 """.formatted(
                     JsonHelper.toJson(beliefs).toString(),
                     goal.getGoal().getDescription(),
+                    toolDescriptions.toString(),
                     candidates);
+
+            currententry = new ReasoningEntry(System.currentTimeMillis(), "selectIntention", prompt, 
+                null, -1, false, goal, null);
 
             int selected = Integer.parseInt(ask(prompt).trim());
 
@@ -415,15 +596,26 @@ public class LlmReasoner implements IReasoner
 
             if(sel == null)
             {
-                ret.setException(new RuntimeException("LLM selected invalid intention index: "+selected));
+                ret.setException(new RuntimeException("LLM selected invalid intention index: " + selected));
                 return ret;
             }
 
-            System.out.println("selected intention: "+sel);
+            System.out.println("selected intention: " + sel);
+
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                ""+sel, System.currentTimeMillis()-currententry.timestamp(), true, goal, sel);
+            currententry = null;
+            addHistoryEntry(entry);
+
             ret.setResult(sel);
         }
         catch(Exception e)
         {
+            ReasoningEntry entry = new ReasoningEntry(currententry.timestamp(), currententry.method(), currententry.prompt(), 
+                e.getMessage(), System.currentTimeMillis()-currententry.timestamp(), true, goal, null);
+            currententry = null;
+            addHistoryEntry(entry);
+
             ret.setException(e);
         }
 
@@ -437,6 +629,35 @@ public class LlmReasoner implements IReasoner
 
         try
         {
+            IComponent agent = IComponentManager.get().getCurrentComponent();
+
+            StringBuilder toolDescriptions = new StringBuilder();
+
+            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
+
+            for(ToolRef tool : tools.values())
+            {
+                if(tool == null)
+                    continue;
+
+                ToolSpecification spec = tool.spec();
+
+                toolDescriptions.append("- ")
+                    .append(spec.name())
+                    .append("\n");
+
+                if(spec.description() != null && !spec.description().isBlank())
+                {
+                    toolDescriptions.append("  Description: ")
+                        .append(spec.description())
+                        .append("\n");
+                }
+
+                toolDescriptions.append("  Parameters: ")
+                    .append(JsonHelper.toJson(spec.parameters()))
+                    .append("\n\n");
+            }
+
             StringBuilder history = new StringBuilder();
 
             if(in.getHistory() != null)
@@ -473,17 +694,142 @@ public class LlmReasoner implements IReasoner
 
                 Generate a different plan if previous plans are listed.
 
-                For the plan provide:
-                - name: a short, concise name identifying the plan
-                - description: a brief description of how the plan is carried out
+                A plan consists of a linear sequence of executable plan body steps.
+                The planBody MUST contain one or more steps.
 
-                Return ONLY a JSON object with a "name" and "description" field.
+                Each planBody step MUST be exactly one of these two types:
+
+                1. Tool call step
+
+                A tool call step directly invokes an available tool.
+
+                It has the following fields:
+                - type: "tool"
+                - toolname: the exact name of the tool to call
+                - mapping: a JSON object mapping tool argument names to plan parameter names
+                - resultmapping: the plan parameter name in which the tool result should be stored,
+                    or null if the result is not needed later
+
+                The mapping has the following semantics:
+
+                    "toolArgumentName": "planParameterName"
+
+                The tool receives the value of the specified plan parameter as the
+                corresponding tool argument.
 
                 Example:
                 {
-                    "name": "Prepare coffee",
-                    "description": "Prepare coffee using the coffee machine"
+                    "type": "tool",
+                    "toolname": "searchFlights",
+                    "mapping": {
+                        "from": "departure",
+                        "to": "destination",
+                        "date": "travelDate"
+                    },
+                    "resultmapping": "availableFlights"
                 }
+
+                Only use parameters that are actually available from the current
+                beliefs, the intention/goal, or values produced by previous plan steps.
+
+                If a tool does not require arguments, use an empty mapping object.
+
+                2. Subgoal step
+
+                A subgoal step delegates a meaningful intermediate goal to another
+                goal/plan.
+
+                It has the following fields:
+                - type: "subgoal"
+                - goal: a concise description of the intermediate goal
+                - requiredState: a concrete world state that must become true after
+                    successful execution of the subgoal
+                - description: a short description of what the subgoal accomplishes
+
+                IMPORTANT SUBGOAL RULES:
+
+                - A subgoal may ONLY be created if its requiredState is currently
+                    NOT satisfied by the beliefs.
+                - The requiredState must be a concrete, independently meaningful
+                    world state.
+                - Successful execution of the subgoal MUST establish the requiredState.
+                - Do NOT use a subgoal merely to group multiple tool calls.
+                - Do NOT use a subgoal merely because the task is complicated.
+                - Do NOT create a subgoal whose purpose is to decide what steps to take.
+                - Do NOT create a subgoal whose only result is another plan.
+                - Do NOT create unnecessary subgoals.
+                - Prefer a direct tool call whenever the required action can be
+                    performed directly with an available tool.
+                - A subgoal must close a concrete gap between the current beliefs
+                    and the state required by a later plan step.
+                - If the requiredState is already true according to the beliefs,
+                    the subgoal MUST NOT be created.
+
+                PLAN BODY RULES:
+
+                - planBody is a strictly linear sequence.
+                - Steps are executed from first to last.
+                - No branching.
+                - No loops.
+                - No parallel execution.
+                - Every step must contribute directly to achieving the intention.
+                - Keep the plan as short as reasonably possible.
+                - A later step may use a result produced by an earlier tool step.
+                - Do not reference values that are not available from beliefs, the goal,
+                the intention, or previous plan steps.
+
+                For the plan provide:
+                - name: a short, concise name identifying the plan
+                - description: a brief description of how the plan is carried out
+                - planBody: the linear sequence of plan body steps
+
+                Return ONLY a JSON object with "name", "description", and "planBody".
+
+                Example with tool calls:
+
+                {
+                    "name": "Find and store weather",
+                    "description": "Retrieve the weather for the requested city.",
+                    "planBody": [
+                        {
+                            "type": "tool",
+                            "toolname": "getWeather",
+                            "mapping": {
+                                "city": "targetCity"
+                            },
+                            "resultmapping": "weather"
+                        }
+                    ]
+                }
+
+                Example with a subgoal followed by a tool:
+
+                {
+                    "name": "Book selected flight",
+                    "description": "Ensure a suitable flight is selected and then book it.",
+                    "planBody": [
+                        {
+                            "type": "subgoal",
+                            "goal": "Find a suitable flight",
+                            "requiredState": "A suitable flight has been selected",
+                            "description": "Find a flight satisfying the requested constraints."
+                        },
+                        {
+                            "type": "tool",
+                            "toolname": "bookFlight",
+                            "mapping": {
+                                "flight": "selectedFlight"
+                            },
+                            "resultmapping": "bookingResult"
+                        }
+                    ]
+                }
+
+                If "A suitable flight has been selected" is already satisfied by the
+                current beliefs, the subgoal MUST be omitted and the plan should directly
+                call bookFlight.
+
+                Generate the most concrete executable plan possible.
                 """.formatted(
                     JsonHelper.toJson(beliefs).toString(),
                     in.getGoal().getGoal().getDescription(),
@@ -494,6 +840,8 @@ public class LlmReasoner implements IReasoner
             System.out.println("generate plan: "+prompt);
 
             String text = ask(prompt);
+
+            System.out.println("generated plan: "+text);
 
             JsonValue val = Json.parse(text);
 

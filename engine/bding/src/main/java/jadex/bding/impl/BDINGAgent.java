@@ -1,6 +1,5 @@
 package jadex.bding.impl;
 
-import jadex.bding.AgentModel;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.impl.Component;

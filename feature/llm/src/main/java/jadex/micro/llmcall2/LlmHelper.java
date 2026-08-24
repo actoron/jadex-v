@@ -604,12 +604,12 @@ public class LlmHelper
 					
 					// Append suffix to new tool if name already exists.
 					ToolRef	tool_ref	= new ToolRef(tool, service, m);
-					if(tools.containsKey(name))
+					if(ret.containsKey(name))
 					{
 						tool_ref	= appendSuffix(tool_ref, ret);
 					}
 						
-					tools.put(tool_ref.spec().name(), tool_ref);
+					ret.put(tool_ref.spec().name(), tool_ref);
 				}
 			}
 		}

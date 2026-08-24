@@ -65,7 +65,10 @@ public class RGoal
     }
 
     public void adopt()
-    {
+    { 
+        IComponent agent = IComponentManager.get().getCurrentComponent();
+        BDINGAgentFeature bdif = (BDINGAgentFeature)agent.getFeature(IBDINGAgentFeature.class);
+        bdif.addGoal(this);
         changeState(GoalState.ACTIVE);
     }
 
@@ -81,13 +84,18 @@ public class RGoal
         {
             BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
 
-            Set<Intention> intentions = reasoner.generateIntentions(this, beliefs).get();
-        
+            Set<Intention> intentions = getGoal().getIntentions();
+            if(intentions.isEmpty())
+            {
+                intentions = reasoner.generateIntentions(this, beliefs).get();
+                getGoal().setIntentions(intentions);
+            }
             Intention intention = reasoner.selectIntention(this, intentions, beliefs).get();
 
             if(intention==null)
             {
-                ret.setException(new RuntimeException("No plan could be generated for intention"));
+                // todo: one could try to generate new/more intentions
+                ret.setException(new RuntimeException("No intention for goal: "+this));
             }
             else
             {
@@ -197,6 +205,27 @@ public class RGoal
     protected boolean isFinished(GoalState state)
     {
         return state==GoalState.SUCCEEDED || state==GoalState.FAILED || state==GoalState.DROPPED;
+    }
+
+    public IntentionHistory getHistory() 
+    {
+        return history;
+    }
+
+    public RGoal setHistory(IntentionHistory history) 
+    {
+        this.history = history;
+        return this;
+    }
+
+    public Map<String, Object> getParameters() 
+    {
+        return parameters;
+    }
+
+    public void setParameters(Map<String, Object> parameters) 
+    {
+        this.parameters = parameters;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package jadex.bding;
 
 import jadex.future.IFuture;
+
+import java.util.List;
 import java.util.Set;
 
 import jadex.bding.impl.BeliefSnapshot;
@@ -36,4 +38,8 @@ public interface IReasoner
     public IFuture<Boolean> isSameIntention(Intention in1, Intention in2);
 
     public IFuture<GoalState> evaluateGoalState(RGoal goal, BeliefSnapshot beliefs);
+
+    public IFuture<ReasoningEntry> getCurrentReasoning();
+
+    public IFuture<List<ReasoningEntry>> getReasoningHistory();
 }
