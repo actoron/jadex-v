@@ -367,7 +367,7 @@ public class LlmBenchmark
 //			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
 		
 		// Run benchmarks for remote Ollama models
 		include_models	= Arrays.asList(
@@ -382,7 +382,30 @@ public class LlmBenchmark
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LOCAL_AI, false);
 		
 		// Run benchmarks for available Unsloth models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.UNSLOTH, true);
+		include_models	= Arrays.asList(
+			"unsloth/Ministral-3-14B-Instruct-2512-GGUF",
+			"unsloth/Ministral-3-14B-Reasoning-2512-GGUF",
+			"unsloth/Ministral-3-3B-Instruct-2512-GGUF",
+			"unsloth/Ministral-3-3B-Reasoning-2512-GGUF",
+			"unsloth/Ministral-3-8B-Instruct-2512-GGUF",
+			"unsloth/Ministral-3-8B-Reasoning-2512-GGUF",
+			"unsloth/Muse-Glimmer-30B-GGUF",
+			"unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF",
+			"unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+			"unsloth/Qwen3.5-0.8B-MTP-GGUF",
+			"unsloth/Qwen3.5-2B-MTP-GGUF",
+			"unsloth/Qwen3.5-4B-MTP-GGUF",
+			"unsloth/Qwen3.5-9B-MTP-GGUF",
+			"unsloth/Qwen3.8-27B-GGUF",
+			"unsloth/gemma-4-12B-it-qat-GGUF",
+			"unsloth/gemma-4-E2B-it-qat-GGUF",
+			"unsloth/gemma-4-E4B-it-qat-GGUF"
+//			// No vision
+//			"unsloth/gpt-oss-20b-GGUF",
+//			"unsloth/granite-4.1-3b-GGUF",
+//			"unsloth/granite-4.1-8b-GGUF"
+		);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.UNSLOTH, true);
 		
 		// Run benchmarks for available Llama server models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LLAMA_SERVER, false);
@@ -671,30 +694,31 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.MISTRAL_AI;
+		Provider provider = Provider.UNSLOTH;
 		for(String model_name: provider.getModels())
 		{
-			try
-			{
-				StreamingChatModel llm = provider.createChatModel(model_name, false);
-				boolean	nothink	= !LlmHelper.isThinking(llm);
-				System.out.println("Model: "+model_name+" No-think: "+nothink);
-			}
-			catch(Exception e)
-			{
-				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
-			}
-			
-			try
-			{
-				StreamingChatModel	llm = provider.createChatModel(model_name, true);
-				boolean	think	= LlmHelper.isThinking(llm);
-				System.out.println("Model: "+model_name+" Think: "+think);
-			}
-			catch(Exception e)
-			{
-				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
-			}
+			System.out.println("\""+model_name+"\",");
+//			try
+//			{
+//				StreamingChatModel llm = provider.createChatModel(model_name, false);
+//				boolean	nothink	= !LlmHelper.isThinking(llm);
+//				System.out.println("Model: "+model_name+" No-think: "+nothink);
+//			}
+//			catch(Exception e)
+//			{
+//				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
+//			}
+//			
+//			try
+//			{
+//				StreamingChatModel	llm = provider.createChatModel(model_name, true);
+//				boolean	think	= LlmHelper.isThinking(llm);
+//				System.out.println("Model: "+model_name+" Think: "+think);
+//			}
+//			catch(Exception e)
+//			{
+//				System.out.println("  Failed to check thinking for model "+model_name+": "+e);
+//			}
 		}
 	}
 }
