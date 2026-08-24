@@ -1,29 +1,23 @@
 package jadex.bding;
 
-import jadex.core.IComponent;
-import jadex.core.IComponentHandle;
-import jadex.injection.annotation.Inject;
-import jadex.injection.annotation.OnStart;
-import jadex.micro.llmcall2.LlmChatAgent;
-import jadex.micro.llmcall2.LlmChatAgent2;
-import jadex.micro.llmcall2.LlmHelper;
-import jadex.providedservice.annotation.Service;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.bding.annotation.BDINGAgent;
-import jadex.bding.annotation.Model;
 import jadex.bding.annotation.Belief;
-import jadex.bding.annotation.Reasoner;
-import jadex.bding.impl.LlmReasoner;
 import jadex.bding.tool.BDIViewer;
-import jadex.common.transformation.B;
+import jadex.core.IComponent;
+import jadex.core.IComponentHandle;
 import jadex.core.impl.ComponentManager;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.injection.annotation.Inject;
+import jadex.injection.annotation.OnStart;
+import jadex.micro.llmcall2.LlmChatAgent2;
+import jadex.micro.llmcall2.LlmHelper;
+import jadex.providedservice.annotation.Service;
 
 /** 
 

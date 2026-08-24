@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -24,14 +25,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
-import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.util.Tokenizer.Cursor;
-
 import jadex.bding.Goal;
 import jadex.bding.IBDINGAgentFeature;
-import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
 import jadex.bding.Parameter;
