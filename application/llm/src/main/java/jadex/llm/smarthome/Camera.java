@@ -85,11 +85,12 @@ public class Camera	implements ICameraService
 //				.modelName("gemini-2.5-flash-image")
 //				.build();
 			
-			// Local model using https://github.com/mudler/LocalAI
+			// Local model using unsloth studio
 				= OpenAiImageModel.builder()
-				.baseUrl("http://localhost:8080/v1")
-//				.modelName("flux.2-klein-4b")
-				.modelName("flux.2-klein-9b")
+				.baseUrl("http://localhost:8888/v1")
+				.apiKey(System.getenv("UNSLOTH_API_KEY"))
+				// currently doesn't support model selection :-(
+				//.modelName("unsloth/FLUX.2-klein-4B-GGUF")
 				.build();
 			
 			dev.langchain4j.data.image.Image	image	= imagemodel.generate("security camera image of "+prompt).content();
