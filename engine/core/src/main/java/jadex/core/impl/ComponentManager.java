@@ -799,6 +799,7 @@ public class ComponentManager implements IComponentManager
 			try
 			{
 				// Check for overridden toString() (raises exception if not found)
+				@SuppressWarnings("unused")
 				Method unused = comp.getPojo().getClass().getDeclaredMethod("toString");
 				ret	= comp.getPojo().toString();
 			}
