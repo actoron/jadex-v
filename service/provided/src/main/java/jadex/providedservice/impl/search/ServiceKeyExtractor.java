@@ -139,7 +139,7 @@ public class ServiceKeyExtractor implements IKeyExtractor<IServiceIdentifier>
 		}
 		else if(KEY_TYPE_APPID.equals(keytype))
 		{
-			ret = new SetWrapper<String>(serv.getAppId());
+			ret = new SetWrapper<String>(serv.getProviderId().getAppId());
 		}
 		else if(KEY_TYPE_GROUPS.equals(keytype))
 		{

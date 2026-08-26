@@ -44,7 +44,7 @@ public class CallerAgent
         System.out.println("Service Name: " + servicename);
 
         Set<String> groups = new HashSet<>();
-        ServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(provider, appid, ITestService.class, null, servicename, ServiceScope.GLOBAL, groups, true, null);
+        ServiceIdentifier sid = ServiceIdentifier.createServiceIdentifier(provider, ITestService.class, null, servicename, ServiceScope.GLOBAL, groups, true, null);
         //ServiceIdentifier sid = new ServiceIdentifier(provider, new ClassInfo(ITestService.class), null, servicename, ServiceScope.GLOBAL, groups, true, null);
 
         System.out.println("Creating service proxy...");

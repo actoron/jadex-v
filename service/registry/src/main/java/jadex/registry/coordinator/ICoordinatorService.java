@@ -44,16 +44,12 @@ public interface ICoordinatorService
 	
 	public static ICoordinatorService getCoordinatorServiceProxy(IComponent agent, String name)
     {
-    	StringTokenizer stok = new StringTokenizer(name, "@");
-    	String agentname = stok.nextToken();
-    	String pid = stok.nextToken();
-    	String hostname = stok.nextToken();
-    	ComponentIdentifier copid = new ComponentIdentifier(agentname, pid, hostname);
+    	ComponentIdentifier copid = ComponentIdentifier.fromString(name);
     	// TODO: app id needed for remote invocation?
     	String appid = null;
     	
     	IServiceIdentifier rrsid = ServiceIdentifier.createServiceIdentifier(
-    		copid, appid, ICoordinatorService.class, null, SReflect.getUnqualifiedClassName(ICoordinatorService.class),
+    		copid, ICoordinatorService.class, null, SReflect.getUnqualifiedClassName(ICoordinatorService.class),
     		ServiceScope.GLOBAL, null, true, null);
     			
     	// Can null when service is local and not available.

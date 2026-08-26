@@ -1484,7 +1484,7 @@ public class SecurityFeature implements ISecurityFeature//, ISecurityHandler
 	 */
 	protected void sendSecurityMessage(GlobalProcessIdentifier receiver, Object message)
 	{
-		ComponentIdentifier secid = new ComponentIdentifier(null, receiver);
+		ComponentIdentifier secid = new ComponentIdentifier(null, null, receiver);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ISerializationServices.get().encode(baos, ComponentManager.get().getClassLoader(), message);
 		ipc.sendMessage(secid, baos.toByteArray());

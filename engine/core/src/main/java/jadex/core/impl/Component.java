@@ -95,7 +95,7 @@ public class Component implements IComponent
 	public void init()
 	{
 		// If no id is given, create a new one.
-		this.id = id==null? new ComponentIdentifier(): id;
+		this.id = id==null? new ComponentIdentifier(app): id;
 		
 		//System.out.println(this.id.getLocalName());
 		ComponentManager.get().addComponent(this);

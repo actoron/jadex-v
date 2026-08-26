@@ -120,7 +120,7 @@ public class BaseObject extends SpaceObject
 	@Override
 	public void debug()
 	{
-		IComponent	comp	= ComponentManager.get().getComponent(new ComponentIdentifier(name));
+		IComponent	comp	= ComponentManager.get().getComponent(new ComponentIdentifier(null, name));
 		for(Set<RPlan> plans: ((BDIAgentFeature)comp.getFeature(IBDIAgentFeature.class)).getPlans().values())
 		{
 			System.out.println(plans);

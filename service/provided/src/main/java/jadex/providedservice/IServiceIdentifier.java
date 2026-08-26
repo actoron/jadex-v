@@ -19,12 +19,6 @@ public interface IServiceIdentifier
 	public ComponentIdentifier getProviderId();
 	
 	/**
-	 *  Get the service provider application identifier.
-	 *  @return The provider application id, if any
-	 */
-	public String getAppId();
-
-	/**
 	 *  Get the service name.
 	 *  @return The service name.
 	 */

@@ -149,7 +149,7 @@ public class IpcTest
 	private ComponentIdentifier getIpcComponentTestId(String compname)
 	{
 		String pid = 1000000000 + (Math.abs(SSecurity.getSecureRandom().nextInt()) % 10000000) +"";
-		ComponentIdentifier ret = new ComponentIdentifier(compname, new GlobalProcessIdentifier(pid, GlobalProcessIdentifier.getSelf().host()));
+		ComponentIdentifier ret = new ComponentIdentifier(null, compname, new GlobalProcessIdentifier(pid, GlobalProcessIdentifier.getSelf().host()));
 		return ret;
 	}
 }

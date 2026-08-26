@@ -60,7 +60,7 @@ public class EventIntermediateMessageActivityHandler extends DefaultActivityHand
 		if(cid instanceof String)
 		{
 			// Special case -> string converted to sibling cid.
-			ret = new ComponentIdentifier((String)cid);//, parent);
+			ret = new ComponentIdentifier(null, (String)cid);//, parent);
 		}
 		else
 		{

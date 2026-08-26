@@ -18,12 +18,12 @@ import jadex.providedservice.annotation.Service;
  */
 public class ApplicationSearchTest
 {
+	@Service
+	interface ITestService {}
+
 	@Test
 	public void testApplicationSearch()
-	{
-		@Service
-		interface ITestService {}
-		
+	{		
 		Application app = new Application("testapp");
 		Application app2 = new Application("testapp2");
 
@@ -51,8 +51,8 @@ public class ApplicationSearchTest
 			// Check that each app only sees its own service.
 			assertEquals(1, services.size());
 			assertEquals(1, services2.size());
-			assertEquals(app.getId(), ((IService) services.iterator().next()).getServiceId().getAppId());
-			assertEquals(app2.getId(), ((IService) services2.iterator().next()).getServiceId().getAppId());
+			assertEquals(app.getId(), ((IService) services.iterator().next()).getServiceId().getProviderId().getAppId());
+			assertEquals(app2.getId(), ((IService) services2.iterator().next()).getServiceId().getProviderId().getAppId());
 			
 			// Check that searching with null appId returns all three services.
 			assertEquals(3, all_services.size());

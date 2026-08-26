@@ -20,7 +20,7 @@ public class Application implements IComponentFactory
 
 	public Application(String name)
 	{
-		this(name, name+"_"+idgen.getAndIncrement());
+		this(name, name+"_"+idgen.incrementAndGet());
 	}
 	
 	public Application(String name, String id)
