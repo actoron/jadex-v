@@ -1,6 +1,7 @@
 package jadex.bdi.blocksworld;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
@@ -40,6 +41,32 @@ import jadex.micro.llmcall2.LlmHelper.Provider;
  */
 public abstract class LlmBlocksworldBaseAgent	extends BlocksworldAgent	implements IBlocksworldBaseService
 {
+	/**
+	 *  Overridden to explicitly number the blocks
+	 *  thus avoiding static counter issues when running benchmark repeatedly.
+	 */
+	public void agentCreated()
+	{
+		Block b0 = new Block(1, new Color(240, 16, 16), table);
+		Block b1 = new Block(2, new Color(64, 96, 255), table);
+		Block b2 = new Block(3, new Color(240, 240, 16), b0);
+		blocks.add(b0);
+		blocks.add(b1);
+		blocks.add(b2);
+		blocks.add(new Block(4, new Color(16, 240, 16), b2));
+		blocks.add(new Block(5, new Color(240, 16, 240), bucket));
+		blocks.add(new Block(6, new Color(16, 240, 240), bucket));
+		blocks.add(new Block(7, new Color(240, 240, 240), bucket));
+
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				new BlocksworldGui(agent.getComponentHandle());
+			}
+		});
+}
+	
 	@Override
 	public IFuture<Void> move(String block1, String block2)
 	{

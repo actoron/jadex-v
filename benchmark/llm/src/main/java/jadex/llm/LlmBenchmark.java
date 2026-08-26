@@ -7,7 +7,11 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -15,24 +19,18 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import dev.langchain4j.exception.InternalServerException;
 import dev.langchain4j.exception.RateLimitException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.common.SUtil;
+import jadex.core.Application;
 import jadex.core.ComponentTerminatedException;
-import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.core.INoCopyStep;
 import jadex.errorhandling.IErrorHandlingFeature;
-import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.micro.llmcall2.ChatFragment;
-import jadex.micro.llmcall2.ILlmChatService;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
 import jadex.micro.llmcall2.LlmHelper.Provider;
-import jadex.providedservice.IService;
-import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmBenchmark
 {
@@ -233,7 +231,7 @@ public class LlmBenchmark
 	/**
 	 * Small helper GUI to mark current run as failed and terminate the active future.
 	 */
-	protected static JFrame showFailureGui(String model, int run, int runs)
+	protected static JFrame showFailureGui(String model, int run, int runs, ITerminableIntermediateFuture<ChatFragment> results)
 	{
 		JFrame[] frame = new JFrame[1];
 		try
@@ -252,8 +250,6 @@ public class LlmBenchmark
 				{
 					try
 					{
-						ITerminableIntermediateFuture<ChatFragment> results =
-							getService(ILlmChatService.class, "").getCurrentChat();
 						results.terminate(new RuntimeException("Manual failure triggered via GUI"));
 					}
 					catch(Exception ex)
@@ -286,7 +282,7 @@ public class LlmBenchmark
 	}
 
 	public static void runBenchmarks(String benchmark_name, String prompt,
-		Runnable setup, Function<String, Boolean> success, Runnable teardown)
+		Consumer<Application> setup, BiFunction<Application, String, Boolean> success, Runnable teardown)
 	{
 		IComponentManager.get().getFeature(IErrorHandlingFeature.class)
 			.addExceptionHandler(LlmChatAgent.class, Exception.class, false, (ex, comp) -> {return;});
@@ -371,39 +367,53 @@ public class LlmBenchmark
 		
 		// Run benchmarks for remote Ollama models
 		include_models	= Arrays.asList(
-			"gemma4:26b-a4b-it-q4_K_M",
-			"gemma4:31b",
-			"qwen3.6:27b",
-			"qwen3.6:35b"
+			"gemma4:12b-it-qat"
+//			"gemma4:26b-a4b-it-q4_K_M",
+//			"gemma4:31b",
+//			"hf.co/unsloth/Qwen3-14B-GGUF:latest",
+//			"hf.co/unsloth/Qwen3-32B-GGUF:latest",
+//			"hf.co/unsloth/Qwen3-8B-GGUF:latest",
+//			"hf.co/unsloth/gpt-oss-20b-GGUF:latest",
+//			"qwen2.5-coder:1.5b",
+//			"qwen2.5-coder:7b",
+//			"qwen3-14b:latest",
+//			"qwen3-8b:latest",
+//			"qwen3.6:27b",
+//			"qwen3.6:35b",
+//			"qwen3.8:latest",
+//			"gemma4:26b-a4b-it-q4_K_M",
+//			"gemma4:31b",
+//			"qwen3.6:27b",
+//			"qwen3.6:35b"
 			);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_REMOTE, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA, true);
 		
 //		// Run benchmarks for Local Ai models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LOCAL_AI, false);
 		
 		// Run benchmarks for available Unsloth models
 		include_models	= Arrays.asList(
-			"unsloth/Ministral-3-14B-Instruct-2512-GGUF",
-			"unsloth/Ministral-3-14B-Reasoning-2512-GGUF",
-			"unsloth/Ministral-3-3B-Instruct-2512-GGUF",
-			"unsloth/Ministral-3-3B-Reasoning-2512-GGUF",
-			"unsloth/Ministral-3-8B-Instruct-2512-GGUF",
-			"unsloth/Ministral-3-8B-Reasoning-2512-GGUF",
-			"unsloth/Muse-Glimmer-30B-GGUF",
-			"unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF",
-			"unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
-			"unsloth/Qwen3.5-0.8B-MTP-GGUF",
-			"unsloth/Qwen3.5-2B-MTP-GGUF",
-			"unsloth/Qwen3.5-4B-MTP-GGUF",
-			"unsloth/Qwen3.5-9B-MTP-GGUF",
-			"unsloth/Qwen3.8-27B-GGUF",
-			"unsloth/gemma-4-12B-it-qat-GGUF",
-			"unsloth/gemma-4-E2B-it-qat-GGUF",
-			"unsloth/gemma-4-E4B-it-qat-GGUF"
-//			// No vision
-//			"unsloth/gpt-oss-20b-GGUF",
-//			"unsloth/granite-4.1-3b-GGUF",
-//			"unsloth/granite-4.1-8b-GGUF"
+//			"unsloth/Ministral-3-14B-Instruct-2512-GGUF",
+//			"unsloth/Ministral-3-14B-Reasoning-2512-GGUF",
+			"unsloth/Ministral-3-3B-Instruct-2512-GGUF"
+//			"unsloth/Ministral-3-3B-Reasoning-2512-GGUF",
+//			"unsloth/Ministral-3-8B-Instruct-2512-GGUF",
+//			"unsloth/Ministral-3-8B-Reasoning-2512-GGUF",
+//			"unsloth/Muse-Glimmer-30B-GGUF",
+//			"unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF",
+//			"unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
+//			"unsloth/Qwen3.5-0.8B-MTP-GGUF"
+//			"unsloth/Qwen3.5-2B-MTP-GGUF",
+//			"unsloth/Qwen3.5-4B-MTP-GGUF" // 1:30 minutes for 10 runs
+//			"unsloth/Qwen3.5-9B-MTP-GGUF",
+//			"unsloth/Qwen3.8-27B-GGUF",
+//			"unsloth/gemma-4-12B-it-qat-GGUF",
+//			"unsloth/gemma-4-E2B-it-qat-GGUF",
+//			"unsloth/gemma-4-E4B-it-qat-GGUF"
+////			// No vision
+////			"unsloth/gpt-oss-20b-GGUF",
+////			"unsloth/granite-4.1-3b-GGUF",
+////			"unsloth/granite-4.1-8b-GGUF"
 		);
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.UNSLOTH, true);
 		
@@ -459,8 +469,8 @@ public class LlmBenchmark
 	/**
 	 *  Run benchmarks for all models of the given provider.
 	 */
-	protected static void runProviderBenchmarks(String benchmark_name, String prompt, Runnable setup,
-			Function<String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
+	protected static void runProviderBenchmarks(String benchmark_name, String prompt, Consumer<Application> setup,
+			BiFunction<Application, String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
 			List<String> include_models, Provider provider, boolean skip_latest)
 	{
 		for(String model_name: provider.getModels())
@@ -475,7 +485,7 @@ public class LlmBenchmark
 					boolean	nothink	= !LlmHelper.isThinking(llm);										
 					if(nothink)
 					{
-						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider.toString(), llm, false);
+						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider, false);
 					}
 				}
 				catch(Exception e)
@@ -497,7 +507,7 @@ public class LlmBenchmark
 					boolean	think	= LlmHelper.isThinking(llm);
 					if(think)
 					{
-						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider.toString(), llm, true);
+						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider, true);
 					}
 				}
 				catch(Exception e)
@@ -518,99 +528,114 @@ public class LlmBenchmark
 	/**
 	 *  Run the benchmark for the given model and prompt, and write results to CSV file.
 	 */
-	protected static void benchmark(String benchmark_name, String prompt, Runnable setup,
-		Function<String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
-		String model_name, String provider, StreamingChatModel llm, boolean dothink)
+	protected static void benchmark(String benchmark_name, String prompt, Consumer<Application> setup,
+		BiFunction<Application, String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
+		String model_name, Provider provider, boolean dothink)
 	{
 		int runs	= DEFAULT_RUNS;
 		long[] times	= new long[runs-1];
 		int[] tokens	= new int[runs];
 		Boolean[]	successes	= new Boolean[runs];
-		int max_context	= -1;
+		AtomicInteger max_context	= new AtomicInteger(-1);
+		ExecutorService executor = Executors.newFixedThreadPool(3);
 		for(int i=0; i<runs; i++)
 		{
-			System.out.print(model_name+" run "+(i+1)+"/"+runs+": ");
-		
-			if(setup!=null)
-				setup.run();
-			
-			IComponentHandle	agent	= IComponentManager.get().create(new LlmChatAgent(llm)).get();
-			ILlmChatService	chat	= getService(ILlmChatService.class, "");
-			
-			long	start	= System.currentTimeMillis();
-			ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
-			JFrame failureFrame = showFailureGui(model_name, i+1, runs);
-			LlmChatAgent.printResults(results);
-			try
+			final int fi	= i;
+			executor.submit(() ->
 			{
-				// Cloud models -> wait for max 1 minute, otherwise consider it a failure.
-				if(llm.getClass().getName().contains("Google")
-					|| llm.getClass().getName().contains("Mistral"))
-				{
-					results.get(60000);
-				}
-				// Local models -> wait for max 5 minutes, otherwise consider it a failure.
-				else
-				{
-					results.get(300000);
-				}
+				System.out.println(model_name+" run "+(fi+1)+"/"+runs+": ");
+			
+				Application	app	= new Application("Benchmark-"+model_name);
+				if(setup!=null)
+					setup.accept(app);
 				
-				successes[i]	= success.apply(LlmChatAgent.getResponse(results));
-				long	end	= System.currentTimeMillis();
-				tokens[i]	= successes[i] ? chat.getTotalTokenCount().get() : -1;
-				max_context	= successes[i] ? chat.getMaxTokenCount().get() : max_context;
-				if(i>0)
-				{
-					times[i-1]	= successes[i] ? end-start : -1;
-				}
+				StreamingChatModel	llm	= provider.createChatModel(model_name, dothink);
+				LlmChatAgent	chat	= app.create(new LlmChatAgent(llm)).get().getPojoHandle(LlmChatAgent.class);
 				
-				System.out.println((successes[i] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
-						+ ", "+chat.getTotalTokenCount().get()+" tokens)");
-			}
-			catch(Exception e)
-			{
-				long	end	= System.currentTimeMillis();
+				long	start	= System.currentTimeMillis();
+				ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
+				JFrame failureFrame = showFailureGui(model_name, fi+1, runs, results);
+				LlmChatAgent.printResults(results);
 				try
 				{
-					results.terminate(e);
+					// Cloud models -> wait for max 1 minute, otherwise consider it a failure.
+					if(llm.getClass().getName().contains("Google")
+						|| llm.getClass().getName().contains("Mistral"))
+					{
+						results.get(60000);
+					}
+					// Local models -> wait for max 5 minutes, otherwise consider it a failure.
+					else
+					{
+						results.get(300000);
+					}
+					
+					successes[fi]	= success.apply(app, LlmChatAgent.getResponse(results));
+					long	end	= System.currentTimeMillis();
+					tokens[fi]	= successes[fi] ? chat.getTotalTokenCount().get() : -1;
+					if(successes[fi])
+						max_context.getAndAccumulate(chat.getMaxTokenCount().get(), Math::max);
+					if(fi>0)
+					{
+						times[fi-1]	= successes[fi] ? end-start : -1;
+					}
+					
+					System.out.println((successes[fi] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
+							+ ", "+chat.getTotalTokenCount().get()+" tokens)");
 				}
-				catch(ComponentTerminatedException cte)
+				catch(Exception e)
 				{
-				}
-				
-				if(e instanceof RateLimitException
-					|| e instanceof InternalServerException && (e.getMessage()==null || !e.getMessage().toLowerCase().contains("syntax")))
-				{
-					// Some mistral models have rate limits below 1/s
-					// Try to wait for a while and retry once, otherwise skip the model.
+					long	end	= System.currentTimeMillis();
 					try
 					{
-						System.out.println("Rate limit reached for model "+model_name+", retrying in 1 min...");
-						Thread.sleep(60000);
+						results.terminate(e);
 					}
-					catch(InterruptedException ie)
+					catch(ComponentTerminatedException cte)
 					{
 					}
-					i--;
+					
+					// TODO: handle rate limit in parallel runs?
+//					if(e instanceof RateLimitException
+//						|| e instanceof InternalServerException && (e.getMessage()==null || !e.getMessage().toLowerCase().contains("syntax")))
+//					{
+//						// Some mistral models have rate limits below 1/s
+//						// Try to wait for a while and retry once, otherwise skip the model.
+//						try
+//						{
+//							System.out.println("Rate limit reached for model "+model_name+", retrying in 1 min...");
+//							Thread.sleep(60000);
+//						}
+//						catch(InterruptedException ie)
+//						{
+//						}
+//					}
+//					else
+					{
+						successes[fi]	= false;
+						tokens[fi]	= -1;
+						if(fi>0)
+						{
+							times[fi-1]	= -1;
+						}
+						System.out.println(e+" ("+(end-start)/1000+" s)");
+					}				
 				}
-				else
+				finally
 				{
-					successes[i]	= false;
-					tokens[i]	= -1;
-					if(i>0)
-					{
-						times[i-1]	= -1;
-					}
-					System.out.println(e+" ("+(end-start)/1000+" s)");
-				}				
-			}
-			finally
-			{
-				closeFailureGui(failureFrame);
-				if(teardown!=null)
-					teardown.run();
-				agent.terminate().get();
-			}
+					closeFailureGui(failureFrame);
+					if(teardown!=null)
+						teardown.run();
+					app.terminate().get();
+				}
+			});
+		}
+		try
+		{
+			executor.shutdown();
+			executor.awaitTermination(10, java.util.concurrent.TimeUnit.MINUTES);
+		}
+		catch(InterruptedException e)
+		{
 		}
 		
 		long	min	= Arrays.stream(times).filter(time -> time>=0).min().orElse(-1000)/1000;
@@ -629,7 +654,7 @@ public class LlmBenchmark
 		CsvStats current = new CsvStats();
 		current.benchmark = benchmark_name;
 		current.model = model_name;
-		current.provider = provider;
+		current.provider = provider.name();
 		current.thinking = dothink;
 		current.runs = runs;
 		current.successRuns = successCount;
@@ -641,25 +666,11 @@ public class LlmBenchmark
 		current.avgTokens = token_avg;
 		current.minTokens = token_min;
 		current.maxTokens = token_max;
-		current.maxContext = max_context;
+		current.maxContext = max_context.get();
 
 		mergeAndPersistStats(out, csvStats, current);
 	}
-	
-	/**
-	 *  Get a service with name contained in service ID.
-	 */
-	public static <T> T getService(Class<? extends T> servicetype, String name)
-	{
-		return IComponentManager.get()
-			.runAsync((INoCopyStep<IFuture<T>>)
-				comp -> comp.getFeature(IRequiredServiceFeature.class)
-					.searchServices(servicetype)
-					.thenApply(sensors -> sensors.stream()
-						.filter(s -> ((IService)s).getServiceId().toString().contains(name))
-						.findFirst().get())).get();
-	}
-	
+		
 	/**
 	 *  Check thinking for all models.
 	 */
@@ -694,7 +705,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.UNSLOTH;
+		Provider provider = Provider.OLLAMA;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");
