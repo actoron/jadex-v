@@ -37,7 +37,7 @@ def _short_cmd(cmd, maxlen=90):
     return s if len(s) <= maxlen else s[:maxlen] + " ...[truncated]"
 
 # Bazel rule kinds we turn into Eclipse projects.
-SUPPORTED_KINDS = {"java_library", "java_test", "java_binary"}
+SUPPORTED_KINDS = {"java_library", "java_test", "java_binary", "java_import"}
 
 # Conventional source directories we look for on disk inside each
 # package. Adjust here if your layout ever differs from
@@ -198,13 +198,16 @@ def query_all_java_rules(workspace):
             "name": rule.get("name"),
         }
 
-        for list_name in ("srcs", "resources", "deps", "runtime_deps"):
+        for list_name in ("srcs", "resources", "deps", "runtime_deps", "jars"):
             elem = rule.find(f"list[@name='{list_name}']")
             data[list_name] = (
                 [lbl.get("value") for lbl in elem.findall("label")]
                 if elem is not None
                 else []
             )
+
+        srcjar = rule.find("label[@name='srcjar']")
+        data["srcjar"] = srcjar.get("value") if srcjar is not None else None
 
         jc = rule.find("list[@name='javacopts']")
         data["javacopts"] = (
@@ -512,20 +515,53 @@ def resolve_maven_jars(maven_labels, workspace, execroot):
     return jars
 
 
+def _label_to_workspace_file(label):
+    """Convert workspace file label to a repo-relative path, or None for non-workspace labels."""
+    if not label.startswith("//"):
+        return None
+
+    pkg, target = label[2:].split(":", 1)
+    if target.startswith("/"):
+        return None
+
+    rel = f"{pkg}/{target}" if pkg else target
+    return os.path.normpath(rel)
+
+
+def resolve_workspace_jar_labels(jar_labels, srcjar_by_jar, workspace):
+    """Resolve //pkg:file.jar style labels to absolute file paths for Eclipse classpath entries."""
+    if not jar_labels:
+        return {}
+
+    resolved = {}
+
+    for jar_label in sorted(jar_labels):
+        rel_jar = _label_to_workspace_file(jar_label)
+        if rel_jar is None:
+            continue
+
+        jar_path = os.path.normpath(os.path.join(workspace, rel_jar))
+        if not os.path.isfile(jar_path):
+            continue
+
+        srcjar_label = srcjar_by_jar.get(jar_label)
+        srcjar_path = None
+        if srcjar_label:
+            rel_src = _label_to_workspace_file(srcjar_label)
+            if rel_src is not None:
+                candidate = os.path.normpath(os.path.join(workspace, rel_src))
+                if os.path.isfile(candidate):
+                    srcjar_path = candidate
+
+        resolved[jar_label] = {"jar": jar_path, "srcjar": srcjar_path}
+
+    return resolved
+
+
 def query_transitive_deps_all(workspace, labels):
     """
     Compute the combined transitive dependency graph for every given
-    label in a SINGLE bazel query, instead of one `bazel query
-    deps(label)` per target (which used to mean one full bazel process
-    start -- analysis included -- per java_library/java_test/
-    java_binary in the repo).
-
-    bazel's --output=xml format includes, for every rule node reached
-    by the query, its direct dependency edges as <rule-input>
-    elements. So one `deps(set(all_targets))` query gives us every
-    edge we need in one shot; per-target transitive closures are then
-    computed locally in Python via a plain BFS/DFS over that graph,
-    which is essentially free compared to a bazel invocation.
+    label in a single bazel query and return direct rule-input edges.
     """
     label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
     expr = f"deps({label_set_expr})"
@@ -559,7 +595,7 @@ def query_transitive_deps_all(workspace, labels):
 
 
 def transitive_closure(graph, start):
-    """Plain BFS over the pre-fetched dependency graph -- no subprocess calls."""
+    """Plain DFS/BFS over pre-fetched dependency graph without subprocess calls."""
     seen = set()
     stack = [start]
 
@@ -580,6 +616,7 @@ def build_project_models(rules, workspace):
         lambda: {
             "internal_deps": set(),
             "maven_deps": set(),
+            "workspace_jars": set(),
             "other_deps": set(),
             "javacopts": [],
             "srcs": [],
@@ -587,6 +624,11 @@ def build_project_models(rules, workspace):
     )
 
     target_to_pkg = build_target_to_java_package(rules)
+    java_import_jars = {
+        rule["name"]: list(rule.get("jars") or [])
+        for rule in rules
+        if rule.get("kind") == "java_import"
+    }
 
     # First collect sources and direct Maven deps.
     for rule in rules:
@@ -595,6 +637,9 @@ def build_project_models(rules, workspace):
 
         model["javacopts"].append(rule["javacopts"])
         model["srcs"].extend(rule["srcs"])
+
+        if rule.get("kind") == "java_import":
+            model["workspace_jars"].update(rule.get("jars") or [])
 
         for dep_list in ("deps", "runtime_deps"):
             for dep in rule[dep_list]:
@@ -628,6 +673,11 @@ def build_project_models(rules, workspace):
                 # direct Maven dependencies declared in BUILD.bazel.
                 if dep.startswith("@maven//"):
                     model["maven_deps"].add(dep)
+                    continue
+
+                import_jars = java_import_jars.get(dep)
+                if import_jars is not None:
+                    model["workspace_jars"].update(import_jars)
                     continue
 
                 dep_pkg = target_to_pkg.get(dep)
@@ -766,6 +816,8 @@ def write_classpath_file(
     internal_deps,
     maven_deps,
     maven_jars,
+    workspace_jar_deps,
+    workspace_jars,
     jdk,
 ):
     """
@@ -843,6 +895,33 @@ def write_classpath_file(
         #
         # are still only one Eclipse classpath entry if both resolve
         # to the same physical JAR.
+        add_entry(
+            ("lib", jar_path),
+            (
+                f'\t<classpathentry kind="lib" '
+                f'path="{jar_path}"'
+                f'{f" sourcepath=\"{src_path}\"" if src_path else ""}/>'
+            ),
+        )
+
+    # Workspace java_import dependencies
+    for label in sorted(workspace_jars):
+        info = workspace_jar_deps.get(label)
+
+        if not info:
+            missing.append(label)
+            continue
+
+        jar_path = os.path.normcase(
+            os.path.normpath(info["jar"])
+        )
+
+        src_path = info.get("srcjar")
+        if src_path:
+            src_path = os.path.normcase(
+                os.path.normpath(src_path)
+            )
+
         add_entry(
             ("lib", jar_path),
             (
@@ -1062,23 +1141,29 @@ def main():
     )
 
     all_maven_labels = set()
+    all_workspace_jar_labels = set()
+    workspace_srcjar_by_jar = {}
+    java_import_rules = [r for r in rules if r.get("kind") == "java_import"]
+    for rule in java_import_rules:
+        srcjar_label = rule.get("srcjar")
+        for jar_label in (rule.get("jars") or []):
+            all_workspace_jar_labels.add(jar_label)
+            if srcjar_label:
+                workspace_srcjar_by_jar[jar_label] = srcjar_label
+
     for model in projects.values():
         all_maven_labels |= model["maven_deps"]
+        all_workspace_jar_labels |= model["workspace_jars"]
 
     with timed(f"resolve {len(all_maven_labels)} maven jar(s)"):
         maven_jars = resolve_maven_jars(all_maven_labels, workspace, execroot)
 
-    for label in sorted(all_maven_labels):
-        info = maven_jars.get(label)
-
-        if info:
-            print(f"  {label}")
-            print(f"    JAR: {info['jar']}")
-
-            if info["srcjar"]:
-                print(f"    SRC: {info['srcjar']}")
-        else:
-            print(f"  MISSING: {label}")
+    with timed(f"resolve {len(all_workspace_jar_labels)} workspace java_import jar(s)"):
+        workspace_jar_deps = resolve_workspace_jar_labels(
+            all_workspace_jar_labels,
+            workspace_srcjar_by_jar,
+            workspace,
+        )
 
     generated = 0
     all_missing = defaultdict(list)
@@ -1109,7 +1194,14 @@ def main():
 
             write_project_file(pkg_dir, project_name, model["internal_deps"])
             missing = write_classpath_file(
-                pkg_dir, src_dirs, model["internal_deps"], model["maven_deps"], maven_jars, jdk
+                pkg_dir,
+                src_dirs,
+                model["internal_deps"],
+                model["maven_deps"],
+                maven_jars,
+                workspace_jar_deps,
+                model["workspace_jars"],
+                jdk,
             )
             write_jdt_prefs(pkg_dir, jdk)
             if missing:
