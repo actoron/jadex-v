@@ -741,6 +741,25 @@ def write_project_file(pkg_dir, project_name, internal_deps):
         f.write(content)
 
 
+def write_non_java_project_file(pkg_dir, project_name):
+    """Write a plain Eclipse project (no Java builder/nature)."""
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!-- {AUTO_GEN_NOTICE} -->
+<projectDescription>
+\t<name>{project_name}</name>
+\t<comment>Workspace root helper project (non-Java).</comment>
+\t<projects>
+\t</projects>
+\t<buildSpec>
+\t</buildSpec>
+\t<natures>
+\t</natures>
+</projectDescription>
+"""
+    with open(os.path.join(pkg_dir, ".project"), "w") as f:
+        f.write(content)
+
+
 def write_classpath_file(
     pkg_dir,
     src_dirs,
@@ -975,6 +994,11 @@ def main():
     parser.add_argument("--workspace", default=".", help="Path to the Bazel workspace root (containing MODULE.bazel)")
     parser.add_argument("--jdk", type=int, default=21, help="Fallback JDK version if javacopts don't specify one")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be generated, write nothing")
+    parser.add_argument(
+        "--skip-non-java-root-project",
+        action="store_true",
+        help="Do not generate a non-Java Eclipse .project in the workspace root",
+    )
     args = parser.parse_args()
 
     workspace = os.path.abspath(args.workspace)
@@ -1031,6 +1055,12 @@ def main():
         for model in projects.values():
             model["internal_deps"] -= skipped_ancestors
 
+    root_project_name = os.path.basename(workspace.rstrip(os.sep)) or "workspace"
+    should_generate_non_java_root = (
+        not args.skip_non_java_root_project
+        and "" not in projects
+    )
+
     all_maven_labels = set()
     for model in projects.values():
         all_maven_labels |= model["maven_deps"]
@@ -1053,7 +1083,16 @@ def main():
     generated = 0
     all_missing = defaultdict(list)
 
-    with timed(f"write {len(projects)} project(s) to disk (.project/.classpath/.settings)"):
+    total_projects_to_write = len(projects) + (1 if should_generate_non_java_root else 0)
+
+    with timed(f"write {total_projects_to_write} project(s) to disk (.project/.classpath/.settings)"):
+        if should_generate_non_java_root:
+            if args.dry_run:
+                print(f"  would generate: {root_project_name}  (non-Java root project)")
+            else:
+                write_non_java_project_file(workspace, root_project_name)
+                generated += 1
+
         for pkg_path, model in sorted(projects.items()):
             project_name = project_name_for_package(pkg_path)
             pkg_dir = os.path.join(workspace, pkg_path)
@@ -1078,7 +1117,7 @@ def main():
             generated += 1
 
     if args.dry_run:
-        print(f"\nDry run: {len(projects)} project(s) would be generated.")
+        print(f"\nDry run: {total_projects_to_write} project(s) would be generated.")
         _print_timing_summary(run_start)
         return
 
