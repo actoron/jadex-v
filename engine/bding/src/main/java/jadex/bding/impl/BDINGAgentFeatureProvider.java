@@ -2,17 +2,9 @@ package jadex.bding.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import jadex.bding.impl.BDINGAgentFeature;
 import jadex.bding.IBDINGAgentFeature;
-import jadex.common.ITriFunction;
-import jadex.common.SReflect;
-import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponentHandle;
@@ -20,16 +12,12 @@ import jadex.core.impl.Component;
 import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.IComponentLifecycleManager;
 import jadex.future.IFuture;
-import jadex.injection.impl.InjectionModel;
 
 public class BDINGAgentFeatureProvider extends ComponentFeatureProvider<IBDINGAgentFeature> implements IComponentLifecycleManager
 {
 
 	public BDINGAgentFeatureProvider()
 	{
-		super();
-
-		System.out.println("BDINGAgentFeatureProvider constructor called");
 	}
 
 	@Override

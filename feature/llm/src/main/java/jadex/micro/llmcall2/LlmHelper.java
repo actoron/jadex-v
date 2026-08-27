@@ -7,24 +7,42 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.http.HttpClient;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 
+import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.data.image.Image;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.TextContent;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.http.client.jdk.JdkHttpClient;
+import dev.langchain4j.internal.Json;
 import dev.langchain4j.model.anthropic.AnthropicModelCatalog;
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.response.CompleteToolCall;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiModelCatalog;
@@ -33,13 +51,19 @@ import dev.langchain4j.model.mistralai.MistralAiModelCatalog;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
-import dev.langchain4j.model.ollama.OllamaStreamingChatModel.OllamaStreamingChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiModelCatalog;
 import dev.langchain4j.model.openai.OpenAiResponsesStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import jadex.common.SUtil;
 import jadex.common.TimeoutException;
+import jadex.core.IComponent;
 import jadex.core.IComponentManager;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
+import jadex.providedservice.IService;
+import jadex.providedservice.ServiceQuery;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmHelper
 {
@@ -341,18 +365,19 @@ public class LlmHelper
 	
 	protected static StreamingChatModel createOllamaChatModel(String baseurl, String model, Boolean think)
 	{
-		OllamaStreamingChatModelBuilder	llm	= OllamaStreamingChatModel.builder()
+		Map<String, String> headers = new HashMap<>();
+
+		String apiKey = System.getenv("OLLAMA_API_KEY");
+		if(apiKey != null && !apiKey.isBlank())
+			headers.put("X-API-Key", apiKey);
+
+		return OllamaStreamingChatModel.builder()
 			.baseUrl(baseurl)
+			.customHeaders(headers)
 			.modelName(model)
-//			.temperature(0.0)
-//			.logRequests(true)
-//			.logResponses(true)
-			// If there is thinking -> always use it.
-			.returnThinking(true);
-			
-		if(think!=null)
-			llm.think(think);
-		return llm.build();
+			.think(think)
+			.returnThinking(true)
+			.build();
 	}
 	
 	protected static List<String>	fetchGeminiModels()
@@ -499,4 +524,273 @@ public class LlmHelper
 		}
 
 	}
+
+	public static String cleanJsonResponse(String text)
+	{
+		text = text.trim();
+
+		if(text.startsWith("```"))
+		{
+			int newline = text.indexOf('\n');
+			int closing = text.lastIndexOf("```");
+
+			if(newline >= 0 && closing > newline)
+				text = text.substring(newline + 1, closing).trim();
+		}
+
+		return text;
+	}
+
+	public static Map<String, ToolRef> findTools(IComponent agent, Map<String, ToolRef> tools)
+	{
+		Set<Object>	found_services = new LinkedHashSet<>();
+		Map<String, ToolRef> ret = new HashMap<>();
+		if(tools!=null)
+			ret.putAll(tools);
+		
+		Collection<?> services = agent.getFeature(IRequiredServiceFeature.class)
+			.getLocalServices(new ServiceQuery<>((Class<?>)null).setServiceAnnotations(Tool.class));
+
+		for(Object service : services)
+		{
+//			System.out.println("Found service: " + service);
+			found_services.add(service);
+			
+			// Skip services that are already added as tools, to avoid creating new names when duplicate names exist.
+			if(ret.values().stream().anyMatch(tool -> tool!=null && tool.service().equals(service)))
+			{
+				continue;
+			}
+			
+			Class<?> type = ((IService)service).getServiceId().getServiceType().getType0();
+			Collection<String>	tags = ((IService)service).getServiceId().getTags();
+			for(Method m: type.getMethods())
+			{
+				if(m.isAnnotationPresent(Tool.class))
+				{
+					ToolSpecification	tool	= ToolSpecifications.toolSpecificationFrom(m);
+					
+					// Convert name to snake case if not explicitly set in annotation, as this is more common for tools (e.g. python function calls)
+					String	name	= tool.name();
+					if(m.getAnnotation(Tool.class).name().isEmpty())
+					{
+						name = SUtil.toSnakeCase(name);
+					}
+					
+					// Append tags to description.
+					String	description	= tool.description()==null ? "" : tool.description();
+					description += (tags==null || tags.isEmpty() ? ""
+						: (description.isBlank() ? "" : "\n")+	"Tags: "+String.join(", ", tags));
+					
+					// Create new tool specification with adjusted name and description.
+					tool = ToolSpecification.builder()
+						.name(name)
+						.description(description)
+						.parameters(tool.parameters())
+						.metadata(tool.metadata())
+						.build();
+
+					// If tool with name already exists -> append suffix to existing, too.
+					ToolRef existing = ret.get(name);
+					if(existing!=null)
+					{
+						// Set to null to rename subsequent tools too.
+						ret.put(name, null);
+						
+						ToolRef	new_tool = appendSuffix(existing, ret);
+						ret.put(new_tool.spec().name(), new_tool);
+					}
+					
+					// Append suffix to new tool if name already exists.
+					ToolRef	tool_ref	= new ToolRef(tool, service, m);
+					if(ret.containsKey(name))
+					{
+						tool_ref	= appendSuffix(tool_ref, ret);
+					}
+						
+					ret.put(tool_ref.spec().name(), tool_ref);
+				}
+			}
+		}
+		
+		for(ToolRef tool: new ArrayList<>(ret.values()))
+		{
+			// Remove tools that don't exist anymore
+			if(tool!=null && !found_services.contains(tool.service()))
+			{
+				ret.remove(tool.spec().name());
+			}
+		}
+		
+		return ret;//.values().stream().filter(tool -> tool!=null).map(tool -> tool.spec()).toList();
+	}
+
+	public static ToolRef findTool(IComponent agent, String name)
+	{
+		Map<String, ToolRef> tools = findTools(agent, null);
+		return tools.get(name);
+	}
+
+	/**
+	 * 	Append unique suffix to tool name to avoid duplicate tool names.
+	 */
+	public static ToolRef appendSuffix(ToolRef existing, Map<String, ToolRef> tools)
+	{
+		String	name = existing.spec().name();
+		while(tools.containsKey(name))
+		{
+			name = existing.spec().name()+"_"+UUID.randomUUID().toString().substring(0, 3);
+		}
+		return new ToolRef(ToolSpecification.builder()
+			.name(name)
+			.description(existing.spec().description())
+			.parameters(existing.spec().parameters())
+			.metadata(existing.spec().metadata())
+			.build(), existing.service(), existing.method());
+	}
+
+	public static IFuture<Object> callTool(IComponent agent, String toolname, Map<String, Object> parameters)
+	{
+		try
+		{
+			ToolRef tool = findTool(agent, toolname);
+			if(tool == null)
+				throw new RuntimeException("Tool not found: " + toolname);
+
+			IService service = (IService)tool.service();
+			Method m = tool.method();
+
+			//Map<String, Object> args = Json.fromJson(call.toolExecutionRequest().arguments(), Map.class);
+
+			List<Object> param_values = new ArrayList<>();
+
+			for(int i = 0; i < m.getParameters().length; i++)
+			{
+				if(!parameters.containsKey(m.getParameters()[i].getName()))
+				{
+					throw new RuntimeException(
+						"Missing argument: "
+						+ m.getParameters()[i].getName());
+				}
+
+				Object value = parameters.get(m.getParameters()[i].getName());
+
+				// Convert value to parameter type if needed.
+				if(value != null
+					&& !m.getParameters()[i].getType().isAssignableFrom(value.getClass()))
+				{
+					value = Json.fromJson(Json.toJson(value), m.getParameters()[i].getType());
+				}
+
+				param_values.add(value);
+			}
+
+			Object result = m.invoke(service, param_values.toArray());
+
+			if(result instanceof IFuture)
+			{
+				@SuppressWarnings("unchecked")
+				IFuture<Object> resfut = (IFuture<Object>)result;
+				return resfut;
+			}
+			else
+			{
+				return new Future<>(result);
+			}
+		}
+		catch(Exception e)
+		{
+			return new Future<>(e);
+		}
+	}
+
+	public static void addToolResult(List<ChatMessage> messages, CompleteToolCall call, Object result, boolean isvoid, StreamingChatModel llm)
+	{
+		ToolExecutionResultMessage msg;
+
+		if(result instanceof RenderedImage)
+		{
+			msg = ToolExecutionResultMessage.builder()
+				.id(call.toolExecutionRequest().id())
+				.toolName(call.toolExecutionRequest().name())
+				.contents(ImageContent.from(
+					createLangchainImage((RenderedImage)result)))
+				.build();
+		}
+		else
+		{
+			msg = ToolExecutionResultMessage.from(
+				call.toolExecutionRequest(),
+				isvoid && result==null
+					? "done"
+					: result instanceof String
+						? (String)result
+						: Json.toJson(result));
+		}
+
+		// Hack: currently important fields aren't passed back by
+		// Ollama mapping, so add them manually here.
+		if(llm instanceof OllamaStreamingChatModel)
+		{
+			if(msg.hasSingleText())
+			{
+				String text =
+					"id=" + msg.id()
+					+ ", tool_name=" + msg.toolName()
+					+ ", result=" + msg.text();
+
+				messages.add(
+					ToolExecutionResultMessage.from(
+						call.toolExecutionRequest(), text));
+			}
+			else
+			{
+				// Ollama only supports text content in tool results.
+				List<Content> contents = new ArrayList<>();
+
+				contents.add(TextContent.from(
+					"id=" + msg.id()
+					+ ", tool_name=" + msg.toolName()
+					+ ", result=see attached contents"));
+
+				contents.addAll(msg.contents());
+
+				messages.add(UserMessage.from(contents));
+			}
+		}
+		else if((llm instanceof MistralAiStreamingChatModel || llm.getClass().getName().contains("GoogleGenAiStreamingChatModel"))
+			&& !msg.hasSingleText())
+		{
+			// Mistral/Google GenAI only support text content in tool results.
+
+			int i = messages.size();
+
+			while(i > 0 && messages.get(i - 1) instanceof UserMessage)
+			{
+				i--;
+			}
+
+			messages.add(
+				i,
+				ToolExecutionResultMessage.from(
+					call.toolExecutionRequest(),
+					"result=see user message"));
+
+			List<Content> contents = new ArrayList<>();
+
+			contents.add(TextContent.from(
+				"id=" + msg.id()
+				+ ", tool_name=" + msg.toolName()
+				+ ", result=see attached contents"));
+
+			contents.addAll(msg.contents());
+
+			messages.add(UserMessage.from(contents));
+		}
+		else
+		{
+			messages.add(msg);
+		}
+	}
+
 }

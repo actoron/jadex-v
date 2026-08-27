@@ -231,14 +231,14 @@ public class LlmBenchmark
 	/**
 	 * Small helper GUI to mark current run as failed and terminate the active future.
 	 */
-	protected static JFrame showFailureGui(String model, int run, int runs, ITerminableIntermediateFuture<ChatFragment> results)
+	protected static JFrame showFailureGui(String benchmark, String model, int run, int runs, ITerminableIntermediateFuture<ChatFragment> results)
 	{
 		JFrame[] frame = new JFrame[1];
 		try
 		{
 			SwingUtilities.invokeAndWait(() ->
 			{
-				frame[0] = new JFrame("Benchmark Control");
+				frame[0] = new JFrame(benchmark);
 				frame[0].setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 				JPanel panel = new JPanel(new BorderLayout(0, 6));
@@ -545,7 +545,7 @@ public class LlmBenchmark
 			{
 				System.out.println(model_name+" run "+(fi+1)+"/"+runs+": ");
 			
-				Application	app	= new Application("Benchmark-"+model_name);
+				Application	app	= new Application(benchmark_name+"-"+model_name);
 				if(setup!=null)
 					setup.accept(app);
 				
@@ -555,7 +555,7 @@ public class LlmBenchmark
 				
 				long	start	= System.currentTimeMillis();
 				ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
-				JFrame failureFrame = showFailureGui(model_name, fi+1, runs, results);
+				JFrame failureFrame = showFailureGui(benchmark_name, model_name, fi+1, runs, results);
 				LlmChatAgent.printResults(results);
 				try
 				{

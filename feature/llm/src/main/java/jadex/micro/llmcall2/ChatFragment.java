@@ -8,11 +8,13 @@ import jadex.core.annotation.NoCopy;
  *  @param text The text content of the fragment.
  */
 @NoCopy	// fragment is immutable -> disable copying for improved performance. 
-public record ChatFragment(Type type, String text)
+public record ChatFragment(Type type, String text, int lastTokenCount, int totalTokenCount, int maxTokenCount)
 {
 	/** The fragment type.*/
 	public static enum Type
 	{
+		 /** The conversation ID of a newly created conversation. */
+        CONVERSATION,
 		/** A response fragment, i.e. part of the text response that the LLM wants to send to the user. */
 		RESPONSE,
 		/** A thinking fragment, i.e. part of the internal thought process that the LLM wants to share but not send to the user as a final response. */

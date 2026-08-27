@@ -5,11 +5,16 @@ public class Intention
     protected String name;
     protected String description;
 
-    protected Goal goal; //applicable for goal
+    protected AgentModel model;
+
+    //protected Goal goal; //applicable for goal
     
-    public Intention(String name)
+    public Intention(String name, String description, AgentModel model)
     {
         this.name = name;
+        this.description = description;
+        this.model = model;
+        model.addIntention(this);
     }
 
     public String getName() 
@@ -34,7 +39,12 @@ public class Intention
         return this;
     }
 
-    public Goal getGoal() 
+    public AgentModel getModel() 
+    {
+        return model;
+    }
+
+    /*public Goal getGoal() 
     {
         return goal;
     }
@@ -43,6 +53,12 @@ public class Intention
     {
         this.goal = goal;
         return this;
+    }*/
+    
+    @Override
+    public String toString() 
+    {
+        return "Intention [name=" + name + ", description=" + description + "]";
     }
     
 }

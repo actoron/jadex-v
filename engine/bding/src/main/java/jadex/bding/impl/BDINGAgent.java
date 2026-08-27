@@ -9,12 +9,15 @@ import jadex.core.impl.Component;
  */
 public class BDINGAgent extends Component
 {
+	//protected AgentModel model;
+
 	/**
 	 *  Create the component.
 	 */
 	public BDINGAgent(Object pojo, ComponentIdentifier id, Application app)
 	{
 		super(pojo, id, app);
+		//this.model = new AgentModel();
 	}
 	
 	@Override

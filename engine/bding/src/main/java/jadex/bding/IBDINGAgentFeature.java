@@ -1,5 +1,9 @@
 package jadex.bding;
 
+import java.util.Set;
+
+import jadex.bding.impl.BeliefSnapshot;
+import jadex.bding.impl.RGoal;
 import jadex.core.IComponentFeature;
 import jadex.future.ITerminableFuture;
 
@@ -10,5 +14,13 @@ public interface IBDINGAgentFeature	extends IComponentFeature
 {
     public IReasoner getReasoner();
 
-    public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal);
+    public AgentModel getModel();
+
+    public Set<RGoal> getGoals();
+
+    public BeliefSnapshot getBeliefs();
+
+    public ITerminableFuture<Void> dispatchTopLevelGoal(String usergoal);
+
+    //public ITerminableFuture<Void> dispatchTopLevelGoal(Goal goal);
 }
