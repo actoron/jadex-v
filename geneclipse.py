@@ -69,6 +69,10 @@ GENERATED_DIRS = {
 # limits once hundreds of labels get concatenated into one set(...) expr.
 QUERY_FILE_THRESHOLD = 6000
 
+# Cache `bazel info` lookups so repeated callers do not spawn extra bazel
+# processes for values that stay constant within one script run.
+_BAZEL_INFO_CACHE = {}
+
 
 def run(cmd, cwd):
     """Run a subprocess, raise with full stderr on failure. Every call is
@@ -164,7 +168,15 @@ def clean_workspace(workspace):
 
 
 def bazel_info(key, workspace):
-    return run(["bazel", "info", key], cwd=workspace).strip()
+    cache_key = (os.path.abspath(workspace), key)
+
+    cached = _BAZEL_INFO_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    value = run(["bazel", "info", key], cwd=workspace).strip()
+    _BAZEL_INFO_CACHE[cache_key] = value
+    return value
 
 
 def query_all_java_rules(workspace):
@@ -235,7 +247,10 @@ def _cquery_jars_raw(labels, workspace):
     label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
     starlark_expr = (
         "'%s\t%s' % (str(target.label), "
-        "','.join([f.path for f in target.files.to_list()]))"
+        "','.join([f.path for f in target.files.to_list()] + "
+        "[f.path for f in "
+        "providers(target).get('@@rules_java+//java/private:java_info.bzl%JavaInfo', "
+        "struct(source_jars=[])).source_jars]))"
     )
 
     cmd = ["bazel", "cquery"]
@@ -287,30 +302,39 @@ def _resolve_chunk(labels, workspace, execroot, depth=0):
     have resolved together just fine.
     """
     if not labels:
-        return {}
+        return {}, set()
 
     stdout, returncode, stderr = _cquery_jars_raw(labels, workspace)
-    jars = _parse_cquery_jar_output(stdout, execroot, labels)
+    jars, seen_labels = _parse_cquery_jar_output(
+        stdout, execroot, labels, include_seen=True
+    )
 
-    if returncode not in (0, 3) and not jars:
+    if returncode not in (0, 3) and not seen_labels:
         first_err_line = next((l for l in stderr.splitlines() if l.strip()), "")
         print(f"    NOTE: cquery hard-failed for {len(labels)} label(s): {first_err_line}")
 
-    missing = [l for l in labels if l not in jars]
+    # Only recurse for labels that were not returned at all.
+    # If bazel returned a label but no usable JAR path was found, retrying
+    # the same label in smaller chunks is usually pointless.
+    missing = [l for l in labels if l not in seen_labels]
 
     if not missing or len(labels) == 1:
-        return jars
+        return jars, seen_labels
 
     # Stop subdividing once chunks get small: each bisection level costs
     # its own bazel call, so past this point it's cheaper to just let
     # resolve_maven_jars's final individual-fallback pass mop them up.
     if depth >= 5 or len(labels) <= 3:
-        return jars
+        return jars, seen_labels
 
     mid = len(missing) // 2
-    jars.update(_resolve_chunk(missing[:mid], workspace, execroot, depth + 1))
-    jars.update(_resolve_chunk(missing[mid:], workspace, execroot, depth + 1))
-    return jars
+    left_jars, left_seen = _resolve_chunk(missing[:mid], workspace, execroot, depth + 1)
+    right_jars, right_seen = _resolve_chunk(missing[mid:], workspace, execroot, depth + 1)
+    jars.update(left_jars)
+    jars.update(right_jars)
+    seen_labels.update(left_seen)
+    seen_labels.update(right_seen)
+    return jars, seen_labels
 
 
 def _target_name(label):
@@ -324,7 +348,7 @@ def _target_name(label):
     return label.rsplit(":", 1)[-1]
 
 
-def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
+def _parse_cquery_jar_output(stdout, execroot, requested_labels=None, include_seen=False):
     """Parse the '<label>\\t<paths>' lines from _cquery_jars_raw into
     {label: {"jar": ..., "srcjar": ...}}.
 
@@ -342,6 +366,7 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
             name_to_label[_target_name(l)] = l
 
     jars = {}
+    seen_labels = set()
 
     for line in stdout.splitlines():
         line = line.strip()
@@ -351,6 +376,10 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
 
         resolved_label, paths = line.split("\t", 1)
         key = name_to_label.get(_target_name(resolved_label), resolved_label)
+        seen_labels.add(key)
+
+        primary_jar = None
+        source_jar = None
 
         for rel_path in paths.split(","):
             rel_path = rel_path.strip()
@@ -363,22 +392,42 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
             if not os.path.isfile(abs_path):
                 continue
 
-            src_path = None
-            candidate = abs_path[:-4] + "-sources.jar"
+            lower_name = os.path.basename(abs_path).lower()
+            is_source = (
+                lower_name.endswith("-sources.jar")
+                or lower_name.endswith("-source.jar")
+            )
 
+            if is_source and source_jar is None:
+                source_jar = abs_path
+                continue
+
+            if primary_jar is None:
+                primary_jar = abs_path
+
+        if primary_jar is None:
+            continue
+
+        # Fallback for layouts where source jars are present next to
+        # the binary jar but not listed in target.files.
+        if source_jar is None:
+            candidate = primary_jar[:-4] + "-sources.jar"
             if os.path.isfile(candidate):
-                src_path = candidate
+                source_jar = candidate
 
-            jars[key] = {"jar": abs_path, "srcjar": src_path}
-            break
+        jars[key] = {"jar": primary_jar, "srcjar": source_jar}
+
+    if include_seen:
+        return jars, seen_labels
 
     return jars
 
 
-MAVEN_CHUNK_SIZE = 60
+MAVEN_CHUNK_SIZE = 120
+FINAL_RETRY_CHUNK_SIZE = 24
 
 
-def resolve_maven_jars(maven_labels, workspace):
+def resolve_maven_jars(maven_labels, workspace, execroot):
     """
     Resolve @maven//:... labels to actual JAR files.
 
@@ -392,9 +441,9 @@ def resolve_maven_jars(maven_labels, workspace):
     if not maven_labels:
         return {}
 
-    execroot = bazel_info("execution_root", workspace)
     labels_sorted = sorted(maven_labels)
     jars = {}
+    seen_labels = set()
 
     chunks = [
         labels_sorted[i:i + MAVEN_CHUNK_SIZE]
@@ -407,18 +456,49 @@ def resolve_maven_jars(maven_labels, workspace):
     ):
         for i, chunk in enumerate(chunks, 1):
             print(f"  chunk {i}/{len(chunks)}: {len(chunk)} label(s)")
-            jars.update(_resolve_chunk(chunk, workspace, execroot))
+            chunk_jars, chunk_seen = _resolve_chunk(chunk, workspace, execroot)
+            jars.update(chunk_jars)
+            seen_labels.update(chunk_seen)
 
-    missing = [l for l in labels_sorted if l not in jars]
+    missing = [l for l in labels_sorted if l not in seen_labels]
+
+    if missing:
+        retry_chunks = [
+            missing[i:i + FINAL_RETRY_CHUNK_SIZE]
+            for i in range(0, len(missing), FINAL_RETRY_CHUNK_SIZE)
+        ]
+
+        with timed(
+            f"straggler retry batches ({len(missing)} label(s), "
+            f"{len(retry_chunks)} chunk(s) of up to {FINAL_RETRY_CHUNK_SIZE})"
+        ):
+            for i, chunk in enumerate(retry_chunks, 1):
+                print(f"  retry chunk {i}/{len(retry_chunks)}: {len(chunk)} label(s)")
+                chunk_jars, chunk_seen = _resolve_chunk(chunk, workspace, execroot)
+                jars.update(chunk_jars)
+                seen_labels.update(chunk_seen)
+
+    missing = [l for l in labels_sorted if l not in seen_labels]
 
     if missing:
         with timed(
-            f"final straggler retries ({len(missing)} label(s), one bazel call EACH)"
+            f"final individual retries ({len(missing)} label(s), one bazel call EACH)"
         ):
             for index, label in enumerate(missing, 1):
                 print(f"  [{index}/{len(missing)}] {label}")
                 single_stdout, _, _ = _cquery_jars_raw([label], workspace)
-                jars.update(_parse_cquery_jar_output(single_stdout, execroot, [label]))
+                single_jars, single_seen = _parse_cquery_jar_output(
+                    single_stdout, execroot, [label], include_seen=True
+                )
+                jars.update(single_jars)
+                seen_labels.update(single_seen)
+
+    total_with_sources = sum(1 for l in labels_sorted if l in jars and jars[l].get("srcjar"))
+    total_resolved = sum(1 for l in labels_sorted if l in jars)
+    print(
+        f"  Source jars available for {total_with_sources}/{total_resolved} "
+        "resolved Maven dependency target(s)."
+    )
 
     print(
         f"  Resolved {len(jars)}/{len(labels_sorted)} "
@@ -906,6 +986,9 @@ def main():
 
     run_start = time.perf_counter()
 
+    with timed("bazel info: execution_root"):
+        execroot = bazel_info("execution_root", workspace)
+
     if not args.dry_run:
         with timed("clean workspace (metadata + bin/ dirs)"):
             clean_workspace(workspace)
@@ -953,7 +1036,7 @@ def main():
         all_maven_labels |= model["maven_deps"]
 
     with timed(f"resolve {len(all_maven_labels)} maven jar(s)"):
-        maven_jars = resolve_maven_jars(all_maven_labels, workspace)
+        maven_jars = resolve_maven_jars(all_maven_labels, workspace, execroot)
 
     for label in sorted(all_maven_labels):
         info = maven_jars.get(label)
