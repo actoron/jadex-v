@@ -30,7 +30,6 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.micro.llmcall2.ChatFragment;
-import jadex.micro.llmcall2.ILlmChatService;
 import jadex.micro.llmcall2.ILlmChatService2;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
