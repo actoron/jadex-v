@@ -1,11 +1,10 @@
 package jadex.llm.smarthome;
 
 import dev.langchain4j.model.chat.StreamingChatModel;
-import jadex.core.IComponentManager;
+import jadex.core.Application;
 import jadex.core.INoCopyStep;
 import jadex.future.IFuture;
 import jadex.micro.llmcall2.IRuleSystemService;
-import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
 import jadex.micro.llmcall2.RuleSystem;
 import jadex.requiredservice.IRequiredServiceFeature;
@@ -13,29 +12,30 @@ import jadex.requiredservice.IRequiredServiceFeature;
 public class Main
 {
 	public static void main(String[] args)
-	{
-		// Create smart home components
-		IComponentManager.get().create(new RuleSystem(), "Rule System").get();
-		IComponentManager.get().create(new Camera(), "Kamera 1").get();
-		IComponentManager.get().create(new Camera(), "Kamera 2").get();
-		IComponentManager.get().create(new Camera(), "Kamera 3").get();
-		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get();
-		IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder B").get();
-		IComponentManager.get().create(new Alarm(), "Alarm").get();
-		
-		// Create the LLM agent that will control the smart home
+	{		
+		// Create the LLM that will control the smart home
 		StreamingChatModel	model	= LlmHelper.createChatModel();	// Default Ollama model
+//		StreamingChatModel	model	= LlmHelper.Provider.UNSLOTH.createChatModel(null,  null);
 //		StreamingChatModel	model	= LlmHelper.Provider.OLLAMA_REMOTE.createChatModel("gemma4:26b-a4b-it-q4_K_M", false);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-2.5-flash", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.GOOGLE_GEMINI.createChatModel("gemini-3-flash-preview", true);
 //		StreamingChatModel	model	= LlmHelper.Provider.MISTRAL_AI.createChatModel("mistral-large-2512", false);
-		IComponentManager.get().create(new LlmChatAgent(model)).get();
+		
+		// Create smart home components
+		Application app = new Application("Smart Home");
+		app.create(new RuleSystem(model), "Rule System").get();
+		app.create(new Camera(), "Kamera 1").get();
+		app.create(new Camera(), "Kamera 2").get();
+		app.create(new Camera(), "Kamera 3").get();
+		app.create(new MotionSensor(), "Bewegungsmelder A").get();
+		app.create(new MotionSensor(), "Bewegungsmelder B").get();
+		app.create(new Alarm(), "Alarm").get();
 		
 		// Create the GUI to visualize the smart home
-		IComponentManager.get().create(new MainGui()).get();
+		app.create(new MainGui()).get();
 		
 		// Get the rule system and send some prompts to it
-		IRuleSystemService rulesystem = IComponentManager.get()
+		IRuleSystemService rulesystem = app
 			.runAsync((INoCopyStep<IFuture<IRuleSystemService>>)
 				comp -> comp.getFeature(IRequiredServiceFeature.class)
 					.searchService(IRuleSystemService.class)).get();

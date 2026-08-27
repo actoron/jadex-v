@@ -27,10 +27,10 @@ public class LlmBlocksworldImageBenchmark
 			},
 			(app, response) -> {
 				// Check that red (Block 1) is on top of green (Block 4)
-				return POJO.get(app).blocks.stream().filter(b -> b.toString().equals("Block 1"))
+				return POJO.remove(app).blocks.stream().filter(b -> b.toString().equals("Block 1"))
 					.findFirst()
 					.map(b -> b.getLower()!=null && b.getLower().toString().equals("Block 4"))
 					.orElse(false);
-			}, null);
+			});
 	}
 }

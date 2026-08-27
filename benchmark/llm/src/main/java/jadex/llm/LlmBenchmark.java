@@ -282,7 +282,7 @@ public class LlmBenchmark
 	}
 
 	public static void runBenchmarks(String benchmark_name, String prompt,
-		Consumer<Application> setup, BiFunction<Application, String, Boolean> success, Runnable teardown)
+		Consumer<Application> setup, BiFunction<Application, String, Boolean> success)
 	{
 		IComponentManager.get().getFeature(IErrorHandlingFeature.class)
 			.addExceptionHandler(LlmChatAgent.class, Exception.class, false, (ex, comp) -> {return;});
@@ -312,7 +312,7 @@ public class LlmBenchmark
 //					.returnThinking(true)
 //					.build();
 //				
-//				benchmark(benchmark_name, prompt, setup, success, teardown, model_name, "Ollama (local)", llm, false);
+//				benchmark(benchmark_name, prompt, setup, success, model_name, "Ollama (local)", llm, false);
 //				if(thinking)
 //				{
 //					llm = OllamaStreamingChatModel.builder()
@@ -321,49 +321,49 @@ public class LlmBenchmark
 //						.think(true)
 //						.returnThinking(true)
 //						.build();
-//					benchmark(benchmark_name, prompt, setup, success, teardown, model_name, "Ollama (local)", llm, true);
+//					benchmark(benchmark_name, prompt, setup, success, model_name, "Ollama (local)", llm, true);
 //				}
 //			}
 //		}
 		
 		// Run benchmarks for local Ollama models
 		List<String>	include_models	= Arrays.asList(
-			"gemma4:e2b",
-			"gemma4:e2b-it-qat",
-			"gemma4:e4b",
-			"gemma4:e4b-it-qat",
-			"gemma4:12b",
-			"gemma4:12b-it-qat",
-//			"gemma4:26b",
-//			"gemma4:31b",
-			
-			// Non-image models
-//			"gpt-oss:20b",
-//			"granite4.1:3b",
-//			"granite4.1:8b",
-////			"granite4.1:30b",
-//			"lfm2.5:8b",
-
-//			"lfm2:24b",
-//			"laguna-xs.2:q4_K_M",
-			
-			"ministral-3:14b",
-			"ministral-3:8b",
-			"ministral-3:3b",
-//			"mistral-small3.2:24b",
-//			"devstral-small-2:24b",
-//			"phi4-mini:3.8b",
-//			"doomgrave/phi-4:14b-tools-Q3_K_S"
-			"qwen3.5:9b",
-			"qwen3.5:4b",
-			"qwen3.5:2b",
-			"qwen3.5:0.8b"
-//			"qwen3.6:35b"
-//			"qwen3.6:27b"
-//			"nemotron3:33b"
+//			"gemma4:e2b",
+//			"gemma4:e2b-it-qat",
+//			"gemma4:e4b",
+//			"gemma4:e4b-it-qat",
+//			"gemma4:12b",
+//			"gemma4:12b-it-qat",
+////			"gemma4:26b",
+////			"gemma4:31b",
+//			
+//			// Non-image models
+////			"gpt-oss:20b",
+			"granite4.2:3b"
+////			"granite4.1:8b",
+//////			"granite4.1:30b",
+////			"lfm2.5:8b",
+//
+////			"lfm2:24b",
+////			"laguna-xs.2:q4_K_M",
+//			
+//			"ministral-3:14b",
+//			"ministral-3:8b",
+//			"ministral-3:3b",
+////			"mistral-small3.2:24b",
+////			"devstral-small-2:24b",
+////			"phi4-mini:3.8b",
+////			"doomgrave/phi-4:14b-tools-Q3_K_S"
+//			"qwen3.5:9b",
+//			"qwen3.5:4b",
+//			"qwen3.5:2b",
+//			"qwen3.5:0.8b"
+////			"qwen3.6:35b"
+////			"qwen3.6:27b"
+////			"nemotron3:33b"
 			);
 //		List<String>	include_models	= null;
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA_LOCAL, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.OLLAMA, true);
 		
 		// Run benchmarks for remote Ollama models
 		include_models	= Arrays.asList(
@@ -386,10 +386,10 @@ public class LlmBenchmark
 //			"qwen3.6:27b",
 //			"qwen3.6:35b"
 			);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.OLLAMA, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.OLLAMA, true);
 		
 //		// Run benchmarks for Local Ai models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LOCAL_AI, false);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LOCAL_AI, false);
 		
 		// Run benchmarks for available Unsloth models
 		include_models	= Arrays.asList(
@@ -415,10 +415,10 @@ public class LlmBenchmark
 ////			"unsloth/granite-4.1-3b-GGUF",
 ////			"unsloth/granite-4.1-8b-GGUF"
 		);
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.UNSLOTH, true);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.UNSLOTH, true);
 		
 		// Run benchmarks for available Llama server models
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, null, Provider.LLAMA_SERVER, false);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LLAMA_SERVER, false);
 		
 //		// Run benchmarks for available Google Gemini models
 		include_models	= Arrays.asList(
@@ -437,7 +437,7 @@ public class LlmBenchmark
 //			"gemma-4-31b-it", 
 //			"nano-banana-pro-preview"
 			);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.GOOGLE_GEMINI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.GOOGLE_GEMINI, true);
 		
 		// Run benchmarks for available Mistral AI models
 		include_models	= Arrays.asList(
@@ -463,14 +463,14 @@ public class LlmBenchmark
 ////			"voxtral-mini-2507", 
 ////			"voxtral-small-2507" 
 			);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, teardown, csvStats, out, include_models, Provider.MISTRAL_AI, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.MISTRAL_AI, true);
 	}
 
 	/**
 	 *  Run benchmarks for all models of the given provider.
 	 */
 	protected static void runProviderBenchmarks(String benchmark_name, String prompt, Consumer<Application> setup,
-			BiFunction<Application, String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
+			BiFunction<Application, String, Boolean> success, Map<String, CsvStats> csvStats, File out,
 			List<String> include_models, Provider provider, boolean skip_latest)
 	{
 		for(String model_name: provider.getModels())
@@ -485,7 +485,7 @@ public class LlmBenchmark
 					boolean	nothink	= !LlmHelper.isThinking(llm);										
 					if(nothink)
 					{
-						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider, false);
+						benchmark(benchmark_name, prompt, setup, success, csvStats, out, model_name, provider, false);
 					}
 				}
 				catch(Exception e)
@@ -507,7 +507,7 @@ public class LlmBenchmark
 					boolean	think	= LlmHelper.isThinking(llm);
 					if(think)
 					{
-						benchmark(benchmark_name, prompt, setup, success, teardown, csvStats, out, model_name, provider, true);
+						benchmark(benchmark_name, prompt, setup, success, csvStats, out, model_name, provider, true);
 					}
 				}
 				catch(Exception e)
@@ -529,7 +529,7 @@ public class LlmBenchmark
 	 *  Run the benchmark for the given model and prompt, and write results to CSV file.
 	 */
 	protected static void benchmark(String benchmark_name, String prompt, Consumer<Application> setup,
-		BiFunction<Application, String, Boolean> success, Runnable teardown, Map<String, CsvStats> csvStats, File out,
+		BiFunction<Application, String, Boolean> success, Map<String, CsvStats> csvStats, File out,
 		String model_name, Provider provider, boolean dothink)
 	{
 		int runs	= DEFAULT_RUNS;
@@ -550,7 +550,8 @@ public class LlmBenchmark
 					setup.accept(app);
 				
 				StreamingChatModel	llm	= provider.createChatModel(model_name, dothink);
-				LlmChatAgent	chat	= app.create(new LlmChatAgent(llm)).get().getPojoHandle(LlmChatAgent.class);
+				// Explicitly name chat agent for lookup in, e.g., smart home benchmark for subsequent prompts.
+				LlmChatAgent	chat	= app.create(new LlmChatAgent(llm), "Chat").get().getPojoHandle(LlmChatAgent.class);
 				
 				long	start	= System.currentTimeMillis();
 				ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
@@ -623,8 +624,6 @@ public class LlmBenchmark
 				finally
 				{
 					closeFailureGui(failureFrame);
-					if(teardown!=null)
-						teardown.run();
 					app.terminate().get();
 				}
 			});

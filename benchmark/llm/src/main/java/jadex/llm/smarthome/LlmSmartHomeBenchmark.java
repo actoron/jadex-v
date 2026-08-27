@@ -25,7 +25,7 @@ public class LlmSmartHomeBenchmark
 		
 		LlmBenchmark.runBenchmarks(benchmark_name, prompt,
 			app -> {
-				app.create(new RuleSystem()
+				app.create(new RuleSystem(null)
 				{
 //					protected void	scheduleCronRule(CronExpression cron, Rule rule)
 					protected void	scheduleCronRule(Cron cron, Rule rule)
@@ -144,7 +144,7 @@ public class LlmSmartHomeBenchmark
 					}
 					return alarm.getAlarmState().get()==AlarmState.TRIGGERED;
 				}
-			}, null);
+			});
 	}
 
 	protected static <T> T getService(Application app, Class<T> clazz, String comp_name)

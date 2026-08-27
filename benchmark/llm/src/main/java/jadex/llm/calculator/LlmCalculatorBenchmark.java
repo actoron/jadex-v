@@ -48,7 +48,11 @@ public class LlmCalculatorBenchmark
 					return new Future<>(Math.sqrt(a));
 				}).get();
 			},
-			(app, response) -> response.contains("13") && response.contains("123")
-				&& CALLED.computeIfAbsent(app, k -> new AtomicInteger()).get()==2, null);
+			(app, response) -> 
+			{
+				// Check that the calculator service was called exactly twice
+				AtomicInteger counter = CALLED.remove(app);
+				return response.contains("13") && response.contains("123") && counter!=null && counter.get()==2;
+			});
 	}
 }

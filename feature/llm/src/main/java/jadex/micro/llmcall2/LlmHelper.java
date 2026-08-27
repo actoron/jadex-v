@@ -141,7 +141,8 @@ public class LlmHelper
 	public static final Map<Provider, String>	DEFAULT_MODELS = Collections.unmodifiableMap(
 		Map.of(
 			Provider.OLLAMA, "gemma4:31b",
-			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
+//			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
+			Provider.UNSLOTH, "unsloth/Ministral-3-3B-Instruct-2512-GGUF:UD-Q4_K_XL"
 		));
 	
 	public static StreamingChatModel createChatModel()

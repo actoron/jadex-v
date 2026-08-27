@@ -3,6 +3,7 @@ package jadex.llm.breakfast;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jadex.common.SUtil;
 import jadex.core.Application;
 import jadex.execution.IExecutionFeature;
 import jadex.llm.LlmBenchmark;
@@ -44,6 +45,12 @@ public class LlmBreakfastBenchmark
 					return coffee+" ready.";
 				})).get();
 			},
-			(app, response) -> TOAST_CALLED.getOrDefault(app, false) && COFFEE_CALLED.getOrDefault(app, false), null);
+			(app, response) -> 
+			{
+				// Remove the flags from the maps and check if both services were called
+				boolean toast_called = SUtil.equals(true, TOAST_CALLED.remove(app));
+				boolean coffee_called = SUtil.equals(true, COFFEE_CALLED.remove(app));
+				return toast_called && coffee_called;
+			});
 	}
 }
