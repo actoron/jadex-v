@@ -389,15 +389,11 @@ public class Main
     {
         ComponentManager.get().create(new ToolAgent()).get();
 
-<<<<<<< HEAD
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA, "gemma4:31b", false);
         StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", 
             false, true);
         
-=======
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA, "gemma4:31b", false);
-
->>>>>>> 0bdf2a148e3ff265d421d9915f5d53ccbaca87e0
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 
         IComponentHandle ua = ComponentManager.get().create(new UniversityAgent()).get();
