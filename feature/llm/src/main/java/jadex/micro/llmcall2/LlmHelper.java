@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.function.TriFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import jadex.common.ITriFunction;
 
 import javax.imageio.ImageIO;
 
@@ -137,11 +137,11 @@ public class LlmHelper
 			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model));
 		
 		private final String name;
-		private final TriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
+		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
 		private final Function<String, Integer> contextfetcher;
 
-		private Provider(String name, TriFunction<String, Boolean, Boolean, StreamingChatModel> creator,
+		private Provider(String name, ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator,
 			Supplier<List<String>> modelfetcher, Function<String, Integer> contextfetcher)
 		{
 			this.name = name;

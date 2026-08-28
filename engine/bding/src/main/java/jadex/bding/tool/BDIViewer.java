@@ -11,6 +11,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
@@ -347,7 +348,7 @@ public class BDIViewer extends JFrame
 
         protected BDISnapshot snapshot;
 
-        protected final Set<Object> expandedObjects = Collections.newSetFromMap(new IdentityHashMap<>());
+        protected final Set<String> expandedObjects = new HashSet<>();
 
 
         public GoalTreePanel(Consumer<Object> selectionListener)
@@ -383,7 +384,7 @@ public class BDIViewer extends JFrame
             {
                 for(RGoal goal : snapshot.goals())
                 {
-                    content.add(new GoalNode(goal, 0, selectionListener));
+                    content.add(new GoalNode(goal, 0, selectionListener, this));
                 }
             }
 
@@ -391,17 +392,17 @@ public class BDIViewer extends JFrame
             content.repaint();
         }
 
-        protected boolean isExpanded(Object object)
+        protected boolean isExpanded(String key)
         {
-            return expandedObjects.contains(object);
+            return expandedObjects.contains(key);
         }
 
-        protected void setExpanded(Object object, boolean expanded)
+        protected void setExpanded(String key, boolean expanded)
         {
             if(expanded)
-                expandedObjects.add(object);
+                expandedObjects.add(key);
             else
-                expandedObjects.remove(object);
+                expandedObjects.remove(key);
         }
 
     }
@@ -410,7 +411,7 @@ public class BDIViewer extends JFrame
     {
         protected final RGoal goal;
 
-        public GoalNode(RGoal goal, int depth, Consumer<Object> selectionListener)
+        public GoalNode(RGoal goal, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
             super();
 
@@ -449,14 +450,14 @@ public class BDIViewer extends JFrame
             if(current != null)
             {
                 add(new Header("▶", "Current intention", null, null, "ACTIVE", depth + 1,null));
-                add(new IntentionNode(current, depth + 2, selectionListener));
+                add(new IntentionNode(current, depth + 2, selectionListener, treePanel));
             }
 
             if(goal.getHistory() != null && !goal.getHistory().getEntries().isEmpty())
             {
                 add(Box.createVerticalStrut(5));
 
-                add(new HistoryNode(goal, depth + 1, selectionListener));
+                add(new HistoryNode(goal, depth + 1, selectionListener, treePanel));
             }
 
             constrainHeight(this);
@@ -465,10 +466,7 @@ public class BDIViewer extends JFrame
 
     protected static class HistoryNode extends CollapsibleNode
     {
-        public HistoryNode(
-            RGoal goal,
-            int depth,
-            Consumer<Object> selectionListener)
+        public HistoryNode(RGoal goal, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
             super(
                 "↻",
@@ -477,21 +475,16 @@ public class BDIViewer extends JFrame
                 null,
                 "",
                 depth,
-                true,
-                null);
+                treePanel.isExpanded("history_"+goal.getId()),
+                expanded -> treePanel.setExpanded("history_"+goal.getId(), expanded));
 
-            for(IntentionHistoryEntry entry :
-                goal.getHistory().getEntries())
+            for(IntentionHistoryEntry entry : goal.getHistory().getEntries())
             {
                 RIntention intention = entry.getIntention();
 
                 if(intention != null)
                 {
-                    getContent().add(
-                        new IntentionNode(
-                            intention,
-                            depth + 1,
-                            selectionListener));
+                    getContent().add(new IntentionNode(intention, depth + 1, selectionListener, treePanel));
                 }
             }
         }
@@ -515,7 +508,7 @@ public class BDIViewer extends JFrame
     {
         protected final Object intention;
 
-        public IntentionNode(RIntention intention, int depth, Consumer<Object> selectionListener)
+        public IntentionNode(RIntention intention, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
             super();
 
@@ -532,7 +525,7 @@ public class BDIViewer extends JFrame
             RPlan plan = intention.getPlan();
 
             if(plan != null)
-                add(new PlanNode(plan, depth + 1, selectionListener));
+                add(new PlanNode(plan, depth + 1, selectionListener, treePanel));
 
             constrainHeight(this);
         }
@@ -555,10 +548,7 @@ public class BDIViewer extends JFrame
 
     protected static class PlanNode extends CollapsibleNode
     {
-        public PlanNode(
-            RPlan plan,
-            int depth,
-            Consumer<Object> selectionListener)
+        public PlanNode(RPlan plan, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
             super(
                 "📋",
@@ -567,8 +557,8 @@ public class BDIViewer extends JFrame
                 null,
                 "",
                 depth,
-                true,
-                null);
+                treePanel.isExpanded(plan.getId()),
+                expanded -> treePanel.setExpanded(plan.getId(), expanded));
 
             IPlanBody body = plan.getPlan().getBody();
 
@@ -578,12 +568,7 @@ public class BDIViewer extends JFrame
 
                 for(IPlanStep step : body.getSteps())
                 {
-                    getContent().add(
-                        new PlanStepNode(
-                            step,
-                            stepno++,
-                            depth + 1,
-                            selectionListener));
+                    getContent().add(new PlanStepNode(step, stepno++, depth + 1, selectionListener));
                 }
             }
         }

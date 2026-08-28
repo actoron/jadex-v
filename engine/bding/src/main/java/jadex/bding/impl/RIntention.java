@@ -3,6 +3,7 @@ import jadex.future.Future;
 import jadex.future.IFuture;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
@@ -11,7 +12,7 @@ import jadex.core.IComponentManager;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
 
-public class RIntention 
+public class RIntention extends RIdElement
 {
     protected RGoal goal;
 
@@ -23,6 +24,7 @@ public class RIntention
 
     public RIntention(Intention intention, RGoal goal) 
     {   
+        super("intention_"+intention.getName());
         this.intention = intention;
         this.goal = goal;
     }
@@ -119,6 +121,38 @@ public class RIntention
     public void setHistory(PlanHistory history) 
     {
         this.history = history;
+    }
+
+    public String getId() 
+    {
+        return id;
+    }
+
+    @Override
+    public int hashCode() 
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) 
+    {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RIntention other = (RIntention) obj;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        return true;
     }
 
     @Override

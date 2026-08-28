@@ -4,13 +4,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jadex.bding.IPlanStep;
+import jadex.bding.impl.RIdElement;
 import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.llmcall2.LlmHelper;
 
-public class ToolCallStep implements IPlanStep
+public class ToolCallStep extends RIdElement implements IPlanStep
 {
     protected String toolname;
     
@@ -20,6 +21,7 @@ public class ToolCallStep implements IPlanStep
 
     public ToolCallStep(String toolname, Map<String, String> mapping, String resultmapping)
     {
+        super("subgoalstep");
         this.toolname = toolname;
         this.mapping = mapping;
         this.resultmapping = resultmapping;
@@ -68,5 +70,4 @@ public class ToolCallStep implements IPlanStep
         return resultmapping;
     }
 
-    
 }

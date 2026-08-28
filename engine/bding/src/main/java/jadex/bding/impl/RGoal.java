@@ -15,9 +15,10 @@ import jadex.future.IFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class RGoal 
+public class RGoal extends RIdElement
 {
     public enum GoalState
 	{
@@ -47,6 +48,7 @@ public class RGoal
 
     public RGoal(Goal goal, Map<String, Object> parameters)
     {
+        super("goal_"+goal.getName());
         this.goal = goal;
         this.parameters = parameters;
     }
@@ -276,6 +278,33 @@ public class RGoal
     public void setParentPlan(RPlan parentPlan)
     {
         this.parentPlan = parentPlan;
+    }
+
+    @Override
+    public int hashCode() 
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) 
+    {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RGoal other = (RGoal) obj;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        return true;
     }
 
     @Override

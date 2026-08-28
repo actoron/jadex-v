@@ -5,12 +5,13 @@ import java.util.Map;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner.ReasoningType;
+import jadex.bding.impl.RIdElement;
 import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class ReasoningStep implements IPlanStep
+public class ReasoningStep extends RIdElement implements IPlanStep 
 {
     protected String problem;
 
@@ -20,6 +21,7 @@ public class ReasoningStep implements IPlanStep
 
     public ReasoningStep(String problem, ReasoningType reasoningtype, String resultmapping)
     {
+        super("reasoningstep");
         this.problem = problem;
         this.reasoningtype = reasoningtype;
         this.resultmapping = resultmapping;
@@ -56,5 +58,5 @@ public class ReasoningStep implements IPlanStep
     {
         return resultmapping;
     }
-    
+ 
 }

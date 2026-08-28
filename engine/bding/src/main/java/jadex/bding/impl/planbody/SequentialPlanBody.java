@@ -3,20 +3,23 @@ package jadex.bding.impl.planbody;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.bding.IPlanBody;
 import jadex.bding.IPlanStep;
+import jadex.bding.impl.RIdElement;
 import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class SequentialPlanBody implements IPlanBody
+public class SequentialPlanBody extends RIdElement implements IPlanBody
 {
     protected List<IPlanStep> steps = new ArrayList<>();
 
     public SequentialPlanBody()
     {
+        super("planbody");
     }
 
     /*public SequentialPlanBody(String description)
