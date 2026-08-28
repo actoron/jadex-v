@@ -8,8 +8,8 @@ def _maven_to_bazel(coord):
     return "@maven//:" + group + "_" + artifact
     
 MAVEN_DEPS = [
-    'dev.langchain4j:langchain4j:1.15.1',
-    'dev_langchain4j:langchain4j-core:1.15.1',
+    'dev.langchain4j:langchain4j:1.18.1',
+    'dev.langchain4j:langchain4j-core:1.18.1',
     'org.quartz-scheduler:quartz:2.5.2',
     'com.cronutils:cron-utils:9.2.1',
 ]

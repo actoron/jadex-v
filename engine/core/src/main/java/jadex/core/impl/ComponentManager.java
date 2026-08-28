@@ -799,6 +799,7 @@ public class ComponentManager implements IComponentManager
 			try
 			{
 				// Check for overridden toString() (raises exception if not found)
+				@SuppressWarnings("unused")
 				Method unused = comp.getPojo().getClass().getDeclaredMethod("toString");
 				ret	= comp.getPojo().toString();
 			}
@@ -881,7 +882,7 @@ public class ComponentManager implements IComponentManager
 		if (!(pojo instanceof IDaemonComponent))
 			initializeFeatures();
 
-		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
+		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(app, localname);
 		if(pojo==null)
 		{
 			// Plain component for null pojo
@@ -925,7 +926,7 @@ public class ComponentManager implements IComponentManager
 			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
 			if(creator!=null)
 			{
-				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app, async);
+				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(app, localname), app, async);
 			}
 			else
 			{
@@ -1269,7 +1270,7 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					Component comp = new Component(new IDaemonComponent(){}, new ComponentIdentifier("__globalrunner__"), null)
+					Component comp = new Component(new IDaemonComponent(){}, new ComponentIdentifier(null, "__globalrunner__"), null)
 					{
 						public void handleException(Exception exception)
 						{

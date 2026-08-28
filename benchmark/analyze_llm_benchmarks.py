@@ -19,6 +19,13 @@ THINKING_PALETTE = {
     "Non-thinking": "#4C72B0",
     "Thinking": "#DD8452",
 }
+LOCAL_PROVIDER_KEYWORDS = ("local", "ollama", "unsloth")
+MODEL_LABEL_PREFIX_RE = re.compile(r"^(?:ollama|unsloth|openrouter|openai|anthropic|google|groq)\s*[:/]\s*", re.IGNORECASE)
+MODEL_LABEL_SUFFIX_PATTERNS = [
+    re.compile(r"(?:[-_](?:instruct|instruction|chat|preview|latest|base))+$", re.IGNORECASE),
+    re.compile(r"(?:[-_](?:hf|gguf|awq|gptq|fp16|fp8))+$", re.IGNORECASE),
+    re.compile(r"(?:[-_](?:q\d+[a-z0-9_\-]*))$", re.IGNORECASE),
+]
 
 
 def safe_select_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
@@ -73,6 +80,22 @@ def display_model_family_name(family_name: str) -> str:
     if candidate in special_cases:
         return special_cases[candidate]
     return re.sub(r"[_\-.]+", " ", candidate).title()
+
+
+def beautify_model_display_name(model_name: str) -> str:
+    candidate = str(model_name).strip()
+    if not candidate:
+        return candidate
+
+    # Use the leaf path-like segment and strip provider wrappers.
+    if "/" in candidate:
+        candidate = candidate.split("/")[-1].strip()
+    candidate = MODEL_LABEL_PREFIX_RE.sub("", candidate).strip()
+
+    for pattern in MODEL_LABEL_SUFFIX_PATTERNS:
+        candidate = pattern.sub("", candidate).strip("-_: ")
+
+    return candidate or str(model_name).strip()
 
 
 def wrap_chart_label(label: str, width: int = 20) -> str:
@@ -160,7 +183,7 @@ def benchmark_success_sort_names(benchmark_frames: dict[str, pd.DataFrame]) -> l
 
 def classify_deployment_type(provider_name: str) -> str:
     candidate = str(provider_name).strip().lower()
-    if "local" in candidate or "ollama" in candidate:
+    if any(keyword in candidate for keyword in LOCAL_PROVIDER_KEYWORDS):
         return "Local"
     return "Cloud"
 
@@ -529,12 +552,6 @@ def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame]
         for family in df["Model Family"].dropna().unique():
             family_df = df[df["Model Family"] == family].copy()
             
-            # Keep only models with an inferable size of 20B or less.
-            family_df["_size"] = family_df["Model"].apply(extract_model_size_billions)
-            family_df = family_df[family_df["_size"].notna() & (family_df["_size"] <= 20)]
-            if family_df.empty:
-                continue
-            
             # Sort by success rate (descending) then by avg time (ascending)
             if "Avg Time" in family_df.columns:
                 best_model_row = family_df.sort_values(
@@ -588,10 +605,14 @@ def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame]
         
         # Get values in the correct family order; None = no data for this family/benchmark
         values = [family_success_rates.get(family, None) for family in families]
-        model_names = [
-            (f"{family_model_names.get(family, '')} (think)" if bool(family_thinking.get(family, False)) else family_model_names.get(family, ""))
-            for family in families
-        ]
+        model_names = []
+        for family in families:
+            raw_model_name = family_model_names.get(family, "")
+            cleaned_model_name = beautify_model_display_name(raw_model_name)
+            if bool(family_thinking.get(family, False)):
+                model_names.append(f"{cleaned_model_name} (think)")
+            else:
+                model_names.append(cleaned_model_name)
         
         # Also get avg times for display inside bars
         family_avg_times = benchmark_data.set_index("Model Family Display")["Avg Time"]
@@ -651,7 +672,7 @@ def create_best_model_per_family_chart(benchmark_frames: dict[str, pd.DataFrame]
     
     ax.set_xlabel("", fontsize=12, fontweight="bold")
     ax.set_ylabel("Success Rate (%)", fontsize=12, fontweight="bold")
-    ax.set_title("Best Model per Family across All Benchmarks (≤ 20B) - Ranked by Success Rate then Runtime", fontsize=14, fontweight="bold")
+    ax.set_title("Best Model per Family across All Benchmarks - Ranked by Success Rate then Runtime", fontsize=14, fontweight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels([""] * len(families))  # hide family name labels; model names shown below each bar
     ax.set_ylim(0, 105)
@@ -1084,29 +1105,37 @@ def analyze_all_benchmarks(benchmark_files: list[Path]) -> None:
         analyze_benchmark(csv_path)
         benchmark_frames[benchmark_name] = load_data(csv_path)
 
-    # Filter to only ollama models for overall/local analysis
-    ollama_frames = {}
+    # Filter to local models for overall/local analysis.
+    local_frames = {}
     for name, df in benchmark_frames.items():
         if "Provider" in df.columns:
-            ollama_df = df[df["Provider"].astype(str).str.contains("ollama", case=False, na=False)]
-            if not ollama_df.empty:
-                ollama_frames[name] = ollama_df
+            provider_values = df["Provider"].astype(str).str.lower()
+            local_mask = provider_values.apply(
+                lambda provider: any(keyword in provider for keyword in LOCAL_PROVIDER_KEYWORDS)
+            )
+            local_df = df[local_mask]
+            if not local_df.empty:
+                local_frames[name] = local_df
 
-    # Filter to non-ollama providers for cloud analysis
-    non_ollama_frames = {}
+    # Filter to non-local providers for cloud analysis.
+    cloud_frames = {}
     for name, df in benchmark_frames.items():
         if "Provider" in df.columns:
-            non_ollama_df = df[~df["Provider"].astype(str).str.contains("ollama", case=False, na=False)]
-            if not non_ollama_df.empty:
-                non_ollama_frames[name] = non_ollama_df
+            provider_values = df["Provider"].astype(str).str.lower()
+            local_mask = provider_values.apply(
+                lambda provider: any(keyword in provider for keyword in LOCAL_PROVIDER_KEYWORDS)
+            )
+            cloud_df = df[~local_mask]
+            if not cloud_df.empty:
+                cloud_frames[name] = cloud_df
 
-    overall_family_charts = create_overall_family_model_size_bar_charts(ollama_frames, OUT_DIR)
-    create_best_model_per_family_chart(ollama_frames, OUT_DIR)
-    overall_summary = build_overall_summary(ollama_frames, overall_family_charts)
+    overall_family_charts = create_overall_family_model_size_bar_charts(local_frames, OUT_DIR)
+    create_best_model_per_family_chart(local_frames, OUT_DIR)
+    overall_summary = build_overall_summary(local_frames, overall_family_charts)
     (OUT_DIR / "overall_analysis.md").write_text(overall_summary, encoding="utf-8")
-    cloud_summary = build_deployment_summary(non_ollama_frames, "Cloud")
+    cloud_summary = build_deployment_summary(cloud_frames, "Cloud")
     (OUT_DIR / "cloud_analysis.md").write_text(cloud_summary, encoding="utf-8")
-    local_summary = build_deployment_summary(ollama_frames, "Local")
+    local_summary = build_deployment_summary(local_frames, "Local")
     (OUT_DIR / "local_analysis.md").write_text(local_summary, encoding="utf-8")
 
 

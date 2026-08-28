@@ -30,7 +30,7 @@ public class ServiceIdentifier implements IServiceIdentifier
 	
 	/** The provider identifier. */
 	protected ComponentIdentifier providerid;
-		
+	
 	/** The service name. */
 	protected String servicename;
 	

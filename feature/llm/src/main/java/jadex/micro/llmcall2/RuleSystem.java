@@ -17,7 +17,9 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 
+import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.core.ChangeEvent;
+import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -60,6 +62,9 @@ public class RuleSystem	implements IRuleSystemService
 	@Inject
 	protected IComponent	comp;
 	
+	/** The LLM for executing prompts. */
+	protected StreamingChatModel	llm;
+	
 	/** The registered event types with their source service type. */
 	protected Map<String, Class<?>>	event_sources = new LinkedHashMap<>();
 	
@@ -72,8 +77,16 @@ public class RuleSystem	implements IRuleSystemService
 	/** The subscribers to the registered rules. */
 	protected List<SubscriptionIntermediateFuture<ChangeEvent>>	subscribers = new ArrayList<>();
 	
-	/** The current LLM call, if any.*/
-	protected IFuture<Void>	current_call = IFuture.DONE;
+	//-------- constructors --------
+	
+	/**
+	 *  Create rule system with an llm.
+	 *  @param llm The LLM to use for executing prompts.
+	 */
+	public RuleSystem(StreamingChatModel llm)
+	{
+		this.llm = llm;
+	}
 	
 	//-------- tool methods --------
 	
@@ -272,32 +285,30 @@ public class RuleSystem	implements IRuleSystemService
 	@Override
 	public IFuture<Void> executePrompt(String prompt)
 	{
-		// If there is an ongoing call, we chain the new calls to it, otherwise we start a new chain.
-		current_call = current_call!=null ? current_call : IFuture.DONE;
-		Future<Void>	next_call	= new Future<>();
-		Consumer<Object>	execute	= v ->
+		System.out.println("User: "+prompt);
+		ITerminableIntermediateFuture<ChatFragment>	ifut;
+		if(llm!=null)
 		{
-			IFuture<Void>	fut	= comp.getFeature(IRequiredServiceFeature.class).searchService(ILlmChatService.class)
-				.thenCompose(llmChat -> 
+			ifut	= comp.getApplication().runAsync(new LlmChatAgent(llm, prompt));
+		}
+		else
+		{
+			// Hack!!! For benchmarking -> reuse existing LlmChatAgent from the application, which has a model set.
+			ComponentIdentifier	cid	= comp.getApplication().getAllComponents().stream()
+				.filter(c -> c.getLocalName().equals("Chat"))
+				.findFirst()
+				.orElseThrow(() -> new IllegalStateException("No 'Chat' agent found in the application."));
+			ifut	= comp.getApplication().getComponentHandle(cid).getPojoHandle(LlmChatAgent.class).chat(prompt);
+		}
+		LlmChatAgent.printResults(ifut);
+		return ifut
+			.then(v1 -> System.out.println("================"))
+			.catchEx(ex -> 
 			{
-				System.out.println("User: "+prompt);
-				ITerminableIntermediateFuture<ChatFragment>	ifut	= llmChat.chat(prompt);
-				LlmChatAgent.printResults(ifut);
-				return ifut
-					.then(v1 -> System.out.println("================"))
-					.catchEx(ex -> 
-					{
-						System.err.println("================");
-						ex.printStackTrace();
-					})
-					.thenApply(fragments -> null);
-			});
-			fut.then(next_call::setResult)
-				.catchEx(ex -> next_call.setResult(null));
-		};
-		current_call.catchEx(execute).then(execute);
-		current_call	= next_call;
-		return current_call;
+				System.err.println("================");
+				ex.printStackTrace();
+			})
+			.thenApply(fragments -> null);
 	}
 	
 	//-------- UI only methods --------

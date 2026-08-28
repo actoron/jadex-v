@@ -34,6 +34,7 @@ import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.CollectionWrapper;
 import jadex.collection.MapWrapper;
 import jadex.common.SUtil;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
 import jadex.core.INoCopyStep;
 import jadex.injection.Dyn;
@@ -130,7 +131,17 @@ public class BDIViewer extends JFrame
 
     private void	startAutoRefresh() 
     {
-        Timer timer = new Timer(100, ev -> BDIViewer.this.refreshTables());
+        Timer timer = new Timer(100, ev -> 
+        {
+        	try
+        	{
+        		BDIViewer.this.refreshTables();
+        	}
+			catch(ComponentTerminatedException e)
+        	{
+				// ignore
+        	}
+        });
         timer.start();
         
 		// Kill agent on window close.

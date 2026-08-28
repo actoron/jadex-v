@@ -1,22 +1,22 @@
 package jadex.llm.smarthome;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.cronutils.model.Cron;
 
-import jadex.core.IComponentHandle;
-import jadex.core.IComponentManager;
+import jadex.core.Application;
+import jadex.core.impl.ComponentManager;
 import jadex.llm.LlmBenchmark;
 import jadex.llm.smarthome.IAlarmService.AlarmState;
 import jadex.micro.llmcall2.IRuleSystemService;
 import jadex.micro.llmcall2.IRuleSystemService.Rule;
 import jadex.micro.llmcall2.RuleSystem;
+import jadex.providedservice.IService;
+import jadex.providedservice.ServiceQuery;
+import jadex.requiredservice.IRequiredServiceFeature;
 
 public class LlmSmartHomeBenchmark
 {
-	static List<IComponentHandle>	COMPONENTS	= new ArrayList<>();
-	
 	public static void main(String[] args)
 	{
 		String	prompt	= "Immer wenn Bewegungsmelder A auslöst, analysiere das aktuelle Bild von Kamera 1 "
@@ -24,29 +24,29 @@ public class LlmSmartHomeBenchmark
 		String	benchmark_name	= LlmSmartHomeBenchmark.class.getSimpleName();
 		
 		LlmBenchmark.runBenchmarks(benchmark_name, prompt,
-			() -> {
-				COMPONENTS.add(IComponentManager.get().create(new RuleSystem()
+			app -> {
+				app.create(new RuleSystem(null)
 				{
 //					protected void	scheduleCronRule(CronExpression cron, Rule rule)
 					protected void	scheduleCronRule(Cron cron, Rule rule)
 					{
 						// NOP -> is executed manually in the benchmark response phase
 					}
-				}, "Rule System").get());
-				COMPONENTS.add(IComponentManager.get().create(new Camera(), "Kamera 1").get());
-				COMPONENTS.add(IComponentManager.get().create(new Camera(), "Kamera 2").get());
-				COMPONENTS.add(IComponentManager.get().create(new Camera(), "Kamera 3").get());
-				COMPONENTS.add(IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder A").get());
-				COMPONENTS.add(IComponentManager.get().create(new MotionSensor(), "Bewegungsmelder B").get());
-				COMPONENTS.add(IComponentManager.get().create(new Alarm(), "Alarm").get());
+				}, "Rule System").get();
+				app.create(new Camera(), "Kamera 1").get();
+				app.create(new Camera(), "Kamera 2").get();
+				app.create(new Camera(), "Kamera 3").get();
+				app.create(new MotionSensor(), "Bewegungsmelder A").get();
+				app.create(new MotionSensor(), "Bewegungsmelder B").get();
+				app.create(new Alarm(), "Alarm").get();
 			},
-			response -> {
+			(app, response) -> {
 				
 				// Check that there is exactly one rule created (the motion sensor rule)
 				// And that the alarm is not triggered without motion
-				IRuleSystemService	rule_system = LlmBenchmark.getService(IRuleSystemService.class, "Rule System");
+				IRuleSystemService	rule_system = getService(app, IRuleSystemService.class, "Rule System");
 				List<Rule>	rules	= rule_system.listRules().get();
-				IAlarmService alarm = LlmBenchmark.getService(IAlarmService.class, "Alarm");
+				IAlarmService alarm = getService(app, IAlarmService.class, "Alarm");
 				if(rules.size()!=1
 					|| !MotionSensor.EVENT_TYPE_MOTION_DETECTED.equals(rule_system.listRules().get().get(0).event_type())
 					|| !"Bewegungsmelder A".equals(rule_system.listRules().get().get(0).event_source())
@@ -56,14 +56,14 @@ public class LlmSmartHomeBenchmark
 				}
 				
 				// Check first use case: trigger motion sensor, check if alarm is (not) triggered
-				IMotionSensorService sensor = LlmBenchmark.getService(IMotionSensorService.class, "Bewegungsmelder A");
+				IMotionSensorService sensor = getService(app, IMotionSensorService.class, "Bewegungsmelder A");
 				sensor.motionDetected().get(300000);
 				if(alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 				{
 					return false;
 				}
 				
-				ICameraService camera = LlmBenchmark.getService(ICameraService.class, "Kamera 1");
+				ICameraService camera = getService(app, ICameraService.class, "Kamera 1");
 				camera.setCurrentImage("a burglar breaking into a house at night").get();
 				sensor.motionDetected().get(300000);
 				if(alarm.getAlarmState().get()!=AlarmState.TRIGGERED)
@@ -132,7 +132,7 @@ public class LlmSmartHomeBenchmark
 						return false;
 					}
 					
-					camera = LlmBenchmark.getService(ICameraService.class, "Kamera 2");
+					camera = getService(app, ICameraService.class, "Kamera 2");
 					camera.setCurrentImage("a burglar breaking into a house at night").get();
 					
 					// Check and execute the cron rules manually (maybe one for each camera)
@@ -144,14 +144,14 @@ public class LlmSmartHomeBenchmark
 					}
 					return alarm.getAlarmState().get()==AlarmState.TRIGGERED;
 				}
-			},
-			() -> {
-				for(IComponentHandle comp : COMPONENTS)
-				{
-					comp.terminate().get();
-				}
-				COMPONENTS.clear();
 			});
+	}
 
+	protected static <T> T getService(Application app, Class<T> clazz, String comp_name)
+	{
+		return ComponentManager.get().getGlobalRunner().getFeature(IRequiredServiceFeature.class)
+			.searchServices(new ServiceQuery<>(clazz).setAppId(app.getId())).get()
+			.stream().filter(s -> comp_name.equals(((IService)s).getServiceId().getProviderId().getLocalName()))
+			.findFirst().orElse(null);
 	}
 }

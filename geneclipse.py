@@ -37,7 +37,7 @@ def _short_cmd(cmd, maxlen=90):
     return s if len(s) <= maxlen else s[:maxlen] + " ...[truncated]"
 
 # Bazel rule kinds we turn into Eclipse projects.
-SUPPORTED_KINDS = {"java_library", "java_test", "java_binary"}
+SUPPORTED_KINDS = {"java_library", "java_test", "java_binary", "java_import"}
 
 # Conventional source directories we look for on disk inside each
 # package. Adjust here if your layout ever differs from
@@ -68,6 +68,10 @@ GENERATED_DIRS = {
 # of as a raw command-line argument, to stay well clear of OS ARG_MAX
 # limits once hundreds of labels get concatenated into one set(...) expr.
 QUERY_FILE_THRESHOLD = 6000
+
+# Cache `bazel info` lookups so repeated callers do not spawn extra bazel
+# processes for values that stay constant within one script run.
+_BAZEL_INFO_CACHE = {}
 
 
 def run(cmd, cwd):
@@ -164,7 +168,15 @@ def clean_workspace(workspace):
 
 
 def bazel_info(key, workspace):
-    return run(["bazel", "info", key], cwd=workspace).strip()
+    cache_key = (os.path.abspath(workspace), key)
+
+    cached = _BAZEL_INFO_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    value = run(["bazel", "info", key], cwd=workspace).strip()
+    _BAZEL_INFO_CACHE[cache_key] = value
+    return value
 
 
 def query_all_java_rules(workspace):
@@ -186,13 +198,16 @@ def query_all_java_rules(workspace):
             "name": rule.get("name"),
         }
 
-        for list_name in ("srcs", "resources", "deps", "runtime_deps"):
+        for list_name in ("srcs", "resources", "deps", "runtime_deps", "jars"):
             elem = rule.find(f"list[@name='{list_name}']")
             data[list_name] = (
                 [lbl.get("value") for lbl in elem.findall("label")]
                 if elem is not None
                 else []
             )
+
+        srcjar = rule.find("label[@name='srcjar']")
+        data["srcjar"] = srcjar.get("value") if srcjar is not None else None
 
         jc = rule.find("list[@name='javacopts']")
         data["javacopts"] = (
@@ -235,7 +250,10 @@ def _cquery_jars_raw(labels, workspace):
     label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
     starlark_expr = (
         "'%s\t%s' % (str(target.label), "
-        "','.join([f.path for f in target.files.to_list()]))"
+        "','.join([f.path for f in target.files.to_list()] + "
+        "[f.path for f in "
+        "providers(target).get('@@rules_java+//java/private:java_info.bzl%JavaInfo', "
+        "struct(source_jars=[])).source_jars]))"
     )
 
     cmd = ["bazel", "cquery"]
@@ -287,30 +305,39 @@ def _resolve_chunk(labels, workspace, execroot, depth=0):
     have resolved together just fine.
     """
     if not labels:
-        return {}
+        return {}, set()
 
     stdout, returncode, stderr = _cquery_jars_raw(labels, workspace)
-    jars = _parse_cquery_jar_output(stdout, execroot, labels)
+    jars, seen_labels = _parse_cquery_jar_output(
+        stdout, execroot, labels, include_seen=True
+    )
 
-    if returncode not in (0, 3) and not jars:
+    if returncode not in (0, 3) and not seen_labels:
         first_err_line = next((l for l in stderr.splitlines() if l.strip()), "")
         print(f"    NOTE: cquery hard-failed for {len(labels)} label(s): {first_err_line}")
 
-    missing = [l for l in labels if l not in jars]
+    # Only recurse for labels that were not returned at all.
+    # If bazel returned a label but no usable JAR path was found, retrying
+    # the same label in smaller chunks is usually pointless.
+    missing = [l for l in labels if l not in seen_labels]
 
     if not missing or len(labels) == 1:
-        return jars
+        return jars, seen_labels
 
     # Stop subdividing once chunks get small: each bisection level costs
     # its own bazel call, so past this point it's cheaper to just let
     # resolve_maven_jars's final individual-fallback pass mop them up.
     if depth >= 5 or len(labels) <= 3:
-        return jars
+        return jars, seen_labels
 
     mid = len(missing) // 2
-    jars.update(_resolve_chunk(missing[:mid], workspace, execroot, depth + 1))
-    jars.update(_resolve_chunk(missing[mid:], workspace, execroot, depth + 1))
-    return jars
+    left_jars, left_seen = _resolve_chunk(missing[:mid], workspace, execroot, depth + 1)
+    right_jars, right_seen = _resolve_chunk(missing[mid:], workspace, execroot, depth + 1)
+    jars.update(left_jars)
+    jars.update(right_jars)
+    seen_labels.update(left_seen)
+    seen_labels.update(right_seen)
+    return jars, seen_labels
 
 
 def _target_name(label):
@@ -324,7 +351,7 @@ def _target_name(label):
     return label.rsplit(":", 1)[-1]
 
 
-def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
+def _parse_cquery_jar_output(stdout, execroot, requested_labels=None, include_seen=False):
     """Parse the '<label>\\t<paths>' lines from _cquery_jars_raw into
     {label: {"jar": ..., "srcjar": ...}}.
 
@@ -342,6 +369,7 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
             name_to_label[_target_name(l)] = l
 
     jars = {}
+    seen_labels = set()
 
     for line in stdout.splitlines():
         line = line.strip()
@@ -351,6 +379,10 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
 
         resolved_label, paths = line.split("\t", 1)
         key = name_to_label.get(_target_name(resolved_label), resolved_label)
+        seen_labels.add(key)
+
+        primary_jar = None
+        source_jar = None
 
         for rel_path in paths.split(","):
             rel_path = rel_path.strip()
@@ -363,22 +395,42 @@ def _parse_cquery_jar_output(stdout, execroot, requested_labels=None):
             if not os.path.isfile(abs_path):
                 continue
 
-            src_path = None
-            candidate = abs_path[:-4] + "-sources.jar"
+            lower_name = os.path.basename(abs_path).lower()
+            is_source = (
+                lower_name.endswith("-sources.jar")
+                or lower_name.endswith("-source.jar")
+            )
 
+            if is_source and source_jar is None:
+                source_jar = abs_path
+                continue
+
+            if primary_jar is None:
+                primary_jar = abs_path
+
+        if primary_jar is None:
+            continue
+
+        # Fallback for layouts where source jars are present next to
+        # the binary jar but not listed in target.files.
+        if source_jar is None:
+            candidate = primary_jar[:-4] + "-sources.jar"
             if os.path.isfile(candidate):
-                src_path = candidate
+                source_jar = candidate
 
-            jars[key] = {"jar": abs_path, "srcjar": src_path}
-            break
+        jars[key] = {"jar": primary_jar, "srcjar": source_jar}
+
+    if include_seen:
+        return jars, seen_labels
 
     return jars
 
 
-MAVEN_CHUNK_SIZE = 60
+MAVEN_CHUNK_SIZE = 120
+FINAL_RETRY_CHUNK_SIZE = 24
 
 
-def resolve_maven_jars(maven_labels, workspace):
+def resolve_maven_jars(maven_labels, workspace, execroot):
     """
     Resolve @maven//:... labels to actual JAR files.
 
@@ -392,9 +444,9 @@ def resolve_maven_jars(maven_labels, workspace):
     if not maven_labels:
         return {}
 
-    execroot = bazel_info("execution_root", workspace)
     labels_sorted = sorted(maven_labels)
     jars = {}
+    seen_labels = set()
 
     chunks = [
         labels_sorted[i:i + MAVEN_CHUNK_SIZE]
@@ -407,18 +459,49 @@ def resolve_maven_jars(maven_labels, workspace):
     ):
         for i, chunk in enumerate(chunks, 1):
             print(f"  chunk {i}/{len(chunks)}: {len(chunk)} label(s)")
-            jars.update(_resolve_chunk(chunk, workspace, execroot))
+            chunk_jars, chunk_seen = _resolve_chunk(chunk, workspace, execroot)
+            jars.update(chunk_jars)
+            seen_labels.update(chunk_seen)
 
-    missing = [l for l in labels_sorted if l not in jars]
+    missing = [l for l in labels_sorted if l not in seen_labels]
+
+    if missing:
+        retry_chunks = [
+            missing[i:i + FINAL_RETRY_CHUNK_SIZE]
+            for i in range(0, len(missing), FINAL_RETRY_CHUNK_SIZE)
+        ]
+
+        with timed(
+            f"straggler retry batches ({len(missing)} label(s), "
+            f"{len(retry_chunks)} chunk(s) of up to {FINAL_RETRY_CHUNK_SIZE})"
+        ):
+            for i, chunk in enumerate(retry_chunks, 1):
+                print(f"  retry chunk {i}/{len(retry_chunks)}: {len(chunk)} label(s)")
+                chunk_jars, chunk_seen = _resolve_chunk(chunk, workspace, execroot)
+                jars.update(chunk_jars)
+                seen_labels.update(chunk_seen)
+
+    missing = [l for l in labels_sorted if l not in seen_labels]
 
     if missing:
         with timed(
-            f"final straggler retries ({len(missing)} label(s), one bazel call EACH)"
+            f"final individual retries ({len(missing)} label(s), one bazel call EACH)"
         ):
             for index, label in enumerate(missing, 1):
                 print(f"  [{index}/{len(missing)}] {label}")
                 single_stdout, _, _ = _cquery_jars_raw([label], workspace)
-                jars.update(_parse_cquery_jar_output(single_stdout, execroot, [label]))
+                single_jars, single_seen = _parse_cquery_jar_output(
+                    single_stdout, execroot, [label], include_seen=True
+                )
+                jars.update(single_jars)
+                seen_labels.update(single_seen)
+
+    total_with_sources = sum(1 for l in labels_sorted if l in jars and jars[l].get("srcjar"))
+    total_resolved = sum(1 for l in labels_sorted if l in jars)
+    print(
+        f"  Source jars available for {total_with_sources}/{total_resolved} "
+        "resolved Maven dependency target(s)."
+    )
 
     print(
         f"  Resolved {len(jars)}/{len(labels_sorted)} "
@@ -432,20 +515,53 @@ def resolve_maven_jars(maven_labels, workspace):
     return jars
 
 
+def _label_to_workspace_file(label):
+    """Convert workspace file label to a repo-relative path, or None for non-workspace labels."""
+    if not label.startswith("//"):
+        return None
+
+    pkg, target = label[2:].split(":", 1)
+    if target.startswith("/"):
+        return None
+
+    rel = f"{pkg}/{target}" if pkg else target
+    return os.path.normpath(rel)
+
+
+def resolve_workspace_jar_labels(jar_labels, srcjar_by_jar, workspace):
+    """Resolve //pkg:file.jar style labels to absolute file paths for Eclipse classpath entries."""
+    if not jar_labels:
+        return {}
+
+    resolved = {}
+
+    for jar_label in sorted(jar_labels):
+        rel_jar = _label_to_workspace_file(jar_label)
+        if rel_jar is None:
+            continue
+
+        jar_path = os.path.normpath(os.path.join(workspace, rel_jar))
+        if not os.path.isfile(jar_path):
+            continue
+
+        srcjar_label = srcjar_by_jar.get(jar_label)
+        srcjar_path = None
+        if srcjar_label:
+            rel_src = _label_to_workspace_file(srcjar_label)
+            if rel_src is not None:
+                candidate = os.path.normpath(os.path.join(workspace, rel_src))
+                if os.path.isfile(candidate):
+                    srcjar_path = candidate
+
+        resolved[jar_label] = {"jar": jar_path, "srcjar": srcjar_path}
+
+    return resolved
+
+
 def query_transitive_deps_all(workspace, labels):
     """
     Compute the combined transitive dependency graph for every given
-    label in a SINGLE bazel query, instead of one `bazel query
-    deps(label)` per target (which used to mean one full bazel process
-    start -- analysis included -- per java_library/java_test/
-    java_binary in the repo).
-
-    bazel's --output=xml format includes, for every rule node reached
-    by the query, its direct dependency edges as <rule-input>
-    elements. So one `deps(set(all_targets))` query gives us every
-    edge we need in one shot; per-target transitive closures are then
-    computed locally in Python via a plain BFS/DFS over that graph,
-    which is essentially free compared to a bazel invocation.
+    label in a single bazel query and return direct rule-input edges.
     """
     label_set_expr = "set(" + " ".join(sorted(labels)) + ")"
     expr = f"deps({label_set_expr})"
@@ -479,7 +595,7 @@ def query_transitive_deps_all(workspace, labels):
 
 
 def transitive_closure(graph, start):
-    """Plain BFS over the pre-fetched dependency graph -- no subprocess calls."""
+    """Plain DFS/BFS over pre-fetched dependency graph without subprocess calls."""
     seen = set()
     stack = [start]
 
@@ -500,6 +616,7 @@ def build_project_models(rules, workspace):
         lambda: {
             "internal_deps": set(),
             "maven_deps": set(),
+            "workspace_jars": set(),
             "other_deps": set(),
             "javacopts": [],
             "srcs": [],
@@ -507,6 +624,11 @@ def build_project_models(rules, workspace):
     )
 
     target_to_pkg = build_target_to_java_package(rules)
+    java_import_jars = {
+        rule["name"]: list(rule.get("jars") or [])
+        for rule in rules
+        if rule.get("kind") == "java_import"
+    }
 
     # First collect sources and direct Maven deps.
     for rule in rules:
@@ -515,6 +637,9 @@ def build_project_models(rules, workspace):
 
         model["javacopts"].append(rule["javacopts"])
         model["srcs"].extend(rule["srcs"])
+
+        if rule.get("kind") == "java_import":
+            model["workspace_jars"].update(rule.get("jars") or [])
 
         for dep_list in ("deps", "runtime_deps"):
             for dep in rule[dep_list]:
@@ -548,6 +673,11 @@ def build_project_models(rules, workspace):
                 # direct Maven dependencies declared in BUILD.bazel.
                 if dep.startswith("@maven//"):
                     model["maven_deps"].add(dep)
+                    continue
+
+                import_jars = java_import_jars.get(dep)
+                if import_jars is not None:
+                    model["workspace_jars"].update(import_jars)
                     continue
 
                 dep_pkg = target_to_pkg.get(dep)
@@ -661,12 +791,33 @@ def write_project_file(pkg_dir, project_name, internal_deps):
         f.write(content)
 
 
+def write_non_java_project_file(pkg_dir, project_name):
+    """Write a plain Eclipse project (no Java builder/nature)."""
+    content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!-- {AUTO_GEN_NOTICE} -->
+<projectDescription>
+\t<name>{project_name}</name>
+\t<comment>Workspace root helper project (non-Java).</comment>
+\t<projects>
+\t</projects>
+\t<buildSpec>
+\t</buildSpec>
+\t<natures>
+\t</natures>
+</projectDescription>
+"""
+    with open(os.path.join(pkg_dir, ".project"), "w") as f:
+        f.write(content)
+
+
 def write_classpath_file(
     pkg_dir,
     src_dirs,
     internal_deps,
     maven_deps,
     maven_jars,
+    workspace_jar_deps,
+    workspace_jars,
     jdk,
 ):
     """
@@ -744,6 +895,33 @@ def write_classpath_file(
         #
         # are still only one Eclipse classpath entry if both resolve
         # to the same physical JAR.
+        add_entry(
+            ("lib", jar_path),
+            (
+                f'\t<classpathentry kind="lib" '
+                f'path="{jar_path}"'
+                f'{f" sourcepath=\"{src_path}\"" if src_path else ""}/>'
+            ),
+        )
+
+    # Workspace java_import dependencies
+    for label in sorted(workspace_jars):
+        info = workspace_jar_deps.get(label)
+
+        if not info:
+            missing.append(label)
+            continue
+
+        jar_path = os.path.normcase(
+            os.path.normpath(info["jar"])
+        )
+
+        src_path = info.get("srcjar")
+        if src_path:
+            src_path = os.path.normcase(
+                os.path.normpath(src_path)
+            )
+
         add_entry(
             ("lib", jar_path),
             (
@@ -895,6 +1073,11 @@ def main():
     parser.add_argument("--workspace", default=".", help="Path to the Bazel workspace root (containing MODULE.bazel)")
     parser.add_argument("--jdk", type=int, default=21, help="Fallback JDK version if javacopts don't specify one")
     parser.add_argument("--dry-run", action="store_true", help="Print what would be generated, write nothing")
+    parser.add_argument(
+        "--skip-non-java-root-project",
+        action="store_true",
+        help="Do not generate a non-Java Eclipse .project in the workspace root",
+    )
     args = parser.parse_args()
 
     workspace = os.path.abspath(args.workspace)
@@ -905,6 +1088,9 @@ def main():
         raise SystemExit("bazel not found on PATH")
 
     run_start = time.perf_counter()
+
+    with timed("bazel info: execution_root"):
+        execroot = bazel_info("execution_root", workspace)
 
     if not args.dry_run:
         with timed("clean workspace (metadata + bin/ dirs)"):
@@ -948,29 +1134,50 @@ def main():
         for model in projects.values():
             model["internal_deps"] -= skipped_ancestors
 
+    root_project_name = os.path.basename(workspace.rstrip(os.sep)) or "workspace"
+    should_generate_non_java_root = (
+        not args.skip_non_java_root_project
+        and "" not in projects
+    )
+
     all_maven_labels = set()
+    all_workspace_jar_labels = set()
+    workspace_srcjar_by_jar = {}
+    java_import_rules = [r for r in rules if r.get("kind") == "java_import"]
+    for rule in java_import_rules:
+        srcjar_label = rule.get("srcjar")
+        for jar_label in (rule.get("jars") or []):
+            all_workspace_jar_labels.add(jar_label)
+            if srcjar_label:
+                workspace_srcjar_by_jar[jar_label] = srcjar_label
+
     for model in projects.values():
         all_maven_labels |= model["maven_deps"]
+        all_workspace_jar_labels |= model["workspace_jars"]
 
     with timed(f"resolve {len(all_maven_labels)} maven jar(s)"):
-        maven_jars = resolve_maven_jars(all_maven_labels, workspace)
+        maven_jars = resolve_maven_jars(all_maven_labels, workspace, execroot)
 
-    for label in sorted(all_maven_labels):
-        info = maven_jars.get(label)
-
-        if info:
-            print(f"  {label}")
-            print(f"    JAR: {info['jar']}")
-
-            if info["srcjar"]:
-                print(f"    SRC: {info['srcjar']}")
-        else:
-            print(f"  MISSING: {label}")
+    with timed(f"resolve {len(all_workspace_jar_labels)} workspace java_import jar(s)"):
+        workspace_jar_deps = resolve_workspace_jar_labels(
+            all_workspace_jar_labels,
+            workspace_srcjar_by_jar,
+            workspace,
+        )
 
     generated = 0
     all_missing = defaultdict(list)
 
-    with timed(f"write {len(projects)} project(s) to disk (.project/.classpath/.settings)"):
+    total_projects_to_write = len(projects) + (1 if should_generate_non_java_root else 0)
+
+    with timed(f"write {total_projects_to_write} project(s) to disk (.project/.classpath/.settings)"):
+        if should_generate_non_java_root:
+            if args.dry_run:
+                print(f"  would generate: {root_project_name}  (non-Java root project)")
+            else:
+                write_non_java_project_file(workspace, root_project_name)
+                generated += 1
+
         for pkg_path, model in sorted(projects.items()):
             project_name = project_name_for_package(pkg_path)
             pkg_dir = os.path.join(workspace, pkg_path)
@@ -987,7 +1194,14 @@ def main():
 
             write_project_file(pkg_dir, project_name, model["internal_deps"])
             missing = write_classpath_file(
-                pkg_dir, src_dirs, model["internal_deps"], model["maven_deps"], maven_jars, jdk
+                pkg_dir,
+                src_dirs,
+                model["internal_deps"],
+                model["maven_deps"],
+                maven_jars,
+                workspace_jar_deps,
+                model["workspace_jars"],
+                jdk,
             )
             write_jdt_prefs(pkg_dir, jdk)
             if missing:
@@ -995,7 +1209,7 @@ def main():
             generated += 1
 
     if args.dry_run:
-        print(f"\nDry run: {len(projects)} project(s) would be generated.")
+        print(f"\nDry run: {total_projects_to_write} project(s) would be generated.")
         _print_timing_summary(run_start)
         return
 

@@ -43,9 +43,9 @@ public class DestroyComponentTask implements ITask
 			String name = (String)context.getParameterValue("name");
 //			cid = ces.createComponentIdentifier(name, true, null);
 			if(name.indexOf("@")==-1)
-				cid = new ComponentIdentifier(name);
-			//else
-				//cid = new ComponentIdentifier(name, instance.getId().getParent());
+				cid = new ComponentIdentifier(instance.getApplication(), name);
+			else
+				cid = ComponentIdentifier.fromString(name);
 		}
 		
 		//IFuture<Map<String, Object>> tmp = instance.getExternalAccess(cid).killComponent();

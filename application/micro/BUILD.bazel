@@ -120,7 +120,7 @@ java_test(
         "//feature/execution",
         "//feature/injection",
         "//feature/result",
-        "//feature/simulation",
+        #"//feature/simulation",
         "//feature/llm",
         "//feature/monitoring/logbase",
         "//service/provided:providedservice",

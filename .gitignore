@@ -39,3 +39,5 @@ jadex-deploy-vars.sh
 /benchmark/llm/*.csv
 /deploy
 /application/llm/generated_images
+/.bazel
+**/__pycache__

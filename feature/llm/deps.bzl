@@ -9,14 +9,15 @@ def _maven_to_bazel(coord):
     
 MAVEN_DEPS = [
     'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0',
-    'dev.langchain4j:langchain4j:1.15.1',
-    'dev_langchain4j_langchain4j_core:1.15.1',
-    'dev.langchain4j:langchain4j-http-client-jdk:1.15.1',
-    'dev.langchain4j:langchain4j-ollama:1.15.1',
-    'dev.langchain4j:langchain4j-google-ai-gemini:1.15.1',
-    'dev.langchain4j:langchain4j-mistral-ai:1.15.1',
-    'dev.langchain4j:langchain4j-open-ai:1.15.1',
-    'dev.langchain4j:langchain4j-anthropic:1.15.1',
+    'dev.langchain4j:langchain4j:1.18.1',
+    'dev.langchain4j:langchain4j-core:1.18.1',
+    'dev.langchain4j:langchain4j-http-client-jdk:1.18.1',
+    'dev.langchain4j:langchain4j-ollama:1.18.1',
+    'dev.langchain4j:langchain4j-google-ai-gemini:1.18.1',
+    'dev.langchain4j:langchain4j-mistral-ai:1.18.1',
+    'dev.langchain4j:langchain4j-open-ai:1.18.1',
+    'dev.langchain4j:langchain4j-anthropic:1.18.1',
+    'org.slf4j:slf4j-simple:2.0.18',
     'org.testcontainers:testcontainers:2.0.3',
     'org.testcontainers:testcontainers-ollama:2.0.3',
     'com.github.docker-java:docker-java-api:3.7.1',
@@ -25,4 +26,3 @@ MAVEN_DEPS = [
 ]
 
 DEPS = [_maven_to_bazel(artifact) for artifact in MAVEN_DEPS]	
-

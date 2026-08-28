@@ -59,7 +59,7 @@ import jadex.requiredservice.IRequiredServiceFeature;
  *  The agent motivates the LLM to autonomously plan and execute tool calls for completing given tasks.
  *  Tools are found by looking for services / service methods annotated with {@link Tool}. 
  */
-public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>, ILlmChatService
+public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>
 {
 	//-------- attributes --------
 	
@@ -197,7 +197,6 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	//-------- component (i.e. user-facing) methods --------
 	
 	@ComponentMethod
-	@Override
 	public ITerminableIntermediateFuture<ChatFragment>	chat(String prompt, RenderedImage... images)
 	{
 		if(current_loop!=null && !current_loop.isDone())
@@ -226,37 +225,22 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		return current_loop;
 	}
 	
-	@Override
 	@ComponentMethod
 	public IFuture<Integer> getLastTokenCount()
 	{
 		return new Future<>(last_token_count);
 	}
 	
-	@Override
 	@ComponentMethod
 	public IFuture<Integer> getTotalTokenCount()
 	{
 		return new Future<>(total_token_count);
 	}
 	
-	@Override
 	@ComponentMethod
 	public IFuture<Integer> getMaxTokenCount()
 	{
 		return new Future<>(max_token_count);
-	}
-	
-	@Override
-	@ComponentMethod
-	public ITerminableIntermediateFuture<ChatFragment> getCurrentChat()
-	{
-		if(current_loop==null)
-		{
-			current_loop	= new TerminableIntermediateFuture<ChatFragment>();
-			current_loop.setFinished();
-		}
-		return current_loop;
 	}
 	
 	//-------- internal methods --------

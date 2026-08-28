@@ -10,12 +10,6 @@ workflow:
       when: never
     - when: always
 
-stages:
-  - build
-  - test
-  - deploy
-  - benchmark
-
 before_script:
   - apt-get update
   - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip maven xvfb libxtst6 libxi6

@@ -15,7 +15,7 @@ import jadex.providedservice.annotation.Service;
 public class LlmCalculator
 {
 	@Service
-	static interface ICalculator	extends IDaemonComponent
+	public static interface ICalculator	extends IDaemonComponent
 	{
 		@Tool("Calculate the square root of a real number")
 		IFuture<Double> sqrt(double a);
@@ -35,6 +35,7 @@ public class LlmCalculator
 		String	prompt	= "What is the square root of 144 and the square root of 15129?";
 		
 		StreamingChatModel llm = LlmHelper.createChatModel();
+//		StreamingChatModel llm = LlmHelper.createChatModel(Provider.UNSLOTH, null, null);
 		
 		ITerminableIntermediateFuture<ChatFragment>	results	= IComponentManager.get()
 			.runAsync(new LlmChatAgent(llm, prompt));
