@@ -8,5 +8,5 @@ import jadex.providedservice.annotation.Service;
 @Service
 public interface ILlmChatService2 
 {
-    public ITerminableIntermediateFuture<ChatFragment> chat(String systemprompt, String prompt, RenderedImage... images);
+    public ITerminableIntermediateFuture<ChatFragment> chat(String systemprompt, String prompt, String schema, RenderedImage... images);
 }

@@ -15,7 +15,7 @@ public class BeliefExtractor
      *
      * The returned snapshot contains the actual Java objects.
      */
-    public static BeliefSnapshot extract(IComponent component)
+    public static Map<String, Object> extract(IComponent component)
     {
         Object pojo = component.getPojo();
 
@@ -23,7 +23,7 @@ public class BeliefExtractor
 
         extractFields(pojo, beliefs);
 
-        return new BeliefSnapshot(beliefs);
+        return beliefs;
     }
 
     /**
@@ -74,11 +74,11 @@ public class BeliefExtractor
      * The snapshot contains actual Java objects, so no conversion
      * through JSON is necessary.
      */
-    public static void inject(IComponent component, BeliefSnapshot beliefs)
+    public static void inject(IComponent component, Map<String, Object> beliefs)
     {
         Object pojo = component.getPojo();
 
-        injectFields(pojo, beliefs.getBeliefs());
+        injectFields(pojo, beliefs);
     }
 
     /**

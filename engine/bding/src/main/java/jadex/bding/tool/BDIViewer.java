@@ -1,10 +1,17 @@
 package jadex.bding.tool;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -14,7 +21,6 @@ import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -23,20 +29,21 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.UIManager;
 
-import jadex.bding.Goal;
-import jadex.bding.IBDINGAgentFeature;
-import jadex.bding.IReasoner;
+import jadex.bding.IPlanBody;
+import jadex.bding.IPlanStep;
 import jadex.bding.Intention;
-import jadex.bding.Parameter;
+import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
-import jadex.bding.impl.BeliefSnapshot;
+import jadex.bding.impl.IntentionHistory.IntentionHistoryEntry;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
+import jadex.bding.impl.planbody.ReasoningStep;
+import jadex.bding.impl.planbody.SubgoalStep;
+import jadex.bding.impl.planbody.ToolCallStep;
+import jadex.bding.tool.BDIViewer.PlanNode;
 import jadex.core.IComponentHandle;
-import jadex.core.INoCopyStep;
 
 
 /**
@@ -53,8 +60,9 @@ public class BDIViewer extends JFrame
 
     protected final GoalTreePanel treePanel;
     protected final InspectorPanel inspectorPanel;
-
     protected final ReasoningPanel reasoningPanel;
+
+    protected Object selectedObject;
 
     protected BDISnapshot snapshot;
 
@@ -81,18 +89,32 @@ public class BDIViewer extends JFrame
         JScrollPane treeScroll = new JScrollPane(treePanel);
         treeScroll.setBorder(null);
 
-        leftPanel.add(
-            treeScroll,
-            BorderLayout.CENTER);
+
+        leftPanel.setLayout(new GridBagLayout());
 
         reasoningPanel = new ReasoningPanel(this::showDetails);
 
-        leftPanel.add(reasoningPanel, BorderLayout.SOUTH);
+        GridBagConstraints treeConstraints = new GridBagConstraints();
+        treeConstraints.gridx = 0;
+        treeConstraints.gridy = 0;
+        treeConstraints.weightx = 1.0;
+        treeConstraints.weighty = 0.70;
+        treeConstraints.fill = GridBagConstraints.BOTH;
+        treeConstraints.anchor = GridBagConstraints.NORTHWEST;
 
-        JSplitPane split = new JSplitPane(
-            JSplitPane.HORIZONTAL_SPLIT,
-            leftPanel,
-            inspectorPanel);
+        leftPanel.add(treeScroll, treeConstraints);
+
+        GridBagConstraints reasoningConstraints = new GridBagConstraints();
+        reasoningConstraints.gridx = 0;
+        reasoningConstraints.gridy = 1;
+        reasoningConstraints.weightx = 1.0;
+        reasoningConstraints.weighty = 0.30;
+        reasoningConstraints.fill = GridBagConstraints.BOTH;
+        reasoningConstraints.anchor = GridBagConstraints.NORTHWEST;
+
+        leftPanel.add(reasoningPanel, reasoningConstraints);
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, inspectorPanel);
 
         split.setDividerLocation(650);
         split.setResizeWeight(0.65);
@@ -106,19 +128,29 @@ public class BDIViewer extends JFrame
         refresh();
     }
 
-
     protected void refresh()
     {
         try
         {
             BDISnapshot newSnapshot = inspector.createSnapshot();
 
-            if(!Objects.equals(snapshot, newSnapshot))
+            //if(!Objects.equals(snapshot, newSnapshot))
             {
                 snapshot = newSnapshot;
 
                 treePanel.setSnapshot(snapshot);
                 reasoningPanel.setSnapshot(snapshot);
+
+                if(selectedObject instanceof ReasoningEntry selected)
+                {
+                    ReasoningEntry updated = findReasoningEntry(snapshot, selected);
+
+                    if(updated != null)
+                    {
+                        selectedObject = updated;
+                        inspectorPanel.setObject(updated);
+                    }
+                }
             }
         }
         catch(Exception e)
@@ -127,12 +159,40 @@ public class BDIViewer extends JFrame
         }
     }
 
+    protected ReasoningEntry findReasoningEntry(BDISnapshot snapshot, ReasoningEntry selected)
+    {
+        if(snapshot == null || selected == null)
+            return null;
+
+        Set<ReasoningEntry> currentEntries = snapshot.currentReasoning();
+
+        if(currentEntries != null)
+        {
+            for(ReasoningEntry entry : currentEntries)
+            {
+                if(entry.equals(selected))
+                    return entry;
+            }
+        }
+
+        List<ReasoningEntry> history = snapshot.reasoningHistory();
+
+        if(history != null)
+        {
+            for(ReasoningEntry entry : history)
+            {
+                if(entry.equals(selected))
+                    return entry;
+            }
+        }
+
+        return null;
+    }
 
     protected void showDetails(Object object)
     {
         inspectorPanel.setObject(object);
     }
-
 
     @Override
     public void dispose()
@@ -152,82 +212,132 @@ public class BDIViewer extends JFrame
         });
     }
 
-
-    /*
-     * ---------------------------------------------------------------------
-     * Snapshot
-     * ---------------------------------------------------------------------
-     */
-
-    /**
-     * A snapshot contains the actual runtime objects.
-     *
-     * No separate GoalInfo / IntentionInfo / PlanInfo objects are necessary.
-     */
-    public record BDISnapshot(
-        Set<RGoal> goals,
-        BeliefSnapshot beliefs,
-        ReasoningEntry currentReasoning,
-        List<ReasoningEntry> reasoningHistory)
+    protected static class CollapsibleNode extends JPanel
     {
-    }
+        protected final JPanel content;
+        protected final JLabel arrow;
 
+        protected boolean expanded;
 
-    /*
-     * ---------------------------------------------------------------------
-     * Inspector
-     * ---------------------------------------------------------------------
-     */
-
-    /**
-     * Reads the BDI runtime from the agent.
-     *
-     * The snapshot is created inside the agent thread so that all runtime
-     * objects are read consistently.
-     */
-    protected static class BDIInspector
-    {
-        protected final IComponentHandle agent;
-
-        public BDIInspector(IComponentHandle agent)
+        public CollapsibleNode(
+            String icon,
+            String title,
+            String description,
+            String extra,
+            String status,
+            int depth,
+            boolean initiallyExpanded,
+            Consumer<Boolean> expandedListener)
         {
-            this.agent = agent;
-        }
+            super();
 
+            this.expanded = initiallyExpanded;
 
-        public BDISnapshot createSnapshot()
-        {
-            return agent.scheduleStep((INoCopyStep<BDISnapshot>)ag ->
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setAlignmentX(LEFT_ALIGNMENT);
+
+            JPanel header = new JPanel(new BorderLayout(8, 0));
+            header.setAlignmentX(LEFT_ALIGNMENT);
+
+            int left = 12 + depth * 22;
+
+            header.setBorder(BorderFactory.createEmptyBorder(
+                7, left, 7, 12));
+
+            arrow = new JLabel(expanded ? "▼" : "▶");
+
+            JLabel iconLabel = new JLabel(icon);
+
+            JLabel titleLabel = new JLabel(title);
+            titleLabel.setFont(
+                titleLabel.getFont().deriveFont(Font.PLAIN, 14f));
+
+            JPanel center = new JPanel();
+            center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+            center.setOpaque(false);
+
+            center.add(titleLabel);
+
+            if(description != null && !description.isBlank())
             {
-                IBDINGAgentFeature feature =
-                    ag.getFeature(IBDINGAgentFeature.class);
+                JLabel descriptionLabel = new JLabel(description);
+                descriptionLabel.setFont(
+                    descriptionLabel.getFont().deriveFont(Font.PLAIN, 11f));
 
-                Set<RGoal> goals = feature.getGoals();
-                BeliefSnapshot beliefs = feature.getBeliefs();
+                center.add(descriptionLabel);
+            }
 
-                IReasoner reasoner = feature.getReasoner();
+            if(extra != null && !extra.isBlank())
+            {
+                JLabel extraLabel = new JLabel(extra);
+                extraLabel.setFont(
+                    extraLabel.getFont().deriveFont(Font.PLAIN, 10f));
 
-                ReasoningEntry current =
-                    reasoner.getCurrentReasoning().get();
+                center.add(extraLabel);
+            }
 
-                List<ReasoningEntry> history =
-                    reasoner.getReasoningHistory().get();
+            JLabel statusLabel = new JLabel(
+                status == null ? "" : status);
 
-                return new BDISnapshot(
-                    goals,
-                    beliefs,
-                    current,
-                    history);
-            }).get();
+            JPanel leftPanel = new JPanel(
+                new BorderLayout(5, 0));
+
+            leftPanel.setOpaque(false);
+            leftPanel.add(arrow, BorderLayout.WEST);
+            leftPanel.add(iconLabel, BorderLayout.CENTER);
+
+            header.add(leftPanel, BorderLayout.WEST);
+            header.add(center, BorderLayout.CENTER);
+            header.add(statusLabel, BorderLayout.EAST);
+
+            content = new JPanel();
+            content.setLayout(
+                new BoxLayout(content, BoxLayout.Y_AXIS));
+
+            content.setAlignmentX(LEFT_ALIGNMENT);
+
+            header.addMouseListener(new MouseAdapter()
+            {
+                @Override
+                public void mousePressed(MouseEvent e)
+                {
+                    if(!SwingUtilities.isLeftMouseButton(e))
+                        return;
+
+                    setExpanded(!expanded);
+
+                    if(expandedListener != null)
+                        expandedListener.accept(expanded);
+                }
+            });
+
+            add(header);
+            add(content);
+
+            content.setVisible(expanded);
+        }
+
+        public JPanel getContent()
+        {
+            return content;
+        }
+
+        public boolean isExpanded()
+        {
+            return expanded;
+        }
+
+        public void setExpanded(boolean expanded)
+        {
+            this.expanded = expanded;
+
+            content.setVisible(expanded);
+            arrow.setText(expanded ? "▼" : "▶");
+
+            revalidate();
+            repaint();
         }
     }
-
-
-    /*
-     * ---------------------------------------------------------------------
-     * Goal tree
-     * ---------------------------------------------------------------------
-     */
 
     public static class GoalTreePanel extends JPanel
     {
@@ -236,6 +346,8 @@ public class BDIViewer extends JFrame
         protected final Consumer<Object> selectionListener;
 
         protected BDISnapshot snapshot;
+
+        protected final Set<Object> expandedObjects = Collections.newSetFromMap(new IdentityHashMap<>());
 
 
         public GoalTreePanel(Consumer<Object> selectionListener)
@@ -263,8 +375,7 @@ public class BDIViewer extends JFrame
             if(snapshot == null || snapshot.goals().isEmpty())
             {
                 JLabel empty = new JLabel("No active goals");
-                empty.setBorder(
-                    BorderFactory.createEmptyBorder(20, 20, 20, 20));
+                empty.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
                 content.add(empty);
             }
@@ -272,24 +383,28 @@ public class BDIViewer extends JFrame
             {
                 for(RGoal goal : snapshot.goals())
                 {
-                    content.add(new GoalNode(
-                        goal,
-                        0,
-                        selectionListener));
+                    content.add(new GoalNode(goal, 0, selectionListener));
                 }
             }
 
             content.revalidate();
             content.repaint();
         }
+
+        protected boolean isExpanded(Object object)
+        {
+            return expandedObjects.contains(object);
+        }
+
+        protected void setExpanded(Object object, boolean expanded)
+        {
+            if(expanded)
+                expandedObjects.add(object);
+            else
+                expandedObjects.remove(object);
+        }
+
     }
-
-
-    /*
-     * ---------------------------------------------------------------------
-     * Goal node
-     * ---------------------------------------------------------------------
-     */
 
     protected static class GoalNode extends JPanel
     {
@@ -304,19 +419,10 @@ public class BDIViewer extends JFrame
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setAlignmentX(LEFT_ALIGNMENT);
 
-            /*
-            * Goal itself
-            */
-            add(new Header("🎯", goal.getGoal().getName(), goal.getGoal().getDescription(), formatParameters(goal),
-                goal.getState().toString(),
-                depth, () -> selectionListener.accept(goal)));
+            add(new Header("🎯", goal.getGoal().getName(), goal.getGoal().getDescription(),
+                formatParameters(goal), goal.getState().toString(), depth,
+                () -> selectionListener.accept(goal)));
 
-            /*
-            * Possible intentions
-            *
-            * These are the alternatives generated for this goal.
-            * The currently active intention is rendered separately below.
-            */
             Set<Intention> intentions = goal.getGoal().getIntentions();
 
             RIntention current = goal.getIntention();
@@ -324,20 +430,11 @@ public class BDIViewer extends JFrame
 
             if(intentions != null && !intentions.isEmpty())
             {
-                add(new Header(
-                    "💡",
-                    "Possible intentions (" + intentions.size() + ")",
-                    null,
-                    null,
-                    "",
-                    depth + 1,
-                    null));
+                add(new Header("💡", "Possible intentions (" + intentions.size() + ")", null,
+                    null, "", depth + 1, null));
 
                 for(Intention intention : intentions)
                 {
-                    /*
-                    * Don't show the current intention a second time here.
-                    */
                     if(currentIntention != null && currentIntention.equals(intention))
                         continue;
 
@@ -345,64 +442,64 @@ public class BDIViewer extends JFrame
 
                     String status = attempted ? "ATTEMPTED": "AVAILABLE";
 
-                    add(new Header(attempted ? "↻" : "○", intention.getName(), intention.getDescription(), null, status, depth + 2,
-                        () -> selectionListener.accept(intention)));
+                    add(new IntentionNode(intention, status, depth + 2, selectionListener));
                 }
             }
 
-            /*
-            * Current intention
-            */
             if(current != null)
             {
-                add(new Header(
-                    "▶",
-                    "Current intention",
-                    null,
-                    null, 
-                    "ACTIVE",
-                    depth + 1,
-                    null));
-
-                add(new IntentionNode(
-                    current,
-                    depth + 2,
-                    selectionListener));
+                add(new Header("▶", "Current intention", null, null, "ACTIVE", depth + 1,null));
+                add(new IntentionNode(current, depth + 2, selectionListener));
             }
 
-            /*
-            * History
-            */
-            if(goal.getHistory() != null &&
-                !goal.getHistory().getEntries().isEmpty())
+            if(goal.getHistory() != null && !goal.getHistory().getEntries().isEmpty())
             {
                 add(Box.createVerticalStrut(5));
 
-                add(new Header(
-                    "↻",
-                    "History (" +
-                        goal.getHistory().getEntries().size() +
-                        ")",
-                    null,
-                    null, 
-                    "",
-                    depth + 1,
-                    null));
-
-                /*
-                * History nodes can be added here once the
-                * IntentionHistoryEntry API is exposed.
-                */
+                add(new HistoryNode(goal, depth + 1, selectionListener));
             }
 
             constrainHeight(this);
         }
     }
 
+    protected static class HistoryNode extends CollapsibleNode
+    {
+        public HistoryNode(
+            RGoal goal,
+            int depth,
+            Consumer<Object> selectionListener)
+        {
+            super(
+                "↻",
+                "History (" + goal.getHistory().getEntries().size() + ")",
+                null,
+                null,
+                "",
+                depth,
+                true,
+                null);
+
+            for(IntentionHistoryEntry entry :
+                goal.getHistory().getEntries())
+            {
+                RIntention intention = entry.getIntention();
+
+                if(intention != null)
+                {
+                    getContent().add(
+                        new IntentionNode(
+                            intention,
+                            depth + 1,
+                            selectionListener));
+                }
+            }
+        }
+    }
+
     protected static String formatParameters(RGoal goal)
     {
-        if(goal.getParameters() == null ||
-            goal.getParameters().isEmpty())
+        if(goal.getParameters() == null ||goal.getParameters().isEmpty())
         {
             return null;
         }
@@ -414,21 +511,11 @@ public class BDIViewer extends JFrame
             .collect(Collectors.joining(" · "));
     }
 
-    /*
-     * ---------------------------------------------------------------------
-     * Intention node
-     * ---------------------------------------------------------------------
-     */
-
     protected static class IntentionNode extends JPanel
     {
-        protected final RIntention intention;
+        protected final Object intention;
 
-
-        public IntentionNode(
-            RIntention intention,
-            int depth,
-            Consumer<Object> selectionListener)
+        public IntentionNode(RIntention intention, int depth, Consumer<Object> selectionListener)
         {
             super();
 
@@ -439,65 +526,109 @@ public class BDIViewer extends JFrame
 
             Intention model = intention.getIntention();
 
-            add(new Header(
-                "💡",
-                model.getName(),
-                model.getDescription(),
-                null,
-                "",
-                depth,
-                () -> selectionListener.accept(intention)));
+            add(new Header("💡",model.getName(), model.getDescription(), null, "ACTIVE",
+                depth, () -> selectionListener.accept(intention)));
 
-            /*
-             * Adapt this to the actual RIntention API.
-             *
-             * For example, if RIntention has:
-             *
-             *     getPlan()
-             *
-             * then:
-             *
-             * Plan plan = intention.getPlan();
-             *
-             *     if(plan != null)
-             *         add(new PlanNode(...));
-             */
+            RPlan plan = intention.getPlan();
+
+            if(plan != null)
+                add(new PlanNode(plan, depth + 1, selectionListener));
+
+            constrainHeight(this);
+        }
+
+        public IntentionNode(Intention intention, String status, int depth, Consumer<Object> selectionListener)
+        {
+            super();
+
+            this.intention = intention;
+
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setAlignmentX(LEFT_ALIGNMENT);
+
+            add(new Header("💡", intention.getName(), intention.getDescription(), null, status, depth,
+                () -> selectionListener.accept(intention)));
 
             constrainHeight(this);
         }
     }
 
-
-    /*
-     * ---------------------------------------------------------------------
-     * Plan node
-     * ---------------------------------------------------------------------
-     */
-
-    protected static class PlanNode extends JPanel
+    protected static class PlanNode extends CollapsibleNode
     {
         public PlanNode(
-            Object plan,
+            RPlan plan,
             int depth,
             Consumer<Object> selectionListener)
+        {
+            super(
+                "📋",
+                plan.getPlan().getName(),
+                plan.getPlan().getDescription(),
+                null,
+                "",
+                depth,
+                true,
+                null);
+
+            IPlanBody body = plan.getPlan().getBody();
+
+            if(body != null)
+            {
+                int stepno = 0;
+
+                for(IPlanStep step : body.getSteps())
+                {
+                    getContent().add(
+                        new PlanStepNode(
+                            step,
+                            stepno++,
+                            depth + 1,
+                            selectionListener));
+                }
+            }
+        }
+    }
+
+    protected static class PlanStepNode extends JPanel
+    {
+        public PlanStepNode(IPlanStep step, int index, int depth, Consumer<Object> selectionListener)
         {
             super();
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setAlignmentX(LEFT_ALIGNMENT);
 
-            /*
-             * This is deliberately kept as Object in this first version
-             * because the exact Plan API is not shown here.
-             *
-             * Once Plan's getters are known this becomes:
-             *
-             *     Plan p = (Plan)plan;
-             *
-             *     p.getName()
-             *     p.getDescription()
-             *     p.getPlanBody()
-             */
+            String icon;
+            String title;
+            String description = null;
+
+            if(step instanceof ToolCallStep tool)
+            {
+                icon = "🔧";
+                title = tool.getToolName();
+                description = "Tool call";
+            }
+            else if(step instanceof ReasoningStep reasoning)
+            {
+                icon = "🧠";
+                title = "Reasoning";
+                description = reasoning.getProblem();
+            }
+            else if(step instanceof SubgoalStep subgoal)
+            {
+                icon = "🎯";
+                title = "Subgoal";
+                description = subgoal.getGoal();
+            }
+            else
+            {
+                icon = "•";
+                title = step.getClass().getSimpleName();
+            }
+
+            add(new Header(icon, (index + 1) + ". " + title,
+                description, null, "", depth,
+                () -> selectionListener.accept(step)));
 
             constrainHeight(this);
         }
@@ -510,14 +641,10 @@ public class BDIViewer extends JFrame
         component.setMaximumSize(new Dimension(Integer.MAX_VALUE, pref.height));
     }
 
-    /*
-     * ---------------------------------------------------------------------
-     * Header
-     * ---------------------------------------------------------------------
-     */
-
     protected static class Header extends JPanel
     {
+        protected final JLabel arrowLabel;
+
         public Header(
             String icon,
             String title,
@@ -527,6 +654,29 @@ public class BDIViewer extends JFrame
             int depth,
             Runnable click)
         {
+            this(
+                icon,
+                title,
+                description,
+                extra,
+                status,
+                depth,
+                click,
+                null,
+                false);
+        }
+
+        public Header(
+            String icon,
+            String title,
+            String description,
+            String extra,
+            String status,
+            int depth,
+            Runnable click,
+            Runnable toggle,
+            boolean expanded)
+        {
             super(new BorderLayout(8, 0));
 
             setAlignmentX(LEFT_ALIGNMENT);
@@ -534,17 +684,18 @@ public class BDIViewer extends JFrame
             int left = 12 + depth * 22;
 
             setBorder(BorderFactory.createEmptyBorder(
-                7,
-                left,
-                7,
-                12));
+                7, left, 7, 12));
+
+            arrowLabel = new JLabel(
+                toggle != null
+                    ? (expanded ? "▼" : "▶")
+                    : "");
 
             JLabel iconLabel = new JLabel(icon);
 
             JLabel titleLabel = new JLabel(title);
             titleLabel.setFont(
-                titleLabel.getFont().deriveFont(
-                    Font.PLAIN, 14f));
+                titleLabel.getFont().deriveFont(Font.PLAIN, 14f));
 
             JPanel center = new JPanel();
             center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
@@ -556,8 +707,7 @@ public class BDIViewer extends JFrame
             {
                 JLabel descriptionLabel = new JLabel(description);
                 descriptionLabel.setFont(
-                    descriptionLabel.getFont().deriveFont(
-                        Font.PLAIN, 11f));
+                    descriptionLabel.getFont().deriveFont(Font.PLAIN, 11f));
 
                 center.add(descriptionLabel);
             }
@@ -566,8 +716,7 @@ public class BDIViewer extends JFrame
             {
                 JLabel extraLabel = new JLabel(extra);
                 extraLabel.setFont(
-                    extraLabel.getFont().deriveFont(
-                        Font.PLAIN, 10f));
+                    extraLabel.getFont().deriveFont(Font.PLAIN, 10f));
 
                 center.add(extraLabel);
             }
@@ -575,748 +724,100 @@ public class BDIViewer extends JFrame
             JLabel statusLabel = new JLabel(
                 status == null ? "" : status);
 
-            add(iconLabel, BorderLayout.WEST);
+            JPanel leftPanel = new JPanel(
+                new BorderLayout(5, 0));
+
+            leftPanel.setOpaque(false);
+
+            leftPanel.add(
+                arrowLabel,
+                BorderLayout.WEST);
+
+            leftPanel.add(
+                iconLabel,
+                BorderLayout.CENTER);
+
+            add(leftPanel, BorderLayout.WEST);
             add(center, BorderLayout.CENTER);
             add(statusLabel, BorderLayout.EAST);
 
+            /*
+            * Pfeil: expand / collapse
+            */
+            if(toggle != null)
+            {
+                arrowLabel.setCursor(
+                    Cursor.getPredefinedCursor(
+                        Cursor.HAND_CURSOR));
+
+                arrowLabel.addMouseListener(
+                    new MouseAdapter()
+                    {
+                        @Override
+                        public void mousePressed(MouseEvent e)
+                        {
+                            if(SwingUtilities.isLeftMouseButton(e))
+                            {
+                                toggle.run();
+                            }
+                        }
+                    });
+            }
+
+            /*
+            * Restlicher Header: Inspector
+            */
             if(click != null)
             {
                 setToolTipText("Click to inspect");
-                setCursor(new java.awt.Cursor(
-                    java.awt.Cursor.HAND_CURSOR));
 
-                MouseAdapter listener = new MouseAdapter()
-                {
-                    @Override
-                    public void mousePressed(MouseEvent e)
+                MouseAdapter listener =
+                    new MouseAdapter()
                     {
-                        click.run();
-                    }
-                };
+                        @Override
+                        public void mousePressed(MouseEvent e)
+                        {
+                            if(SwingUtilities.isLeftMouseButton(e))
+                            {
+                                click.run();
+                            }
+                        }
+                    };
 
-                addMouseListener(listener);
+                iconLabel.addMouseListener(listener);
+                center.addMouseListener(listener);
+                statusLabel.addMouseListener(listener);
 
-                addMouseListenerToChildren(this, listener);
+                setCursor(
+                    Cursor.getPredefinedCursor(
+                        Cursor.HAND_CURSOR));
             }
 
-            Dimension pref = getPreferredSize();
+            constrainHeight(this);
+        }
 
-            setMaximumSize(
-                new Dimension(
-                    Integer.MAX_VALUE,
-                    pref.height));
+        public void setExpanded(boolean expanded)
+        {
+            arrowLabel.setText(
+                expanded ? "▼" : "▶");
         }
     }
 
-    protected static void addMouseListenerToChildren(
-        java.awt.Container container,
-        MouseAdapter listener)
+    protected static void addClickListener(Component component, MouseAdapter listener)
     {
-        for(java.awt.Component component :
-            container.getComponents())
-        {
-            component.addMouseListener(listener);
+        component.addMouseListener(listener);
+        component.setCursor(
+            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            if(component instanceof java.awt.Container child)
+        if(component instanceof Container container)
+        {
+            for(Component child : container.getComponents())
             {
-                addMouseListenerToChildren(child, listener);
+                addClickListener(child, listener);
             }
         }
     }
 
-    /*
-     * ---------------------------------------------------------------------
-     * Inspector panel
-     * ---------------------------------------------------------------------
-     */
-
-    protected static class InspectorPanel extends JPanel
-    {
-        protected final JPanel content;
-
-        public InspectorPanel()
-        {
-            setLayout(new BorderLayout());
-
-            content = new JPanel();
-            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-            content.setBorder(
-                BorderFactory.createEmptyBorder(15, 18, 15, 18));
-
-            JScrollPane scroll = new JScrollPane(content);
-            scroll.setBorder(null);
-
-            add(scroll, BorderLayout.CENTER);
-        }
-
-        public void setObject(Object object)
-        {
-            content.removeAll();
-
-            if(object == null)
-            {
-                addTitle("Select an element");
-            }
-            else if(object instanceof RGoal goal)
-            {
-                showGoal(goal);
-            }
-            else if(object instanceof RIntention intention)
-            {
-                showIntention(intention);
-            }
-            else if(object instanceof RPlan plan)
-            {
-                showPlan(plan);
-            }
-            /*else if(object instanceof IPlanStep step)
-            {
-                showStep(step);
-            }*/
-
-            content.revalidate();
-            content.repaint();
-        }
-
-
-        /*
-        * -------------------------------------------------------------
-        * Goal
-        * -------------------------------------------------------------
-        */
-
-        protected void showGoal(RGoal rgoal)
-        {
-            Goal goal = rgoal.getGoal();
-
-            addTitle("🎯 " + goal.getName());
-
-            addField(
-                "Description",
-                goal.getDescription());
-
-            addSection("Runtime");
-
-            addField(
-                "State",
-                rgoal.getState().toString());
-
-            if(rgoal.getIntention() != null)
-            {
-                addField(
-                    "Current intention",
-                    rgoal.getIntention()
-                        .getIntention()
-                        .getName());
-            }
-            else
-            {
-                addField(
-                    "Current intention",
-                    "None");
-            }
-
-            addSection("Goal model");
-
-            addField(
-                "Importance",
-                goal.getImportance() != null
-                    ? goal.getImportance().toString()
-                    : "Not specified");
-
-            addField(
-                "Keep on success",
-                Boolean.toString(
-                    goal.isKeepOnSuccess()));
-
-            addSection("Conditions");
-
-            addField(
-                "Activation",
-                goal.getActivationWhen());
-
-            addField(
-                "Success",
-                goal.getSuccessWhen());
-
-            addField(
-                "Failure",
-                goal.getFailureWhen());
-
-            addSection("Parameters");
-
-            if(goal.getParameters().isEmpty())
-            {
-                addField(
-                    "Parameters",
-                    "None");
-            }
-            else
-            {
-                for(Parameter parameter : goal.getParameters().values())
-                {
-                    Object value = rgoal.getParameters().get(parameter.getName());
-
-                    addParameter(
-                        parameter,
-                        value);
-                }
-            }
-
-            addSection("Generated intentions");
-
-            if(goal.getIntentions().isEmpty())
-            {
-                addField(
-                    "Intentions",
-                    "None");
-            }
-            else
-            {
-                for(Intention intention :
-                    goal.getIntentions())
-                {
-                    addField(
-                        intention.getName(),
-                        intention.getDescription());
-                }
-            }
-        }
-
-
-        /*
-        * -------------------------------------------------------------
-        * Helper methods
-        * -------------------------------------------------------------
-        */
-
-        protected void addTitle(String text)
-        {
-            JLabel label = new JLabel(text);
-
-            label.setFont(
-                label.getFont().deriveFont(
-                    Font.BOLD, 20f));
-
-            label.setAlignmentX(LEFT_ALIGNMENT);
-
-            content.add(label);
-            content.add(Box.createVerticalStrut(12));
-        }
-
-
-        protected void addSection(String text)
-        {
-            content.add(Box.createVerticalStrut(10));
-
-            JLabel label = new JLabel(text);
-
-            label.setFont(
-                label.getFont().deriveFont(
-                    Font.BOLD, 14f));
-
-            label.setAlignmentX(LEFT_ALIGNMENT);
-
-            label.setBorder(
-                BorderFactory.createEmptyBorder(
-                    5, 0, 5, 0));
-
-            content.add(label);
-        }
-
-
-        protected void addField(
-            String name,
-            String value)
-        {
-            if(value == null || value.isBlank())
-                value = "—";
-
-            JPanel row = new JPanel(
-                new BorderLayout(10, 0));
-
-            row.setAlignmentX(LEFT_ALIGNMENT);
-
-            JLabel nameLabel =
-                new JLabel(name);
-
-            nameLabel.setFont(
-                nameLabel.getFont().deriveFont(
-                    Font.BOLD, 12f));
-
-            JLabel valueLabel =
-                new JLabel(
-                    "<html>" +
-                    escapeHtml(value) +
-                    "</html>");
-
-            valueLabel.setFont(
-                valueLabel.getFont().deriveFont(
-                    Font.PLAIN, 12f));
-
-            row.add(
-                nameLabel,
-                BorderLayout.WEST);
-
-            row.add(
-                valueLabel,
-                BorderLayout.CENTER);
-
-            content.add(row);
-        }
-
-
-        protected void addParameter(Parameter parameter, Object value)
-        {
-            JLabel nameLabel =
-                new JLabel(parameter.getName());
-
-            nameLabel.setFont(
-                nameLabel.getFont().deriveFont(
-                    Font.BOLD, 13f));
-
-            nameLabel.setAlignmentX(
-                LEFT_ALIGNMENT);
-
-            content.add(nameLabel);
-
-            /*
-            * Adjust these getters if your Parameter class
-            * uses different names.
-            */
-            addField(
-                "Type",
-                parameter.getType() != null
-                    ? parameter.getType().toString()
-                    : "Unknown");
-
-            addField(
-                "Description",
-                parameter.getDescription());
-
-            addField(
-                "Current value",
-                String.valueOf(value));
-
-            content.add(
-                Box.createVerticalStrut(8));
-        }
-
-
-        protected String escapeHtml(String text)
-        {
-            return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\n", "<br>");
-        }
-
-
-        /*
-        * -------------------------------------------------------------
-        * TODO: other inspectors
-        * -------------------------------------------------------------
-        */
-
-        protected void showIntention(RIntention intention)
-        {
-            addTitle(
-                "💡 " +
-                intention.getIntention().getName());
-
-            addField(
-                "Description",
-                intention.getIntention().getDescription());
-        }
-
-
-        protected void showPlan(RPlan plan)
-        {
-            addTitle("📋 " + plan.getPlan().getName());
-
-            /*addField(
-                "Status",
-                plan.);*/
-
-            addField(
-                "Description",
-                plan.getPlan().getDescription());
-        }
-
-
-        /*protected void showStep(IPlanStep step)
-        {
-            addTitle(
-                (step.type() == StepType.TOOL
-                    ? "🔧 "
-                    : "🎯 ") +
-                step.name());
-
-            addField(
-                "Type",
-                step.type().toString());
-
-            addField(
-                "Status",
-                step.status().toString());
-
-            addField(
-                "Description",
-                step.description());
-        }*/
-    }
-
-    protected static class ReasoningPanel extends JPanel
-    {
-        protected final JPanel content;
-
-        protected final Consumer<Object> selectionListener;
-
-        protected BDISnapshot snapshot;
-
-        public ReasoningPanel(Consumer<Object> selectionListener)
-        {
-            super(new BorderLayout());
-
-            this.selectionListener =
-                selectionListener;
-
-            setBorder(
-                BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(
-                        1, 0, 0, 0,
-                        UIManager.getColor(
-                            "Component.borderColor")),
-                    BorderFactory.createEmptyBorder(
-                        6, 8, 6, 8)));
-
-            JPanel header = new JPanel(
-                new BorderLayout());
-
-            JLabel title =
-                new JLabel("🧠 Reasoning");
-
-            title.setFont(
-                title.getFont().deriveFont(
-                    Font.BOLD,
-                    13f));
-
-            header.add(
-                title,
-                BorderLayout.WEST);
-
-            add(
-                header,
-                BorderLayout.NORTH);
-
-            content = new JPanel();
-
-            content.setLayout(
-                new BoxLayout(
-                    content,
-                    BoxLayout.Y_AXIS));
-
-            JScrollPane scroll =
-                new JScrollPane(content);
-
-            scroll.setBorder(null);
-
-            add(
-                scroll,
-                BorderLayout.CENTER);
-
-            /*
-            * Keep the reasoning section compact.
-            */
-            setPreferredSize(
-                new Dimension(
-                    0,
-                    220));
-        }
-
-
-        public void setSnapshot(BDISnapshot snapshot)
-        {
-            this.snapshot = snapshot;
-
-            rebuild();
-        }
-
-
-        protected void rebuild()
-        {
-            content.removeAll();
-
-            if(snapshot == null)
-            {
-                content.revalidate();
-                content.repaint();
-                return;
-            }
-
-            /*
-            * Current reasoning
-            */
-            ReasoningEntry current = snapshot.currentReasoning();
-
-            if(current != null)
-            {
-                addSectionLabel(
-                    "CURRENT");
-
-                addEntry(
-                    current,
-                    true);
-            }
-
-            /*
-            * History
-            */
-            List<ReasoningEntry> history =
-                snapshot.reasoningHistory();
-
-            if(history != null &&
-                !history.isEmpty())
-            {
-                addSectionLabel("RECENT REASONING");
-
-                int start =
-                    Math.max(
-                        0,
-                        history.size() - 5);
-
-                /*
-                * Newest first.
-                */
-                for(int i = history.size() - 1;
-                    i >= start;
-                    i--)
-                {
-                    addEntry(
-                        history.get(i),
-                        false);
-                }
-
-                if(history.size() > 5)
-                {
-                    JButton more =
-                        new JButton(
-                            "Show all (" +
-                            history.size() +
-                            ")");
-
-                    more.setAlignmentX(
-                        LEFT_ALIGNMENT);
-
-                    more.addActionListener(e ->
-                    {
-                        showAllHistory();
-                    });
-
-                    content.add(
-                        Box.createVerticalStrut(4));
-
-                    content.add(more);
-                }
-            }
-
-            content.revalidate();
-            content.repaint();
-        }
-
-
-        protected void addSectionLabel(String text)
-        {
-            JLabel label =
-                new JLabel(text);
-
-            label.setFont(
-                label.getFont().deriveFont(
-                    Font.BOLD,
-                    10f));
-
-            label.setBorder(
-                BorderFactory.createEmptyBorder(
-                    5, 4, 2, 4));
-
-            label.setAlignmentX(
-                LEFT_ALIGNMENT);
-
-            content.add(label);
-        }
-
-
-        protected void addEntry(
-            ReasoningEntry entry,
-            boolean current)
-        {
-            String icon =
-                current ? "→" : "✓";
-
-            String status =
-                current
-                    ? "RUNNING"
-                    : "DONE";
-
-            String duration =
-                formatDuration(entry, current);
-
-            Header header =
-                new Header(
-                    icon,
-                    getMethod(entry),
-                    null,
-                    null,
-                    duration,
-                    0,
-                    () ->
-                        selectionListener.accept(entry));
-
-            header.setAlignmentX(
-                LEFT_ALIGNMENT);
-
-            content.add(header);
-        }
-
-
-        public void updateDuration()
-        {
-            if(snapshot == null)
-                return;
-
-            /*
-            * Only the current entry's duration
-            * needs to be updated.
-            *
-            * Do not rebuild the whole panel here.
-            */
-            ReasoningEntry current =
-                snapshot.currentReasoning();
-
-            if(current == null)
-                return;
-
-            /*
-            * For the first implementation the
-            * complete panel can simply be rebuilt.
-            *
-            * Later we can keep a reference to
-            * the current duration label.
-            */
-            rebuild();
-        }
-
-
-        protected void showAllHistory()
-        {
-            if(snapshot == null)
-                return;
-
-            /*
-            * Simple first implementation:
-            * display all entries in a dialog.
-            */
-            JPanel panel = new JPanel();
-
-            panel.setLayout(
-                new BoxLayout(
-                    panel,
-                    BoxLayout.Y_AXIS));
-
-            List<ReasoningEntry> history =
-                snapshot.reasoningHistory();
-
-            for(int i = history.size() - 1;
-                i >= 0;
-                i--)
-            {
-                ReasoningEntry entry =
-                    history.get(i);
-
-                Header header =
-                    new Header(
-                        "✓",
-                        getMethod(entry),
-                        null,
-                        null,
-                        formatDuration(
-                            entry,
-                            false),
-                        0,
-                        () ->
-                            selectionListener
-                                .accept(entry));
-
-                panel.add(header);
-            }
-
-            JScrollPane scroll =
-                new JScrollPane(panel);
-
-            scroll.setPreferredSize(
-                new Dimension(
-                    600,
-                    500));
-
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                scroll,
-                "Reasoning history",
-                javax.swing.JOptionPane
-                    .PLAIN_MESSAGE);
-        }
-
-        /*
-        * These three methods isolate the exact
-        * ReasoningEntry API from the viewer.
-        *
-        * Replace the getter names with the
-        * actual methods of your class.
-        */
-
-        protected static String getMethod(ReasoningEntry entry)
-        {
-            return entry.method();
-        }
-
-
-        protected static long getTimestamp(ReasoningEntry entry)
-        {
-            return entry.timestamp();
-        }
-
-
-        protected static long getDuration(ReasoningEntry entry)
-        {
-            return entry.duration();
-        }
-
-        protected static String formatDuration(
-            ReasoningEntry entry,
-            boolean current)
-        {
-            long duration;
-
-            if(current)
-            {
-                duration =
-                    System.currentTimeMillis()
-                    - entry.timestamp();
-            }
-            else
-            {
-                duration = entry.duration();
-            }
-
-            duration = Math.max(0, duration);
-
-            if(duration < 1000)
-                return duration + " ms";
-
-            return String.format(
-                "%.1f s",
-                duration / 1000.0);
-        }
-    }
+    
 }
+    

@@ -18,6 +18,10 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.internal.Json;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ResponseFormat;
+import dev.langchain4j.model.chat.request.ResponseFormatType;
+import dev.langchain4j.model.chat.request.json.JsonRawSchema;
+import dev.langchain4j.model.chat.request.json.JsonSchema;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.CompleteToolCall;
 import dev.langchain4j.model.chat.response.PartialResponse;
@@ -29,6 +33,8 @@ import dev.langchain4j.model.chat.response.PartialToolCallContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest.Builder;
+
 import jadex.common.SUtil;
 import jadex.core.IComponent;
 import jadex.future.Future;
@@ -66,12 +72,16 @@ public class LlmChatAgent2 implements ILlmChatService2
 	}
 
 	@Override
-	public ITerminableIntermediateFuture<ChatFragment> chat(String systemprompt, String prompt, RenderedImage... images)
+	public ITerminableIntermediateFuture<ChatFragment> chat(String systemprompt, String prompt, String schema, RenderedImage... images)
 	{
 		Conversation conv = new Conversation(systemprompt, llm.getClass());
 		//conversations.put(conv.getId(), conv);
 
+		if(schema!=null)
+			conv.setSchema(schema);
+
 		List<Content> content = new ArrayList<>();
+		content.add(TextContent.from(systemprompt));
 		content.add(TextContent.from(prompt));
 
 		if(images!=null)
@@ -108,10 +118,32 @@ public class LlmChatAgent2 implements ILlmChatService2
 		Map<String, ToolRef> ts = LlmHelper.findTools(agent, conv.getTools());
         List<ToolSpecification> tools = ts.values().stream().filter(tool -> tool!=null).map(tool -> tool.spec()).toList();
 
-		ChatRequest request = ChatRequest.builder()
-			.messages(conv.messages)
-			.toolSpecifications(tools)
-			.build();
+		
+		Builder builder = ChatRequest.builder();
+		builder.messages(conv.messages).toolSpecifications(tools);
+		if(conv.getSchema()!=null)
+		{
+			JsonSchema js = JsonSchema.builder()
+				.name("response")
+				.rootElement(JsonRawSchema.from(conv.getSchema()))
+				.build();
+
+			//builder.responseFormat(ResponseFormat.builder().type(ResponseFormatType.JSON).jsonSchema(js).build());*/
+
+			ResponseFormat rf = ResponseFormat.builder()
+				.type(ResponseFormatType.JSON)
+				.jsonSchema(js)
+				.build();
+
+			//System.out.println("RF = " + rf);
+
+			builder.responseFormat(rf);
+
+			//System.out.println("BUILDER = " + builder);
+		}
+		ChatRequest request = builder.build();
+
+		//System.out.println("REQUEST = " + request);
 
 		conv.current_call = new Future<>();
 

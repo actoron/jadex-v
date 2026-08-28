@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jadex.bding.IPlanStep;
+import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -25,7 +26,7 @@ public class ToolCallStep implements IPlanStep
     }
 
     @Override
-    public IFuture<Map<String, Object>> execute(IComponent agent, Map<String, Object> parameters)
+    public IFuture<Map<String, Object>> execute(IComponent agent, Map<String, Object> parameters, RPlan plan)
     {
         Future<Map<String, Object>> ret = new Future<>();
         
@@ -51,4 +52,21 @@ public class ToolCallStep implements IPlanStep
         return ret;
         
     }
+
+    public String getToolName() 
+    {
+        return toolname;
+    }
+
+    public Map<String, String> getMapping() 
+    {
+        return mapping;
+    }
+
+    public String getResultMapping() 
+    {
+        return resultmapping;
+    }
+
+    
 }

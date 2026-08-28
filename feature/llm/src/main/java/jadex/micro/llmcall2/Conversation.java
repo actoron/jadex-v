@@ -45,6 +45,8 @@ public class Conversation
 
     protected Map<String, ToolRef> tools = new LinkedHashMap<>();
 
+    protected String schema;
+
     protected int last_token_count;
     protected int total_token_count;
     protected int max_token_count;
@@ -57,6 +59,17 @@ public class Conversation
         this.llmtype = llmtype;
 
         messages.add(SystemMessage.from(systemprompt));
+    }
+
+    public Conversation setSchema(String schema) 
+    {
+        this.schema = schema;
+        return this;
+    }
+
+    public String getSchema() 
+    {
+        return schema;
     }
 
     public List<ChatMessage> getMessages()

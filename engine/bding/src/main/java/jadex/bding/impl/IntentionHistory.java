@@ -41,9 +41,10 @@ public class IntentionHistory
         boolean ret = false;
         for(IntentionHistoryEntry entry: entries)
         {
+            // todo:
             if(entry.getIntention().getIntention().getDescription().equals(intention.getDescription()))
             {
-                System.out.println("Found similar intention: "+intention+" "+entry.getIntention().getIntention());
+                //System.out.println("Found similar intention: "+intention+" "+entry.getIntention().getIntention());
                 ret = true;
                 break;
             }

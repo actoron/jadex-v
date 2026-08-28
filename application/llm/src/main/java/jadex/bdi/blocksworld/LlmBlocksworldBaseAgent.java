@@ -261,7 +261,7 @@ public abstract class LlmBlocksworldBaseAgent	extends BlocksworldAgent	implement
 						new LlmChatAgent(LlmHelper.createChatModel(
 							(Provider)provider.getSelectedItem(),
 							(String)model.getSelectedItem(),
-							think.isSelected())
+							think.isSelected(), false)
 						)).get();
 					llmagentpojo[0] = llmagent.getPojoHandle(LlmChatAgent.class);
 				}

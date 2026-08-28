@@ -6,6 +6,7 @@ import java.util.Map;
 
 import jadex.bding.IPlanBody;
 import jadex.bding.IPlanStep;
+import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -18,10 +19,10 @@ public class SequentialPlanBody implements IPlanBody
     {
     }
 
-    public SequentialPlanBody(String description)
+    /*public SequentialPlanBody(String description)
     {
         addSteps(description);
-    }
+    }*/
 
     public SequentialPlanBody addStep(IPlanStep step)
     {
@@ -29,7 +30,7 @@ public class SequentialPlanBody implements IPlanBody
         return this;
     }
 
-    public SequentialPlanBody addStep(String description)
+    /*public SequentialPlanBody addStep(String description)
     {
         steps.add(PlanStepParser.parse(description));
         return this;
@@ -39,7 +40,7 @@ public class SequentialPlanBody implements IPlanBody
     {
         steps.addAll(PlanStepParser.parseAll(description));
         return this;
-    }
+    }*/
 
     public List<IPlanStep> getSteps()
     {
@@ -47,17 +48,16 @@ public class SequentialPlanBody implements IPlanBody
     }
 
     @Override
-    public IFuture<Map<String, Object>> execute(IComponent component, Map<String, Object> parameters)
+    public IFuture<Map<String, Object>> execute(IComponent component, RPlan plan, Map<String, Object> parameters)
     {
         Future<Map<String, Object>> ret = new Future<>();
 
-
-        executeSteps(component, parameters, 0, ret);
+        executeSteps(component, plan, parameters, 0, ret);
 
         return ret;
     }
 
-    protected void executeSteps(IComponent component, Map<String, Object> parameters, int index, Future<Map<String, Object>> ret)
+    protected void executeSteps(IComponent component, RPlan plan, Map<String, Object> parameters, int index, Future<Map<String, Object>> ret)
     {
         if(index >= steps.size())
         {
@@ -72,7 +72,7 @@ public class SequentialPlanBody implements IPlanBody
             // Execute before transformation
             //step.getBefore().apply(parameters);
 
-            step.execute(component, parameters).then(result ->
+            step.execute(component, parameters, plan).then(result ->
             {
                 if(result != null)
                     parameters.putAll(result);
@@ -80,7 +80,7 @@ public class SequentialPlanBody implements IPlanBody
                 // Execute after transformation
                 //step.getAfter().apply(parameters);
 
-                executeSteps(component, parameters, index + 1, ret);
+                executeSteps(component, plan, parameters, index+1, ret);
             }).catchEx(ex ->
             {
                 ret.setException(ex);

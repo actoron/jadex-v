@@ -7,6 +7,7 @@ import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.bding.annotation.BDINGAgent;
 import jadex.bding.annotation.Belief;
+import jadex.bding.impl.RGoal;
 import jadex.bding.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
@@ -97,22 +98,22 @@ public class Main
     @Service
     public interface IAppTools
     {
-        @Tool("Get information about available train connections between two locations, including departure time, arrival time, duration, and price.")
+        @Tool("Get all available train connections between two locations, including departure time, arrival time, duration, and price.")
         public IFuture<TripInfo> getTrainConnectionInfo(String from, String to);
 
-        @Tool("Get information about available bus connections between two locations, including departure time, arrival time, duration, and price.")
+        @Tool("Get all available bus connections between two locations, including departure time, arrival time, duration, and price.")
         public IFuture<TripInfo> getBusConnectionInfo(String from, String to);
 
-        @Tool("Buy a bus ticket for a journey between two locations using the specified account.")
-        public IFuture<Ticket> buyBusTicket(String from, String to, String account);
+        @Tool("Buy a bus ticket for the specified connection using the specified account.")
+        public IFuture<Ticket> buyBusTicket(TripInfo connection, String account);
 
-        @Tool("Buy a train ticket for a journey between two locations using the specified account.")
-        public IFuture<Ticket> buyTrainTicket(String from, String to, String account);
+        @Tool("Buy a train ticket for the specified connection using the specified account.")
+        public IFuture<Ticket> buyTrainTicket(TripInfo connection, String account);
 
-        @Tool("Travel by train using a previously purchased train ticket.")
+        @Tool("Travel by train using the specified purchased train ticket.")
         public IFuture<String> travelByTrain(Ticket ticket);
 
-        @Tool("Travel by bus using a previously purchased bus ticket.")
+        @Tool("Travel by bus using the specified purchased bus ticket.")
         public IFuture<String> travelByBus(Ticket ticket);
 
         @Tool("Walk from one location to another location.")
@@ -163,15 +164,50 @@ public class Main
             //this.model = model;
         }
         
+        /*OnStart
+        protected void onStart()
+        {
+            //System.out.println("Hello from agent " + agent.getId()+" "+agent.getClass().getName());
+
+            RGoal goal = agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(
+                "Go now to City University of Applied Sciences in Bremen.").get();
+            
+            goal.getFinished().then(Void ->
+            {
+                System.out.println("goal finished: "+goal.getState());
+                agent.terminate();
+            }).catchEx(ex ->
+            {
+                System.out.println("goal finished with ex: "+ex.getMessage());
+                ex.printStackTrace();
+                agent.terminate();
+            });
+        }*/
+
         @OnStart
         protected void onStart()
         {
-            System.out.println("Hello from agent " + agent.getId()+" "+agent.getClass().getName());
-
             agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(
-                "Go now to City University of Applied Sciences in Bremen.");
-
-            agent.terminate();
+                "Go now to City University of Applied Sciences in Bremen.")
+            .then(goal ->
+            {
+                goal.getFinished().then(Void ->
+                {
+                    System.out.println("goal finished: " + goal.getState());
+                    agent.terminate();
+                }).catchEx(ex ->
+                {
+                    System.out.println("goal finished with ex: " + ex.getMessage());
+                    ex.printStackTrace();
+                    agent.terminate();
+                });
+            })
+            .catchEx(ex ->
+            {
+                System.out.println("dispatch failed: " + ex.getMessage());
+                ex.printStackTrace();
+                agent.terminate();
+            });
         }
     }
 
@@ -188,11 +224,11 @@ public class Main
         }
 
         @Override
-        public IFuture<Ticket> buyBusTicket(String from, String to, String account)
+        public IFuture<Ticket> buyBusTicket(TripInfo connection, String account)
         {
             Future<Ticket> ret = new Future<>();
 
-            double price = getBusPrice(from, to);
+            double price = getBusPrice(connection.from(), connection.to());
 
             Double balance = accounts.get(account);
 
@@ -210,7 +246,7 @@ public class Main
 
             accounts.put(account, balance - price);
 
-            Ticket ticket = new Ticket(from, to, nextTicketNo++);
+            Ticket ticket = new Ticket(connection.from(), connection.to(), nextTicketNo++);
 
             System.out.println("Bought bus ticket: " + ticket + " for " + price + " EUR using " + account);
 
@@ -219,11 +255,11 @@ public class Main
         }
 
         @Override
-        public IFuture<Ticket> buyTrainTicket(String from, String to, String account)
+        public IFuture<Ticket> buyTrainTicket(TripInfo connection, String account)
         {
             Future<Ticket> ret = new Future<>();
 
-            double price = getTrainPrice(from, to);
+            double price = getTrainPrice(connection.from(), connection.to());
 
             Double balance = accounts.get(account);
 
@@ -241,7 +277,7 @@ public class Main
 
             accounts.put(account, balance - price);
 
-            Ticket ticket = new Ticket(from, to, nextTicketNo++);
+            Ticket ticket = new Ticket(connection.from(), connection.to(), nextTicketNo++);
 
             System.out.println("Bought train ticket: " + ticket + " for " + price + " EUR using " + account);
 
@@ -351,12 +387,12 @@ public class Main
 
     public static void main(String[] args) 
     {
-        System.out.println("Starting test...");
-
         ComponentManager.get().create(new ToolAgent()).get();
 
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false);
-
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false);
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", 
+            false, true);
+        
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 
         IComponentHandle ua = ComponentManager.get().create(new UniversityAgent()).get();

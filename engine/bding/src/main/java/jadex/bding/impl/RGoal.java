@@ -15,6 +15,7 @@ import jadex.future.IFuture;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RGoal 
 {
@@ -42,6 +43,8 @@ public class RGoal
 
     protected Exception exception;
 
+    protected RPlan parentPlan;
+
     public RGoal(Goal goal, Map<String, Object> parameters)
     {
         this.goal = goal;
@@ -65,79 +68,105 @@ public class RGoal
     }
 
     public void adopt()
-    { 
+    {
         IComponent agent = IComponentManager.get().getCurrentComponent();
         BDINGAgentFeature bdif = (BDINGAgentFeature)agent.getFeature(IBDINGAgentFeature.class);
         bdif.addGoal(this);
-        changeState(GoalState.ACTIVE);
+        execute();
     }
 
     public IFuture<Void> execute()
     {
         Future<Void> ret = new Future<>();
 
-        IComponent component = IComponentManager.get().getCurrentComponent();
+        boolean igen = false;
 
-        IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
-
-        do
+        try
         {
-            BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
+            setState(GoalState.ACTIVE);
 
-            Set<Intention> intentions = getGoal().getIntentions();
-            if(intentions.isEmpty())
-            {
-                intentions = reasoner.generateIntentions(this, beliefs).get();
-                getGoal().setIntentions(intentions);
-            }
-            Intention intention = reasoner.selectIntention(this, intentions, beliefs).get();
+            IComponent component = IComponentManager.get().getCurrentComponent();
+            IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
-            if(intention==null)
+            while(true)
             {
-                // todo: one could try to generate new/more intentions
-                ret.setException(new RuntimeException("No intention for goal: "+this));
-            }
-            else
-            {
-                if(history.isKnown(intention))
+                Map<String, Object> beliefs = BeliefExtractor.extract(component);
+
+                Set<Intention> intentions = getGoal().getIntentions();
+
+                if(!igen)
                 {
-                    System.out.println("Intention generation error, known: "+intention);
-                    ret.setException(new RuntimeException("Intention generation error, known: "+intention));
+                    igen = true;
+                    intentions = reasoner.generateIntentions(this, beliefs).get();
+                    getGoal().setIntentions(intentions);
                 }
+
+                Set<Intention> possible = getGoal().getIntentions().stream()
+                    .filter(intention -> !history.isKnown(intention))
+                    .collect(Collectors.toSet());
+
+                if(possible.isEmpty())
+                {
+                    if(evaluateGoalState().get()==GoalState.SUCCEEDED)
+                        setState(GoalState.SUCCEEDED);
+                    else
+                        setState(GoalState.FAILED);
+
+                    break;
+                }
+                else
+                {
+                    System.out.println("Possible: "+possible.size()+" "+possible);
+                }
+
+                Intention intention = possible.size() == 1
+                    ? possible.iterator().next()
+                    : reasoner.selectIntention(this, possible, beliefs).get();
 
                 RIntention rintention = new RIntention(intention, this);
                 setIntention(rintention);
+
+                System.out.println("---- GOAL LOOP ----");
+                System.out.println("History intentions: " + getHistory().getEntries());
+                System.out.println("All intentions: " + getGoal().getIntentions());
+                System.out.println("Possible intentions: " + possible);
+                System.out.println("Selected intention: " + getIntention());
 
                 try
                 {
                     rintention.execute().get();
 
-                    this.state = evaluateGoalState().get();
+                    if(evaluateGoalState().get()==GoalState.SUCCEEDED)
+                    {
+                        setState(GoalState.SUCCEEDED);
+                        break;
+                    }
+
+                    history.addEntry(new IntentionHistoryEntry(rintention));
                 }
                 catch(Exception e)
                 {
                     history.addEntry(new IntentionHistoryEntry(rintention));
                 }
-
-                /*rintention.execute().then(Void ->
-                {
-                    System.out.println("Intention executed");
-                }
-                ).catchEx(ex ->
-                {
-                    // intention failed. add to history and generate new intention
-                    history.addEntry(new IntentionHistoryEntry(rintention));
-                });*/
             }
+
+            ret.setResult(null);
         }
-        while(!isFinished(getState()));
-        
+        catch(Exception e)
+        {
+            this.exception = e;
+            System.out.println("Goal failed: "+e.getMessage());
+            ret.setExceptionIfUndone(e);
+            setState(GoalState.FAILED);
+        }
+
         return ret;
     }
 
     public void drop()
     {
-        changeState(GoalState.DROPPED);
+        throw new UnsupportedOperationException();
+        //changeState(GoalState.DROPPED);
     }
 
     public GoalState getState() 
@@ -145,14 +174,25 @@ public class RGoal
         return state;
     }
 
-    public void changeState(GoalState newstate)
+    public void setState(GoalState newstate)
     {
-        GoalState oldstate = state;
+        if(state == newstate)
+            throw new IllegalStateException("Goal is already in state " + state);
+
+        if(isFinished(state))
+            throw new IllegalStateException("Cannot change finished goal from " + state + " to " + newstate);
+
+        if(newstate == GoalState.ACTIVE && state != GoalState.INACTIVE)
+            throw new IllegalStateException("Goal can only become ACTIVE from INACTIVE, but is " + state);
+
         state = newstate;
 
-        if(newstate == GoalState.ACTIVE && oldstate == GoalState.INACTIVE)
+        if(isFinished(newstate))
         {
-            execute();
+            if(newstate == GoalState.SUCCEEDED)
+                ((TerminableFuture<Void>)getFinished()).setResult(null);
+            else
+                ((TerminableFuture<Void>)getFinished()).setException(exception != null ? exception: new RuntimeException("Goal " + newstate));
         }
     }
 
@@ -166,7 +206,7 @@ public class RGoal
 			finished = new TerminableFuture<>(reason -> 
 			{
 				exception = reason;
-//				System.out.println("drop: "+this+", "+reason);
+				System.out.println("drop: "+this+", "+reason);
 				drop();	
 			});
 		}
@@ -176,7 +216,7 @@ public class RGoal
     public IFuture<GoalState> evaluateGoalState()
     {
         IComponent component = IComponentManager.get().getCurrentComponent();
-        BeliefSnapshot beliefs = BeliefSnapshot.extract(component);
+        Map<String, Object> beliefs = BeliefExtractor.extract(component);
         return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
     }
 
@@ -226,6 +266,16 @@ public class RGoal
     public void setParameters(Map<String, Object> parameters) 
     {
         this.parameters = parameters;
+    }
+
+    public RPlan getParentPlan()
+    {
+        return parentPlan;
+    }
+
+    public void setParentPlan(RPlan parentPlan)
+    {
+        this.parentPlan = parentPlan;
     }
 
     @Override

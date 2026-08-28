@@ -2,13 +2,14 @@ package jadex.bding.impl;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
+import java.util.Map;
+
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
-import jadex.bding.Plan;
 
 public class RIntention 
 {
@@ -32,7 +33,7 @@ public class RIntention
 
         IComponent component = IComponentManager.get().getCurrentComponent();
 
-        BeliefSnapshot beliefsbefore = BeliefSnapshot.extract(component);
+        Map<String, Object> beliefsbefore = BeliefExtractor.extract(component);
 
         IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
@@ -41,37 +42,38 @@ public class RIntention
         //Plan plan = reasoner.selectPlan(this, plans).get();
 
         // Generate full plan with planbody
-        Plan plan = reasoner.generatePlan(this, beliefsbefore).get();
-
-        if(plan==null)
+        reasoner.generatePlan(this, beliefsbefore).then(plan ->
         {
-            ret.setException(new RuntimeException("No plan could be generated for intention"));
-        }
-        else
-        {
-            this.plan = new RPlan(plan, component);
-            this.plan.execute().then(Void ->
+            if(plan==null)
             {
-                System.out.println("Plan executed");
-                BeliefSnapshot beliefsafter = BeliefSnapshot.extract(component);
-                reasoner.isIntentionAchieved(this, beliefsafter).then(state ->
-                {
-                    if(state)
-                    {
-                        ret.setResult(null);
-                    }
-                    else
-                    {
-                        tryNextPlan().delegateTo(ret);
-                    }
-                });
-                  
+                ret.setException(new RuntimeException("No plan could be generated for intention"));
             }
-            ).catchEx(ex ->
+            else
             {
-                tryNextPlan().delegateTo(ret);
-            });
-        }
+                this.plan = new RPlan(plan, component);
+                this.plan.execute().then(Void ->
+                {
+                    System.out.println("Plan executed");
+                    Map<String, Object> beliefsafter = BeliefExtractor.extract(component);
+                    reasoner.isIntentionAchieved(this, beliefsafter).then(state ->
+                    {
+                        if(state)
+                        {
+                            ret.setResult(null);
+                        }
+                        else
+                        {
+                            tryNextPlan().delegateTo(ret);
+                        }
+                    });
+                    
+                }
+                ).catchEx(ex ->
+                {
+                    tryNextPlan().delegateTo(ret);
+                });
+            }
+        }).catchEx(ret);
 
         return ret;
     }
