@@ -34,4 +34,17 @@ public class Belief extends ModelElement
     {
         return ElementType.fromJavaClass(field.getType());
     }
+
+    public void setValue(Object pojo, Object val)
+    {
+        try
+        {
+            field.setAccessible(true);
+            field.set(pojo, val);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
 }

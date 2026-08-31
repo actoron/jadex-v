@@ -4,6 +4,8 @@ public class Plan extends ModelElement
 {
     protected Intention intention;
 
+    protected StrategicPlan strategicplan;
+
     protected IPlanBody body;
 
     public Plan(String name, String desciption, Intention intention, AgentModel model)
@@ -33,6 +35,16 @@ public class Plan extends ModelElement
     {
         this.body = body;
         return this;
+    }
+
+    public StrategicPlan getStrategicPlan() 
+    {
+        return strategicplan;
+    }
+
+    public void setStrategicPlan(StrategicPlan strategicplan) 
+    {
+        this.strategicplan = strategicplan;
     }
 
     @Override

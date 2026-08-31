@@ -8,6 +8,7 @@ import java.util.Set;
 
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
+import jadex.bding.impl.RPlan;
 import jadex.bding.impl.RGoal.GoalState;
 
 /**
@@ -35,7 +36,11 @@ public interface IReasoner
 
     public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions, Map<String, Object> context);
 
-    public IFuture<Plan> generatePlan(RIntention intention, Map<String, Object> context);
+    public IFuture<Plan> generateStrategicPlan(RIntention intention, Map<String, Object> context);
+    
+    public IFuture<IPlanStep> generatePlanStep(RPlan plan, StrategicStep step, Map<String, Object> context);
+
+    //public IFuture<Plan> generatePlan(RIntention intention, Map<String, Object> context);
 
     //public IFuture<Set<Plan>> generatePlans(RIntention intention);
 

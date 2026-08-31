@@ -40,7 +40,10 @@ public class ToolCallStep extends RIdElement implements IPlanStep
             String target = entry.getValue();
 
             if(!parameters.containsKey(target))
+            {
+                System.out.println("Missing plan parameter: " + target);
                 return new Future<>(new RuntimeException("Missing plan parameter: " + target));
+            }
 
             args.put(source, parameters.get(target));
         }
