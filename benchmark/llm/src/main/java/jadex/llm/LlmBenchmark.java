@@ -517,7 +517,7 @@ public class LlmBenchmark
 				{
 					try
 					{
-						StreamingChatModel	llm	= provider.createChatModel(model_name, false);
+						StreamingChatModel	llm	= provider.createChatModel(model_name, false, false);
 						boolean	supportsVision	= LlmHelper.supportsVision(llm);
 						if(!supportsVision)
 						{
@@ -542,7 +542,7 @@ public class LlmBenchmark
 				// non-thinking
 				try
 				{
-					StreamingChatModel	llm = provider.createChatModel(model_name, false);
+					StreamingChatModel	llm = provider.createChatModel(model_name, false, false);
 					boolean	nothink	= !LlmHelper.isThinking(llm);										
 					if(nothink)
 					{
@@ -564,7 +564,7 @@ public class LlmBenchmark
 				// thinking
 				try
 				{
-					StreamingChatModel	llm = provider.createChatModel(model_name, true);
+					StreamingChatModel	llm = provider.createChatModel(model_name, true, false);
 					boolean	think	= LlmHelper.isThinking(llm);
 					if(think)
 					{
@@ -610,7 +610,7 @@ public class LlmBenchmark
 				if(setup!=null)
 					setup.accept(app);
 				
-				StreamingChatModel	llm	= provider.createChatModel(model_name, dothink);
+				StreamingChatModel	llm	= provider.createChatModel(model_name, dothink, false);
 				// Explicitly name chat agent for lookup in, e.g., smart home benchmark for subsequent prompts.
 				LlmChatAgent	chat	= app.create(new LlmChatAgent(llm), "Chat").get().getPojoHandle(LlmChatAgent.class);
 				

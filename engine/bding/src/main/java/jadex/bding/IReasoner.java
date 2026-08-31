@@ -3,9 +3,9 @@ package jadex.bding;
 import jadex.future.IFuture;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import jadex.bding.impl.BeliefSnapshot;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RGoal.GoalState;
@@ -21,25 +21,35 @@ import jadex.bding.impl.RGoal.GoalState;
  */
 public interface IReasoner 
 {
-    public IFuture<RGoal> createGoal(String usergoal, AgentModel model);
+    public enum ReasoningType
+    {
+        BOOLEAN, // true/false answer
+        SELECTION, // number/int answer
+        COMPUTATION, // number/double answer
+        EXPLANATION // textual answer
+    }
 
-    public IFuture<Set<Intention>> generateIntentions(RGoal goal, BeliefSnapshot beliefs);
+    public IFuture<RGoal> createGoal(String usergoal, AgentModel model, Map<String, Object> context);
 
-    public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions, BeliefSnapshot beliefs);
+    public IFuture<Set<Intention>> generateIntentions(RGoal goal, Map<String, Object> context);
 
-    public IFuture<Plan> generatePlan(RIntention intention, BeliefSnapshot beliefs);
+    public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions, Map<String, Object> context);
+
+    public IFuture<Plan> generatePlan(RIntention intention, Map<String, Object> context);
 
     //public IFuture<Set<Plan>> generatePlans(RIntention intention);
 
     //public IFuture<Plan> selectPlan(RGoal goal, Set<Plan> plans);
 
-    public IFuture<Boolean> isIntentionAchieved(RIntention in, BeliefSnapshot beliefs);
+    public IFuture<Boolean> isIntentionAchieved(RIntention in, Map<String, Object> context);
 
     public IFuture<Boolean> isSameIntention(Intention in1, Intention in2);
 
-    public IFuture<GoalState> evaluateGoalState(RGoal goal, BeliefSnapshot beliefs);
+    public IFuture<GoalState> evaluateGoalState(RGoal goal, Map<String, Object> context);
 
-    public IFuture<ReasoningEntry> getCurrentReasoning();
+    public IFuture<Set<ReasoningEntry>> getCurrentReasoning();
 
     public IFuture<List<ReasoningEntry>> getReasoningHistory();
+
+    public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type);
 }

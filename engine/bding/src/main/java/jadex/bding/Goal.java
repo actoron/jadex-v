@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Goal 
+public class Goal extends ModelElement
 {
     public enum Importance
     {
@@ -14,9 +14,6 @@ public class Goal
         HIGH,
         CRITICAL
     }
-
-    protected String name;
-    protected String description;
 
     protected Map<String, Parameter> parameters = new LinkedHashMap<>();
 
@@ -29,38 +26,12 @@ public class Goal
 
     protected Importance importance;
 
-    protected AgentModel model;
-
     protected Set<Intention> intentions = new HashSet<>();
 
     public Goal(String name, String description, AgentModel model)
     {
-        this.name = name;
-        this.description = description;
-        this.model = model;
+        super(name, description, model);
         model.addGoal(this);
-    }
-
-    public String getName() 
-    {
-        return name;
-    }
-
-    public Goal setName(String name) 
-    {
-        this.name = name;
-        return this;
-    }
-
-    public String getDescription() 
-    {
-        return description;
-    }
-
-    public Goal setDescription(String description) 
-    {
-        this.description = description;
-        return this;
     }
 
     public Goal addParameter(Parameter param)
@@ -151,11 +122,6 @@ public class Goal
     public Set<Intention> getIntentions()
     {
         return this.intentions;
-    }
-
-    public AgentModel getModel() 
-    {
-        return model;
     }
 
     @Override

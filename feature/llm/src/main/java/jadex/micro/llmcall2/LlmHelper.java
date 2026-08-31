@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import jadex.common.ITriFunction;
 
 import javax.imageio.ImageIO;
 
@@ -42,6 +42,7 @@ import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.catalog.ModelCatalog;
 import dev.langchain4j.model.catalog.ModelType;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.response.CompleteToolCall;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GeminiThinkingConfig.GeminiThinkingLevel;
@@ -77,8 +78,20 @@ public class LlmHelper
 	
 	public static enum Provider
 	{
+		OLLAMA_LOCAL("Ollama (local)",
+			(model, think, json) -> createOllamaChatModel("http://localhost:11434", model, think),
+			() -> fetchOllamaModels("http://localhost:11434"),
+			(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
+		OLLAMA_REMOTE("Ollama (remote)", 
+			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
+			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
+			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
+		OPENAI_HCI("Ollama (remote)", 
+			(model, think, json) -> createOpenAiChatModel(System.getenv("OPENAI_BASE_URL"), System.getenv("OPENAI_API_KEY"),model, think, json),
+			() -> fetchOllamaModels(System.getenv("OPENAI_BASE_URL")),
+			(model) -> fetchOllamaContextSize(System.getenv("OPENAI_BASE_URL"), model)),
 		OLLAMA("Ollama", 
-			(model, think) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
+			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
 //		OLLAMA_LOCAL("Ollama (local)",
@@ -86,16 +99,16 @@ public class LlmHelper
 //		() -> fetchOllamaModels("http://localhost:11434"),
 //		(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
 		GOOGLE_GEMINI("Google Gemini",
-			(model, think) -> createGoogleGeminiChatModel(model, think),
+			(model, think, json) -> createGoogleGeminiChatModel(model, think),
 //			(model, think) -> createGoogleGenAiChatModel(model, think),
 			() -> fetchGeminiModels(),
 			(model) -> fetchGeminiContextSize(model)),
 		MISTRAL_AI("Mistral AI",
-			(model, think) -> createMistralChatModel(model, think),
+			(model, think, json) -> createMistralChatModel(model, think),
 			() -> fetchMistralModels(),
 			(model) -> fetchMistralContextSize(model)),
 		OPEN_ROUTER("Open Router",
-			(model, think) -> createOpenAiChatModel("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model, think),
+			(model, think, json) -> createOpenAiChatModel("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model, think, json),
 			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), true),
 			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model)),
 //		LOCAL_AI("Local AI",
@@ -106,28 +119,29 @@ public class LlmHelper
 //			(model, think) -> createOllamaChatModel("http://localhost:8080", model, think),
 //			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
 //			(model) -> fetchOllamaContextSize("http://localhost:8080", model)),
-//		LOCAL_AI("Local AI",
-//			(model, think) -> createOpenAiChatModel("http://localhost:8080/v1", "", model, think),
-//			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
-//			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
-//		LM_STUDIO("LM Studio",
-//			(model, think) -> createOpenAiResponsesChatModel("http://localhost:1234/v1", "nix", model, think),
-//			() -> fetchOpenAiModels("http://localhost:1234/v1", "nix", false),
-//			(model) -> fetchOpenAiContextSize("http://localhost:1234/v1", "", model)),
-//		LLAMA_SERVER("Llama Server",
-//			(model, think) -> createOpenAiChatModel("http://localhost:8033/v1", "nix", model, think),
-//			() -> fetchOpenAiModels("http://localhost:8033/v1", "nix", false),
-//			(model) -> fetchOpenAiContextSize("http://localhost:8033/v1", "", model)),
+		LOCAL_AI("Local AI",
+			(model, think, json) -> createOpenAiChatModel("http://localhost:8080/v1", "", model, think, json),
+			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
+		LM_STUDIO("LM Studio",
+			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:1234/v1", "nix", model, think),
+			() -> fetchOpenAiModels("http://localhost:1234/v1", "nix", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:1234/v1", "", model)),
+		LLAMA_SERVER("Llama Server",
+			(model, think, json) -> createOpenAiChatModel("http://localhost:8033/v1", "nix", model, think, json),
+			() -> fetchOpenAiModels("http://localhost:8033/v1", "nix", false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8033/v1", "", model)),
 		UNSLOTH("Unsloth",
-			(model, think) -> createOpenAiResponsesChatModel("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
-			() -> fetchOpenAiModels("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model));
+			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
+			() -> fetchOpenAiModels("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model));
 		
 		private final String name;
-		private final BiFunction<String, Boolean, StreamingChatModel> creator;
+		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
 		private final Function<String, Integer> contextfetcher;
-		private Provider(String name, BiFunction<String, Boolean, StreamingChatModel> creator,
+
+		private Provider(String name, ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator,
 			Supplier<List<String>> modelfetcher, Function<String, Integer> contextfetcher)
 		{
 			this.name = name;
@@ -142,15 +156,15 @@ public class LlmHelper
 			return name;
 		}
 		
-		public StreamingChatModel createChatModel(String model, Boolean think)
+		public StreamingChatModel createChatModel(String model, Boolean think, Boolean json)
 		{
 			if(model==null)
 				model = DEFAULT_MODELS.get(this);
 			if(model==null)
 				model = getModels().get(0);
-			return creator.apply(model, think);
+			return creator.apply(model, think, json);
 		}
-		
+
 		public List<String> getModels()
 		{
 			return modelfetcher.get().stream().sorted().toList();
@@ -171,7 +185,7 @@ public class LlmHelper
 	
 	public static StreamingChatModel createChatModel()
 	{
-		return createChatModel(null, null, null);
+		return createChatModel(null, null, null, null);
 //		return createChatModel(null, null, false);
 	}
 	
@@ -245,15 +259,15 @@ public class LlmHelper
 		}
 	}
 
-	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think)
+	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think, Boolean json)
 	{
 		if(provider==null)
 			provider = Provider.values()[0];
 		
-		return provider.createChatModel(model, think);
+		return provider.createChatModel(model, think, json);
 	}
-	
-	protected static StreamingChatModel	createOpenAiChatModel(String baseurl, String apikey, String model, Boolean think)
+
+	public static StreamingChatModel createOpenAiChatModel(String baseurl, String apikey, String model, Boolean think, boolean json)
 	{
 		return OpenAiStreamingChatModel.builder()
 			.baseUrl(baseurl)
@@ -264,12 +278,13 @@ public class LlmHelper
 			// If there is thinking -> always use it.
 			.returnThinking(true)
 			.sendThinking(true)
-//			.logRequests(true)
-//			.logResponses(true)
-//			// For LM Studio, we need to force HTTP/1.1 :-(
-//			.httpClientBuilder(JdkHttpClient.builder()
-//				.httpClientBuilder(HttpClient.newBuilder()
-//					.version(HttpClient.Version.HTTP_1_1)))
+			//.logRequests(true)
+			//.logResponses(true)
+			.responseFormat(json? ResponseFormat.JSON: ResponseFormat.TEXT)
+			// For LM Studio, we need to force HTTP/1.1 :-(
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
 			.build();
 	}
 		
@@ -795,6 +810,67 @@ public class LlmHelper
 		{
 			messages.add(msg);
 		}
+	}
+
+	public static String sanitizeJson(String text)
+	{
+		StringBuilder ret = new StringBuilder(text.length());
+
+		boolean inString = false;
+		boolean escaped = false;
+
+		for(int i=0; i<text.length(); i++)
+		{
+			char c = text.charAt(i);
+
+			if(escaped)
+			{
+				ret.append(c);
+				escaped = false;
+				continue;
+			}
+
+			if(c == '\\')
+			{
+				ret.append(c);
+				escaped = true;
+				continue;
+			}
+
+			if(c == '"')
+			{
+				ret.append(c);
+				inString = !inString;
+				continue;
+			}
+
+			if(inString)
+			{
+				switch(c)
+				{
+					case '\n':
+						ret.append("\\n");
+						break;
+
+					case '\r':
+						ret.append("\\r");
+						break;
+
+					case '\t':
+						ret.append("\\t");
+						break;
+
+					default:
+						ret.append(c);
+				}
+			}
+			else
+			{
+				ret.append(c);
+			}
+		}
+
+		return ret.toString();
 	}
 
 	/**

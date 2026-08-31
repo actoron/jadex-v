@@ -15,6 +15,8 @@ import jadex.bding.annotation.Belief;
 import jadex.bding.annotation.Model;
 import jadex.bding.annotation.Reasoner;
 import jadex.core.impl.ILifecycle;
+import jadex.future.Future;
+import jadex.future.IFuture;
 import jadex.future.ITerminableFuture;
 import jadex.future.TerminableFuture;
 
@@ -135,26 +137,40 @@ public class BDINGAgentFeature implements IBDINGAgentFeature, ILifecycle
 		return ret;
 	}
 
-	// todo: terminate
-	public ITerminableFuture<Void> dispatchTopLevelGoal(String usergoal)
+	public IFuture<RGoal> dispatchTopLevelGoal(String usergoal)
 	{
-		TerminableFuture<Void>	ret	= new TerminableFuture<Void>();
+		Future<RGoal>	ret	= new Future<>();
 		
-		reasoner.createGoal(usergoal, model).then(rgoal ->
+		reasoner.createGoal(usergoal, model, BeliefExtractor.extract(self)).then(rgoal ->
 		{
+			ret.setResult(rgoal);
 			rgoal.adopt();
-			ITerminableFuture<Void>	gret = (ITerminableFuture<Void>)rgoal.getFinished();
-			gret.delegateTo(ret);
-		});
+			//ITerminableFuture<Void>	gret = (ITerminableFuture<Void>)rgoal.getFinished();
+			//gret.delegateTo(ret);
+		}).catchEx(ret);
+
+		return ret;
+	}
+
+	public IFuture<RGoal> dispatchSubgoal(String usergoal, RPlan plan)
+	{
+		Future<RGoal> ret = new Future<>();
+
+		reasoner.createGoal(usergoal, model, BeliefExtractor.extract(self)).then(rgoal ->
+		{
+			ret.setResult(rgoal);
+			rgoal.setParentPlan(plan);
+			plan.addSubgoal(rgoal);
+			rgoal.adopt();
+		}).catchEx(ret);
 
 		return ret;
 	}
 
 	@Override
-	public BeliefSnapshot getBeliefs() 
+	public Map<String, Object> getBeliefs() 
 	{
-		BeliefSnapshot beliefs = BeliefSnapshot.extract(self);
-		return beliefs;
+		return BeliefExtractor.extract(self);
 	}
 
 	@Override
