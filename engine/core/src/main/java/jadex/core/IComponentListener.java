@@ -14,7 +14,7 @@ public interface IComponentListener
 	}
 	
 	/**
-	 * Called when the last component is removed.
+	 * Called when a component is removed.
 	 * @param cid The component identifier.
 	 */
 	public default void componentRemoved(ComponentIdentifier cid)
