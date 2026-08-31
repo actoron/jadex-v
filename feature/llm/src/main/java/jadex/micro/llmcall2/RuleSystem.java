@@ -25,8 +25,10 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
 import jadex.future.ITerminableIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
+import jadex.future.TerminableFuture;
 import jadex.injection.annotation.Inject;
 import jadex.providedservice.IService;
 import jadex.providedservice.impl.service.ServiceCall;
@@ -283,7 +285,7 @@ public class RuleSystem	implements IRuleSystemService
 	}
 	
 	@Override
-	public IFuture<Void> executePrompt(String prompt)
+	public ITerminableFuture<Void> executePrompt(String prompt)
 	{
 		System.out.println("User: "+prompt);
 		ITerminableIntermediateFuture<ChatFragment>	ifut;
@@ -301,14 +303,18 @@ public class RuleSystem	implements IRuleSystemService
 			ifut	= comp.getApplication().getComponentHandle(cid).getPojoHandle(LlmChatAgent.class).chat(prompt);
 		}
 		LlmChatAgent.printResults(ifut);
-		return ifut
-			.then(v1 -> System.out.println("================"))
-			.catchEx(ex -> 
-			{
-				System.err.println("================");
-				ex.printStackTrace();
-			})
-			.thenApply(fragments -> null);
+		TerminableFuture<Void>	ret	= new TerminableFuture<>(ex -> ifut.terminate());
+		ifut.then(v1 ->
+		{
+			System.out.println("================");
+			ret.setResult(null);
+		})
+		.catchEx(ex -> 
+		{
+			System.out.println("================");
+			ret.setException(ex);
+		});
+		return ret;
 	}
 	
 	//-------- UI only methods --------

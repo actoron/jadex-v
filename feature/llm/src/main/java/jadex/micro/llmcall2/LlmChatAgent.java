@@ -412,7 +412,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			    @Override
 			    public void onError(Throwable error)
 			    {
-			    	System.err.println("Error in LLM response handler: "+error);
+//			    	System.err.println("Error in LLM response handler: "+error);
 			    	agent.getComponentHandle().scheduleStep(() ->
 		    		{
 		    			current_loop.setExceptionIfUndone(SUtil.convertToRuntimeException(error));
@@ -718,6 +718,14 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	 */
 	public static void printResults(ITerminableIntermediateFuture<ChatFragment> results)
 	{
+		printResults(results, true);
+	}
+	
+	/**
+	 *  Helper method to print results to console.
+	 */
+	public static void printResults(ITerminableIntermediateFuture<ChatFragment> results, boolean printonex)
+	{
 		results.next(fragment ->
 		{
 			if(fragment.type()==ChatFragment.Type.RESPONSE)
@@ -732,7 +740,11 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 			{
 				System.out.print("\033[3;1m"+fragment.text()+"\033[0m");
 			}
-		}).printOnEx();
+		});
+		if(printonex)
+		{
+			results.printOnEx();
+		}
 	}
 	
 	/**

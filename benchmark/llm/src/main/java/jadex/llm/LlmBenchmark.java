@@ -1,6 +1,7 @@
 package jadex.llm;
 
 import java.awt.BorderLayout;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import jadex.micro.llmcall2.LlmHelper.Provider;
 
 public class LlmBenchmark
 {
-	private static final int DEFAULT_RUNS = 10;
+	private static final int DEFAULT_RUNS = 3;
 	private static final String CSV_HEADER =
 		"Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
 		+ ";Avg Tokens;Min Tokens;Max Tokens;Max Context;Runs;Success Runs;Time Samples;Token Samples";
@@ -393,27 +394,51 @@ public class LlmBenchmark
 		
 		// Run benchmarks for available Unsloth models
 		include_models	= Arrays.asList(
+//			"ibm-granite/granite-4.2-30b-GGUF",
+//			"ibm-granite/granite-4.2-3b-GGUF",
+//			"ibm-granite/granite-4.2-8b-GGUF",
+//			"ibm-granite/granite-vision-4.1-4b-GGUF",
+//			"poolside/Laguna-XS-2.1-GGUF",
+//			"unsloth/Apertus-70B-Instruct-2509-GGUF"
+//			"unsloth/Apertus-8B-Instruct-2509-GGUF"
+//			"unsloth/DeepSeek-V4-Flash-0731-GGUF",
+//			"unsloth/GLM-4.7-Flash-GGUF",
+//			"unsloth/GLM-4.7-Flash-REAP-23B-A3B-GGUF",
+//			"unsloth/GLM-5.3-Flash-GGUF",
+//			"unsloth/LFM2.5-1.2B-Instruct-GGUF",
+//			"unsloth/LFM2.5-1.2B-Thinking-GGUF",
+//			"unsloth/LFM2.5-230M-GGUF",
+//			"unsloth/LFM2.5-8B-A1B-GGUF",
+//			"unsloth/LFM2.5-VL-1.6B-GGUF",
+//			"unsloth/LFM2.5-VL-3B-GGUF",
+//			"unsloth/Laguna-S-2.1-GGUF",
 //			"unsloth/Ministral-3-14B-Instruct-2512-GGUF",
 //			"unsloth/Ministral-3-14B-Reasoning-2512-GGUF",
-			"unsloth/Ministral-3-3B-Instruct-2512-GGUF"
+//			"unsloth/Ministral-3-3B-Instruct-2512-GGUF",
 //			"unsloth/Ministral-3-3B-Reasoning-2512-GGUF",
 //			"unsloth/Ministral-3-8B-Instruct-2512-GGUF",
 //			"unsloth/Ministral-3-8B-Reasoning-2512-GGUF",
+			"unsloth/Mistral-Small-4-119B-2603-GGUF"
 //			"unsloth/Muse-Glimmer-30B-GGUF",
 //			"unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF",
 //			"unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
-//			"unsloth/Qwen3.5-0.8B-MTP-GGUF"
+//			"unsloth/North-Mini-Code-1.0-GGUF",
+//			"unsloth/Ornith-1.0-35B-GGUF",
+//			"unsloth/Ornith-1.0-9B-GGUF",
+//			"unsloth/Qwen-AgentWorld-35B-A3B-GGUF",
+//			"unsloth/Qwen3.5-0.8B-MTP-GGUF",
 //			"unsloth/Qwen3.5-2B-MTP-GGUF",
-//			"unsloth/Qwen3.5-4B-MTP-GGUF" // 1:30 minutes for 10 runs
+//			"unsloth/Qwen3.5-4B-MTP-GGUF",
 //			"unsloth/Qwen3.5-9B-MTP-GGUF",
+//			"unsloth/Qwen3.6-35B-A3B-MTP-GGUF",
 //			"unsloth/Qwen3.8-27B-GGUF",
+//			"unsloth/Qwen3.8-Flash-Next-GGUF",
 //			"unsloth/gemma-4-12B-it-qat-GGUF",
+//			"unsloth/gemma-4-26B-A4B-it-GGUF",
+//			"unsloth/gemma-4-31B-it-GGUF",
 //			"unsloth/gemma-4-E2B-it-qat-GGUF",
-//			"unsloth/gemma-4-E4B-it-qat-GGUF"
-////			// No vision
-////			"unsloth/gpt-oss-20b-GGUF",
-////			"unsloth/granite-4.1-3b-GGUF",
-////			"unsloth/granite-4.1-8b-GGUF"
+//			"unsloth/gemma-4-E4B-it-qat-GGUF",
+//			"unsloth/gpt-oss-20b-GGUF"
 		);
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.UNSLOTH, true);
 		
@@ -473,11 +498,47 @@ public class LlmBenchmark
 			BiFunction<Application, String, Boolean> success, Map<String, CsvStats> csvStats, File out,
 			List<String> include_models, Provider provider, boolean skip_latest)
 	{
+		// Check if vision is required, i.e. if any tool returns a RenderedImage.
+		Application	app	= new Application(benchmark_name);
+		setup.accept(app);
+		boolean vision	= app.run(comp -> LlmHelper.findTools(comp, null).values().stream()
+			.anyMatch(tool -> tool.method().getGenericReturnType().toString().contains(RenderedImage.class.getName()))).get();
+//		System.out.println(benchmark_name+" requires vision: "+vision);
+//		System.out.println(benchmark_name+" has "+app.run(comp -> LlmHelper.findTools(comp, null).size()).get()+" tools.");
+		app.terminate().get();
+		
 		for(String model_name: provider.getModels())
 		{
 			if(!(skip_latest && model_name.endsWith("latest"))
 				&& (include_models==null || include_models.contains(model_name)))
 			{
+				// Check if the model supports vision if required.
+				if(vision)
+				{
+					try
+					{
+						StreamingChatModel	llm	= provider.createChatModel(model_name, false);
+						boolean	supportsVision	= LlmHelper.supportsVision(llm);
+						if(!supportsVision)
+						{
+							System.out.println("Skipping model "+model_name+" because it does not support vision.");
+							continue;
+						}
+					}
+					catch(Exception e)
+					{
+						if(!(e instanceof RateLimitException))
+						{
+							System.out.println("Failed to get capabilities for model "+model_name+": "+e);
+						}
+						else
+						{
+							System.out.println("Rate limit reached for model "+model_name+", skipping benchmark.");
+						}
+						continue;
+					}
+				}
+				
 				// non-thinking
 				try
 				{
@@ -533,11 +594,11 @@ public class LlmBenchmark
 		String model_name, Provider provider, boolean dothink)
 	{
 		int runs	= DEFAULT_RUNS;
-		long[] times	= new long[runs-1];
+		long[] times	= new long[runs];
 		int[] tokens	= new int[runs];
 		Boolean[]	successes	= new Boolean[runs];
 		AtomicInteger max_context	= new AtomicInteger(-1);
-		ExecutorService executor = Executors.newFixedThreadPool(3);
+		ExecutorService executor = Executors.newFixedThreadPool(1);
 		for(int i=0; i<runs; i++)
 		{
 			final int fi	= i;
@@ -576,10 +637,7 @@ public class LlmBenchmark
 					tokens[fi]	= successes[fi] ? chat.getTotalTokenCount().get() : -1;
 					if(successes[fi])
 						max_context.getAndAccumulate(chat.getMaxTokenCount().get(), Math::max);
-					if(fi>0)
-					{
-						times[fi-1]	= successes[fi] ? end-start : -1;
-					}
+					times[fi]	= successes[fi] ? end-start : -1;
 					
 					System.out.println((successes[fi] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
 							+ ", "+chat.getTotalTokenCount().get()+" tokens)");
@@ -614,10 +672,7 @@ public class LlmBenchmark
 					{
 						successes[fi]	= false;
 						tokens[fi]	= -1;
-						if(fi>0)
-						{
-							times[fi-1]	= -1;
-						}
+						times[fi]	= -1;
 						System.out.println(e+" ("+(end-start)/1000+" s)");
 					}				
 				}
@@ -704,7 +759,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.OLLAMA;
+		Provider provider = Provider.UNSLOTH;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");

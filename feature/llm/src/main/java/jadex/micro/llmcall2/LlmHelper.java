@@ -377,6 +377,7 @@ public class LlmHelper
 			.modelName(model)
 			.think(think)
 			.returnThinking(true)
+//			.logRequests(true)
 			.build();
 	}
 	
@@ -452,19 +453,22 @@ public class LlmHelper
 	{
 		ITerminableIntermediateFuture<ChatFragment>	fut	= IComponentManager.get()
 			.runAsync(new LlmChatAgent(llm, "Perform some chain-of-thoughts reasoning and then answer with the final result."));
-		LlmChatAgent.printResults(fut);
+		LlmChatAgent.printResults(fut, false);
 		
 		try
 		{
 			// Long timeout, because some models take a long time to load.
-			fut.get(60000);
+			return fut.getNextIntermediateResult(300000).type()==ChatFragment.Type.THINKING;
 		}
 		catch(TimeoutException e)
 		{
-			fut.terminate();
 			System.err.println("Timeout while checking if model is thinking: "+e);
+			return false;
 		}
-		return fut.getIntermediateResults().stream().filter(f -> f.type()==ChatFragment.Type.THINKING).count() > 0;
+		finally
+		{
+			fut.terminate();
+		}
 	}
 	
 	/**
@@ -793,4 +797,27 @@ public class LlmHelper
 		}
 	}
 
+	/**
+	 *  Does the model support vision (image input)?
+	 */
+	public static boolean supportsVision(StreamingChatModel llm)
+	{
+		RenderedImage testImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+		ITerminableIntermediateFuture<ChatFragment>	fut	= IComponentManager.get().runAsync(new LlmChatAgent(llm, "Describe the image.", testImage));
+		LlmChatAgent.printResults(fut, false);
+		try
+		{
+			// Long timeout, because some models take a long time to load.
+			fut.getNextIntermediateResult(300000);
+			return true;
+		}
+		catch(Exception e)
+		{
+			return false;
+		}
+		finally
+		{
+			fut.terminate();
+		}
+	}
 }
