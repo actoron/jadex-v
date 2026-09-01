@@ -4,8 +4,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
+import jadex.bding.AgentModel;
+import jadex.bding.Belief;
 import jadex.bding.Plan;
+import jadex.bding.impl.planbody.IncrementalPlanBody;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -14,33 +18,50 @@ public class RPlan extends RIdElement
 {
     protected Plan plan;
 
+    protected RIntention intention; //parent intention
+
     protected Set<RGoal> subgoals = new HashSet<>();
 
-    protected IComponent component;
+    protected IComponent agent;
 
-    public RPlan(Plan plan, IComponent component) 
+    public RPlan(Plan plan, RIntention intention, IComponent agent) 
     {
         super("plan_"+plan.getName());
         this.plan = plan;
-        this.component = component;
+        this.intention = intention;
+        this.agent = agent;
     }
 
     public IFuture<Void> execute()
     {
         Future<Void> ret = new Future<>();
 
-        Map<String, Object> params = new HashMap<>();
-        params.putAll(BeliefExtractor.extract(component));
+        // prepare the context map with beliefs and goal parameter
+        Map<String, Object> params = createContext(getAgent(), intention.getGoal());
 
-        getPlan().getBody().execute(getComponent(), this, params).then(res ->
+        if(getPlan().getBody()!=null)
         {
-            System.out.println("plan execution led to: "+res);
+            getPlan().getBody().execute(getAgent(), this, params)
+            .then(res ->
+            {
+                System.out.println("plan execution led to: "+res);
 
-            // todo: update beliefs with results
+                ret.setResult(null);
 
-            ret.setResult(null);
+            }).catchEx(ret);
+        }
+        else if(getPlan().getStrategicPlan()!=null)
+        {
+            IncrementalPlanBody ibody = new IncrementalPlanBody(getPlan().getStrategicPlan());
+            ibody.execute(getAgent(), this, params)
+            .then(res ->
+            {
+                System.out.println("plan execution led to: "+res);
 
-        }).catchEx(ret);
+                ret.setResult(null);
+
+            }).catchEx(ret);
+        }
 
         return ret;
     }
@@ -50,9 +71,9 @@ public class RPlan extends RIdElement
         return plan;
     }
 
-    public IComponent getComponent() 
+    public IComponent getAgent() 
     {
-        return component;
+        return agent;
     }
 
     public void addSubgoal(RGoal goal)
@@ -74,5 +95,49 @@ public class RPlan extends RIdElement
     public String toString() 
     {
         return "RPlan [id=" + id + ", plan=" + plan + "]";
+    }
+
+    public void setPlan(Plan plan) 
+    {
+        this.plan = plan;
+    }
+
+    public void setSubgoals(Set<RGoal> subgoals) 
+    {
+        this.subgoals = subgoals;
+    }
+
+    public void setAgent(IComponent component) 
+    {
+        this.agent = component;
+    }
+
+    public RIntention getIntention() 
+    {
+        return intention;
+    }
+
+    public void setIntention(RIntention intention) 
+    {
+        this.intention = intention;
+    }
+
+    public static Map<String, Object> createContext(IComponent agent, RGoal goal)
+    {
+        Map<String, Object> params = new HashMap<>();
+        
+        Map<String, Object> bels = BeliefExtractor.extract(agent);
+        for(Entry<String, Object> b: bels.entrySet())
+        {
+            params.put("belief."+b.getKey(), b.getValue());
+        }
+        
+        Map<String, Object> goalparams = goal.getParameters();
+        for(Entry<String, Object> gp: goalparams.entrySet())
+        {
+            params.put("goal."+gp.getKey(), gp.getValue());
+        }
+
+        return params;
     }
 }

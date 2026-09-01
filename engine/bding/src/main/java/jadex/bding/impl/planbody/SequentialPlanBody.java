@@ -3,7 +3,6 @@ package jadex.bding.impl.planbody;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.bding.IPlanBody;
 import jadex.bding.IPlanStep;
@@ -91,6 +90,7 @@ public class SequentialPlanBody extends RIdElement implements IPlanBody
         }
         catch(Exception e)
         {
+            e.printStackTrace();
             ret.setException(e);
         }
     }

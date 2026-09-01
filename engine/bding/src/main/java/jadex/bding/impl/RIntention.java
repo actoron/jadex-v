@@ -44,7 +44,7 @@ public class RIntention extends RIdElement
         //Plan plan = reasoner.selectPlan(this, plans).get();
 
         // Generate full plan with planbody
-        reasoner.generatePlan(this, beliefsbefore).then(plan ->
+        reasoner.generateStrategicPlan(this, beliefsbefore).then(plan ->
         {
             if(plan==null)
             {
@@ -52,7 +52,7 @@ public class RIntention extends RIdElement
             }
             else
             {
-                this.plan = new RPlan(plan, component);
+                this.plan = new RPlan(plan, this, component);
                 this.plan.execute().then(Void ->
                 {
                     System.out.println("Plan executed");

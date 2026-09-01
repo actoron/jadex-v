@@ -1,6 +1,7 @@
 package jadex.bding.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,15 +18,17 @@ import jadex.bding.Belief;
 import jadex.bding.ElementType;
 import jadex.bding.Goal;
 import jadex.bding.IBDINGAgentFeature;
+import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
 import jadex.bding.Parameter;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
+import jadex.bding.StrategicPlan;
+import jadex.bding.StrategicStep;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.bding.impl.RGoal.GoalState;
 import jadex.bding.impl.planbody.ReasoningStep;
-import jadex.bding.impl.planbody.SequentialPlanBody;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
 import jadex.core.IComponent;
@@ -274,6 +277,29 @@ public class LlmReasoner implements IReasoner
         return Json.parse(san);
     }
 
+    protected List<String> readStringArray(JsonValue val)
+    {
+        if(val == null || !val.isArray())
+            return null;
+
+        List<String> ret = new ArrayList<>();
+
+        for(JsonValue entry : val.asArray())
+        {
+            if(!entry.isString())
+                return null;
+
+            String value = entry.asString();
+
+            if(value == null || value.isBlank())
+                return null;
+
+            ret.add(value);
+        }
+
+        return ret;
+    }
+
     @Override
     public IFuture<Set<ReasoningEntry>> getCurrentReasoning() 
     {
@@ -299,6 +325,24 @@ public class LlmReasoner implements IReasoner
     public void addHistoryEntry(ReasoningEntry entry)
     {
         history.add(entry);
+    }
+
+    protected String formatValues(List<String> values)
+    {
+        if(values == null || values.isEmpty())
+            return "None";
+
+        StringBuilder sb = new StringBuilder();
+
+        for(String value : values)
+        {
+            if(value == null || value.isBlank())
+                continue;
+
+            sb.append("- ").append(value).append("\n");
+        }
+
+        return sb.length() > 0 ? sb.toString() : "None";
     }
 
     protected String formatGoal(RGoal goal)
@@ -361,6 +405,53 @@ public class LlmReasoner implements IReasoner
         return sb.toString();
     }
 
+    protected String formatGoals(AgentModel model)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        Collection<Goal> goals = model.getGoals().values();
+
+        if(goals == null || goals.isEmpty())
+            return "None";
+
+        for(Goal goal : goals)
+        {
+            sb.append("- ").append(goal.getName()).append("\n");
+
+            if(goal.getDescription() != null && !goal.getDescription().isBlank())
+            {
+                sb.append("  Description: ")
+                    .append(goal.getDescription())
+                    .append("\n");
+            }
+
+            if(goal.getParameters() != null && !goal.getParameters().isEmpty())
+            {
+                sb.append("  Parameters:\n");
+
+                for(Parameter parameter : goal.getParameters().values())
+                {
+                    sb.append("    - ").append(parameter.getName());
+
+                    if(parameter.getType() != null)
+                        sb.append(" (").append(parameter.getType()).append(")");
+
+                    if(parameter.getDescription() != null
+                        && !parameter.getDescription().isBlank())
+                    {
+                        sb.append(": ").append(parameter.getDescription());
+                    }
+
+                    sb.append("\n");
+                }
+            }
+
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
     protected String formatContext(AgentModel model, Map<String, Object> values)
     {
         if(values == null || values.isEmpty())
@@ -388,6 +479,32 @@ public class LlmReasoner implements IReasoner
         }
 
         return sb.toString();
+    }
+
+    protected String formatTools(IComponent agent)
+    {
+        Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
+
+        StringBuilder descs = new StringBuilder();
+
+        for(ToolRef tool : tools.values())
+        {
+            if(tool == null)
+                continue;
+
+            ToolSpecification spec = tool.spec();
+
+            descs.append("- ").append(spec.name());
+
+            if(spec.description() != null && !spec.description().isBlank())
+            {
+                descs.append(": ").append(spec.description());
+            }
+
+            descs.append("\n");
+        }
+
+        return descs.toString();
     }
 
 
@@ -630,30 +747,6 @@ public class LlmReasoner implements IReasoner
         {
             IComponent agent = IComponentManager.get().getCurrentComponent();
 
-            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
-
-            StringBuilder descs = new StringBuilder();
-
-            if(tools!=null)
-            {
-                for(ToolRef tool : tools.values())
-                {
-                    if(tool == null)
-                        continue;
-
-                    ToolSpecification spec = tool.spec();
-
-                    descs.append("- ").append(spec.name());
-
-                    if(spec.description() != null && !spec.description().isBlank())
-                    {
-                        descs.append(": ").append(spec.description());
-                    }
-
-                    descs.append("\n");
-                }
-            }
-
             String prompt = """
                 Generate the most promising intentions for the following goal.
 
@@ -725,7 +818,7 @@ public class LlmReasoner implements IReasoner
                 """.formatted(
                     formatContext(goal.getGoal().getModel(), beliefs),
                     formatGoal(goal),
-                    descs.toString());
+                    formatTools(agent));
 
             //System.out.println("generateIntentions: "+prompt);
 
@@ -825,26 +918,7 @@ public class LlmReasoner implements IReasoner
                     .append(intention.getDescription()).append("\n");
             }
 
-            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
-
-            StringBuilder toolDescriptions = new StringBuilder();
-
-            for(ToolRef tool : tools.values())
-            {
-                if(tool == null)
-                    continue;
-
-                ToolSpecification spec = tool.spec();
-
-                toolDescriptions.append("- ").append(spec.name());
-
-                if(spec.description() != null && !spec.description().isBlank())
-                {
-                    toolDescriptions.append(": ").append(spec.description());
-                }
-
-                toolDescriptions.append("\n");
-            }
+            
 
             String prompt = """
                 Select the most promising intention for the following goal.
@@ -904,7 +978,7 @@ public class LlmReasoner implements IReasoner
                 """.formatted(
                     formatContext(goal.getGoal().getModel(), beliefs),
                     formatGoal(goal),
-                    toolDescriptions.toString(),
+                    formatTools(agent),
                     candidates);
 
             ce = new ReasoningEntry(idcnt++, System.currentTimeMillis(), "selectIntention", prompt, 
@@ -990,8 +1064,9 @@ public class LlmReasoner implements IReasoner
         return ret;
     }
 
+   
     @Override
-    public IFuture<Plan> generatePlan(RIntention in, Map<String, Object> beliefs)
+    public IFuture<Plan> generateStrategicPlan(RIntention in, Map<String, Object> beliefs)
     {
         Future<Plan> ret = new Future<>();
 
@@ -1000,27 +1075,6 @@ public class LlmReasoner implements IReasoner
         try
         {
             IComponent agent = IComponentManager.get().getCurrentComponent();
-
-            StringBuilder toolDescriptions = new StringBuilder();
-
-            Map<String, ToolRef> tools = LlmHelper.findTools(agent, null);
-
-            for(ToolRef tool : tools.values())
-            {
-                if(tool == null)
-                    continue;
-
-                ToolSpecification spec = tool.spec();
-
-                toolDescriptions.append("- ").append(spec.name()).append("\n");
-
-                if(spec.description() != null && !spec.description().isBlank())
-                {
-                    toolDescriptions.append("  Description: ").append(spec.description()).append("\n");
-                }
-
-                toolDescriptions.append("  Parameters: ").append(JsonHelper.toJson(spec.parameters())).append("\n\n");
-            }
 
             StringBuilder history = new StringBuilder();
 
@@ -1035,218 +1089,357 @@ public class LlmReasoner implements IReasoner
             }
 
             String prompt = """
-            Generate the next concrete executable plan for the following intention.
+            Generate a strategic plan for the following intention.
 
-            Current context:
-            %s
+            The strategic plan describes WHAT the agent needs to do to achieve the
+            intention and the abstract flow of information between the required steps.
 
-            Goal:
-            %s
+            The strategic plan is NOT yet an executable plan.
 
-            Intention:
-            Name: %s
-            Description: %s
+            A later tactical planning phase will transform each strategic step into
+            a concrete executable step. The tactical planner will determine how each
+            input is obtained from the current context and how each output is stored.
 
-            Previously attempted plans:
-            %s
+            Therefore, the strategic plan must NOT contain concrete context mappings.
 
-            The plan must be a strictly linear sequence of executable steps.
-            Steps are executed from first to last.
+            Do not use context references such as:
 
-            Available step types are:
+                goal.<value>
+                belief.<value>
+                plan.<value>
 
-            1. Tool step
+            Instead, inputs and outputs must use semantic value names only.
+            
+            Generate a strategic plan consisting of:
 
-            A tool step invokes an available tool.
+            1. Plan metadata
+            - name
+            - description
 
-            The toolname must be the exact name of an available tool.
+            2. A strictly sequential list of strategic steps.
 
-            The mapping maps tool argument names to values available in the plan context.
-            The value referenced by a context name must already exist in the context,
-            either as a current belief or goal parameter, or as the result of an earlier
-            plan step.
+            The plan name and description describe the overall approach to achieving
+            the intention. They must not merely repeat the intention itself.
 
-            The mapping has the following meaning:
-
-                "toolArgumentName": "contextName"
-
-            For example:
-
-                {
-                    "type": "tool",
-                    "toolname": "buyTrainTicket",
-                    "mapping": {
-                        "connection": "selectedConnection",
-                        "account": "account"
-                    },
-                    "resultmapping": "ticket"
-                }
-
-            The tool argument names must match the actual tool signature.
-            Do not invent argument names such as "arg0", "arg1", etc.
-            Use the semantic parameter names exposed by the tool.
-
-            Store the tool result under resultmapping if a later step needs it.
-            Use null if the result is not needed later.
-
-            2. Reasoning step
-
-            A reasoning step asks the reasoner to perform a specific cognitive
-            operation using the current plan context.
-
-            Use reasoning steps when a decision, selection, computation, or explanation
-            is required to determine how the next steps should proceed.
-
-            The problem must clearly describe the concrete question or task to solve
-            and explicitly identify which information from the current context should
-            be considered.
-
-            Reasoning types:
-
-            BOOLEAN:
-                Determine whether a condition is true or false.
-
-            SELECTION:
-                Select one item from the provided context.
-                The result should identify the selected item or its index as requested
-                by the problem.
-
-            COMPUTATION:
-                Calculate a numeric result from the provided context.
-
-            EXPLANATION:
-                Produce a textual result explaining or summarizing information.
-
-            A reasoning step may use results produced by previous tool or reasoning
-            steps.
-
-            For example:
-
-                {
-                    "type": "reasoning",
-                    "reasoningType": "SELECTION",
-                    "problem": "Select the train connection that best satisfies the user's
-                    goal. Consider departure time, arrival time, duration and price.
-                    Return the selected connection.",
-                    "resultmapping": "selectedConnection"
-                }
-
-            3. Subgoal step
-
-            A subgoal delegates a meaningful intermediate goal to another BDI goal.
-
-            Use a subgoal only when an independently meaningful intermediate state
-            must be established before the remaining plan can succeed.
-
-            Do not use a subgoal merely to group tool calls or to make the plan look
-            structured.
+            Each strategic step describes one meaningful operation within the plan.
 
             ------------------------------------------------------------
-            PLAN CONSTRUCTION RULES
+            GOAL
             ------------------------------------------------------------
 
-            1. Every step must have a concrete purpose.
+            %s
 
-            Every step must contribute directly to achieving the intention or provide
-            information that is actually required by a later step.
+            ------------------------------------------------------------
+            INTENTION
+            ------------------------------------------------------------
 
-            Never add a tool call merely because its information might be useful.
+            Name:
+            %s
 
-            For example, if the plan retrieves an account balance, the result must be
-            used by a later step to make a decision or otherwise affect execution.
-            Otherwise the step should not exist.
+            Description:
+            %s
 
-            2. Steps must be logically connected.
+            ------------------------------------------------------------
+            CURRENT BELIEFS
+            ------------------------------------------------------------
 
-            The output of an earlier step should normally be consumed by a later step
-            when that output is necessary for continuing the plan.
+            %s
 
-            A good plan forms a dependency chain such as:
+            ------------------------------------------------------------
+            AVAILABLE TOOLS
+            ------------------------------------------------------------
 
-                tool -> reasoning -> tool -> tool
+            %s
 
-            or:
+            ------------------------------------------------------------
+            AVAILABLE GOALS
+            ------------------------------------------------------------
 
-                tool -> reasoning -> reasoning -> tool
+            %s
 
-            Avoid independent steps that have no effect on subsequent execution.
+            ------------------------------------------------------------
+            PREVIOUSLY ATTEMPTED PLANS
+            ------------------------------------------------------------
 
-            3. Prefer reasoning over implicit LLM decisions.
+            %s
 
-            If execution requires choosing between alternatives, evaluating information,
-            determining whether a condition is satisfied, or calculating a value,
-            represent this explicitly as a reasoning step.
+            ------------------------------------------------------------
+            STRATEGIC PLAN
+            ------------------------------------------------------------
 
-            Do not hide such decisions inside the description of a tool call.
+            Generate a strictly sequential list of strategic steps.
 
-            4. Prefer concrete executable values.
+            Each step must contain:
 
-            If a previous step produces an object that a later tool requires, pass that
-            object directly through the mapping.
+            - name
+            - description
+            - type
+            - inputs
+            - outputs
 
-            For example, if getTrainConnectionInfo produces a TripInfo object and
-            buyTrainTicket requires a TripInfo object, the plan should use:
+            The type must be one of:
 
-                "resultmapping": "connections"
+                TOOL
+                REASONING
+                SUBGOAL
 
-            followed by:
+            The name identifies the capability or operation represented by the step.
 
-                "mapping": {
-                    "connection": "connections"
-                }
+            For a TOOL step, the name MUST be the exact name of an available tool.
 
-            If a reasoning step selects one connection, it may produce:
+            For a SUBGOAL step, the name MUST identify the available goal being
+            delegated to.
 
-                "resultmapping": "selectedConnection"
+            For a REASONING step, the name should concisely identify the cognitive
+            operation being performed.
 
-            which can then be passed directly to buyTrainTicket.
+            ------------------------------------------------------------
+            TOOL STEPS
+            ------------------------------------------------------------
 
-            Do not convert an object into an artificial index or reconstruct an object
-            from unrelated fields unless the tool explicitly requires that.
+            A TOOL step represents an invocation of an available tool.
 
-            5. Use current beliefs and goal parameters as initial context.
+            The tool must actually exist in the available tools.
 
-            The plan starts with all values contained in the current context.
-            These values can be used directly by plan steps.
+            The inputs must contain the semantic parameter names required by the tool.
 
-            Do not assume that every context value is a model belief.
-            Context may also contain goal parameters or results produced by earlier
-            reasoning or plan execution.
+            Use the actual parameter names from the tool specification.
 
-            6. Do not retrieve information that is not needed.
+            Do not invent parameter names.
 
-            Every information-gathering step must have a clear downstream purpose.
+            The outputs must contain the meaningful values produced by the tool that
+            are required by later steps or are necessary for achieving the intention.
 
-            7. Keep the plan as short as reasonably possible.
+            Do not list every technically returned value if it is not relevant to the
+            plan.
 
-            Do not add unnecessary verification, repeated tool calls, or reasoning steps.
+            A tool step must be achievable using the specified tool and its available
+            parameters.
 
-            8. No branching, loops, or parallel execution.
+            ------------------------------------------------------------
+            REASONING STEPS
+            ------------------------------------------------------------
 
-            The plan is strictly sequential.
+            A REASONING step represents an explicit cognitive operation required by
+            the plan.
 
-            9. The plan must be executable with the available tools and context.
+            Use reasoning steps when the plan requires:
 
-            Do not reference values that do not exist and cannot be produced by an
-            earlier step.
+            - making a decision
+            - selecting between alternatives
+            - evaluating information
+            - calculating a value
+            - transforming information
+            - interpreting information
+            - determining whether a condition is satisfied
 
-            10. Consider failure realistically.
+            The inputs identify the information required by the reasoning operation.
 
-            Do not assume that a tool succeeds merely because it is available.
-            If a tool may fail because a prerequisite is missing, use a reasoning step
-            when the necessary information is available to determine an appropriate
-            choice or action.
+            The outputs identify the result produced by the reasoning operation.
 
-            Generate the most concrete and coherent plan possible.
+            Important decisions should be represented explicitly as reasoning steps
+            rather than being hidden inside descriptions of other steps.
 
-            Return only the requested structured data. Do not include any additional
-            text or Markdown.
+            ------------------------------------------------------------
+            SUBGOAL STEPS
+            ------------------------------------------------------------
+
+            A SUBGOAL step delegates a meaningful intermediate objective to an
+            available BDI goal.
+
+            Use a subgoal only when the intermediate objective is independently
+            meaningful or represents a useful state that must be established before
+            the remaining plan can succeed.
+
+            Do not use subgoals merely to group several actions.
+
+            The inputs identify information required by the subgoal.
+
+            The outputs identify information or state produced by the subgoal that is
+            required by subsequent steps.
+
+            ------------------------------------------------------------
+            ABSTRACT DATA FLOW
+            ------------------------------------------------------------
+
+            The strategic plan is a strictly sequential data-flow plan.
+
+            An output produced by one step becomes available to subsequent steps.
+
+            If a later step requires a value produced by an earlier step, the later
+            step must reference that value using exactly the same semantic name.
+
+            Every input must have a possible source.
+
+            An input must either:
+
+            1. represent information that can initially be obtained from the goal or
+            current agent state, or
+            2. be produced as an output of an earlier step.
+
+            A step must never depend on an output produced by a later step.
+
+            The data flow must therefore be internally consistent.
+
+            Do not introduce an input for which there is no plausible source.
+
+            Do not introduce an output that is never used unless it represents a
+            meaningful result required for achieving the intention.
+
+            ------------------------------------------------------------
+            INPUT AND OUTPUT NAMES
+            ------------------------------------------------------------
+
+            Inputs and outputs represent semantic values, not runtime locations.
+
+            Do not encode their scope.
+
+            Never use names such as:
+
+                goal.destination
+                belief.location
+                plan.result
+
+            Use semantic names only.
+
+            The tactical planner is responsible for determining whether a value comes
+            from:
+
+            - a goal parameter
+            - an agent belief
+            - a result produced by an earlier step
+
+            The strategic planner must not make that decision.
+
+            The same semantic value must keep the same name throughout the plan.
+
+            Do not rename a value between steps unless the value itself changes.
+
+            ------------------------------------------------------------
+            PLAN REALISM
+            ------------------------------------------------------------
+
+            The plan must be realistic with respect to the capabilities available to
+            the agent.
+
+            Every TOOL step must reference an actually available tool.
+
+            Every SUBGOAL step must reference an actually available goal.
+
+            Do not invent tools, goals, capabilities, or operations.
+
+            Every REASONING step must represent a cognitive operation that can actually
+            be performed by the available reasoning mechanism.
+
+            Do not assume that arbitrary external actions are possible unless an
+            available capability provides them.
+
+            ------------------------------------------------------------
+            PLAN CONSTRUCTION
+            ------------------------------------------------------------
+
+            The plan should describe the smallest coherent sequence of actions required
+            to achieve the intention.
+
+            Do not add steps merely because their information could potentially be
+            useful.
+
+            Every step must have a concrete purpose.
+
+            Prefer direct data flow between steps.
+
+            Avoid unnecessary intermediate values.
+
+            Avoid redundant tool calls.
+
+            Avoid unnecessary verification steps.
+
+            If a decision is necessary, represent it explicitly.
+
+            If information must be obtained before a later decision or action, include
+            the corresponding information-gathering step.
+
+            If an existing output can be used directly by a later step, do not introduce
+            an unnecessary transformation.
+
+            The plan must form a coherent progression from the current situation toward
+            the intended result.
+
+            ------------------------------------------------------------
+            STRATEGIC VS. TACTICAL PLANNING
+            ------------------------------------------------------------
+
+            Strategic planning determines:
+
+                what needs to be done
+                which capabilities are required
+                in which order they are required
+                what information flows between the steps
+
+            Tactical planning determines:
+
+                where each input value comes from
+                which concrete goal or belief value satisfies an input
+                where each output is stored
+                how concrete runtime values are mapped to step parameters
+
+            Therefore, do NOT perform tactical planning here.
+
+            Do not generate:
+
+                tool mappings
+                result mappings
+                concrete context references
+                concrete runtime values
+                goal/belief/plan prefixes
+
+            The strategic plan must nevertheless contain enough information for a
+            tactical planner to determine a concrete implementation of every step.
+
+            ------------------------------------------------------------
+            PLAN QUALITY REQUIREMENTS
+            ------------------------------------------------------------
+
+            A high-quality strategic plan must satisfy all of the following:
+
+            1. It directly addresses the intention.
+
+            2. Every step has a concrete purpose.
+
+            3. Every step uses an available capability.
+
+            4. Every input has a plausible source.
+
+            5. Every dependency refers only to an earlier step or to initial state.
+
+            6. Every relevant output has a meaningful purpose.
+
+            7. The abstract data flow is internally consistent.
+
+            8. The sequence contains no unnecessary steps.
+
+            9. The plan contains no branching, loops, or parallel execution.
+
+            10. The plan does not contain tactical mappings.
+
+            11. The plan is concrete enough to be transformed into executable steps.
+
+            12. The plan should not rely on capabilities that are not represented by
+                the available tools, goals, or reasoning mechanism.
+
+            Generate the most appropriate strategic plan for the given intention.
+
+            Return only the requested structured data.
+            Do not include explanations, Markdown, or any additional text.
             """.formatted(
-                formatContext(in.getIntention().getModel(), beliefs),
                 formatGoal(in.getGoal()),
                 in.getIntention().getName(),
                 in.getIntention().getDescription(),
-                history.length() == 0 ? "None" : history.toString());
+                formatContext(in.getIntention().getModel(), beliefs),
+                formatTools(agent),
+                formatGoals(in.getIntention().getModel()),
+                history.length() == 0 ? "None" : history.toString()
+            );
 
 
             //System.out.println("generate plan: "+prompt);
@@ -1260,107 +1453,52 @@ public class LlmReasoner implements IReasoner
             "type": "object",
             "properties": {
                 "name": {
-                "type": "string"
+                    "type": "string"
                 },
                 "description": {
-                "type": "string"
+                    "type": "string"
                 },
-                "planBody": {
+                "steps": {
                 "type": "array",
                 "items": {
-                    "oneOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["tool"]
-                        },
-                        "toolname": {
-                            "type": "string"
-                        },
-                        "mapping": {
-                            "type": "object",
-                            "additionalProperties": {
-                            "type": "string"
-                            }
-                        },
-                        "resultmapping": {
-                            "type": ["string", "null"]
-                        }
-                        },
-                        "required": [
-                        "type",
-                        "toolname",
-                        "mapping",
-                        "resultmapping"
-                        ],
-                        "additionalProperties": false
+                    "type": "object",
+                    "properties": {
+                    "name": {
+                        "type": "string"
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["reasoning"]
-                        },
-                        "reasoningType": {
-                            "type": "string",
-                            "enum": [
-                            "BOOLEAN",
-                            "SELECTION",
-                            "COMPUTATION",
-                            "EXPLANATION"
-                            ]
-                        },
-                        "problem": {
-                            "type": "string"
-                        },
-                        "resultmapping": {
-                            "type": "string"
-                        }
-                        },
-                        "required": [
-                        "type",
-                        "reasoningType",
-                        "problem",
-                        "resultmapping"
-                        ],
-                        "additionalProperties": false
+                    "description": {
+                        "type": "string"
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["subgoal"]
-                        },
-                        "goal": {
-                            "type": "string"
-                        },
-                        "requiredState": {
-                            "type": "string"
-                        },
-                        "description": {
-                            "type": "string"
+                    "type": {
+                        "type": "string",
+                        "enum": ["TOOL", "REASONING", "SUBGOAL"]
+                    },
+                    "inputs": {
+                        "type": "array",
+                        "items": {
+                        "type": "string"
                         }
-                        },
-                        "required": [
-                        "type",
-                        "goal",
-                        "requiredState",
-                        "description"
-                        ],
-                        "additionalProperties": false
+                    },
+                    "outputs": {
+                        "type": "array",
+                        "items": {
+                        "type": "string"
+                        }
                     }
-                    ]
+                    },
+                    "required": [
+                    "name",
+                    "description",
+                    "type",
+                    "inputs",
+                    "outputs"
+                    ],
+                    "additionalProperties": false
                 }
                 }
             },
             "required": [
-                "name",
-                "description",
-                "planBody"
+                "steps"
             ],
             "additionalProperties": false
             }
@@ -1368,7 +1506,7 @@ public class LlmReasoner implements IReasoner
 
             String text = ask(prompt, schema);
 
-            System.out.println("generated plan: "+text);
+            //System.out.println("generated strategic plan: "+text);
 
             JsonValue val = parseJson(text);
 
@@ -1381,164 +1519,108 @@ public class LlmReasoner implements IReasoner
                 JsonObject obj = val.asObject();
 
                 String name = obj.getString("name", null);
-
                 String description = obj.getString("description", null);
 
                 if(name == null || name.isBlank())
                 {
-                    ret.setException(new RuntimeException("LLM generated plan without name"));
+                    ret.setException(new RuntimeException("LLM generated strategic plan without name"));
                     return ret;
                 }
 
                 if(description == null || description.isBlank())
                 {
-                    ret.setException(new RuntimeException("LLM generated plan without description"));
+                    ret.setException(new RuntimeException("LLM generated strategic plan without description"));
                     return ret;
                 }
 
-                JsonValue bodyval = obj.get("planBody");
+                JsonValue stepsval = obj.get("steps");
 
-                if(bodyval == null || !bodyval.isArray())
+                if(stepsval == null || !stepsval.isArray())
                 {
-                     ret.setException(new RuntimeException("LLM generated plan without planBody"));
-                     return ret;
+                    ret.setException(new RuntimeException("LLM generated strategic plan without steps"));
+                    return ret;
                 }
+
+                List<StrategicStep> steps = new ArrayList<>();
+
+                for(JsonValue stepval : stepsval.asArray())
+                {
+                    if(!stepval.isObject())
+                    {
+                        ret.setException(new RuntimeException("Strategic plan contains invalid step"));
+                        return ret;
+                    }
+
+                    JsonObject step = stepval.asObject();
+
+                    String stepname = step.getString("name", null);
+                    String stepdescription = step.getString("description", null);
+                    String typestr = step.getString("type", null);
+
+                    if(stepname == null || stepname.isBlank())
+                    {
+                        ret.setException(new RuntimeException("Strategic step without name"));
+                        return ret;
+                    }
+
+                    if(stepdescription == null || stepdescription.isBlank())
+                    {
+                        ret.setException(new RuntimeException(
+                            "Strategic step '" + stepname + "' without description"));
+                        return ret;
+                    }
+
+                    if(typestr == null || typestr.isBlank())
+                    {
+                        ret.setException(new RuntimeException(
+                            "Strategic step '" + stepname + "' without type"));
+                        return ret;
+                    }
+
+                    StrategicPlan.StepType type;
+
+                    try
+                    {
+                        type = StrategicPlan.StepType.valueOf(typestr.toUpperCase());
+                    }
+                    catch(IllegalArgumentException e)
+                    {
+                        ret.setException(new RuntimeException("Unknown strategic step type: " + typestr, e));
+                        return ret;
+                    }
+
+                    List<String> inputs = readStringArray(step.get("inputs"));
+                    if(inputs == null)
+                    {
+                        ret.setException(new RuntimeException("Strategic step '" + stepname + "' without valid inputs"));
+                        return ret;
+                    }
+
+                    List<String> outputs = readStringArray(step.get("outputs"));
+                    if(outputs == null)
+                    {
+                        ret.setException(new RuntimeException("Strategic step '" + stepname + "' without valid outputs"));
+                        return ret;
+                    }
+
+                    steps.add(new StrategicStep(stepname, stepdescription, type, inputs, outputs));
+                }
+
+                StrategicPlan splan = new StrategicPlan(steps);
 
                 Plan plan = new Plan(name, description, in.getIntention(), getModel());
 
-                SequentialPlanBody body = new SequentialPlanBody();
+                plan.setStrategicPlan(splan);
 
-                for(JsonValue stepval : bodyval.asArray())
-                {
-                    JsonObject step = stepval.asObject();
+                ReasoningEntry entry = new ReasoningEntry(ce.id(), ce.timestamp(), ce.method(), ce.prompt(),
+                    text, System.currentTimeMillis() - ce.timestamp(), true, in.getGoal(), in.getIntention());
 
-                    String type = step.getString("type", null);
-
-                    if("tool".equalsIgnoreCase(type))
-                    {
-                        String toolname = step.getString("toolname", null);
-
-                        if(toolname == null || toolname.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Tool step without toolname"));
-                            return ret;
-                        }
-
-                        Map<String, String> mapping = new LinkedHashMap<>();
-
-                        JsonValue mappingval = step.get("mapping");
-
-                        if(mappingval != null && mappingval.isObject())
-                        {
-                            JsonObject mappingobj = mappingval.asObject();
-
-                            for(String parameter : mappingobj.names())
-                            {
-                                String planParameter = mappingobj.getString(parameter, null);
-
-                                if(planParameter == null || planParameter.isBlank())
-                                {
-                                    ret.setException(new RuntimeException("Invalid mapping for tool '" +toolname + "'"));
-                                    return ret;
-                                }
-
-                                mapping.put(parameter, planParameter);
-                            }
-                        }
-
-                        String resultmapping = null;
-                        JsonValue resultmappingval = step.get("resultmapping");
-                        if(resultmappingval != null)
-                        {
-                            if(resultmappingval.isString())
-                            {
-                                resultmapping = resultmappingval.asString();
-                            }
-                            else if(!resultmappingval.isNull())
-                            {
-                                ret.setException(new RuntimeException("Invalid resultmapping for tool '" + toolname + "'"));
-                                return ret;
-                            }
-                        }
-
-                        body.addStep(new ToolCallStep(toolname, mapping, resultmapping));
-                    }
-                    else if("subgoal".equalsIgnoreCase(type))
-                    {
-                        String goal = step.getString("goal", null);
-
-                        String requiredState = step.getString("requiredState", null);
-
-                        String stepDescription = step.getString("description", null);
-
-                        if(goal == null || goal.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Subgoal step without goal"));
-                            return ret;
-                        }
-                        if(stepDescription == null || stepDescription.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Subgoal step without description"));
-                            return ret;
-                        }
-
-                        body.addStep(new SubgoalStep(goal));
-                    }
-                    else if("reasoning".equalsIgnoreCase(type))
-                    {
-                        String reasoningType = step.getString("reasoningType", null);
-                        String problem = step.getString("problem", null);
-                        String resultmapping = step.getString("resultmapping", null);
-
-                        if(reasoningType == null || reasoningType.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Reasoning step without reasoningType"));
-                            return ret;
-                        }
-
-                        if(problem == null || problem.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Reasoning step without problem"));
-                            return ret;
-                        }
-
-                        if(resultmapping == null || resultmapping.isBlank())
-                        {
-                            ret.setException(new RuntimeException("Reasoning step without resultmapping"));
-                            return ret;
-                        }
-
-                        ReasoningType typeEnum;
-
-                        try
-                        {
-                            typeEnum = ReasoningType.valueOf(reasoningType.toUpperCase());
-                        }
-                        catch(IllegalArgumentException e)
-                        {
-                            ret.setException(new RuntimeException("Unknown reasoning type: " + reasoningType, e));
-                            return ret;
-                        }
-
-                        body.addStep(new ReasoningStep(problem, typeEnum, resultmapping));
-                    }
-                    else
-                    {
-                        ret.setException(new RuntimeException("Unknown plan body step type: " + type));
-                        return ret;
-                    }
-                }
-
-                plan.setBody(body);
-
-                //System.out.println("generated plan: " + name + " " + description);
-
-                ReasoningEntry entry = new ReasoningEntry(ce.id(), ce.timestamp(), ce.method(), ce.prompt(), text, System.currentTimeMillis() -
-                    ce.timestamp(), true, in.getGoal(), in.getIntention());
                 removeReasoningEntry(entry);
                 addHistoryEntry(entry);
 
                 ret.setResult(plan);
+
+                //System.out.println("generated plan: " + name + " " + description);
             }
         }
         catch(Exception e)
@@ -1559,6 +1641,525 @@ public class LlmReasoner implements IReasoner
 
         return ret;
     }
+
+    @Override
+    public IFuture<IPlanStep> generatePlanStep(RPlan plan, StrategicStep step, Map<String, Object> context)
+    {
+        Future<IPlanStep> ret = new Future<>();
+
+        ReasoningEntry ce = null;
+
+        try
+        {
+            IComponent agent = IComponentManager.get().getCurrentComponent();
+
+            String prompt = """
+            Generate exactly one concrete executable plan step for the given
+            strategic plan step.
+
+            The strategic step describes WHAT should be accomplished.
+            Your task is to determine HOW this particular step can be executed
+            using the available capabilities and the current context.
+
+            Do not generate additional steps.
+            Do not plan future strategic steps.
+
+            ------------------------------------------------------------
+            STRATEGIC STEP
+            ------------------------------------------------------------
+
+            Name:
+            %s
+
+            Description:
+            %s
+
+            Type:
+            %s
+
+            Inputs:
+            %s
+
+            Outputs:
+            %s
+
+            ------------------------------------------------------------
+            CURRENT CONTEXT
+            ------------------------------------------------------------
+
+            The context contains all values currently available to this plan.
+
+            %s
+
+            ------------------------------------------------------------
+            AVAILABLE TOOLS
+            ------------------------------------------------------------
+
+            %s
+
+            ------------------------------------------------------------
+            AVAILABLE GOALS
+            ------------------------------------------------------------
+
+            %s
+
+            ------------------------------------------------------------
+            CONTEXT SCOPES
+            ------------------------------------------------------------
+
+            Every context value belongs to exactly one scope.
+
+            GOAL:
+                goal.<name>
+
+            These are parameters of the currently pursued goal.
+            They are existing input values and must not be modified by
+            ordinary plan steps.
+
+            BELIEF:
+                belief.<name>
+
+            These are current beliefs of the agent.
+            They are existing state or knowledge and may be used as inputs.
+
+            PLAN:
+                plan.<name>
+
+            These are values produced by previously executed plan steps.
+            They are intermediate values available to subsequent steps.
+
+            The scope prefix is part of the context identifier.
+
+            Therefore:
+
+                destination
+
+            is NOT a valid context reference.
+
+            Valid references are for example:
+
+                goal.destination
+                belief.destination
+                plan.destination
+
+            Never omit the scope prefix.
+
+            ------------------------------------------------------------
+            INPUT MAPPING
+            ------------------------------------------------------------
+
+            Every input required by the strategic step must be mapped to
+            an existing value in the current context.
+
+            Mapping values MUST use one of these forms:
+
+                goal.<name>
+                belief.<name>
+                plan.<name>
+
+            Example:
+
+                "mapping": {
+                    "inputA": "goal.someParameter",
+                    "inputB": "belief.someBelief",
+                    "inputC": "plan.previousResult"
+                }
+
+            The referenced value must actually exist in the current context.
+
+            Do not invent context values.
+
+            If the same semantic value exists in multiple scopes, choose the
+            value that is appropriate for the strategic input based on its
+            meaning and type.
+
+            Do not copy or reconstruct values unnecessarily.
+            If an existing context value already has the required object or
+            data type, reference that value directly.
+
+            ------------------------------------------------------------
+            OUTPUT MAPPING
+            ------------------------------------------------------------
+
+            Outputs of the strategic step are values that become available
+            to subsequent plan steps.
+
+            Newly produced intermediate values MUST be stored in the PLAN scope.
+
+            Therefore a result mapping must use:
+
+                plan.<outputName>
+
+            The output name should normally be exactly the output name specified
+            by the strategic step.
+
+            For example, if the strategic step specifies:
+
+                Outputs:
+                    result
+
+            then the concrete step should normally use:
+
+                "resultmapping": "plan.result"
+
+            Do not store newly generated plan results in the goal or belief scope.
+
+            Goal parameters and beliefs are existing values, not ordinary
+            destinations for step results.
+
+            ------------------------------------------------------------
+            STEP TYPE
+            ------------------------------------------------------------
+
+            The concrete step MUST have exactly the same type as the strategic
+            step.
+
+            Strategic type TOOL:
+                Generate one tool step.
+
+            Strategic type REASONING:
+                Generate one reasoning step.
+
+            Strategic type SUBGOAL:
+                Generate one subgoal step.
+
+            Do not change the strategic type.
+
+            ------------------------------------------------------------
+            TOOL STEPS
+            ------------------------------------------------------------
+
+            For a TOOL strategic step:
+
+            - Select an available tool that can perform the required operation.
+            - The tool name must exactly match an available tool.
+            - The tool parameters must exactly match the tool signature.
+            - Map the required tool parameters to existing context values.
+            - Every mapping value must use an explicit scope prefix.
+            - Do not invent parameters such as arg0, arg1, etc.
+            - If the tool produces the required strategic output, store it using
+            the corresponding plan.<outputName> result mapping.
+            - If the tool does not return a result that needs to be retained,
+            resultmapping may be null.
+
+            Do not add another tool call to compensate for missing information.
+            This step represents exactly one operation.
+
+            ------------------------------------------------------------
+            REASONING STEPS
+            ------------------------------------------------------------
+
+            For a REASONING strategic step:
+
+            - Choose the appropriate reasoning type.
+            - Use only information available in the current context.
+            - Explicitly describe the required reasoning operation in the problem.
+            - Store the result under the corresponding plan.<outputName>.
+            - Do not perform additional reasoning operations.
+
+            Reasoning types are:
+
+            BOOLEAN:
+                Determine whether a condition is true or false.
+
+            SELECTION:
+                Select an item from the provided context.
+
+            COMPUTATION:
+                Calculate a value from the provided context.
+
+            EXPLANATION:
+                Produce a textual explanation or summary.
+
+            ------------------------------------------------------------
+            SUBGOAL STEPS
+            ------------------------------------------------------------
+
+            For a SUBGOAL strategic step:
+
+            - Select an available goal that can accomplish the strategic operation.
+            - The goal name must exactly match an available goal.
+            - Provide the required goal parameter mappings.
+            - Map goal parameters from existing context values where necessary.
+            - Do not invent parameter values.
+
+            ------------------------------------------------------------
+            GENERAL RULES
+            ------------------------------------------------------------
+
+            Generate exactly ONE concrete executable step.
+
+            The step must directly implement the given strategic step.
+
+            Do not implement any other strategic step.
+
+            Do not introduce unnecessary operations.
+
+            Do not invent missing context values.
+
+            Do not invent tools or goals.
+
+            Do not omit required inputs.
+
+            Prefer existing context objects directly over reconstructing them.
+
+            The generated step must be executable with the supplied context
+            and available capabilities.
+
+            Return only the requested structured data.
+            Do not include Markdown or additional explanatory text.
+            """.formatted(
+                step.getName(),
+                step.getDescription(),
+                step.getType(),
+                formatValues(step.getInputs()),
+                formatValues(step.getOutputs()),
+                formatContext(plan.getPlan().getModel(), context),
+                formatTools(agent),
+                formatGoals(plan.getPlan().getModel())
+            );
+
+            ce = new ReasoningEntry(idcnt++, System.currentTimeMillis(), "generatePlanStep",
+                prompt, null, -1, false, plan.getIntention().getGoal(), plan.getPlan().getIntention());
+
+            addReasoningEntry(ce);
+
+            String schema = """
+            {
+            "type": "object",
+            "properties": {
+                "type": {
+                "type": "string",
+                "enum": ["tool", "reasoning", "subgoal"]
+                },
+                "toolname": {
+                "type": ["string", "null"]
+                },
+                "mapping": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                }
+                },
+                "reasoningType": {
+                "type": ["string", "null"],
+                "enum": [
+                    "BOOLEAN",
+                    "SELECTION",
+                    "COMPUTATION",
+                    "EXPLANATION",
+                    null
+                ]
+                },
+                "problem": {
+                "type": ["string", "null"]
+                },
+                "goal": {
+                "type": ["string", "null"]
+                },
+                "resultmapping": {
+                "type": ["string", "null"]
+                }
+            },
+            "required": [
+                "type",
+                "toolname",
+                "mapping",
+                "reasoningType",
+                "problem",
+                "goal",
+                "resultmapping"
+            ],
+            "additionalProperties": false
+            }
+            """;
+
+            String text = ask(prompt, schema);
+
+            JsonObject res = parseJson(text).asObject();
+
+            if(res == null || res.isNull())
+            {
+                ret.setException(new RuntimeException(
+                    "LLM generated no plan step"));
+                return ret;
+            }
+
+            String type = res.getString("type", null);
+
+            if(type == null || type.isBlank())
+            {
+                ret.setException(new RuntimeException("LLM generated plan step without type"));
+                return ret;
+            }
+
+            // The tactical planner must not change the strategic operation type.
+            if(!step.getType().name().equalsIgnoreCase(type))
+            {
+                ret.setException(new RuntimeException("Generated step type '" + type+ "' does not match strategic step type '"+ step.getType() + "'"));
+                return ret;
+            }
+
+            IPlanStep result;
+
+            if("tool".equalsIgnoreCase(type))
+            {
+                String toolname = res.getString("toolname", null);
+
+                if(toolname == null || toolname.isBlank())
+                {
+                    ret.setException(new RuntimeException("Tool step without toolname"));
+                    return ret;
+                }
+
+                Map<String, String> mapping = new LinkedHashMap<>();
+
+                JsonValue mappingval = res.get("mapping");
+
+                if(mappingval == null || !mappingval.isObject())
+                {
+                    ret.setException(new RuntimeException("Tool step without valid mapping"));
+                    return ret;
+                }
+
+                JsonObject mappingobj = mappingval.asObject();
+
+                for(String parameter : mappingobj.names())
+                {
+                    String contextName = mappingobj.getString(parameter, null);
+
+                    if(contextName == null || contextName.isBlank())
+                    {
+                        ret.setException(new RuntimeException("Invalid mapping for tool '" + toolname + "'"));
+                        return ret;
+                    }
+
+                    // Context references must explicitly specify their scope.
+                    if(!contextName.startsWith("goal.") && !contextName.startsWith("belief.") && !contextName.startsWith("plan."))
+                    {
+                        ret.setException(new RuntimeException("Context reference '" + contextName + "' has no valid scope prefix"));
+                        return ret;
+                    }
+
+                    mapping.put(parameter, contextName);
+                }
+
+                String resultmapping = null;
+
+                JsonValue resultmappingval = res.get("resultmapping");
+
+                if(resultmappingval != null)
+                {
+                    if(resultmappingval.isString())
+                    {
+                        resultmapping = resultmappingval.asString();
+
+                        /*if(!resultmapping.startsWith("plan."))
+                        {
+                            ret.setException(new RuntimeException("Result mapping '" + resultmapping + "' must use the plan. scope"));
+                            return ret;
+                        }*/
+                    }
+                    else if(!resultmappingval.isNull())
+                    {
+                        ret.setException(new RuntimeException("Invalid resultmapping for tool '"+ toolname + "'"));
+                        return ret;
+                    }
+                }
+
+                result = new ToolCallStep(toolname, mapping, resultmapping);
+            }
+            else if("reasoning".equalsIgnoreCase(type))
+            {
+                String reasoningType = res.getString("reasoningType", null);
+
+                String problem = res.getString("problem", null);
+
+                String resultmapping = res.getString("resultmapping", null);
+
+                if(reasoningType == null || reasoningType.isBlank())
+                {
+                    ret.setException(new RuntimeException("Reasoning step without reasoningType"));
+                    return ret;
+                }
+
+                if(problem == null || problem.isBlank())
+                {
+                    ret.setException(new RuntimeException("Reasoning step without problem"));
+                    return ret;
+                }
+
+                if(resultmapping == null || resultmapping.isBlank())
+                {
+                    ret.setException(new RuntimeException("Reasoning step without resultmapping"));
+                    return ret;
+                }
+
+                /*if(!resultmapping.startsWith("plan."))
+                {
+                    ret.setException(new RuntimeException("Reasoning resultmapping '" + resultmapping+ "' must use the plan. scope"));
+                    return ret;
+                }*/
+
+                ReasoningType stype;
+
+                try
+                {
+                    stype = ReasoningType.valueOf(reasoningType.toUpperCase());
+                }
+                catch(IllegalArgumentException e)
+                {
+                    ret.setException(new RuntimeException("Unknown reasoning type: " + reasoningType, e));
+                    return ret;
+                }
+
+                result = new ReasoningStep(problem, stype, resultmapping);
+            }
+            else if("subgoal".equalsIgnoreCase(type))
+            {
+                String goal = res.getString("goal", null);
+
+                if(goal == null || goal.isBlank())
+                {
+                    ret.setException(new RuntimeException("Subgoal step without goal"));
+                    return ret;
+                }
+
+                result = new SubgoalStep(goal);
+            }
+            else
+            {
+                ret.setException(new RuntimeException("Unknown plan step type: " + type));
+                return ret;
+            }
+
+            ReasoningEntry entry = new ReasoningEntry(ce.id(), ce.timestamp(), ce.method(), ce.prompt(),
+                text, System.currentTimeMillis() - ce.timestamp(), true, plan.getIntention().getGoal(),
+                plan.getIntention().getIntention());
+
+            removeReasoningEntry(entry);
+            addHistoryEntry(entry);
+
+            ret.setResult(result);
+        }
+        catch(Exception e)
+        {
+            if(ce != null)
+            {
+                ReasoningEntry entry = new ReasoningEntry(ce.id(), ce.timestamp(), ce.method(), ce.prompt(),
+                    null, System.currentTimeMillis() - ce.timestamp(), false, 
+                    plan.getIntention().getGoal(), plan.getIntention().getIntention());
+
+                removeReasoningEntry(entry);
+                addReasoningEntry(entry);
+            }
+
+            ret.setException(e);
+        }
+
+        return ret;
+    }
+
 
 
     @Override

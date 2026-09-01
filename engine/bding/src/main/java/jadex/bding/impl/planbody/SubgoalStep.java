@@ -1,7 +1,6 @@
 package jadex.bding.impl.planbody;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IPlanStep;
