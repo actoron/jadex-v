@@ -417,8 +417,6 @@ public class InspectorPanel extends JPanel
         else
             title = "• Unknown Step";
 
-        addTitle(title);
-
         addSection("Execution");
 
         addField(

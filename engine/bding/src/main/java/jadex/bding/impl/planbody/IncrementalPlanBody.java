@@ -93,6 +93,7 @@ public class IncrementalPlanBody extends ModelElement implements IPlanBody
         }
         catch(Exception e)
         {
+            e.printStackTrace();
             ret.setException(e);
         }
     }

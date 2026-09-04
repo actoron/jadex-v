@@ -20,7 +20,7 @@ public class RIntention extends RIdElement
 
     protected RPlan plan;
 
-    protected PlanHistory history;
+    protected PlanHistory history = new PlanHistory();
 
     public RIntention(Intention intention, RGoal goal) 
     {   

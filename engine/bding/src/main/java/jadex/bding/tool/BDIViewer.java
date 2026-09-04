@@ -5,13 +5,17 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.LayoutManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -43,6 +47,7 @@ import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.bding.impl.planbody.ReasoningStep;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
+import jadex.bding.tool.BDIViewer.FixedHeightPanel;
 import jadex.common.SEmoji;
 import jadex.core.IComponentHandle;
 
@@ -134,9 +139,12 @@ public class BDIViewer extends JFrame
         try
         {
             BDISnapshot newSnapshot = inspector.createSnapshot();
+            //System.out.println("snap: "+newSnapshot);
 
-            //if(!Objects.equals(snapshot, newSnapshot))
+            if(!Objects.equals(snapshot, newSnapshot))
             {
+                //System.out.println("refreshing snap");
+
                 snapshot = newSnapshot;
 
                 treePanel.setSnapshot(snapshot);
@@ -153,6 +161,12 @@ public class BDIViewer extends JFrame
                     }
                 }
             }
+            /*else
+            {
+                System.out.println("bdi snapshots equal ");//clea+snapshot);
+            }*/
+
+            forceRefresh(getContentPane());
         }
         catch(Exception e)
         {
@@ -213,22 +227,15 @@ public class BDIViewer extends JFrame
         });
     }
 
-    protected static class CollapsibleNode extends JPanel
+    protected static class CollapsibleNode extends FixedHeightPanel
     {
         protected final JPanel content;
         protected final JLabel arrow;
 
         protected boolean expanded;
 
-        public CollapsibleNode(
-            String icon,
-            String title,
-            String description,
-            String extra,
-            String status,
-            int depth,
-            boolean initiallyExpanded,
-            Consumer<Boolean> expandedListener)
+        public CollapsibleNode(String icon, String title, String description, String extra, String status,
+            int depth, boolean initiallyExpanded, Consumer<Boolean> expandedListener)
         {
             super();
 
@@ -277,11 +284,22 @@ public class BDIViewer extends JFrame
                 center.add(extraLabel);
             }
 
-            JLabel statusLabel = new JLabel(
-                status == null ? "" : status);
+            JLabel statusLabel = new JLabel(status == null ? "" : status);
 
-            JPanel leftPanel = new JPanel(
-                new BorderLayout(5, 0));
+            JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+            leftPanel.setOpaque(false);
+
+            leftPanel.add(arrow);
+            leftPanel.add(iconLabel);
+
+            if(status != null && !status.isBlank())
+                leftPanel.add(statusLabel);
+
+            header.add(leftPanel, BorderLayout.WEST);
+            header.add(center, BorderLayout.CENTER);
+
+            /*JPanel leftPanel = new JPanel(new BorderLayout(5, 0));
 
             leftPanel.setOpaque(false);
             leftPanel.add(arrow, BorderLayout.WEST);
@@ -289,15 +307,13 @@ public class BDIViewer extends JFrame
 
             header.add(leftPanel, BorderLayout.WEST);
             header.add(center, BorderLayout.CENTER);
-            header.add(statusLabel, BorderLayout.EAST);
+            header.add(statusLabel, BorderLayout.EAST);*/
 
             content = new JPanel();
-            content.setLayout(
-                new BoxLayout(content, BoxLayout.Y_AXIS));
-
+            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
             content.setAlignmentX(LEFT_ALIGNMENT);
 
-            header.addMouseListener(new MouseAdapter()
+            MouseListener lis = new MouseAdapter()
             {
                 @Override
                 public void mousePressed(MouseEvent e)
@@ -310,12 +326,27 @@ public class BDIViewer extends JFrame
                     if(expandedListener != null)
                         expandedListener.accept(expanded);
                 }
-            });
+            };
+
+            /*header.addMouseListener(lis);*/
+            addClickListener(header, lis);
 
             add(header);
             add(content);
 
             content.setVisible(expanded);
+        }
+
+        protected static void addClickListener(Component component, MouseListener listener)
+        {
+            component.addMouseListener(listener);
+            component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+            if(component instanceof Container container)
+            {
+                for(Component child : container.getComponents())
+                    addClickListener(child, listener);
+            }
         }
 
         public JPanel getContent()
@@ -328,6 +359,17 @@ public class BDIViewer extends JFrame
             return expanded;
         }
 
+        /*public void setExpanded(boolean expanded)
+        {
+            this.expanded = expanded;
+
+            content.setVisible(expanded);
+            arrow.setText(expanded ? "▼" : "▶");
+
+            revalidate();
+            repaint();
+        }*/
+
         public void setExpanded(boolean expanded)
         {
             this.expanded = expanded;
@@ -336,6 +378,23 @@ public class BDIViewer extends JFrame
             arrow.setText(expanded ? "▼" : "▶");
 
             revalidate();
+
+            Container parent = getParent();
+            while(parent != null)
+            {
+                parent.revalidate();
+                parent = parent.getParent();
+            }
+
+            /*System.out.println(
+                getClass().getSimpleName()
+                + ": expanded=" + expanded
+                + ", visible=" + content.isVisible()
+                + ", children=" + content.getComponentCount()
+                + ", size=" + content.getSize()
+                + ", pref=" + content.getPreferredSize()
+            );*/
+
             repaint();
         }
     }
@@ -357,13 +416,19 @@ public class BDIViewer extends JFrame
 
             this.selectionListener = selectionListener;
 
-            content = new JPanel();
+            /*content = new JPanel();
             content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
             JScrollPane scroll = new JScrollPane(content);
             scroll.setBorder(null);
 
-            add(scroll, BorderLayout.CENTER);
+            add(scroll, BorderLayout.CENTER);*/
+
+            content = new JPanel();
+
+            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+            add(content, BorderLayout.CENTER);
         }
 
 
@@ -388,6 +453,8 @@ public class BDIViewer extends JFrame
                 }
             }
 
+            content.add(Box.createVerticalGlue());
+
             content.revalidate();
             content.repaint();
         }
@@ -407,14 +474,12 @@ public class BDIViewer extends JFrame
 
     }
 
-    protected static class GoalNode extends JPanel
+    protected static class GoalNode extends FixedHeightPanel
     {
         protected final RGoal goal;
 
         public GoalNode(RGoal goal, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
-            super();
-
             this.goal = goal;
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -460,7 +525,7 @@ public class BDIViewer extends JFrame
                 add(new HistoryNode(goal, depth + 1, selectionListener, treePanel));
             }
 
-            constrainHeight(this);
+            //constrainHeight(this);
         }
     }
 
@@ -468,14 +533,8 @@ public class BDIViewer extends JFrame
     {
         public HistoryNode(RGoal goal, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
-            super(
-                "↻",
-                "History (" + goal.getHistory().getEntries().size() + ")",
-                null,
-                null,
-                "",
-                depth,
-                treePanel.isExpanded("history_"+goal.getId()),
+            super("↻", "History (" + goal.getHistory().getEntries().size() + ")", null,
+                null, "", depth, treePanel.isExpanded("history_"+goal.getId()),
                 expanded -> treePanel.setExpanded("history_"+goal.getId(), expanded));
 
             for(IntentionHistoryEntry entry : goal.getHistory().getEntries())
@@ -504,7 +563,7 @@ public class BDIViewer extends JFrame
             .collect(Collectors.joining(" · "));
     }
 
-    protected static class IntentionNode extends JPanel
+    protected static class IntentionNode extends FixedHeightPanel
     {
         protected final Object intention;
 
@@ -527,13 +586,11 @@ public class BDIViewer extends JFrame
             if(plan != null)
                 add(new PlanNode(plan, depth + 1, selectionListener, treePanel));
 
-            constrainHeight(this);
+            //constrainHeight(this);
         }
 
         public IntentionNode(Intention intention, String status, int depth, Consumer<Object> selectionListener)
         {
-            super();
-
             this.intention = intention;
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -542,52 +599,30 @@ public class BDIViewer extends JFrame
             add(new Header("💡", intention.getName(), intention.getDescription(), null, status, depth,
                 () -> selectionListener.accept(intention)));
 
-            constrainHeight(this);
+            //constrainHeight(this);
         }
     }
 
     protected static class PlanNode extends CollapsibleNode
     {
-        public PlanNode(
-            RPlan plan,
-            int depth,
-            Consumer<Object> selectionListener,
-            GoalTreePanel treePanel)
+        public PlanNode(RPlan plan, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
         {
-            super(
-                "📋",
-                plan.getPlan().getName(),
-                plan.getPlan().getDescription(),
-                null,
-                "",
-                depth,
-                treePanel.isExpanded(plan.getId()),
+            super("📋", plan.getPlan().getName(), plan.getPlan().getDescription(), null,
+                "", depth, treePanel.isExpanded(plan.getId()),
                 expanded -> treePanel.setExpanded(plan.getId(), expanded));
 
             Plan model = plan.getPlan();
 
-            // Model
-            CollapsibleNode modelNode = new CollapsibleNode(
-                "📐",
-                "Model",
-                "",
-                null,
-                "",
-                depth + 1,
-                treePanel.isExpanded(plan.getId()+"_model"),
+            CollapsibleNode modelNode = new CollapsibleNode("📐", "Model", "", null,
+                "", depth + 1, treePanel.isExpanded(plan.getId()+"_model"),
                 expanded -> treePanel.setExpanded(plan.getId()+"_model", expanded));
 
             StrategicPlan splan = model.getStrategicPlan();
 
             if(splan != null)
             {
-                CollapsibleNode snode = new CollapsibleNode(
-                    "🧭",
-                    "Strategic Plan",
-                    "",
-                    null,
-                    "",
-                    depth + 2,
+                CollapsibleNode snode = new CollapsibleNode("🧭", "Strategic Plan",
+                    "", null, "", depth + 2,
                     treePanel.isExpanded(plan.getId()+"_splan"),
                     expanded -> treePanel.setExpanded(plan.getId()+"_splan", expanded));
 
@@ -595,7 +630,7 @@ public class BDIViewer extends JFrame
 
                 for(StrategicStep step : splan.getSteps())
                 {
-                    snode.getContent().add(new StrategicStepNode(step, stepno++, depth + 3, selectionListener, treePanel));
+                    snode.getContent().add(new StrategicStepNode(step, stepno++, depth + 3, selectionListener));
                 }
 
                 modelNode.getContent().add(snode);
@@ -605,21 +640,19 @@ public class BDIViewer extends JFrame
 
             if(body != null)
             {
-                CollapsibleNode bodyNode = new CollapsibleNode(
-                    "📝",
-                    "Plan Body",
-                    "",
-                    null,
-                    "",
-                    depth + 2,
-                    treePanel.isExpanded(plan.getId()+"_body"),
+                CollapsibleNode bodyNode = new CollapsibleNode("📝", "Plan Body", "",
+                    null, "", depth + 2, treePanel.isExpanded(plan.getId()+"_body"),
                     expanded -> treePanel.setExpanded(plan.getId()+"_body", expanded));
 
                 int stepno = 0;
 
                 for(IPlanStep step : body.getSteps())
                 {
-                    bodyNode.getContent().add(new PlanStepNode(step, stepno++, depth + 3, selectionListener));
+                    bodyNode.getContent().add(new PlanStepNode(
+                    step,
+                    stepno++,
+                    depth + 3,
+                    selectionListener));
                 }
 
                 modelNode.getContent().add(bodyNode);
@@ -629,34 +662,23 @@ public class BDIViewer extends JFrame
 
             // Runtime
             CollapsibleNode runtimeNode = new CollapsibleNode(
-                "▶",
-                "Runtime",
-                "",
-                null,
-                "",
-                depth + 1,
-                treePanel.isExpanded(plan.getId()+"_runtime"),
+                "▶", "Runtime", "", null, "",
+                depth + 1, treePanel.isExpanded(plan.getId()+"_runtime"),
                 expanded -> treePanel.setExpanded(plan.getId()+"_runtime", expanded));
 
             List<PlanStepExecution> executedSteps = plan.getExecutedSteps();
 
             if(executedSteps != null && !executedSteps.isEmpty())
             {
-                CollapsibleNode executedNode = new CollapsibleNode(
-                    "✓",
-                    "Executed Steps",
-                    "",
-                    null,
-                    "",
-                    depth + 2,
-                    treePanel.isExpanded(plan.getId()+"_rsteps"),
+                CollapsibleNode executedNode = new CollapsibleNode("✓", "Executed Steps", "",
+                    null, "", depth + 2, treePanel.isExpanded(plan.getId()+"_rsteps"),
                     expanded -> treePanel.setExpanded(plan.getId()+"_rsteps", expanded));
 
                 int stepno = 0;
 
                 for(PlanStepExecution execution : executedSteps)
                 {
-                    executedNode.getContent().add(new PlanStepExecutionNode(execution, stepno++, depth + 3, selectionListener, treePanel));
+                    executedNode.getContent().add(new PlanStepExecutionNode(execution, stepno++, depth + 3, selectionListener));
                 }
 
                 runtimeNode.getContent().add(executedNode);
@@ -666,144 +688,212 @@ public class BDIViewer extends JFrame
         }
     }
 
-
-    protected static class StrategicStepNode extends CollapsibleNode
+    protected static class StepNode extends FixedHeightPanel
     {
-        public StrategicStepNode(
-            StrategicStep step,
-            int stepno,
+        protected final JLabel descriptionLabel;
+
+        public StepNode(
+            String icon,
+            String title,
+            String description,
             int depth,
-            Consumer<Object> selectionListener,
-            GoalTreePanel treePanel)
+            Object object,
+            Consumer<Object> selectionListener)
+        {
+            super(new BorderLayout(8, 0));
+
+            setAlignmentX(LEFT_ALIGNMENT);
+
+            int left = 12 + depth * 22;
+
+            setBorder(BorderFactory.createEmptyBorder(
+                7, left, 7, 12));
+
+            JLabel iconLabel = new JLabel(
+                SEmoji.getEmojiIcon(icon, 20));
+
+            JLabel titleLabel = new JLabel(title);
+            titleLabel.setFont(
+                titleLabel.getFont().deriveFont(Font.PLAIN, 14f));
+
+            descriptionLabel = new JLabel(
+                description == null ? "" : description);
+
+            descriptionLabel.setFont(
+                descriptionLabel.getFont().deriveFont(Font.PLAIN, 11f));
+
+            JPanel center = new JPanel();
+            center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+            center.setOpaque(false);
+
+            center.add(titleLabel);
+
+            if(description != null && !description.isBlank())
+                center.add(descriptionLabel);
+
+            add(iconLabel, BorderLayout.WEST);
+            add(center, BorderLayout.CENTER);
+
+            if(selectionListener != null)
+            {
+                MouseAdapter listener = new MouseAdapter()
+                {
+                    @Override
+                    public void mousePressed(MouseEvent e)
+                    {
+                        if(SwingUtilities.isLeftMouseButton(e))
+                            selectionListener.accept(object);
+                    }
+                };
+
+                addClickListener(this, listener);
+                setToolTipText("Click to inspect");
+            }
+        }
+
+        @Override
+        public Dimension getPreferredSize()
+        {
+            Dimension d = super.getPreferredSize();
+
+            Container parent = getParent();
+
+            if(parent != null)
+            {
+                int width = parent.getWidth();
+
+                if(width > 0)
+                    d.width = width;
+            }
+
+            return d;
+        }
+    }
+
+    
+
+    protected static class StrategicStepNode extends StepNode
+    {
+        public StrategicStepNode(StrategicStep step, int stepno, int depth, Consumer<Object> selectionListener)
         {
             super(
                 getIcon(step),
                 getTitle(step),
                 getDescription(step),
-                null,
-                "",
                 depth,
-                treePanel.isExpanded(step.getName()),
-                expanded -> treePanel.setExpanded(step.getName(), expanded));
-
-            if(selectionListener != null)
-                selectionListener.accept(step);
+                step,
+                selectionListener
+            );
         }
 
         protected static String getIcon(StrategicStep step)
         {
-            switch(step.getType())
+            return switch(step.getType())
             {
-                case TOOL:
-                    return "🔧";
-
-                case REASONING:
-                    return "🧠";
-
-                case SUBGOAL:
-                    return "🎯";
-
-                default:
-                    return "•";
-            }
+                case TOOL -> "🔧";
+                case REASONING -> "🧠";
+                case SUBGOAL -> "🎯";
+                default -> "•";
+            };
         }
 
         protected static String getTitle(StrategicStep step)
         {
-            switch(step.getType())
+            return switch(step.getType())
             {
-                case TOOL:
-                    return "Tool: " + step.getName();
-
-                case REASONING:
-                    return "Reasoning";
-
-                case SUBGOAL:
-                    return "Subgoal: " + step.getName();
-
-                default:
-                    return step.getName();
-            }
+                case TOOL -> "Tool: " + step.getName();
+                case REASONING -> "Reasoning";
+                case SUBGOAL -> "Subgoal: " + step.getName();
+                default -> step.getName();
+            };
         }
 
         protected static String getDescription(StrategicStep step)
         {
-            if(step.getDescription() != null)
-                return step.getDescription();
+            return step.getDescription() != null
+                ? step.getDescription()
+                : "";
+        }
+    }
+
+    protected static class PlanStepNode extends StepNode
+    {
+        public PlanStepNode(
+            IPlanStep step,
+            int stepno,
+            int depth,
+            Consumer<Object> selectionListener)
+        {
+            super(
+                getIcon(step),
+                getTitle(step, stepno),
+                getDescription(step),
+                depth,
+                step,
+                selectionListener);
+        }
+
+        protected static String getIcon(IPlanStep step)
+        {
+            if(step instanceof ToolCallStep)
+                return "🔧";
+
+            if(step instanceof ReasoningStep)
+                return "🧠";
+
+            if(step instanceof SubgoalStep)
+                return "🎯";
+
+            return "•";
+        }
+
+        protected static String getTitle(IPlanStep step, int stepno)
+        {
+            String title;
+
+            if(step instanceof ToolCallStep tool)
+                title = tool.getToolName();
+            else if(step instanceof ReasoningStep)
+                title = "Reasoning";
+            else if(step instanceof SubgoalStep)
+                title = "Subgoal";
+            else
+                title = step.getClass().getSimpleName();
+
+            return (stepno + 1) + ". " + title;
+        }
+
+        protected static String getDescription(IPlanStep step)
+        {
+            if(step instanceof ReasoningStep reasoning)
+                return reasoning.getProblem();
+
+            if(step instanceof SubgoalStep subgoal)
+                return subgoal.getGoal();
+
+            if(step instanceof ToolCallStep)
+                return "Tool call";
 
             return "";
         }
     }
 
-    protected static class PlanStepNode extends JPanel
-    {
-        public PlanStepNode(
-            IPlanStep step,
-            int index,
-            int depth,
-            Consumer<Object> selectionListener)
-        {
-            super();
-
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            setAlignmentX(LEFT_ALIGNMENT);
-
-            String icon;
-            String title;
-            String description = null;
-
-            if(step instanceof ToolCallStep tool)
-            {
-                icon = "🔧";
-                title = tool.getToolName();
-                description = "Tool call";
-            }
-            else if(step instanceof ReasoningStep reasoning)
-            {
-                icon = "🧠";
-                title = "Reasoning";
-                description = reasoning.getProblem();
-            }
-            else if(step instanceof SubgoalStep subgoal)
-            {
-                icon = "🎯";
-                title = "Subgoal";
-                description = subgoal.getGoal();
-            }
-            else
-            {
-                icon = "•";
-                title = step.getClass().getSimpleName();
-            }
-
-            add(new Header(icon,(index + 1) + ". " + title, description, null, "", depth, () -> selectionListener.accept(step)));
-
-            constrainHeight(this);
-        }
-    }
-
-
-    protected static class PlanStepExecutionNode extends CollapsibleNode
+    protected static class PlanStepExecutionNode extends StepNode
     {
         public PlanStepExecutionNode(
             PlanStepExecution execution,
             int stepno,
             int depth,
-            Consumer<Object> selectionListener,
-            GoalTreePanel treePanel)
+            Consumer<Object> selectionListener)
         {
             super(
                 getIcon(execution),
                 getTitle(execution, stepno),
                 getDescription(execution),
-                null,
-                "",
                 depth,
-                treePanel.isExpanded(""+execution.hashCode()), // todo! id
-                expanded -> treePanel.setExpanded(""+execution.hashCode(), expanded));
-
-            if(selectionListener != null)
-                selectionListener.accept(execution);
+                execution,
+                selectionListener
+            );
         }
 
         protected static String getIcon(PlanStepExecution execution)
@@ -856,13 +946,13 @@ public class BDIViewer extends JFrame
             return "";
         }
     }
-
-    protected static void constrainHeight(JComponent component)
+        
+    /*protected static void constrainHeight(JComponent component)
     {
         Dimension pref = component.getPreferredSize();
 
         component.setMaximumSize(new Dimension(Integer.MAX_VALUE, pref.height));
-    }
+    }*/
 
     protected static class Header extends JPanel
     {
@@ -971,7 +1061,7 @@ public class BDIViewer extends JFrame
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
 
-            constrainHeight(this);
+            //constrainHeight(this);
         }
 
         public void setExpanded(boolean expanded)
@@ -991,6 +1081,60 @@ public class BDIViewer extends JFrame
             {
                 addClickListener(child, listener);
             }
+        }
+    }
+
+    protected static class FixedHeightPanel extends JPanel
+    {
+        public FixedHeightPanel()
+        {
+            super();
+        }
+
+        public FixedHeightPanel(LayoutManager layout)
+        {
+            super(layout);
+        }
+
+        @Override
+        public Dimension getMaximumSize()
+        {
+            Dimension pref = getPreferredSize();
+
+            return new Dimension(Integer.MAX_VALUE, pref.height);
+        }
+    }
+
+    protected static JLabel createDescriptionLabel(String text)
+    {
+        JLabel label = new JLabel();
+
+        label.setFont(label.getFont().deriveFont(Font.PLAIN, 11f));
+
+        label.setText(
+            "<html>" +
+            text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;") +
+            "</html>");
+
+        return label;
+    }
+
+    public interface IForceRefresh
+    {
+        void forceRefresh();
+    }
+
+    protected void forceRefresh(Container container)
+    {
+        for(Component component : container.getComponents())
+        {
+            if(component instanceof IForceRefresh refresh)
+                refresh.forceRefresh();
+
+            if(component instanceof Container child)
+                forceRefresh(child);
         }
     }
 }
