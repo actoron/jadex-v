@@ -1,17 +1,13 @@
 package jadex.bding.impl.planbody;
 
-import java.util.Map;
-
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner.ReasoningType;
-import jadex.bding.impl.RIdElement;
-import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class ReasoningStep extends RIdElement implements IPlanStep 
+public class ReasoningStep extends PlanStep
 {
     protected String problem;
 
@@ -21,28 +17,62 @@ public class ReasoningStep extends RIdElement implements IPlanStep
 
     public ReasoningStep(String problem, ReasoningType reasoningtype, String resultmapping)
     {
-        super("reasoningstep");
+        super("reasoningstep", null, resultmapping);
         this.problem = problem;
         this.reasoningtype = reasoningtype;
         this.resultmapping = resultmapping;
     }
 
-    @Override
-    public IFuture<Map<String, Object>> execute(IComponent agent, Map<String, Object> parameters, RPlan plan)
+   @Override
+public IFuture<PlanStepExecution> execute(IComponent agent, PlanExecutionContext context)
+{
+    Future<PlanStepExecution> ret = new Future<>();
+
+    PlanStepExecution exe = new PlanStepExecution(this);
+
+    IBDINGAgentFeature bdif = agent.getFeature(IBDINGAgentFeature.class);
+
+    try
     {
-        Future<Map<String, Object>> ret = new Future<>();
-        
-        IBDINGAgentFeature bdif = agent.getFeature(IBDINGAgentFeature.class);
+        exe.setInputs(context.getParameters());
 
-        bdif.getReasoner().reason(problem, bdif.getModel(), parameters, reasoningtype).then(result ->
+        bdif.getReasoner().reason(problem, bdif.getModel(), context.getParameters(), reasoningtype).then(result ->
         {
-            if(resultmapping!=null)
-                parameters.put(resultmapping, result);
-            ret.setResult(parameters);
-        });
+            try
+            {
+                if(resultmapping != null)
+                    context.set(resultmapping, result);
 
-        return ret;
+                exe.setOutputs(context.getParameters());
+                exe.setState(IPlanStep.PlanStepState.SUCCEEDED);
+
+                ret.setResult(exe);
+            }
+            catch(Exception e)
+            {
+                exe.setException(e);
+                exe.setState(IPlanStep.PlanStepState.FAILED);
+
+                ret.setResult(exe);
+            }
+        }).catchEx(e ->
+        {
+            exe.setException(e);
+            exe.setState(IPlanStep.PlanStepState.FAILED);
+
+            ret.setResult(exe);
+        });
     }
+    catch(Exception e)
+    {
+        exe.setException(e);
+        exe.setState(IPlanStep.PlanStepState.FAILED);
+
+        ret.setResult(exe);
+    }
+
+    return ret;
+}
 
     public ReasoningType getReasoningType() 
     {

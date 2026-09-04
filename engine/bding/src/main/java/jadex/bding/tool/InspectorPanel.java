@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -21,12 +22,15 @@ import jadex.bding.Intention;
 import jadex.bding.Parameter;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
+import jadex.bding.StrategicStep;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
+import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.bding.impl.planbody.ReasoningStep;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
+import jadex.common.SEmoji;
 
 public class InspectorPanel extends JPanel
 {
@@ -76,6 +80,14 @@ public class InspectorPanel extends JPanel
         else if(object instanceof ReasoningEntry entry)
         {
             showReasoning(entry);
+        }
+        else if(object instanceof PlanStepExecution execution)
+        {
+            showPlanStepExecution(execution);
+        }
+        else if(object instanceof StrategicStep step)
+        {
+            showStrategicStep(step);
         }
         else
         {
@@ -157,7 +169,7 @@ public class InspectorPanel extends JPanel
     {
         Goal goal = rgoal.getGoal();
 
-        addTitle("🎯 " + goal.getName());
+        addTitle("🎯 ", goal.getName());
 
         addField("Description", goal.getDescription());
 
@@ -223,7 +235,7 @@ public class InspectorPanel extends JPanel
     {
         Intention intention = rintention.getIntention();
 
-        addTitle("💡 " + intention.getName());
+        addTitle("💡 ", intention.getName());
 
         addField("Description", intention.getDescription());
 
@@ -250,7 +262,7 @@ public class InspectorPanel extends JPanel
 
     protected void showIntention(Intention intention)
     {
-        addTitle("💡 " + intention.getName());
+        addTitle("💡 ", intention.getName());
 
         addField("Description", intention.getDescription());
 
@@ -264,7 +276,7 @@ public class InspectorPanel extends JPanel
     {
         Plan plan = rplan.getPlan();
 
-        addTitle("📋 " + plan.getName());
+        addTitle("📋 ", plan.getName());
 
         addField("Description", plan.getDescription());
 
@@ -303,13 +315,171 @@ public class InspectorPanel extends JPanel
         }
         else
         {
-            addTitle("• " + step.getClass().getSimpleName());
+            addTitle("• ", step.getClass().getSimpleName());
         }
+    }
+
+    protected void showStrategicStep(StrategicStep step)
+    {
+        addTitle(getStrategicStepIcon(step) + " " + getStrategicStepTitle(step));
+
+        addSection("Strategic step");
+
+        addField(
+            "Type",
+            step.getType() != null
+                ? step.getType().toString()
+                : "Unknown");
+
+        addField("Name", step.getName());
+        addField("Description", step.getDescription());
+    }
+
+    protected String getStrategicStepIcon(StrategicStep step)
+    {
+        switch(step.getType())
+        {
+            case TOOL:
+                return "🔧";
+
+            case REASONING:
+                return "🧠";
+
+            case SUBGOAL:
+                return "🎯";
+
+            default:
+                return "•";
+        }
+    }
+
+    protected String getStrategicStepTitle(StrategicStep step)
+    {
+        switch(step.getType())
+        {
+            case TOOL:
+                return "Tool: " + step.getName();
+
+            case SUBGOAL:
+                return "Subgoal: " + step.getName();
+
+            case REASONING:
+                return "Reasoning";
+
+            default:
+                return step.getName();
+        }
+    }
+
+    protected void showPlanStepExecution(PlanStepExecution execution)
+    {
+        IPlanStep step = execution.getStep();
+
+        String title;
+        ImageIcon icon;
+
+        if(step instanceof ToolCallStep tool)
+        {
+            icon = SEmoji.getEmojiIcon("🔧", 20);
+            title = tool.getToolName();
+        }
+        else if(step instanceof ReasoningStep)
+        {
+            icon = SEmoji.getEmojiIcon("🧠", 20);
+            title = "Reasoning";
+        }
+        else if(step instanceof SubgoalStep)
+        {
+            icon = SEmoji.getEmojiIcon("🎯", 20);
+            title = "Subgoal";
+        }
+        else if(step != null)
+        {
+            icon = SEmoji.getEmojiIcon("•", 20);
+            title = step.getClass().getSimpleName();
+        }
+        else
+        {
+            icon = SEmoji.getEmojiIcon("•", 20);
+            title = "Unknown Step";
+        }
+
+        addTitle(icon, title);
+
+        if(step instanceof ToolCallStep tool)
+            title = "🔧 " + tool.getToolName();
+        else if(step instanceof ReasoningStep)
+            title = "🧠 Reasoning";
+        else if(step instanceof SubgoalStep)
+            title = "🎯 Subgoal";
+        else if(step != null)
+            title = "• " + step.getClass().getSimpleName();
+        else
+            title = "• Unknown Step";
+
+        addTitle(title);
+
+        addSection("Execution");
+
+        addField(
+            "State",
+            execution.getState() != null
+                ? execution.getState().toString()
+                : "Unknown");
+
+        if(execution.getException() != null)
+        {
+            addField(
+                "Exception",
+                execution.getException().getMessage());
+        }
+
+        if(step != null)
+        {
+            addSection("Step");
+
+            addField(
+                "Type",
+                step.getClass().getSimpleName());
+        }
+
+        addSection("Inputs");
+
+        addParameterMap(execution.getInputs());
+
+        addSection("Outputs");
+
+        addParameterMap(execution.getOutputs());
+    }
+
+    protected void addParameterMap(Map<String, Object> values)
+    {
+        if(values == null || values.isEmpty())
+        {
+            addField("Values", "None");
+            return;
+        }
+
+        for(Map.Entry<String, Object> entry : values.entrySet())
+        {
+            addField(entry.getKey(), formatValue(entry.getValue()));
+        }
+    }
+
+    protected String formatValue(Object value)
+    {
+        if(value == null)
+            return "null";
+
+        if(value instanceof String)
+            return "\"" + value + "\"";
+
+        return String.valueOf(value);
     }
 
     protected void showToolCallStep(ToolCallStep step)
     {
-        addTitle("🔧 " + step.getToolName());
+        addTitle("🔧 ", step.getToolName());
 
         addSection("Tool");
 
@@ -336,30 +506,23 @@ public class InspectorPanel extends JPanel
 
     protected void showReasoningStep(ReasoningStep step)
     {
-        addTitle("🧠 Reasoning");
-
+        addTitle("🧠", " Reasoning");
         addField("Type", step.getReasoningType().toString());
-
         addSection("Problem");
-
         addCollapsibleSection("Problem", step.getProblem());
-
         addSection("Result");
-
         addField("Result mapping", step.getResultMapping());
     }
 
     protected void showSubgoalStep(SubgoalStep step)
     {
-        addTitle("🎯 Subgoal");
-
+        addTitle("🎯", " Subgoal");
         addField("Goal", step.getGoal());
     }
 
     protected void showReasoning(ReasoningEntry entry)
     {
-        addTitle("💭 " + entry.method());
-
+        addTitle("💭", " "+entry.method());
         addField("Status", entry.duration() > 0 ? "Completed": "Running");
 
         if(entry.duration() > 0)
@@ -368,9 +531,7 @@ public class InspectorPanel extends JPanel
         }
 
         addSection("Reasoning");
-
         addCollapsibleSection("Prompt", entry.prompt());
-
         addCollapsibleSection("Response", entry.response());
     }
 
@@ -379,17 +540,27 @@ public class InspectorPanel extends JPanel
         if(duration < 1000)
             return duration + " ms";
 
-        return String.format(
-            "%.2f s",
-            duration / 1000.0);
+        return String.format("%.2f s", duration / 1000.0);
     }
 
     protected void addTitle(String text)
     {
+        addTitle((ImageIcon)null, text);
+    }
+    
+     protected void addTitle(String icon, String text)
+    {
+        addTitle(icon!=null? SEmoji.getEmojiIcon(icon): null, text);
+    }
+
+    protected void addTitle(ImageIcon icon, String text)
+    {
         JLabel label = new JLabel(text);
 
-        label.setFont(label.getFont().deriveFont(Font.BOLD, 20f));
+        if(icon != null)
+            label.setIcon(icon);
 
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 20f));
         label.setAlignmentX(LEFT_ALIGNMENT);
 
         addComponent(label, new Insets(0, 0, 12, 0));
@@ -398,15 +569,10 @@ public class InspectorPanel extends JPanel
     protected void addSection(String text)
     {
         addVerticalSpace(10);
-
         JLabel label = new JLabel(text);
-
         label.setFont(label.getFont().deriveFont(Font.BOLD, 14f));
-
         label.setAlignmentX(LEFT_ALIGNMENT);
-
         label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
         addComponent(label);
     }
 
@@ -416,43 +582,29 @@ public class InspectorPanel extends JPanel
             value = "—";
 
         JPanel rowPanel = new JPanel(new BorderLayout(10, 0));
-
         JLabel nameLabel = new JLabel(name);
-
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 12f));
-
         JLabel valueLabel = new JLabel("<html>" + escapeHtml(value) + "</html>");
-
         valueLabel.setFont(valueLabel.getFont().deriveFont(Font.PLAIN, 12f));
-
         rowPanel.add(nameLabel, BorderLayout.WEST);
-
         rowPanel.add(valueLabel, BorderLayout.CENTER);
-
         addComponent(rowPanel);
     }
 
     protected void addParameter(Parameter parameter, Object value)
     {
         JLabel nameLabel = new JLabel(parameter.getName());
-
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD, 13f));
-
         addComponent(nameLabel);
-
         addField("Type", parameter.getType() != null ? parameter.getType().toString() : "Unknown");
-
         addField("Description", parameter.getDescription());
-
         addField("Current value", String.valueOf(value));
-
         addVerticalSpace(8);
     }
 
     protected void addCollapsibleSection(String title, String text)
     {
         CollapsiblePanel panel = new CollapsiblePanel(title, text);
-
         addComponent(panel, new Insets(0, 0, 8, 0));
     }
 

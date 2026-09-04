@@ -10,11 +10,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -36,14 +33,17 @@ import jadex.bding.IPlanStep;
 import jadex.bding.Intention;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
+import jadex.bding.StrategicPlan;
+import jadex.bding.StrategicStep;
 import jadex.bding.impl.IntentionHistory.IntentionHistoryEntry;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
+import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.bding.impl.planbody.ReasoningStep;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
-import jadex.bding.tool.BDIViewer.PlanNode;
+import jadex.common.SEmoji;
 import jadex.core.IComponentHandle;
 
 
@@ -122,7 +122,7 @@ public class BDIViewer extends JFrame
 
         add(split, BorderLayout.CENTER);
 
-        refreshTimer = new Timer(100, e -> refresh());
+        refreshTimer = new Timer(500, e -> refresh());
         refreshTimer.setCoalesce(true);
         refreshTimer.start();
 
@@ -247,7 +247,7 @@ public class BDIViewer extends JFrame
 
             arrow = new JLabel(expanded ? "▼" : "▶");
 
-            JLabel iconLabel = new JLabel(icon);
+            JLabel iconLabel = new JLabel(SEmoji.getEmojiIcon(icon, 20));
 
             JLabel titleLabel = new JLabel(title);
             titleLabel.setFont(
@@ -548,7 +548,11 @@ public class BDIViewer extends JFrame
 
     protected static class PlanNode extends CollapsibleNode
     {
-        public PlanNode(RPlan plan, int depth, Consumer<Object> selectionListener, GoalTreePanel treePanel)
+        public PlanNode(
+            RPlan plan,
+            int depth,
+            Consumer<Object> selectionListener,
+            GoalTreePanel treePanel)
         {
             super(
                 "📋",
@@ -560,23 +564,184 @@ public class BDIViewer extends JFrame
                 treePanel.isExpanded(plan.getId()),
                 expanded -> treePanel.setExpanded(plan.getId(), expanded));
 
-            IPlanBody body = plan.getPlan().getBody();
+            Plan model = plan.getPlan();
+
+            // Model
+            CollapsibleNode modelNode = new CollapsibleNode(
+                "📐",
+                "Model",
+                "",
+                null,
+                "",
+                depth + 1,
+                treePanel.isExpanded(plan.getId()+"_model"),
+                expanded -> treePanel.setExpanded(plan.getId()+"_model", expanded));
+
+            StrategicPlan splan = model.getStrategicPlan();
+
+            if(splan != null)
+            {
+                CollapsibleNode snode = new CollapsibleNode(
+                    "🧭",
+                    "Strategic Plan",
+                    "",
+                    null,
+                    "",
+                    depth + 2,
+                    treePanel.isExpanded(plan.getId()+"_splan"),
+                    expanded -> treePanel.setExpanded(plan.getId()+"_splan", expanded));
+
+                int stepno = 0;
+
+                for(StrategicStep step : splan.getSteps())
+                {
+                    snode.getContent().add(new StrategicStepNode(step, stepno++, depth + 3, selectionListener, treePanel));
+                }
+
+                modelNode.getContent().add(snode);
+            }
+
+            IPlanBody body = model.getBody();
 
             if(body != null)
             {
+                CollapsibleNode bodyNode = new CollapsibleNode(
+                    "📝",
+                    "Plan Body",
+                    "",
+                    null,
+                    "",
+                    depth + 2,
+                    treePanel.isExpanded(plan.getId()+"_body"),
+                    expanded -> treePanel.setExpanded(plan.getId()+"_body", expanded));
+
                 int stepno = 0;
 
                 for(IPlanStep step : body.getSteps())
                 {
-                    getContent().add(new PlanStepNode(step, stepno++, depth + 1, selectionListener));
+                    bodyNode.getContent().add(new PlanStepNode(step, stepno++, depth + 3, selectionListener));
                 }
+
+                modelNode.getContent().add(bodyNode);
             }
+
+            getContent().add(modelNode);
+
+            // Runtime
+            CollapsibleNode runtimeNode = new CollapsibleNode(
+                "▶",
+                "Runtime",
+                "",
+                null,
+                "",
+                depth + 1,
+                treePanel.isExpanded(plan.getId()+"_runtime"),
+                expanded -> treePanel.setExpanded(plan.getId()+"_runtime", expanded));
+
+            List<PlanStepExecution> executedSteps = plan.getExecutedSteps();
+
+            if(executedSteps != null && !executedSteps.isEmpty())
+            {
+                CollapsibleNode executedNode = new CollapsibleNode(
+                    "✓",
+                    "Executed Steps",
+                    "",
+                    null,
+                    "",
+                    depth + 2,
+                    treePanel.isExpanded(plan.getId()+"_rsteps"),
+                    expanded -> treePanel.setExpanded(plan.getId()+"_rsteps", expanded));
+
+                int stepno = 0;
+
+                for(PlanStepExecution execution : executedSteps)
+                {
+                    executedNode.getContent().add(new PlanStepExecutionNode(execution, stepno++, depth + 3, selectionListener, treePanel));
+                }
+
+                runtimeNode.getContent().add(executedNode);
+            }
+
+            getContent().add(runtimeNode);
+        }
+    }
+
+
+    protected static class StrategicStepNode extends CollapsibleNode
+    {
+        public StrategicStepNode(
+            StrategicStep step,
+            int stepno,
+            int depth,
+            Consumer<Object> selectionListener,
+            GoalTreePanel treePanel)
+        {
+            super(
+                getIcon(step),
+                getTitle(step),
+                getDescription(step),
+                null,
+                "",
+                depth,
+                treePanel.isExpanded(step.getName()),
+                expanded -> treePanel.setExpanded(step.getName(), expanded));
+
+            if(selectionListener != null)
+                selectionListener.accept(step);
+        }
+
+        protected static String getIcon(StrategicStep step)
+        {
+            switch(step.getType())
+            {
+                case TOOL:
+                    return "🔧";
+
+                case REASONING:
+                    return "🧠";
+
+                case SUBGOAL:
+                    return "🎯";
+
+                default:
+                    return "•";
+            }
+        }
+
+        protected static String getTitle(StrategicStep step)
+        {
+            switch(step.getType())
+            {
+                case TOOL:
+                    return "Tool: " + step.getName();
+
+                case REASONING:
+                    return "Reasoning";
+
+                case SUBGOAL:
+                    return "Subgoal: " + step.getName();
+
+                default:
+                    return step.getName();
+            }
+        }
+
+        protected static String getDescription(StrategicStep step)
+        {
+            if(step.getDescription() != null)
+                return step.getDescription();
+
+            return "";
         }
     }
 
     protected static class PlanStepNode extends JPanel
     {
-        public PlanStepNode(IPlanStep step, int index, int depth, Consumer<Object> selectionListener)
+        public PlanStepNode(
+            IPlanStep step,
+            int index,
+            int depth,
+            Consumer<Object> selectionListener)
         {
             super();
 
@@ -611,11 +776,84 @@ public class BDIViewer extends JFrame
                 title = step.getClass().getSimpleName();
             }
 
-            add(new Header(icon, (index + 1) + ". " + title,
-                description, null, "", depth,
-                () -> selectionListener.accept(step)));
+            add(new Header(icon,(index + 1) + ". " + title, description, null, "", depth, () -> selectionListener.accept(step)));
 
             constrainHeight(this);
+        }
+    }
+
+
+    protected static class PlanStepExecutionNode extends CollapsibleNode
+    {
+        public PlanStepExecutionNode(
+            PlanStepExecution execution,
+            int stepno,
+            int depth,
+            Consumer<Object> selectionListener,
+            GoalTreePanel treePanel)
+        {
+            super(
+                getIcon(execution),
+                getTitle(execution, stepno),
+                getDescription(execution),
+                null,
+                "",
+                depth,
+                treePanel.isExpanded(""+execution.hashCode()), // todo! id
+                expanded -> treePanel.setExpanded(""+execution.hashCode(), expanded));
+
+            if(selectionListener != null)
+                selectionListener.accept(execution);
+        }
+
+        protected static String getIcon(PlanStepExecution execution)
+        {
+            if(execution.getState() == IPlanStep.PlanStepState.FAILED)
+                return "❌";
+
+            if(execution.getState() == IPlanStep.PlanStepState.SUCCEEDED)
+                return "✓";
+
+            return "▶";
+        }
+
+        protected static String getTitle(PlanStepExecution execution, int stepno)
+        {
+            IPlanStep step = execution.getStep();
+
+            String title;
+
+            if(step instanceof ToolCallStep tool)
+                title = tool.getToolName();
+            else if(step instanceof ReasoningStep)
+                title = "Reasoning";
+            else if(step instanceof SubgoalStep)
+                title = "Subgoal";
+            else if(step != null)
+                title = step.getClass().getSimpleName();
+            else
+                title = "Unknown Step";
+
+            return (stepno + 1) + ". " + title;
+        }
+
+        protected static String getDescription(PlanStepExecution execution)
+        {
+            if(execution.getException() != null)
+                return execution.getException().getMessage();
+
+            IPlanStep step = execution.getStep();
+
+            if(step instanceof ReasoningStep reasoning)
+                return reasoning.getProblem();
+
+            if(step instanceof SubgoalStep subgoal)
+                return subgoal.getGoal();
+
+            if(step instanceof ToolCallStep)
+                return "Tool call";
+
+            return "";
         }
     }
 
@@ -630,37 +868,13 @@ public class BDIViewer extends JFrame
     {
         protected final JLabel arrowLabel;
 
-        public Header(
-            String icon,
-            String title,
-            String description,
-            String extra,
-            String status,
-            int depth,
-            Runnable click)
+        public Header(String icon, String title, String description, String extra, String status, int depth, Runnable click)
         {
-            this(
-                icon,
-                title,
-                description,
-                extra,
-                status,
-                depth,
-                click,
-                null,
-                false);
+            this(icon, title, description, extra, status, depth, click, null, false);
         }
 
-        public Header(
-            String icon,
-            String title,
-            String description,
-            String extra,
-            String status,
-            int depth,
-            Runnable click,
-            Runnable toggle,
-            boolean expanded)
+        public Header(String icon, String title, String description, String extra, String status, int depth,
+            Runnable click, Runnable toggle, boolean expanded)
         {
             super(new BorderLayout(8, 0));
 
@@ -671,12 +885,9 @@ public class BDIViewer extends JFrame
             setBorder(BorderFactory.createEmptyBorder(
                 7, left, 7, 12));
 
-            arrowLabel = new JLabel(
-                toggle != null
-                    ? (expanded ? "▼" : "▶")
-                    : "");
+            arrowLabel = new JLabel(toggle != null ? (expanded ? "▼" : "▶") : "");
 
-            JLabel iconLabel = new JLabel(icon);
+            JLabel iconLabel = new JLabel(SEmoji.getEmojiIcon(icon, 20));
 
             JLabel titleLabel = new JLabel(title);
             titleLabel.setFont(
@@ -706,76 +917,58 @@ public class BDIViewer extends JFrame
                 center.add(extraLabel);
             }
 
-            JLabel statusLabel = new JLabel(
-                status == null ? "" : status);
+            JLabel statusLabel = new JLabel(status == null ? "" : status);
 
-            JPanel leftPanel = new JPanel(
-                new BorderLayout(5, 0));
+            JPanel leftPanel = new JPanel(new BorderLayout(5, 0));
 
             leftPanel.setOpaque(false);
 
-            leftPanel.add(
-                arrowLabel,
-                BorderLayout.WEST);
+            leftPanel.add(arrowLabel, BorderLayout.WEST);
 
-            leftPanel.add(
-                iconLabel,
-                BorderLayout.CENTER);
+            leftPanel.add(iconLabel, BorderLayout.CENTER);
 
             add(leftPanel, BorderLayout.WEST);
             add(center, BorderLayout.CENTER);
             add(statusLabel, BorderLayout.EAST);
 
-            /*
-            * Pfeil: expand / collapse
-            */
             if(toggle != null)
             {
-                arrowLabel.setCursor(
-                    Cursor.getPredefinedCursor(
-                        Cursor.HAND_CURSOR));
+                arrowLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-                arrowLabel.addMouseListener(
-                    new MouseAdapter()
+                arrowLabel.addMouseListener(new MouseAdapter()
+                {
+                    @Override
+                    public void mousePressed(MouseEvent e)
                     {
-                        @Override
-                        public void mousePressed(MouseEvent e)
+                        if(SwingUtilities.isLeftMouseButton(e))
                         {
-                            if(SwingUtilities.isLeftMouseButton(e))
-                            {
-                                toggle.run();
-                            }
+                            toggle.run();
                         }
-                    });
+                    }
+                });
             }
 
-            /*
-            * Restlicher Header: Inspector
-            */
             if(click != null)
             {
                 setToolTipText("Click to inspect");
 
-                MouseAdapter listener =
-                    new MouseAdapter()
+                MouseAdapter listener = new MouseAdapter()
+                {
+                    @Override
+                    public void mousePressed(MouseEvent e)
                     {
-                        @Override
-                        public void mousePressed(MouseEvent e)
+                        if(SwingUtilities.isLeftMouseButton(e))
                         {
-                            if(SwingUtilities.isLeftMouseButton(e))
-                            {
-                                click.run();
-                            }
+                            click.run();
                         }
-                    };
+                    }
+                };
 
                 iconLabel.addMouseListener(listener);
                 center.addMouseListener(listener);
                 statusLabel.addMouseListener(listener);
 
-                setCursor(
-                    Cursor.getPredefinedCursor(
-                        Cursor.HAND_CURSOR));
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
 
             constrainHeight(this);
@@ -783,16 +976,14 @@ public class BDIViewer extends JFrame
 
         public void setExpanded(boolean expanded)
         {
-            arrowLabel.setText(
-                expanded ? "▼" : "▶");
+            arrowLabel.setText(expanded ? "▼" : "▶");
         }
     }
 
     protected static void addClickListener(Component component, MouseAdapter listener)
     {
         component.addMouseListener(listener);
-        component.setCursor(
-            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         if(component instanceof Container container)
         {
@@ -802,7 +993,5 @@ public class BDIViewer extends JFrame
             }
         }
     }
-
-    
 }
     

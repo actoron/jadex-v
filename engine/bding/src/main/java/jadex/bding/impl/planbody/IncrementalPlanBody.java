@@ -2,38 +2,34 @@ package jadex.bding.impl.planbody;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import jadex.bding.Belief;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IPlanBody;
 import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
+import jadex.bding.ModelElement;
 import jadex.bding.StrategicPlan;
 import jadex.bding.StrategicStep;
-import jadex.bding.impl.RGoal;
-import jadex.bding.impl.RIdElement;
 import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class IncrementalPlanBody extends RIdElement implements IPlanBody
+public class IncrementalPlanBody extends ModelElement implements IPlanBody
 {
-    protected StrategicPlan strategicPlan;
+    protected StrategicPlan splan;
 
     protected List<IPlanStep> steps = new ArrayList<>();
 
-    public IncrementalPlanBody(StrategicPlan strategicPlan)
+    public IncrementalPlanBody(StrategicPlan splan)
     {
-        super("incrementalplanbody");
-        this.strategicPlan = strategicPlan;
+        super("incrementalplanbody", null);
+        this.splan = splan;
     }
 
     public StrategicPlan getStrategicPlan()
     {
-        return strategicPlan;
+        return splan;
     }
 
     public List<IPlanStep> getSteps()
@@ -41,48 +37,59 @@ public class IncrementalPlanBody extends RIdElement implements IPlanBody
         return steps;
     }
 
-    @Override
-    public IFuture<Map<String, Object>> execute(IComponent component, RPlan plan, Map<String, Object> parameters)
+    public void setSteps(List<IPlanStep> steps) 
     {
-        Future<Map<String, Object>> ret = new Future<>();
+        this.steps = steps;
+    }
 
-        executeSteps(component, plan, parameters, 0, ret);
+    @Override
+    public IFuture<Void> execute(IComponent component, PlanExecutionContext context)
+    {
+        Future<Void> ret = new Future<>();
+
+        executeSteps(component, context, 0, ret);
 
         return ret;
     }
 
-    protected void executeSteps(IComponent component, RPlan plan, Map<String, Object> parameters, int index, Future<Map<String, Object>> ret)
+    protected void executeSteps(IComponent component, PlanExecutionContext context, int index, Future<Void> ret)
     {
-        if(index >= strategicPlan.getSteps().size())
+        if(index >= splan.getSteps().size())
         {
-            ret.setResult(parameters);
+            ret.setResult(null);
             return;
         }
 
-        StrategicStep sstep = strategicPlan.getSteps().get(index);
+        StrategicStep sstep = splan.getSteps().get(index);
+
+        // Use already generated step if available.
+        if(index < steps.size())
+        {
+            executeStep(component, context, index, steps.get(index), ret);
+            return;
+        }
 
         try
         {
             IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
-            reasoner.generatePlanStep(plan, sstep, parameters).then(step ->
+            reasoner.generatePlanStep(context.getPlan(),sstep, context.getParameters()).then(step ->
             {
                 if(step == null)
                 {
-                    ret.setException(new RuntimeException("Reasoner generated no plan step for strategic step '"+ sstep.getName() + "'"));
+                    PlanStepExecution exe = new PlanStepExecution(null);
+                    exe.setException(new RuntimeException("Reasoner generated no plan step for strategic step '"+ sstep.getName() + "'"));
+
+                    context.getPlan().addExecutedStep(exe);
+                    ret.setException(exe.getException());
                     return;
                 }
 
                 steps.add(step);
 
-                step.execute(component, parameters, plan).then(result ->
-                {
-                    writeBackContext(result, plan.getIntention().getGoal(), component);
-
-                    executeSteps(component, plan, result, index + 1, ret);
-                })
-                .catchEx(ret);
-            }).catchEx(ret);
+                executeStep(component, context, index, step, ret);
+            })
+            .catchEx(ret);
         }
         catch(Exception e)
         {
@@ -90,36 +97,35 @@ public class IncrementalPlanBody extends RIdElement implements IPlanBody
         }
     }
 
-    public static void writeBackContext(Map<String, Object> context, RGoal goal, IComponent agent)
+    protected void executeStep(IComponent component, PlanExecutionContext context, int index, IPlanStep step, Future<Void> ret)
     {
-        for(Entry<String, Object> e : context.entrySet())
+        step.execute(component, context).then(exe ->
         {
-            String key = e.getKey();
+            context.getPlan().addExecutedStep(exe);
 
-            if(key.startsWith("belief."))
+            if(exe.getState() == IPlanStep.PlanStepState.FAILED)
             {
-                String name = key.substring("belief.".length());
-
-                Belief bel = goal.getGoal().getModel().getBeliefs().get(name);
-
-                if(bel==null)
-                {
-                    //ret.setException(new RuntimeException("belief not found: "+name));
-                    System.out.println("belief not found: "+name);
-                }
-                else
-                {
-                    bel.setValue(agent.getPojo(), e.getValue());
-                    System.out.println("Updated belief: "+name+" "+e.getValue());
-                }
+                ret.setException(exe.getException());
+                return;
             }
-            else if(key.startsWith("goal."))
-            {
-                String name = key.substring("goal.".length());
-            
-                goal.getParameters().put(name, e.getValue());
-                System.out.println("Updated goal parameter: "+name+" "+e.getValue());
-            }
-        }
+
+            RPlan.writeBackContext(context, context.getPlan().getIntention().getGoal(), component);
+
+            executeSteps(component, context, index + 1, ret);
+        })
+        .catchEx(ex ->
+        {
+            // Should not happen: step failures are represented by
+            // PlanStepExecution.
+            System.out.println("Step return exception, should not happen: " + ex);
+
+            PlanStepExecution exe = new PlanStepExecution(step);
+            exe.setException(ex);
+
+            context.getPlan().addExecutedStep(exe);
+            ret.setException(ex);
+        });
     }
+
+
 }

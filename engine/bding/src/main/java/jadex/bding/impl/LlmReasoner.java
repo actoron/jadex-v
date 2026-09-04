@@ -2119,13 +2119,15 @@ public class LlmReasoner implements IReasoner
             {
                 String goal = res.getString("goal", null);
 
+                String resultmapping = res.getString("resultmapping", null);
+
                 if(goal == null || goal.isBlank())
                 {
                     ret.setException(new RuntimeException("Subgoal step without goal"));
                     return ret;
                 }
 
-                result = new SubgoalStep(goal);
+                result = new SubgoalStep(goal, resultmapping);
             }
             else
             {

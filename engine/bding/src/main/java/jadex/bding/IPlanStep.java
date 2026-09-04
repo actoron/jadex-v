@@ -2,11 +2,23 @@ package jadex.bding;
 
 import java.util.Map;
 
-import jadex.bding.impl.RPlan;
+import jadex.bding.impl.planbody.PlanExecutionContext;
+import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.core.IComponent;
 import jadex.future.IFuture;
 
 public interface IPlanStep
 {
-    public IFuture<Map<String, Object>> execute(IComponent component, Map<String, Object> parameters, RPlan plan);
+    public enum PlanStepState
+    {
+        RUNNING,
+        SUCCEEDED,
+        FAILED
+    }
+
+    public IFuture<PlanStepExecution> execute(IComponent agent, PlanExecutionContext context);
+
+    public Map<String, String> getParameterMapping();
+
+    public String getResultMapping();
 }

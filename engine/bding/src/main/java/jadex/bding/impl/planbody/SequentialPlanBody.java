@@ -2,12 +2,10 @@ package jadex.bding.impl.planbody;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import jadex.bding.IPlanBody;
 import jadex.bding.IPlanStep;
 import jadex.bding.impl.RIdElement;
-import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -50,20 +48,20 @@ public class SequentialPlanBody extends RIdElement implements IPlanBody
     }
 
     @Override
-    public IFuture<Map<String, Object>> execute(IComponent component, RPlan plan, Map<String, Object> parameters)
+    public IFuture<Void> execute(IComponent component, PlanExecutionContext context)
     {
-        Future<Map<String, Object>> ret = new Future<>();
+        Future<Void> ret = new Future<>();
 
-        executeSteps(component, plan, parameters, 0, ret);
+        executeSteps(component, context, 0, ret);
 
         return ret;
     }
 
-    protected void executeSteps(IComponent component, RPlan plan, Map<String, Object> parameters, int index, Future<Map<String, Object>> ret)
+    protected void executeSteps(IComponent component, PlanExecutionContext context, int index, Future<Void> ret)
     {
         if(index >= steps.size())
         {
-            ret.setResult(parameters);
+            ret.setResult(null);
             return;
         }
 
@@ -74,17 +72,21 @@ public class SequentialPlanBody extends RIdElement implements IPlanBody
             // Execute before transformation
             //step.getBefore().apply(parameters);
 
-            step.execute(component, parameters, plan).then(result ->
+            step.execute(component, context).then(exe ->
             {
-                if(result != null)
-                    parameters.putAll(result);
-
+                context.getPlan().addExecutedStep(exe);
                 // Execute after transformation
                 //step.getAfter().apply(parameters);
 
-                executeSteps(component, plan, parameters, index+1, ret);
+                executeSteps(component, context, index+1, ret);
             }).catchEx(ex ->
             {
+                 System.out.println("Step return exception, should not happen: "+ex);
+
+                PlanStepExecution exe = new PlanStepExecution(step);
+                exe.setException(ex);
+
+                context.getPlan().addExecutedStep(exe);
                 ret.setException(ex);
             });
         }
