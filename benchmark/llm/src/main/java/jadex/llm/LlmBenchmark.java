@@ -35,7 +35,9 @@ import jadex.micro.llmcall2.LlmHelper.Provider;
 
 public class LlmBenchmark
 {
-	private static final int DEFAULT_RUNS = 3;
+	private static final int DEFAULT_RUNS = 100;
+	public static final int MAX_PARALLEL_RUNS = 5;
+	
 	private static final String CSV_HEADER =
 		"Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
 		+ ";Avg Tokens;Min Tokens;Max Tokens;Max Context;Runs;Success Runs;Time Samples;Token Samples";
@@ -394,6 +396,23 @@ public class LlmBenchmark
 		
 		// Run benchmarks for available Unsloth models
 		include_models	= Arrays.asList(
+			// vLLM
+//			"Qwen/Qwen2.5-1.5B-Instruct"
+//			"unsloth/Qwen3.5-4B-MTP-GGUF:Q4_K_M"
+//			"unsloth/Qwen3.5-4B-GGUF:UD-Q4_K_XL"
+//			"unsloth/Qwen3.5-4B-GGUF:Q8_0"
+//			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
+//			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
+			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
+//			"google/gemma-4-E4B-it-qat-w4a16-ct"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
+//			"useful-quants/Ministral-3-3B-Instruct-2512-W4A16-BF16Vision"
+//			"inference-optimization/Ministral-3-14B-Instruct-2512.w4a16"
+//			"unsloth/Ministral-3-14B-Instruct-2512-GGUF:UD-Q4_K_XL"				
+				
 //			"ibm-granite/granite-4.2-30b-GGUF",
 //			"ibm-granite/granite-4.2-3b-GGUF",
 //			"ibm-granite/granite-4.2-8b-GGUF",
@@ -402,6 +421,7 @@ public class LlmBenchmark
 //			"unsloth/Apertus-70B-Instruct-2509-GGUF"
 //			"unsloth/Apertus-8B-Instruct-2509-GGUF"
 //			"unsloth/DeepSeek-V4-Flash-0731-GGUF",
+//			"unsloth/DeepSeek-V4-Flash-Vision-Exp-GGUF"
 //			"unsloth/GLM-4.7-Flash-GGUF",
 //			"unsloth/GLM-4.7-Flash-REAP-23B-A3B-GGUF",
 //			"unsloth/GLM-5.3-Flash-GGUF",
@@ -418,7 +438,7 @@ public class LlmBenchmark
 //			"unsloth/Ministral-3-3B-Reasoning-2512-GGUF",
 //			"unsloth/Ministral-3-8B-Instruct-2512-GGUF",
 //			"unsloth/Ministral-3-8B-Reasoning-2512-GGUF",
-			"unsloth/Mistral-Small-4-119B-2603-GGUF"
+//			"unsloth/Mistral-Small-4-119B-2603-GGUF"
 //			"unsloth/Muse-Glimmer-30B-GGUF",
 //			"unsloth/NVIDIA-Nemotron-3-Nano-4B-GGUF",
 //			"unsloth/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-GGUF",
@@ -598,7 +618,7 @@ public class LlmBenchmark
 		int[] tokens	= new int[runs];
 		Boolean[]	successes	= new Boolean[runs];
 		AtomicInteger max_context	= new AtomicInteger(-1);
-		ExecutorService executor = Executors.newFixedThreadPool(1);
+		ExecutorService executor = Executors.newFixedThreadPool(MAX_PARALLEL_RUNS);
 		for(int i=0; i<runs; i++)
 		{
 			final int fi	= i;
@@ -629,7 +649,7 @@ public class LlmBenchmark
 					// Local models -> wait for max 5 minutes, otherwise consider it a failure.
 					else
 					{
-						results.get(300000);
+						results.get(300000*MAX_PARALLEL_RUNS);
 					}
 					
 					successes[fi]	= success.apply(app, LlmChatAgent.getResponse(results));
@@ -686,7 +706,7 @@ public class LlmBenchmark
 		try
 		{
 			executor.shutdown();
-			executor.awaitTermination(10, java.util.concurrent.TimeUnit.MINUTES);
+			executor.awaitTermination(24, java.util.concurrent.TimeUnit.HOURS);
 		}
 		catch(InterruptedException e)
 		{

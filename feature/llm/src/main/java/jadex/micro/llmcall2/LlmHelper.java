@@ -294,15 +294,16 @@ public class LlmHelper
 			.baseUrl(baseurl)
 			.apiKey(apikey)
 			.modelName(model)
-			.reasoningEffort(think!=null? (think ? "high" : "none") : null)
+			// Hack: Qwen3.8 models don't support "high" reasoningEffort, only "xhigh"|"medium"|"low" (otherwise we get HTTP 400 errors)
+			.reasoningEffort(think!=null? (think ? (model.contains("Qwen3.8") ? "medium" : "high") : "none") : null)
 			.reasoningSummary("auto")
 //			.logRequests(true)
 //			.logResponses(true)
 			// For LM Studio, we need to force HTTP/1.1 :-(
 			// Also needed for Unsloth!?, otherwise we get strange errors
-//			.httpClientBuilder(JdkHttpClient.builder()
-//				.httpClientBuilder(HttpClient.newBuilder()
-//					.version(HttpClient.Version.HTTP_1_1)))
+			.httpClientBuilder(JdkHttpClient.builder()
+				.httpClientBuilder(HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)))
 			.build();
 	}
 	
@@ -473,7 +474,7 @@ public class LlmHelper
 		try
 		{
 			// Long timeout, because some models take a long time to load.
-			return fut.getNextIntermediateResult(300000).type()==ChatFragment.Type.THINKING;
+			return fut.hasNextIntermediateResult(300000, true) && fut.getNextIntermediateResult(300000).type()==ChatFragment.Type.THINKING;
 		}
 		catch(TimeoutException e)
 		{

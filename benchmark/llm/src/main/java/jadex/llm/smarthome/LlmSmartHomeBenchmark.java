@@ -59,7 +59,7 @@ public class LlmSmartHomeBenchmark
 				
 				// Check first use case: trigger motion sensor, check if alarm is (not) triggered
 				IMotionSensorService sensor = getService(app, IMotionSensorService.class, "Bewegungsmelder A");
-				sensor.motionDetected().get(300000);
+				sensor.motionDetected().get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 				if(alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 				{
 					return false;
@@ -67,7 +67,7 @@ public class LlmSmartHomeBenchmark
 				
 				ICameraService camera = getService(app, ICameraService.class, "Kamera 1");
 				camera.setCurrentImage("a burglar breaking into a house at night").get();
-				sensor.motionDetected().get(300000);
+				sensor.motionDetected().get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 				if(alarm.getAlarmState().get()!=AlarmState.TRIGGERED)
 				{
 					return false;
@@ -84,7 +84,7 @@ public class LlmSmartHomeBenchmark
 					ITerminableFuture<Void>	fut	= rule_system.executePrompt(prompt2);
 					try
 					{
-						fut.get(300000);
+						fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 					}
 					catch(TimeoutException e)
 					{
@@ -133,7 +133,7 @@ public class LlmSmartHomeBenchmark
 							fut	= rule_system.executePrompt(fprompt);
 							try
 							{
-								fut.get(300000);
+								fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 							}
 							catch(TimeoutException e)
 							{
@@ -164,7 +164,7 @@ public class LlmSmartHomeBenchmark
 						fut	= rule_system.executePrompt(fprompt);
 						try
 						{
-							fut.get(300000);
+							fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 						}
 						catch(TimeoutException e)
 						{
