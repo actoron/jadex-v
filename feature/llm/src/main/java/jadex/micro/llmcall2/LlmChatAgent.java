@@ -61,6 +61,12 @@ import jadex.requiredservice.IRequiredServiceFeature;
  */
 public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<ChatFragment>>
 {
+	//-------- constants --------
+	
+	/** Max number of images to send to keep in history. */
+	// Use 1 and see if it works for blocksworld and smart home.
+	public static final int	MAX_HISTORY_IMAGES	= 1;
+	
 	//-------- attributes --------
 	
 	/** Reference to the agent component itself for scheduling steps and looking up tools. */
@@ -218,7 +224,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				content.add(ImageContent.from(LlmHelper.createLangchainImage(img)));
 			}
 		}
-		messages.add(UserMessage.from(content));
+		addToHistory(UserMessage.from(content));
 		
 		current_loop = new TerminableIntermediateFuture<>();
 		sendRequestToLLM();
@@ -251,7 +257,63 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	protected void clearHistory()
 	{
 		messages.clear();		
-		messages.add(SystemMessage.from(systemprompt));
+		addToHistory(SystemMessage.from(systemprompt));
+	}
+	
+	/**
+	 *  Add a new message to the conversation messages.
+	 */
+	protected void addToHistory(ChatMessage message)
+	{
+		// Check that message does not contain too many images.
+		List<Content> contents = message instanceof UserMessage ? ((UserMessage)message).contents()
+			: message instanceof ToolExecutionResultMessage ? ((ToolExecutionResultMessage)message).contents()
+			: List.of();
+		int	cnt	= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
+		if(cnt > MAX_HISTORY_IMAGES)
+		{
+			throw new IllegalArgumentException("Too many images in user message. see MAX_HISTORY_IMAGES = " + MAX_HISTORY_IMAGES);
+		}
+		
+		// Go backwards and remove old images if needed to stay within MAX_HISTORY_IMAGES limit.
+		for(int i=messages.size()-1; i>=0; i--)
+		{
+			ChatMessage m = messages.get(i);
+			if(m instanceof UserMessage)
+			{
+				cnt	+= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
+				if(cnt>MAX_HISTORY_IMAGES)
+				{
+					contents = ((UserMessage)m).contents().stream()
+						.map(c -> c instanceof ImageContent ? TextContent.from("<removed image from chat history>"): c).toList();
+					m = UserMessage.builder()
+						.attributes(((UserMessage)m).attributes())
+						.name(((UserMessage)m).name())
+						.contents(contents)
+						.build();
+					messages.set(i, m);
+				}
+			}
+			else if(m instanceof ToolExecutionResultMessage)
+			{
+				cnt	+= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
+				if(cnt>MAX_HISTORY_IMAGES)
+				{
+					contents = ((ToolExecutionResultMessage)m).contents().stream()
+						.map(c -> c instanceof ImageContent ? TextContent.from("<removed image from chat history>"): c).toList();
+					m = ToolExecutionResultMessage.builder()
+						.id(((ToolExecutionResultMessage)m).id())
+						.toolName(((ToolExecutionResultMessage)m).toolName())
+						.isError(((ToolExecutionResultMessage)m).isError())
+						.attributes(((ToolExecutionResultMessage)m).attributes())
+						.contents(contents)
+						.build();
+					messages.set(i, m);
+				}
+			}
+		}
+		
+		messages.add(message);
 	}
 	
 	/**
@@ -349,7 +411,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		    			// Hack!!! currently thinking isn't passed back by ollama mapping (bug), so we add it manually here
 		    			if(llm instanceof OllamaStreamingChatModel)
 		    			{
-			    			messages.add(AiMessage.builder()
+			    			addToHistory(AiMessage.builder()
 			    				.text(
 			    					(completeResponse.aiMessage().thinking()!=null ? "<thinking>"+completeResponse.aiMessage().thinking()+"</thinking>" : "")
 			    					+(completeResponse.aiMessage().text()!=null ? completeResponse.aiMessage().text() : ""))
@@ -371,15 +433,15 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		    					else if(messages.get(i) instanceof AiMessage
 		    						&& ((AiMessage) messages.get(i)).text()!=null && !((AiMessage) messages.get(i)).text().isBlank())
 		    					{
-		    						messages.add(UserMessage.from(TextContent.from("continue")));
+		    						addToHistory(UserMessage.from(TextContent.from("continue")));
 		    						break;
 		    					}
 		    				}
-		    				messages.add(completeResponse.aiMessage());
+		    				addToHistory(completeResponse.aiMessage());
 		    			}
 		    			else
 		    			{
-			    			messages.add(completeResponse.aiMessage());
+		    				addToHistory(completeResponse.aiMessage());
 		    			}
 	
 		    			current_call.setResult(null);
@@ -618,7 +680,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					if(msg.hasSingleText())
 					{
 						String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=" + msg.text();
-						messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
+						addToHistory(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
 					}
 					// Handle complex content as user message, because Ollama only supports text content in tool results.
 					else
@@ -627,7 +689,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=see attached contents";
 						contents.add(TextContent.from(text));
 						contents.addAll(msg.contents());
-						messages.add(UserMessage.from(contents));
+						addToHistory(UserMessage.from(contents));
 					}
 				}
 				else if((llm instanceof MistralAiStreamingChatModel || llm.getClass().getName().contains("GoogleGenAiStreamingChatModel")) && !msg.hasSingleText())
@@ -645,11 +707,11 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 					String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", result=see attached contents";
 					contents.add(TextContent.from(text));
 					contents.addAll(msg.contents());
-					messages.add(UserMessage.from(contents));					
+					addToHistory(UserMessage.from(contents));					
 				}
 				else
 				{
-					messages.add(msg);
+					addToHistory(msg);
 				}
 				ret.setResult(null);
 			}).catchEx(ex -> 
@@ -666,11 +728,11 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 				if(llm instanceof OllamaStreamingChatModel)
 				{
 					String text = "id="+msg.id() + ", tool_name=" + msg.toolName() + ", error=" + msg.text();
-					messages.add(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
+					addToHistory(ToolExecutionResultMessage.from(call.toolExecutionRequest(), text));
 				}
 				else
 				{
-					messages.add(msg);
+					addToHistory(msg);
 				}
 				ret.setResult(null);
 			}));
