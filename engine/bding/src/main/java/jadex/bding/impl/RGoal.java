@@ -136,6 +136,7 @@ public class RGoal extends RIdElement
                 try
                 {
                     rintention.execute().get();
+                    System.out.println("Intention execute finished");
 
                     if(evaluateGoalState().get()==GoalState.SUCCEEDED)
                     {
@@ -147,6 +148,8 @@ public class RGoal extends RIdElement
                 }
                 catch(Exception e)
                 {
+                    System.out.println("Intention execute exception: "+e.getMessage());
+                    e.printStackTrace();
                     history.addEntry(new IntentionHistoryEntry(rintention));
                 }
             }

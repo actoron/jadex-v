@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -22,6 +23,7 @@ import jadex.bding.Intention;
 import jadex.bding.Parameter;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
+import jadex.bding.StrategicPlan;
 import jadex.bding.StrategicStep;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
@@ -88,6 +90,10 @@ public class InspectorPanel extends JPanel
         else if(object instanceof StrategicStep step)
         {
             showStrategicStep(step);
+        }
+        else if(object instanceof StrategicPlan splan)
+        {
+            showStrategicPlan(splan);
         }
         else
         {
@@ -333,6 +339,45 @@ public class InspectorPanel extends JPanel
 
         addField("Name", step.getName());
         addField("Description", step.getDescription());
+
+        addSection("Inputs");
+        addStringList(step.getInputs());
+
+        addSection("Outputs");
+        addStringList(step.getOutputs());
+    }
+
+    protected void showStrategicPlan(StrategicPlan splan)
+    {
+        //addTitle("📋 ", splan.getName());
+        //addField("Description", splan.getDescription());
+
+        /*addSection("Retry Policy");
+
+        addField("Retry allowed",
+            Boolean.toString(splan.isRetryAllowed()));
+
+        addField("Max retries",
+            Integer.toString(splan.getMaxRetries()));*/
+
+        addSection("Steps");
+
+        addField("Steps size",
+            Integer.toString(splan.getSteps().size()));
+    }
+
+    protected void addStringList(List<String> values)
+    {
+        if(values == null || values.isEmpty())
+        {
+            addField("None", "");
+            return;
+        }
+
+        for(String value : values)
+        {
+            addField("•", value);
+        }
     }
 
     protected String getStrategicStepIcon(StrategicStep step)

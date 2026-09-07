@@ -235,7 +235,7 @@ public class BDIViewer extends JFrame
         protected boolean expanded;
 
         public CollapsibleNode(String icon, String title, String description, String extra, String status,
-            int depth, boolean initiallyExpanded, Consumer<Boolean> expandedListener)
+            int depth, boolean initiallyExpanded, Consumer<Boolean> expandedListener, Runnable click)
         {
             super();
 
@@ -328,8 +328,33 @@ public class BDIViewer extends JFrame
                 }
             };
 
-            /*header.addMouseListener(lis);*/
-            addClickListener(header, lis);
+            
+            arrow.addMouseListener(lis);
+            arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            //header.addMouseListener(lis);
+            //addClickListener(header, lis);
+
+            if(click != null)
+            {
+                MouseAdapter selectionListener = new MouseAdapter()
+                {
+                    @Override
+                    public void mousePressed(MouseEvent e)
+                    {
+                        if(SwingUtilities.isLeftMouseButton(e))
+                            click.run();
+                    }
+                };
+
+                iconLabel.addMouseListener(selectionListener);
+                center.addMouseListener(selectionListener);
+
+                if(statusLabel != null)
+                    statusLabel.addMouseListener(selectionListener);
+
+                iconLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                center.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
 
             add(header);
             add(content);
@@ -535,7 +560,7 @@ public class BDIViewer extends JFrame
         {
             super("↻", "History (" + goal.getHistory().getEntries().size() + ")", null,
                 null, "", depth, treePanel.isExpanded("history_"+goal.getId()),
-                expanded -> treePanel.setExpanded("history_"+goal.getId(), expanded));
+                expanded -> treePanel.setExpanded("history_"+goal.getId(), expanded), null);
 
             for(IntentionHistoryEntry entry : goal.getHistory().getEntries())
             {
@@ -609,13 +634,15 @@ public class BDIViewer extends JFrame
         {
             super("📋", plan.getPlan().getName(), plan.getPlan().getDescription(), null,
                 "", depth, treePanel.isExpanded(plan.getId()),
-                expanded -> treePanel.setExpanded(plan.getId(), expanded));
+                expanded -> treePanel.setExpanded(plan.getId(), expanded),
+                () -> selectionListener.accept(plan));
 
             Plan model = plan.getPlan();
 
             CollapsibleNode modelNode = new CollapsibleNode("📐", "Model", "", null,
                 "", depth + 1, treePanel.isExpanded(plan.getId()+"_model"),
-                expanded -> treePanel.setExpanded(plan.getId()+"_model", expanded));
+                expanded -> treePanel.setExpanded(plan.getId()+"_model", expanded), 
+                () -> selectionListener.accept(model));
 
             StrategicPlan splan = model.getStrategicPlan();
 
@@ -624,7 +651,8 @@ public class BDIViewer extends JFrame
                 CollapsibleNode snode = new CollapsibleNode("🧭", "Strategic Plan",
                     "", null, "", depth + 2,
                     treePanel.isExpanded(plan.getId()+"_splan"),
-                    expanded -> treePanel.setExpanded(plan.getId()+"_splan", expanded));
+                    expanded -> treePanel.setExpanded(plan.getId()+"_splan", expanded), 
+                    () -> selectionListener.accept(splan));
 
                 int stepno = 0;
 
@@ -642,7 +670,7 @@ public class BDIViewer extends JFrame
             {
                 CollapsibleNode bodyNode = new CollapsibleNode("📝", "Plan Body", "",
                     null, "", depth + 2, treePanel.isExpanded(plan.getId()+"_body"),
-                    expanded -> treePanel.setExpanded(plan.getId()+"_body", expanded));
+                    expanded -> treePanel.setExpanded(plan.getId()+"_body", expanded), null);
 
                 int stepno = 0;
 
@@ -664,7 +692,7 @@ public class BDIViewer extends JFrame
             CollapsibleNode runtimeNode = new CollapsibleNode(
                 "▶", "Runtime", "", null, "",
                 depth + 1, treePanel.isExpanded(plan.getId()+"_runtime"),
-                expanded -> treePanel.setExpanded(plan.getId()+"_runtime", expanded));
+                expanded -> treePanel.setExpanded(plan.getId()+"_runtime", expanded), null);
 
             List<PlanStepExecution> executedSteps = plan.getExecutedSteps();
 
@@ -672,7 +700,7 @@ public class BDIViewer extends JFrame
             {
                 CollapsibleNode executedNode = new CollapsibleNode("✓", "Executed Steps", "",
                     null, "", depth + 2, treePanel.isExpanded(plan.getId()+"_rsteps"),
-                    expanded -> treePanel.setExpanded(plan.getId()+"_rsteps", expanded));
+                    expanded -> treePanel.setExpanded(plan.getId()+"_rsteps", expanded), null);
 
                 int stepno = 0;
 

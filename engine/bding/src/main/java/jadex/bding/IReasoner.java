@@ -40,6 +40,8 @@ public interface IReasoner
     
     public IFuture<IPlanStep> generatePlanStep(RPlan plan, StrategicStep step, Map<String, Object> context);
 
+    public IFuture<Boolean> isRetryAllowed(RPlan plan, Map<String, Object> context);
+
     //public IFuture<Plan> generatePlan(RIntention intention, Map<String, Object> context);
 
     //public IFuture<Set<Plan>> generatePlans(RIntention intention);
