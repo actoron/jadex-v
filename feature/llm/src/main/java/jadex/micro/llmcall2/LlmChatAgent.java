@@ -64,8 +64,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	//-------- constants --------
 	
 	/** Max number of images to send to keep in history. */
-	// Use 1 and see if it works for blocksworld and smart home.
-	public static final int	MAX_HISTORY_IMAGES	= 1;
+	// Need at least 2 for smart home benchmark.
+	public static final int	MAX_HISTORY_IMAGES	= 2;
 	
 	//-------- attributes --------
 	
@@ -269,8 +269,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		List<Content> contents = message instanceof UserMessage ? ((UserMessage)message).contents()
 			: message instanceof ToolExecutionResultMessage ? ((ToolExecutionResultMessage)message).contents()
 			: List.of();
-		int	cnt	= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
-		if(cnt > MAX_HISTORY_IMAGES)
+		int	cnt_all	= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
+		if(cnt_all > MAX_HISTORY_IMAGES)
 		{
 			throw new IllegalArgumentException("Too many images in user message. see MAX_HISTORY_IMAGES = " + MAX_HISTORY_IMAGES);
 		}
@@ -278,29 +278,32 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		// Go backwards and remove old images if needed to stay within MAX_HISTORY_IMAGES limit.
 		for(int i=messages.size()-1; i>=0; i--)
 		{
+			// Count images in this message.
 			ChatMessage m = messages.get(i);
-			if(m instanceof UserMessage)
+			contents = m instanceof UserMessage ? ((UserMessage)m).contents()
+				: m instanceof ToolExecutionResultMessage ? ((ToolExecutionResultMessage)m).contents()
+				: List.of();
+			int cnt	= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
+			cnt_all	+= cnt;
+			
+			// Check count to remove excess images, if needed.
+			if(cnt>0 && cnt_all>MAX_HISTORY_IMAGES)
 			{
-				cnt	+= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
-				if(cnt>MAX_HISTORY_IMAGES)
+				// Replace images with explanation text, so that the LLM doesn't get confused.
+				contents = contents.stream()
+					.map(c -> c instanceof ImageContent ? TextContent.from("<removed image from chat history>"): c).toList();
+			
+				// Rebuild message with removed images.
+				if(m instanceof UserMessage)
 				{
-					contents = ((UserMessage)m).contents().stream()
-						.map(c -> c instanceof ImageContent ? TextContent.from("<removed image from chat history>"): c).toList();
 					m = UserMessage.builder()
 						.attributes(((UserMessage)m).attributes())
 						.name(((UserMessage)m).name())
 						.contents(contents)
 						.build();
-					messages.set(i, m);
 				}
-			}
-			else if(m instanceof ToolExecutionResultMessage)
-			{
-				cnt	+= (int) contents.stream().filter(c -> c instanceof ImageContent).count();
-				if(cnt>MAX_HISTORY_IMAGES)
+				else if(m instanceof ToolExecutionResultMessage)
 				{
-					contents = ((ToolExecutionResultMessage)m).contents().stream()
-						.map(c -> c instanceof ImageContent ? TextContent.from("<removed image from chat history>"): c).toList();
 					m = ToolExecutionResultMessage.builder()
 						.id(((ToolExecutionResultMessage)m).id())
 						.toolName(((ToolExecutionResultMessage)m).toolName())
@@ -308,8 +311,8 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						.attributes(((ToolExecutionResultMessage)m).attributes())
 						.contents(contents)
 						.build();
-					messages.set(i, m);
 				}
+				messages.set(i, m);
 			}
 		}
 		
