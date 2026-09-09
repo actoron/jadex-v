@@ -3,6 +3,9 @@ package jadex.bding.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import jadex.bding.Plan;
+import jadex.bding.StrategicPlan;
+
 public class PlanHistory 
 {
     public static class PlanHistoryEntry
@@ -32,6 +35,21 @@ public class PlanHistory
     public List<PlanHistoryEntry> getEntries()
     {
         return entries;
+    }
+
+    public int getRetryCount(Plan plan)
+    {
+        int count = 0;
+
+        for(PlanHistoryEntry entry : entries)
+        {
+            if(entry.getPlan().getPlan().equals(plan))
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
 }

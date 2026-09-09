@@ -17,6 +17,7 @@ ALL_DEPS = [
     "//util/classreader",
     "//util/bytecode",
     "//feature/llm",
+    "//serialization/traverser",
 ] + DEPS
 
 java_library(

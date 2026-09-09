@@ -1,7 +1,9 @@
 package jadex.bding.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -10,6 +12,8 @@ import jadex.bding.AgentModel;
 import jadex.bding.Belief;
 import jadex.bding.Plan;
 import jadex.bding.impl.planbody.IncrementalPlanBody;
+import jadex.bding.impl.planbody.PlanExecutionContext;
+import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -21,6 +25,8 @@ public class RPlan extends RIdElement
     protected RIntention intention; //parent intention
 
     protected Set<RGoal> subgoals = new HashSet<>();
+
+    protected List<PlanStepExecution> executedSteps = new ArrayList<>();
 
     protected IComponent agent;
 
@@ -38,10 +44,22 @@ public class RPlan extends RIdElement
 
         // prepare the context map with beliefs and goal parameter
         Map<String, Object> params = createContext(getAgent(), intention.getGoal());
+        PlanExecutionContext context = new PlanExecutionContext(this, params);
 
         if(getPlan().getBody()!=null)
         {
-            getPlan().getBody().execute(getAgent(), this, params)
+            getPlan().getBody().execute(getAgent(), context)
+            .then(res ->
+            {
+                System.out.println("plan execution led to: "+res);
+
+                ret.setResult(null);
+            }).catchEx(ret);
+        }
+        else if(getPlan().getStrategicPlan()!=null)
+        {
+            IncrementalPlanBody ibody = new IncrementalPlanBody(getPlan().getStrategicPlan());
+            ibody.execute(getAgent(), context)
             .then(res ->
             {
                 System.out.println("plan execution led to: "+res);
@@ -50,17 +68,9 @@ public class RPlan extends RIdElement
 
             }).catchEx(ret);
         }
-        else if(getPlan().getStrategicPlan()!=null)
+        else
         {
-            IncrementalPlanBody ibody = new IncrementalPlanBody(getPlan().getStrategicPlan());
-            ibody.execute(getAgent(), this, params)
-            .then(res ->
-            {
-                System.out.println("plan execution led to: "+res);
-
-                ret.setResult(null);
-
-            }).catchEx(ret);
+            // todo
         }
 
         return ret;
@@ -122,6 +132,21 @@ public class RPlan extends RIdElement
         this.intention = intention;
     }
 
+    public List<PlanStepExecution> getExecutedSteps() 
+    {
+        return executedSteps;
+    }
+
+    public void setExecutedSteps(List<PlanStepExecution> executedSteps) 
+    {
+        this.executedSteps = executedSteps;
+    }
+
+    public void addExecutedStep(PlanStepExecution exe)
+    {
+        executedSteps.add(exe);
+    }
+
     public static Map<String, Object> createContext(IComponent agent, RGoal goal)
     {
         Map<String, Object> params = new HashMap<>();
@@ -140,4 +165,38 @@ public class RPlan extends RIdElement
 
         return params;
     }
+
+    public static void writeBackContext(PlanExecutionContext context, RGoal goal, IComponent agent)
+    {
+        // Only write back dirty values
+        for(String key : context.getDirty())
+        {
+            Object value = context.get(key);
+
+            if(key.startsWith("belief."))
+            {
+                String name = key.substring("belief.".length());
+
+                Belief bel = goal.getGoal().getModel().getBeliefs().get(name);
+
+                if(bel == null)
+                {
+                    System.out.println("belief not found: " + name);
+                }
+                else
+                {
+                    bel.setValue(agent.getPojo(), value);
+                    System.out.println("Updated belief: " + name + " " + value);
+                }
+            }
+            else if(key.startsWith("goal."))
+            {
+                String name = key.substring("goal.".length());
+
+                goal.getParameters().put(name, value);
+                System.out.println("Updated goal parameter: " + name + " " + value);
+            }
+        }
+    }
+
 }

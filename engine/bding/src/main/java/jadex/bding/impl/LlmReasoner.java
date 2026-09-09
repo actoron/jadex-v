@@ -507,6 +507,43 @@ public class LlmReasoner implements IReasoner
         return descs.toString();
     }
 
+    protected String formatPlan(Plan plan)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Name: ").append(plan.getName()).append("\n");
+        sb.append("Description: ").append(plan.getDescription()).append("\n");
+
+        if(plan.getStrategicPlan() != null)
+        {
+            StrategicPlan strategic = plan.getStrategicPlan();
+
+            sb.append("\nStrategic plan:\n");
+            //sb.append("Description: ").append(strategic.getDescription()).append("\n");
+
+            if(strategic.getSteps() != null)
+            {
+                int i = 1;
+
+                for(StrategicStep step : strategic.getSteps())
+                {
+                    sb.append("\nStep ").append(i++).append(":\n");
+                    sb.append("  Name: ").append(step.getName()).append("\n");
+                    sb.append("  Description: ").append(step.getDescription()).append("\n");
+                    sb.append("  Type: ").append(step.getType()).append("\n");
+
+                    if(step.getInputs() != null && !step.getInputs().isEmpty())
+                        sb.append("  Inputs: ").append(step.getInputs()).append("\n");
+
+                    if(step.getOutputs() != null && !step.getOutputs().isEmpty())
+                        sb.append("  Outputs: ").append(step.getOutputs()).append("\n");
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
 
     public IFuture<RGoal> createGoal(String usergoal, AgentModel model, Map<String, Object> context)
     {
@@ -1089,16 +1126,51 @@ public class LlmReasoner implements IReasoner
             }
 
             String prompt = """
-            Generate a strategic plan for the following intention.
+            The strategic plan describes an approach for making progress toward
+            the intention.
 
-            The strategic plan describes WHAT the agent needs to do to achieve the
-            intention and the abstract flow of information between the required steps.
+            There are different valid forms of strategic plans.
+
+            Some intentions are best addressed by a more extensive plan consisting
+            of several sequential steps that together accomplish the intended result.
+
+            Other intentions are better addressed by a short plan that performs one
+            meaningful unit of work and can be applied repeatedly. Each execution
+            operates on the updated agent state and can make further progress toward
+            the intention.
+
+            The strategic planner must decide which form is appropriate for the
+            given intention.
+
+            A repeatable plan should describe the work performed by ONE application
+            of the strategy. It must not contain multiple repetitions of that work.
+
+            Whether a plan can be applied again is decided separately after plan
+            generation. Do not encode retry behavior, retry limits, or repetition
+            policy in the strategic plan.
+
+            Do not encode repetition, loops, or repeated iterations in the strategic
+            plan itself.
+
+            ------------------------------------------------------------
+            STRATEGIC PLANNING
+            ------------------------------------------------------------
+
+            The strategic plan describes WHAT the agent needs to do to make progress
+            toward the intention and the abstract flow of information between the
+            required steps.
 
             The strategic plan is NOT yet an executable plan.
 
             A later tactical planning phase will transform each strategic step into
-            a concrete executable step. The tactical planner will determine how each
-            input is obtained from the current context and how each output is stored.
+            a concrete executable step.
+
+            The tactical planner will determine:
+
+            - how each input is obtained from the current context
+            - which concrete goal or belief value satisfies an input
+            - where each output is stored
+            - how runtime values are mapped to concrete step parameters
 
             Therefore, the strategic plan must NOT contain concrete context mappings.
 
@@ -1108,8 +1180,12 @@ public class LlmReasoner implements IReasoner
                 belief.<value>
                 plan.<value>
 
-            Instead, inputs and outputs must use semantic value names only.
-            
+            Inputs and outputs must use semantic value names only.
+
+            ------------------------------------------------------------
+            PLAN STRUCTURE
+            ------------------------------------------------------------
+
             Generate a strategic plan consisting of:
 
             1. Plan metadata
@@ -1118,10 +1194,350 @@ public class LlmReasoner implements IReasoner
 
             2. A strictly sequential list of strategic steps.
 
-            The plan name and description describe the overall approach to achieving
-            the intention. They must not merely repeat the intention itself.
+            The plan name and description must describe the chosen approach to
+            making progress toward the intention. They must not merely repeat
+            the intention.
 
             Each strategic step describes one meaningful operation within the plan.
+
+            The plan may be relatively extensive when several different operations
+            are required to implement the chosen strategy.
+
+            Alternatively, the plan may be short when a small repeatable operation
+            is a better strategy for making progress toward the intention.
+
+            Do not make the plan artificially long just to avoid repetition.
+
+            Do not make the plan artificially short when several different
+            operations are genuinely required.
+
+            A short repeatable plan should contain only the steps required for
+            ONE application of the strategy.
+
+            ------------------------------------------------------------
+            STRATEGIC STEPS
+            ------------------------------------------------------------
+
+            Each step must contain:
+
+            - name
+            - description
+            - type
+            - inputs
+            - outputs
+
+            The type must be one of:
+
+                TOOL
+                REASONING
+                SUBGOAL
+
+            The name identifies the capability or operation represented by the step.
+
+            For a TOOL step, the name MUST be the exact name of an available tool.
+
+            For a SUBGOAL step, the name MUST identify the available goal being
+            delegated to.
+
+            For a REASONING step, the name should concisely identify the cognitive
+            operation being performed.
+
+            ------------------------------------------------------------
+            TOOL STEPS
+            ------------------------------------------------------------
+
+            A TOOL step represents an invocation of an available tool.
+
+            The tool must actually exist in the available tools.
+
+            The inputs must contain the semantic parameter names required by the tool.
+
+            Use the actual parameter names from the tool specification.
+
+            Do not invent parameter names.
+
+            The outputs must contain meaningful values produced by the tool that
+            are required by later steps or are necessary for making progress toward
+            the intention.
+
+            Do not list every technically returned value if it is not relevant to
+            the plan.
+
+            A tool step must be achievable using the specified tool and its
+            available parameters.
+
+            ------------------------------------------------------------
+            REASONING STEPS
+            ------------------------------------------------------------
+
+            A REASONING step represents an explicit cognitive operation required
+            by the plan.
+
+            Use reasoning steps when the plan requires:
+
+            - making a decision
+            - selecting between alternatives
+            - evaluating information
+            - calculating a value
+            - transforming information
+            - interpreting information
+            - determining whether a condition is satisfied
+
+            The inputs identify the information required by the reasoning operation.
+
+            The outputs identify the result produced by the reasoning operation.
+
+            Important decisions should be represented explicitly as reasoning steps
+            rather than being hidden inside descriptions of other steps.
+
+            Every REASONING step must represent a cognitive operation that can
+            actually be performed by the available reasoning mechanism.
+
+            ------------------------------------------------------------
+            SUBGOAL STEPS
+            ------------------------------------------------------------
+
+            A SUBGOAL step delegates a meaningful intermediate objective to an
+            available BDI goal.
+
+            Use a subgoal only when the intermediate objective is independently
+            meaningful or represents a useful state that must be established
+            before the remaining plan can succeed.
+
+            Do not use subgoals merely to group several actions.
+
+            The inputs identify information required by the subgoal.
+
+            The outputs identify information or state produced by the subgoal
+            that is required by subsequent steps.
+
+            ------------------------------------------------------------
+            ABSTRACT DATA FLOW
+            ------------------------------------------------------------
+
+            The strategic plan is a strictly sequential data-flow plan.
+
+            An output produced by one step becomes available to subsequent steps.
+
+            If a later step requires a value produced by an earlier step, the later
+            step must reference that value using exactly the same semantic name.
+
+            Every input must have a possible source.
+
+            An input must either:
+
+            1. represent information that can initially be obtained from the goal
+            or current agent state, or
+            2. be produced as an output of an earlier step.
+
+            A step must never depend on an output produced by a later step.
+
+            The data flow must therefore be internally consistent.
+
+            Do not introduce an input for which there is no plausible source.
+
+            Do not introduce an output that is never used unless it represents a
+            meaningful result required for achieving the intention.
+
+            The same semantic value must keep the same name throughout the plan.
+
+            Do not rename a value between steps unless the value itself changes.
+
+            ------------------------------------------------------------
+            INPUT AND OUTPUT NAMES
+            ------------------------------------------------------------
+
+            Inputs and outputs represent semantic values, not runtime locations.
+
+            Do not encode their scope.
+
+            Never use names such as:
+
+                goal.destination
+                belief.location
+                plan.result
+
+            Use semantic names only, for example:
+
+                destination
+                currentLocation
+                userQuestion
+                userAnswer
+                selectedOption
+                result
+
+            The tactical planner is responsible for determining whether a value
+            comes from:
+
+            - a goal parameter
+            - an agent belief
+            - a result produced by an earlier step
+
+            The strategic planner must not make that decision.
+
+            The same semantic value must keep the same name throughout the plan.
+
+            Do not rename a value between steps unless the value itself changes.
+
+            ------------------------------------------------------------
+            PLAN REALISM
+            ------------------------------------------------------------
+
+            The plan must be realistic with respect to the capabilities available
+            to the agent.
+
+            Every TOOL step must reference an actually available tool.
+
+            Every SUBGOAL step must reference an actually available goal.
+
+            Do not invent tools, goals, capabilities, or operations.
+
+            Every REASONING step must represent a cognitive operation that can
+            actually be performed by the available reasoning mechanism.
+
+            Do not assume that arbitrary external actions are possible unless an
+            available capability provides them.
+
+            ------------------------------------------------------------
+            PLAN CONSTRUCTION
+            ------------------------------------------------------------
+
+            The plan should describe the smallest coherent sequence of operations
+            that implements the chosen strategy for making progress toward the
+            intention.
+
+            Every step must have a concrete purpose.
+
+            Prefer direct data flow between steps.
+
+            Avoid unnecessary intermediate values.
+
+            Avoid redundant tool calls.
+
+            Avoid unnecessary verification steps.
+
+            If a decision is necessary, represent it explicitly.
+
+            If information must be obtained before a later decision or action,
+            include the corresponding information-gathering step.
+
+            If an existing output can be used directly by a later step, do not
+            introduce an unnecessary transformation.
+
+            The plan must form a coherent progression from the current situation
+            toward the intended result.
+
+            When a short repeatable strategy is appropriate, prefer that strategy
+            over explicitly representing multiple repetitions.
+
+            When a single application requires several genuinely different
+            operations, represent those operations as sequential steps.
+
+            Do not duplicate steps to represent future repetitions.
+
+            Do not create loops or explicit iteration structures.
+
+            ------------------------------------------------------------
+            STRATEGIC VS. TACTICAL PLANNING
+            ------------------------------------------------------------
+
+            Strategic planning determines:
+
+                what needs to be done
+                which capabilities are required
+                in which order they are required
+                what information flows between the steps
+
+            Tactical planning determines:
+
+                where each input value comes from
+                which concrete goal or belief value satisfies an input
+                where each output is stored
+                how concrete runtime values are mapped to step parameters
+
+            Therefore, do NOT perform tactical planning here.
+
+            Do not generate:
+
+                tool mappings
+                result mappings
+                concrete context references
+                concrete runtime values
+                goal/belief/plan prefixes
+
+            The strategic plan must nevertheless contain enough information for
+            a tactical planner to determine a concrete implementation of every
+            step.
+
+            ------------------------------------------------------------
+            PLAN QUALITY REQUIREMENTS
+            ------------------------------------------------------------
+
+            A high-quality strategic plan must satisfy all of the following:
+
+            1. It directly addresses the intention.
+
+            2. The chosen plan structure is appropriate for the intention.
+
+            3. Every step has a concrete purpose.
+
+            4. Every step uses an available capability.
+
+            5. Every input has a plausible source.
+
+            6. Every dependency refers only to an earlier step or to initial state.
+
+            7. Every relevant output has a meaningful purpose.
+
+            8. The abstract data flow is internally consistent.
+
+            9. The sequence contains no unnecessary steps.
+
+            10. The plan contains no branching, loops, or parallel execution.
+
+            11. Repetition is NOT represented by duplicating steps.
+
+            12. The plan does not contain tactical mappings.
+
+            13. The plan is concrete enough to be transformed into executable steps.
+
+            14. The plan does not rely on capabilities that are not represented by
+                the available tools, goals, or reasoning mechanism.
+
+            15. If the chosen strategy is naturally repeatable, the plan represents
+                one application of that strategy rather than multiple applications.
+
+            ------------------------------------------------------------
+            FINAL CHECK
+            ------------------------------------------------------------
+
+            Before returning the strategic plan, verify:
+
+            - Does the plan directly address the intention?
+            - Is the plan structure appropriate for the intention?
+            - Does every step have a concrete purpose?
+            - Does every step use an available capability?
+            - Does every input have a plausible source?
+            - Are all dependencies directed from earlier information to later steps?
+            - Is the abstract data flow internally consistent?
+            - Does the plan avoid unnecessary steps?
+            - Does the plan avoid loops, branching, and parallel execution?
+            - If the strategy is repeatable, does the plan represent only ONE
+            application of that strategy?
+            - Does the plan avoid all tactical context mappings?
+
+            If any condition is violated, revise the plan before returning it.
+
+            Generate the most appropriate strategic plan for the given intention.
+            Return only the requested structured data.
+            Do not include explanations, Markdown, comments, or any additional text.
+
+            ============================================================
+            CURRENT AGENT CONTEXT
+            ============================================================
+
+            The following information describes the current situation for which
+            the strategic plan must be generated.
 
             ------------------------------------------------------------
             GOAL
@@ -1164,273 +1580,24 @@ public class LlmReasoner implements IReasoner
             %s
 
             ------------------------------------------------------------
-            STRATEGIC PLAN
+            TASK
             ------------------------------------------------------------
 
-            Generate a strictly sequential list of strategic steps.
+            Generate the most appropriate strategic plan using the rules above
+            and the current agent context.
 
-            Each step must contain:
+            The plan may either:
 
-            - name
-            - description
-            - type
-            - inputs
-            - outputs
+            1. contain several sequential operations that together implement the
+            chosen strategy, or
 
-            The type must be one of:
+            2. contain a shorter sequence representing one repeatable application
+            of the chosen strategy.
 
-                TOOL
-                REASONING
-                SUBGOAL
+            Choose the form that is most appropriate for the intention and current
+            agent state.
 
-            The name identifies the capability or operation represented by the step.
-
-            For a TOOL step, the name MUST be the exact name of an available tool.
-
-            For a SUBGOAL step, the name MUST identify the available goal being
-            delegated to.
-
-            For a REASONING step, the name should concisely identify the cognitive
-            operation being performed.
-
-            ------------------------------------------------------------
-            TOOL STEPS
-            ------------------------------------------------------------
-
-            A TOOL step represents an invocation of an available tool.
-
-            The tool must actually exist in the available tools.
-
-            The inputs must contain the semantic parameter names required by the tool.
-
-            Use the actual parameter names from the tool specification.
-
-            Do not invent parameter names.
-
-            The outputs must contain the meaningful values produced by the tool that
-            are required by later steps or are necessary for achieving the intention.
-
-            Do not list every technically returned value if it is not relevant to the
-            plan.
-
-            A tool step must be achievable using the specified tool and its available
-            parameters.
-
-            ------------------------------------------------------------
-            REASONING STEPS
-            ------------------------------------------------------------
-
-            A REASONING step represents an explicit cognitive operation required by
-            the plan.
-
-            Use reasoning steps when the plan requires:
-
-            - making a decision
-            - selecting between alternatives
-            - evaluating information
-            - calculating a value
-            - transforming information
-            - interpreting information
-            - determining whether a condition is satisfied
-
-            The inputs identify the information required by the reasoning operation.
-
-            The outputs identify the result produced by the reasoning operation.
-
-            Important decisions should be represented explicitly as reasoning steps
-            rather than being hidden inside descriptions of other steps.
-
-            ------------------------------------------------------------
-            SUBGOAL STEPS
-            ------------------------------------------------------------
-
-            A SUBGOAL step delegates a meaningful intermediate objective to an
-            available BDI goal.
-
-            Use a subgoal only when the intermediate objective is independently
-            meaningful or represents a useful state that must be established before
-            the remaining plan can succeed.
-
-            Do not use subgoals merely to group several actions.
-
-            The inputs identify information required by the subgoal.
-
-            The outputs identify information or state produced by the subgoal that is
-            required by subsequent steps.
-
-            ------------------------------------------------------------
-            ABSTRACT DATA FLOW
-            ------------------------------------------------------------
-
-            The strategic plan is a strictly sequential data-flow plan.
-
-            An output produced by one step becomes available to subsequent steps.
-
-            If a later step requires a value produced by an earlier step, the later
-            step must reference that value using exactly the same semantic name.
-
-            Every input must have a possible source.
-
-            An input must either:
-
-            1. represent information that can initially be obtained from the goal or
-            current agent state, or
-            2. be produced as an output of an earlier step.
-
-            A step must never depend on an output produced by a later step.
-
-            The data flow must therefore be internally consistent.
-
-            Do not introduce an input for which there is no plausible source.
-
-            Do not introduce an output that is never used unless it represents a
-            meaningful result required for achieving the intention.
-
-            ------------------------------------------------------------
-            INPUT AND OUTPUT NAMES
-            ------------------------------------------------------------
-
-            Inputs and outputs represent semantic values, not runtime locations.
-
-            Do not encode their scope.
-
-            Never use names such as:
-
-                goal.destination
-                belief.location
-                plan.result
-
-            Use semantic names only.
-
-            The tactical planner is responsible for determining whether a value comes
-            from:
-
-            - a goal parameter
-            - an agent belief
-            - a result produced by an earlier step
-
-            The strategic planner must not make that decision.
-
-            The same semantic value must keep the same name throughout the plan.
-
-            Do not rename a value between steps unless the value itself changes.
-
-            ------------------------------------------------------------
-            PLAN REALISM
-            ------------------------------------------------------------
-
-            The plan must be realistic with respect to the capabilities available to
-            the agent.
-
-            Every TOOL step must reference an actually available tool.
-
-            Every SUBGOAL step must reference an actually available goal.
-
-            Do not invent tools, goals, capabilities, or operations.
-
-            Every REASONING step must represent a cognitive operation that can actually
-            be performed by the available reasoning mechanism.
-
-            Do not assume that arbitrary external actions are possible unless an
-            available capability provides them.
-
-            ------------------------------------------------------------
-            PLAN CONSTRUCTION
-            ------------------------------------------------------------
-
-            The plan should describe the smallest coherent sequence of actions required
-            to achieve the intention.
-
-            Do not add steps merely because their information could potentially be
-            useful.
-
-            Every step must have a concrete purpose.
-
-            Prefer direct data flow between steps.
-
-            Avoid unnecessary intermediate values.
-
-            Avoid redundant tool calls.
-
-            Avoid unnecessary verification steps.
-
-            If a decision is necessary, represent it explicitly.
-
-            If information must be obtained before a later decision or action, include
-            the corresponding information-gathering step.
-
-            If an existing output can be used directly by a later step, do not introduce
-            an unnecessary transformation.
-
-            The plan must form a coherent progression from the current situation toward
-            the intended result.
-
-            ------------------------------------------------------------
-            STRATEGIC VS. TACTICAL PLANNING
-            ------------------------------------------------------------
-
-            Strategic planning determines:
-
-                what needs to be done
-                which capabilities are required
-                in which order they are required
-                what information flows between the steps
-
-            Tactical planning determines:
-
-                where each input value comes from
-                which concrete goal or belief value satisfies an input
-                where each output is stored
-                how concrete runtime values are mapped to step parameters
-
-            Therefore, do NOT perform tactical planning here.
-
-            Do not generate:
-
-                tool mappings
-                result mappings
-                concrete context references
-                concrete runtime values
-                goal/belief/plan prefixes
-
-            The strategic plan must nevertheless contain enough information for a
-            tactical planner to determine a concrete implementation of every step.
-
-            ------------------------------------------------------------
-            PLAN QUALITY REQUIREMENTS
-            ------------------------------------------------------------
-
-            A high-quality strategic plan must satisfy all of the following:
-
-            1. It directly addresses the intention.
-
-            2. Every step has a concrete purpose.
-
-            3. Every step uses an available capability.
-
-            4. Every input has a plausible source.
-
-            5. Every dependency refers only to an earlier step or to initial state.
-
-            6. Every relevant output has a meaningful purpose.
-
-            7. The abstract data flow is internally consistent.
-
-            8. The sequence contains no unnecessary steps.
-
-            9. The plan contains no branching, loops, or parallel execution.
-
-            10. The plan does not contain tactical mappings.
-
-            11. The plan is concrete enough to be transformed into executable steps.
-
-            12. The plan should not rely on capabilities that are not represented by
-                the available tools, goals, or reasoning mechanism.
-
-            Generate the most appropriate strategic plan for the given intention.
-
-            Return only the requested structured data.
-            Do not include explanations, Markdown, or any additional text.
+            Return only the structured strategic plan.
             """.formatted(
                 formatGoal(in.getGoal()),
                 in.getIntention().getName(),
@@ -1498,6 +1665,8 @@ public class LlmReasoner implements IReasoner
                 }
             },
             "required": [
+                "name",
+                "description",
                 "steps"
             ],
             "additionalProperties": false
@@ -1520,6 +1689,8 @@ public class LlmReasoner implements IReasoner
 
                 String name = obj.getString("name", null);
                 String description = obj.getString("description", null);
+                //boolean retryAllowed = obj.getBoolean("retryAllowed", false);
+                //int maxRetries = obj.getInt("maxRetries", 0);
 
                 if(name == null || name.isBlank())
                 {
@@ -1532,6 +1703,19 @@ public class LlmReasoner implements IReasoner
                     ret.setException(new RuntimeException("LLM generated strategic plan without description"));
                     return ret;
                 }
+
+                /*if(maxRetries < 0)
+                {
+                    ret.setException(new RuntimeException("LLM generated strategic plan with invalid maxRetries: " + maxRetries));
+                    return ret;
+                }
+
+                if(!retryAllowed && maxRetries > 0)
+                {
+                    ret.setException(new RuntimeException(
+                        "LLM generated strategic plan with maxRetries > 0 but retryAllowed is false"));
+                    return ret;
+                }*/
 
                 JsonValue stepsval = obj.get("steps");
 
@@ -1606,7 +1790,7 @@ public class LlmReasoner implements IReasoner
                     steps.add(new StrategicStep(stepname, stepdescription, type, inputs, outputs));
                 }
 
-                StrategicPlan splan = new StrategicPlan(steps);
+                StrategicPlan splan = new StrategicPlan(steps);//, retryAllowed, maxRetries);
 
                 Plan plan = new Plan(name, description, in.getIntention(), getModel());
 
@@ -2119,13 +2303,15 @@ public class LlmReasoner implements IReasoner
             {
                 String goal = res.getString("goal", null);
 
+                String resultmapping = res.getString("resultmapping", null);
+
                 if(goal == null || goal.isBlank())
                 {
                     ret.setException(new RuntimeException("Subgoal step without goal"));
                     return ret;
                 }
 
-                result = new SubgoalStep(goal);
+                result = new SubgoalStep(goal, resultmapping);
             }
             else
             {
@@ -2401,7 +2587,7 @@ public class LlmReasoner implements IReasoner
 
             JsonObject res = parseJson(text).asObject();
 
-            ret.setResult(Boolean.parseBoolean(res.get("achieved").asString()));
+            ret.setResult(res.get("achieved").asBoolean());
         }
         catch(Exception e)
         {
@@ -2418,6 +2604,134 @@ public class LlmReasoner implements IReasoner
 
         return ret;
     }
+
+    @Override
+    public IFuture<Boolean> isRetryAllowed(RPlan plan, Map<String, Object> context)
+    {
+        Future<Boolean> ret = new Future<>();
+
+        ReasoningEntry ce = null;
+
+        try
+        {
+            String prompt = """
+            Determine whether the current plan should be executed again.
+
+            The plan has already been executed once, but the intention has not
+            yet been achieved.
+
+            Return true if executing the same plan again with the current context
+            can reasonably make further progress toward achieving the goal and
+            intention.
+
+            Return false if repeating the plan is unlikely to make meaningful
+            progress and a new plan should be generated instead.
+
+            Consider:
+            - the goal that the agent is trying to achieve,
+            - the intention currently being pursued,
+            - the plan that was just executed,
+            - the effects of the previous execution,
+            - and the current context.
+
+            Do not assume that repeating a plan is useful merely because it has
+            not succeeded yet. Return true only if another execution of the same
+            plan is reasonably likely to make further progress.
+
+            Return only the requested structured data. Do not include any additional
+            text or Markdown.
+
+            Goal:
+            %s
+
+            Intention:
+            %s
+
+            Current context:
+            %s
+
+            Plan:
+            %s
+            """.formatted(
+                formatGoal(plan.getIntention().getGoal()),
+                plan.getIntention().getIntention().getDescription(),
+                formatContext(plan.getIntention().getGoal().getGoal().getModel(), context),
+                formatPlan(plan.getPlan()));
+
+            ce = new ReasoningEntry(
+                idcnt++,
+                System.currentTimeMillis(),
+                "isRetryAllowed",
+                prompt,
+                null,
+                -1,
+                false,
+                plan.getIntention().getGoal(),
+                plan.getIntention().getIntention());
+
+            addReasoningEntry(ce);
+
+            String schema = """
+            {
+            "type": "object",
+            "properties": {
+                "retry": {
+                "type": "boolean"
+                }
+            },
+            "required": [
+                "retry"
+            ],
+            "additionalProperties": false
+            }
+            """;
+
+            String text = ask(prompt, schema).trim();
+
+            ReasoningEntry entry = new ReasoningEntry(
+                ce.id(),
+                ce.timestamp(),
+                ce.method(),
+                ce.prompt(),
+                text,
+                System.currentTimeMillis() - ce.timestamp(),
+                true,
+                plan.getIntention().getGoal(),
+                plan.getIntention().getIntention());
+
+            removeReasoningEntry(entry);
+            addHistoryEntry(entry);
+
+            JsonObject res = parseJson(text).asObject();
+
+            ret.setResult(res.get("retry").asBoolean());
+        }
+        catch(Exception e)
+        {
+            if(ce != null)
+            {
+                ReasoningEntry entry = new ReasoningEntry(
+                    ce.id(),
+                    ce.timestamp(),
+                    ce.method(),
+                    ce.prompt(),
+                    e.getMessage(),
+                    System.currentTimeMillis() - ce.timestamp(),
+                    false,
+                    plan.getIntention().getGoal(),
+                    plan.getIntention().getIntention());
+
+                removeReasoningEntry(entry);
+                addHistoryEntry(entry);
+            }
+
+            ret.setException(e);
+        }
+
+        return ret;
+    }
+
+
 
     @Override
     public IFuture<Object> reason(String problem, AgentModel model,

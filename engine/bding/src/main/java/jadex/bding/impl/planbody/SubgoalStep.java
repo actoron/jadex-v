@@ -1,51 +1,74 @@
 package jadex.bding.impl.planbody;
 
-import java.util.Map;
-
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.IPlanStep;
-import jadex.bding.impl.RIdElement;
-import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
-public class SubgoalStep extends RIdElement implements IPlanStep
+public class SubgoalStep extends PlanStep
 {
     protected String goal;
 
-    public SubgoalStep(String goal)
+    protected String resultmapping;
+
+    public SubgoalStep(String goal, String resultmapping)
     {
-        super("subgoalstep");
+        super("subgoalstep_"+goal, null, resultmapping);
         this.goal = goal;
+        this.resultmapping = resultmapping;
     }
 
-    @Override
-    public IFuture<Map<String, Object>> execute(IComponent component, Map<String, Object> parameters, RPlan plan)
+   @Override
+    public IFuture<PlanStepExecution> execute(IComponent component, PlanExecutionContext context)
     {
         IBDINGAgentFeature feature = component.getFeature(IBDINGAgentFeature.class);
 
-        Future<Map<String, Object>> ret = new Future<>();
+        Future<PlanStepExecution> ret = new Future<>();
+        PlanStepExecution exe = new PlanStepExecution(this);
 
         try
         {
-            feature.dispatchSubgoal(goal, plan).then(subgoal ->
+            exe.setInputs(context.getParameters());
+
+            feature.dispatchSubgoal(goal, context.getPlan()).then(subgoal ->
             {
                 subgoal.getFinished().then(result ->
                 {
-                    ret.setResult(parameters);
+                    try
+                    {
+                        if(resultmapping != null)
+                            context.set(resultmapping, result);
+
+                        exe.setOutputs(context.getParameters());
+                        exe.setState(IPlanStep.PlanStepState.SUCCEEDED);
+
+                        ret.setResult(exe);
+                    }
+                    catch(Exception e)
+                    {
+                        exe.setException(e);
+                        exe.setState(IPlanStep.PlanStepState.FAILED);
+                        ret.setResult(exe);
+                    }
                 }).catchEx(ex ->
                 {
-                    ret.setException(ex);
+                    exe.setException(ex);
+                    exe.setState(IPlanStep.PlanStepState.FAILED);
+                    ret.setResult(exe);
                 });
             }).catchEx(ex ->
             {
-                ret.setException(ex);
+                exe.setException(ex);
+                exe.setState(IPlanStep.PlanStepState.FAILED);
+                ret.setResult(exe);
             });
         }
         catch(Exception e)
         {
-            ret.setException(e);
+            exe.setException(e);
+            exe.setState(IPlanStep.PlanStepState.FAILED);
+            ret.setResult(exe);
         }
 
         return ret;

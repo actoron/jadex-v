@@ -10,6 +10,11 @@ public class ModelElement
 
     protected AgentModel model;
 
+    public ModelElement(String name, String description)
+    {
+        this(name, description, null);
+    }
+
     public ModelElement(String name, String description, AgentModel model)
     {
         this.name = name;

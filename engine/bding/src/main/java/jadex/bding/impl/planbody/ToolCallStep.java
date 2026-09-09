@@ -4,14 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jadex.bding.IPlanStep;
-import jadex.bding.impl.RIdElement;
-import jadex.bding.impl.RPlan;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.micro.llmcall2.LlmHelper;
 
-public class ToolCallStep extends RIdElement implements IPlanStep
+public class ToolCallStep extends PlanStep
 {
     protected String toolname;
     
@@ -21,41 +19,74 @@ public class ToolCallStep extends RIdElement implements IPlanStep
 
     public ToolCallStep(String toolname, Map<String, String> mapping, String resultmapping)
     {
-        super("subgoalstep");
+        super("subgoalstep", mapping, resultmapping);
         this.toolname = toolname;
         this.mapping = mapping;
         this.resultmapping = resultmapping;
     }
 
     @Override
-    public IFuture<Map<String, Object>> execute(IComponent agent, Map<String, Object> parameters, RPlan plan)
+    public IFuture<PlanStepExecution> execute(IComponent agent, PlanExecutionContext context)
     {
-        Future<Map<String, Object>> ret = new Future<>();
-        
+        Future<PlanStepExecution> ret = new Future<>();
+
+        PlanStepExecution exe = new PlanStepExecution(this);
         Map<String, Object> args = new LinkedHashMap<>();
 
-        for(Map.Entry<String, String> entry : mapping.entrySet())
+        try
         {
-            String source = entry.getKey();
-            String target = entry.getValue();
-
-            if(!parameters.containsKey(target))
+            for(Map.Entry<String, String> entry : mapping.entrySet())
             {
-                System.out.println("Missing plan parameter: " + target);
-                return new Future<>(new RuntimeException("Missing plan parameter: " + target));
+                String source = entry.getKey();
+                String target = entry.getValue();
+
+                if(!context.has(target))
+                {
+                    throw new RuntimeException("Missing plan parameter: " + target);
+                }
+
+                args.put(source, context.get(target));
             }
 
-            args.put(source, parameters.get(target));
+            exe.setInputs(args);
+
+            LlmHelper.callTool(agent, toolname, args).then(result ->
+            {
+                try
+                {
+                    if(resultmapping != null)
+                        context.set(resultmapping, result);
+
+                    Map<String, Object> outputs = new LinkedHashMap<>();
+                    if(resultmapping != null)
+                        outputs.put(resultmapping, result);
+
+                    exe.setOutputs(outputs);
+                    exe.setState(IPlanStep.PlanStepState.SUCCEEDED);
+
+                    ret.setResult(exe);
+                }
+                catch(Exception e)
+                {
+                    exe.setException(e);
+                    exe.setState(IPlanStep.PlanStepState.FAILED);
+                    ret.setResult(exe);
+                }
+            }).catchEx(ex ->
+            {
+                exe.setException(ex);
+                exe.setState(IPlanStep.PlanStepState.FAILED);
+                ret.setResult(exe);
+            });
+        }
+        catch(Exception e)
+        {
+            exe.setException(e);
+            exe.setState(IPlanStep.PlanStepState.FAILED);
+            ret.setResult(exe);
         }
 
-        LlmHelper.callTool(agent, toolname, args).then(result ->
-        {
-            if(resultmapping!=null)
-                parameters.put(resultmapping, result);
-            ret.setResult(parameters);
-        });
         return ret;
-        
     }
 
     public String getToolName() 

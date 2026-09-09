@@ -13,11 +13,15 @@ public class StrategicPlan
 
     protected List<StrategicStep> steps;
 
+    //protected boolean retryAllowed;
+
+    //protected int maxRetries;
+
     public StrategicPlan()
     {
     }
 
-    public StrategicPlan(List<StrategicStep> steps)
+    public StrategicPlan(List<StrategicStep> steps)//, boolean retryAllowed, int maxRetries)
     {
         this.steps = steps;
     }
@@ -31,4 +35,26 @@ public class StrategicPlan
     {
         this.steps = steps;
     }
+
+    /*public boolean isRetryAllowed() 
+    {
+        return retryAllowed;
+    }
+
+    public void setRetryAllowed(boolean retryAllowed) 
+    {
+        this.retryAllowed = retryAllowed;
+    }
+
+    public int getMaxRetries() 
+    {
+        return maxRetries;
+    }
+
+    public void setMaxRetries(int maxRetries) 
+    {
+        this.maxRetries = maxRetries;
+    }*/
+
+    
 }
