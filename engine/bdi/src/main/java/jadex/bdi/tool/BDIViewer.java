@@ -4,14 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -33,9 +34,9 @@ import jadex.bdi.impl.plan.RPlan;
 import jadex.collection.CollectionWrapper;
 import jadex.collection.MapWrapper;
 import jadex.common.SUtil;
-import jadex.core.IComponent;
+import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentHandle;
-import jadex.core.IThrowingFunction;
+import jadex.core.INoCopyStep;
 import jadex.injection.Dyn;
 import jadex.injection.IInjectionFeature;
 import jadex.injection.Val;
@@ -57,10 +58,10 @@ public class BDIViewer extends JFrame
     public BDIViewer(IComponentHandle agent) 
     {
         this.agent = agent;
-        setTitle("" + agent.getId().getLocalName());
+        setTitle("BDI Viewer: " + agent.getId().getLocalName());
         setSize(500, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+//        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        setLocationRelativeTo(null);
 
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         JSplitPane topSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -128,28 +129,45 @@ public class BDIViewer extends JFrame
         return table;
     }
 
-    private Timer startAutoRefresh() 
+    private void	startAutoRefresh() 
     {
-        Timer timer = new Timer(true);
-        timer.scheduleAtFixedRate(new TimerTask() 
+        Timer timer = new Timer(100, ev -> 
         {
-            @Override
-            public void run() 
-            {
-                SwingUtilities.invokeLater(BDIViewer.this::refreshTables);
-            }
-        }, 0, 100);
+        	try
+        	{
+        		BDIViewer.this.refreshTables();
+        	}
+			catch(ComponentTerminatedException e)
+        	{
+				// ignore
+        	}
+        });
+        timer.start();
         
-        return timer;
+		// Kill agent on window close.
+		addWindowListener(new WindowAdapter()
+		{
+			public void windowClosing(WindowEvent e)
+			{
+				agent.terminate();
+			}
+		});
+		
+		// Close window on agent kill.
+		agent.waitForTermination().then(b -> SwingUtilities.invokeLater(()->
+		{
+			timer.stop();
+			dispose();
+		}));
     }
 
     private void refreshTables() 
     {
-       	refreshGoalsTable(goalModel, agent.scheduleStep((IThrowingFunction<IComponent, IGoal[]>)a -> {
+       	refreshGoalsTable(goalModel, agent.scheduleStep((INoCopyStep<IGoal[]>)a -> {
        		return a.getFeature(IBDIAgentFeature.class).getGoals().toArray(new IGoal[0]);
        	}).get());
        	
-       	refreshPlansTable(planModel, agent.scheduleStep((IThrowingFunction<IComponent, RPlan[]>)a -> 
+       	refreshPlansTable(planModel, agent.scheduleStep((INoCopyStep<RPlan[]>)a -> 
        	{
        		List<RPlan>	allplans	= new ArrayList<>();
        		Map<IPlanBody, Set<RPlan>>	plans	= ((BDIAgentFeature)a.getFeature(IBDIAgentFeature.class)).getPlans();
@@ -163,7 +181,7 @@ public class BDIViewer extends JFrame
        		return allplans.toArray(new RPlan[allplans.size()]);
        	}).get());
        	
-       	refreshBeliefsTable(beliefModel, agent.scheduleStep((IThrowingFunction<IComponent, List<String>>)a -> 
+       	refreshBeliefsTable(beliefModel, agent.scheduleStep((INoCopyStep<List<String>>)a -> 
        	{
        		List<String>	beliefnames	= new ArrayList<>();
        		Collection<MDynVal>	mdynvals	= ((InjectionFeature) a.getFeature(IInjectionFeature.class)).getModel().getDynamicValues();
@@ -217,7 +235,7 @@ public class BDIViewer extends JFrame
         model.setRowCount(0);
         for (String belief : beliefs) 
         {
-        	BeliefInfo info = agent.scheduleStep((IThrowingFunction<IComponent, BeliefInfo>) a -> 
+        	BeliefInfo info = agent.scheduleStep((INoCopyStep<BeliefInfo>) a -> 
             {
 //            	Object val= belief.getValue();
 //            	return new BeliefValue(val, val.toString());

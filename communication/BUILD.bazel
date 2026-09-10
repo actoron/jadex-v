@@ -1,0 +1,6 @@
+load("//feature/configurator:feature.bzl", "feature_group")
+
+feature_group(
+  description="Inter-process and remote communication capabilities.",
+  type="and",
+)

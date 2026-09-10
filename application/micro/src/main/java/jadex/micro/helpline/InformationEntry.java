@@ -5,7 +5,7 @@ import jadex.common.SUtil;
 /**
  *  Simple struct storing information about a person.
  */
-public class InformationEntry implements Comparable
+public class InformationEntry implements Comparable<InformationEntry>
 {
 	//-------- attributes --------
 	
@@ -123,9 +123,9 @@ public class InformationEntry implements Comparable
 	/**
 	 *  Compare this entry to another one.
 	 */
-	public int compareTo(Object o)
+	public int compareTo(InformationEntry o)
 	{
-		int ret = (int)(((InformationEntry)o).date-date);
+		int ret = (int)(o.date-date);
 		if(ret==0)
 			ret = o.hashCode()-hashCode();
 		return ret;

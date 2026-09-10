@@ -1,20 +1,14 @@
 package jadex.remoteservicetest;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
 import jadex.core.impl.Component;
-import jadex.core.impl.ComponentManager;
 import jadex.injection.annotation.OnStart;
-import jadex.messaging.ISecurityFeature;
-import jadex.messaging.impl.security.authentication.AbstractAuthenticationSecret;
-import jadex.messaging.impl.security.authentication.KeySecret;
 import jadex.providedservice.ServiceScope;
 import jadex.providedservice.impl.service.ServiceIdentifier;
 import jadex.remoteservice.impl.RemoteMethodInvocationHandler;
@@ -37,6 +31,8 @@ public class CallerAgent
         System.out.println("Caller agent started: "+agent.getId());
 
         ComponentIdentifier provider = ComponentIdentifier.fromString(System.getProperty("jadex.provider"));
+    	// TODO: app id needed for remote invocation?
+    	String appid = null;
 
         String servicename = System.getProperty("jadex.servicename");
 

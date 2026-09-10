@@ -1,16 +1,36 @@
 # Jadex V
+---
 
-## Description
+[![GitHub top language](https://img.shields.io/github/languages/top/actoron/jadex-v)](https://github.com/actoron/jadex-v)
+[![GitHub License](https://img.shields.io/github/license/actoron/jadex-v)](https://github.com/actoron/jadex-v?tab=GPL-3.0-1-ov-file)
+[![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core?label=current%20version)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/actoron/jadex-v)
 
-Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease. By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
+[![Maven Central Last Update](https://img.shields.io/maven-central/last-update/org.activecomponents.jadex/core?label=last%20release)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
+[![GitHub last commit](https://img.shields.io/github/last-commit/actoron/jadex-v)](https://github.com/actoron/jadex-v)
+[![Discord](https://img.shields.io/discord/1511822854017253579)](https://discord.gg/5vt97NcCNq)
+[![GitHub Release](https://img.shields.io/github/v/release/actoron/jadex-v?label=download%20examples%20(zip)&color=4FBA12)](https://github.com/actoron/jadex-v/releases/latest/download/jadex-example-applications.zip)
 
-Project news can be found [here](news.md)
+
+
+## Introduction
+
+Jadex V is a versatile framework for actor and distributed service programming. It has been designed with a focus on modularity and simplicity, enabling a wide range of customizations with ease.
+
+The versatility and customizability is shown by an extensive set of [example applications](https://deepwiki.com/actoron/jadex-v/12-example-applications).
 
 ## Features
+
+By breaking down functionalities into separate modules, Jadex V adopts a feature-oriented approach that fosters flexibility and adaptability. Its architecture is rooted in the Java service locator pattern, allowing seamless integration of various features by simply adding modules to the classpath.
+
+Check this page for [details about the feature system](https://deepwiki.com/actoron/jadex-v/2.2-feature-system).
+
 
 ### Concurrency Support
 
 Jadex V embraces the Actor model, offering a straightforward and robust approach to concurrent programming. Each actor, or Jadex component, operates independently, providing a natural metaphor for concurrency. Leveraging Java virtual threads, Jadex ensures highly efficient execution, making it suitable for demanding applications.
+
+Check this page for [details about the execution model](https://deepwiki.com/actoron/jadex-v/2.3-execution-model).
 
 Key points:
 - Actors as concurrency metaphor
@@ -20,6 +40,8 @@ Key points:
 
 Building upon the Actor model, Jadex introduces the concept of active components with an embedded reasoning engine. This empowers developers to define behavior dynamically, facilitating the utilization of various engines such as micro, BDI, and BPMN. Notably, Jadex eliminates the need to pre-start a platform for actor execution, streamlining the development process.
 
+Check this page for [details about the available agent paradigms](https://deepwiki.com/actoron/jadex-v/3-agent-paradigms).
+
 Key points:
 - Support for multiple engines
 - Seamless interaction among component types
@@ -28,6 +50,9 @@ Key points:
 ### Distributed Service Infrastructure
 
 Facilitating interaction among active components, Jadex employs service interfaces for communication. Each component can provide and invoke services, locally or remotely, with service discovery managed by an integrated registry. This ensures smooth communication and effortless scalability, bolstered by built-in communication security measures.
+
+Check these pages for [details about the service system](https://deepwiki.com/actoron/jadex-v/4-service-system)
+and [details about communication and networking](https://deepwiki.com/actoron/jadex-v/5-communication-and-networking).
 
 Key points:
 - Service-oriented interaction model
@@ -39,7 +64,12 @@ Key points:
 
 For many applications, having a virtual environment where active components can operate is beneficial. Jadex provides a lightweight, ready-to-use solution for environment construction. The environment manages all objects, including component representatives (typically called avatars).
 Domain-specific environment actions can be defined, and components are notified about objects within their field of vision. Additionally, components can observe specific environment objects and receive updates when changes occur.
-For more details on environment setup and programming, see [Details about environment setup and programming](environment.md).
+
+Check this page for [details about simulation and environment](https://deepwiki.com/actoron/jadex-v/6-simulation-and-environment).
+
+Key points:
+- Observable environment objects and vision range handling
+- Managed environment actions
 
 ## Installation
 
@@ -48,41 +78,37 @@ For more details on environment setup and programming, see [Details about enviro
 - Create a gradle or maven Java project
 - Add the dependencies of features you plan to use
 - Here is a rather minimal example gradle
+- change `JADEX_VERSION` setting to desired version, e.g., latest version from maven central:
+
+[![Maven Central Version](https://img.shields.io/maven-central/v/org.activecomponents.jadex/core)](https://mvnrepository.com/artifact/org.activecomponents.jadex/core)
+
+
 
 ```gradle
 plugins {
     id 'java-library'
 }
 
-sourceCompatibility = '17'
-targetCompatibility = '17'	
+java {
+	sourceCompatibility = '21'
+	targetCompatibility = '21'	
+}
 
 repositories {
     mavenCentral() 
 }
 
+def JADEX_VERSION = '5.0-beta1'
 dependencies
 {
-	implementation 'org.activecomponents.jadex:json:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:binary:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:traverser:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:serialization:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:idgenerator:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:common:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:collection:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:classreader:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:future:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:core:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:model:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:execution:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:micro:5.0-alpha6'
-	implementation 'org.activecomponents.jadex:application-micro:5.0-alpha6'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+	implementation 'org.activecomponents.jadex:core:'+JADEX_VERSION
+	implementation 'org.activecomponents.jadex:execution:'+JADEX_VERSION
+	implementation 'org.activecomponents.jadex:injection:'+JADEX_VERSION
 }
 
 task runHelloWorld(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'jadex.micro.helloworld.HelloWorldAgent'
+    mainClass = 'helloworld.HelloAgent'
 }
 ```
 
@@ -91,22 +117,19 @@ You can execute an example via the gradle task from the command line
 `./gradlew runHelloWorld`  
 
 In order to set up active components with services we need to include the provided and
-required service features (with additional support for the engines we would like to use).
-So in case we want micro agents with services we additionally include the following:
+required service features. So we additionally include the following:
 
 ```gradle
-    implementation 'org.activecomponents.jadex:providedservice:5.0-alpha6'
-    implementation 'org.activecomponents.jadex:providedservicemicro:5.0-alpha6'
-    implementation 'org.activecomponents.jadex:requiredservice:5.0-alpha6'
-    implementation 'org.activecomponents.jadex:requiredservicemicro:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:providedservice:'+JADEX_VERSION
+    implementation 'org.activecomponents.jadex:requiredservice:'+JADEX_VERSION
 ```
 
 If we additionally want to publish services of active components as REST web services we need also the 
 publication feature and a suitable web server implementation such as Jetty:
 
 ```gradle
-    implementation 'org.activecomponents.jadex:publishservice:5.0-alpha6'
-    implementation 'org.activecomponents.jadex:publishservicejetty:5.0-alpha6'
+    implementation 'org.activecomponents.jadex:publishservice:'+JADEX_VERSION
+    implementation 'org.activecomponents.jadex:publishservicejetty:'+JADEX_VERSION
 ```
 
 ### Integrated Development Environments (IDEs)
@@ -118,18 +141,18 @@ as Java application.
 
 ## Quick Start
 
-After a successful installation, one can start programming with actors. Here is a small example:  
+After a successful installation, one can start programming with actors.
+Here is a small example. Add it to a `src/main/java/helloworld` folder
+in your project directory:
 
 ```java
 package helloworld;
 
 import jadex.core.IComponent;
+import jadex.core.IComponentManager;
 import jadex.execution.IExecutionFeature;
-import jadex.micro.annotation.Agent;
-import jadex.micro.helloworld.HelloWorldAgent;
-import jadex.model.annotation.OnStart;
+import jadex.injection.annotation.OnStart;
 
-@Agent
 public class HelloAgent 
 {
 	@OnStart
@@ -148,30 +171,30 @@ public class HelloAgent
 	
 	public static void main(String[] args) 
 	{
-		IComponentManager.get().create.create(new HelloAgent());
+		IComponentManager.get().create(new HelloAgent());
 		
-		IComponentManager.get().create.waitForLastComponentTerminated();
+		IComponentManager.get().waitForLastComponentTerminated();
 	}
 }
 ```
-- `@Agent` is used to make a class an agent/actor class. To create other agent types
-from a pojo one can additionally declare the component type `@Agent(type="bdi")`
+
 - `@OnStart` is called once the actor is created and starts execution
 - API access is possible via the IComponent interface. It can be injected 
-into methods calls or it can be declared as agent variable `@Agent private IComponent agent;`  
+into methods calls or it can be declared as agent variable `@Inject private IComponent agent;`  
 - Components can be created via IComponentManager interface. `IComponentManager.get().create(new HelloAgent());`
-creates a new active component from a HelloWorld pojo object. The component immediately
+creates a new active component from a HelloWorld POJO object. The component immediately
 starts execution.
 - Active components are started as daemons so that the main thread has to be blocked to
 prohibit program termination. This is done via `IComponentManager.get().create.waitForLastComponentTerminated();`
 
 You can find a lot of different examples in the application packages:
 
-- application/micro
-- application/bdi and bdi-service
-- application/bpmn
-- application/bt
+- [application/micro](application/micro/src/main/java/jadex/micro)
+- [application/bdi](application/bdi/src/main/java/jadex/bdi) and [application/bdi-service](application/bdi-service/src/main/java/jadex/bdi)
+- [application/bt](application/bt/src/main/java/jadex/bt)
+- [application/bpmn](application/bpmn/src/main/java/jadex/bpmn)
 
+Check this page for an overview of available [example applications](https://deepwiki.com/actoron/jadex-v/12-example-applications).
 
 ## Authors
 
@@ -179,7 +202,7 @@ Kai Jander
 Alexander Pokahr  
 Lars Braubach  
 
-This project is supported by [www.actoron.com](http://www.actoron.com)
+This project is supported by [www.actoron.com](https://www.actoron.com).
 
 
 

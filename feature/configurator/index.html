@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Feature Configurator</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #fafafa;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.resizer {
+  flex-shrink: 0;
+  width: 5px;
+  height: 100vh;
+  background: #e0e0e0;
+  cursor: col-resize;
+  position: relative;
+  transition: background .15s;
+  z-index: 10;
+}
+.resizer:hover, .resizer.dragging { background: #aac4e0; }
+.resizer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 32px;
+  border-radius: 2px;
+  background: #c0c0c0;
+}
+.resizer:hover::after, .resizer.dragging::after { background: #6fa8d0; }
+
+.panel-header {
+  flex-shrink: 0;
+  padding: 10px 10px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: .04em;
+  color: #888;
+  text-transform: uppercase;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+button {
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  padding: 5px 9px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #444;
+}
+button:hover { background: #f0f0f0; }
+button:active { background: #e8e8e8; }
+
+/* ── group / feature list ── */
+.category { margin-bottom: 12px; }
+
+.category-header {
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  user-select: none;
+  padding: 5px 6px;
+  border-radius: 6px;
+  gap: 4px;
+}
+.category-header:hover { background: #efefef; }
+
+.category-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.category-name { font-size: 11px; font-weight: bold; color: #444; }
+.category-desc { font-size: 10px; font-weight: normal; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+
+.group-type-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: normal;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.group-type-badge.or  { background: #e8f5e9; color: #2e7d32; }
+.group-type-badge.xor { background: #fff3e0; color: #e65100; }
+.group-type-badge.and { background: #e8eaf6; color: #283593; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+  cursor: default;
+}
+.item:hover { background: #ececec; }
+.item.implied { opacity: .85; }
+
+.item input[type=radio]           { accent-color: #e65100; flex-shrink: 0; }
+.item input[type=checkbox]        { flex-shrink: 0; }
+.item input[type=checkbox].and-check     { accent-color: #283593; cursor: not-allowed; pointer-events: none; }
+.item input[type=checkbox].implied-check { accent-color: #f57f17; cursor: not-allowed; pointer-events: none; }
+
+.name { cursor: pointer; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name:hover { text-decoration: underline; }
+
+.badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 999px;
+  background: #ddd; color: #444; flex-shrink: 0;
+}
+.badge.feature { background: #dff1ff; color: #005b99; }
+.badge.library  { background: #eee;    color: #666; }
+
+.implied-badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 999px;
+  background: #fff8e1; color: #f57f17; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── libraries panel ── */
+.lib-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.lib-item:hover { background: #ececec; }
+.lib-item.active .lib-name { color: #005b99; font-weight: 500; }
+.lib-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #ddd; }
+.lib-dot.implied { background: #f57f17; }
+.lib-cat { font-size: 9px; color: #bbb; flex-shrink: 0; }
+
+/* ── export panel ── */
+#export-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #fafafa;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.export-settings {
+  flex-shrink: 0;
+  border-bottom: 1px solid #eee;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.exp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.exp-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.exp-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.version-status {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-weight: normal;
+}
+.version-status.online  { background: #e8f5e9; color: #2e7d32; }
+.version-status.offline { background: #fff3e0; color: #e65100; }
+.version-status.loading { background: #e8eaf6; color: #283593; }
+
+.exp-row select,
+.exp-row input[type=text] {
+  font-size: 11px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: white;
+  color: #333;
+  width: 100%;
+  outline: none;
+}
+.exp-row select:focus,
+.exp-row input[type=text]:focus {
+  border-color: #aac4e0;
+}
+
+.seg-control {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.seg-btn {
+  flex: 1;
+  font-size: 10px;
+  padding: 4px 3px;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  background: white;
+  color: #777;
+  border-right: 1px solid #ddd;
+  transition: background .1s, color .1s;
+  user-select: none;
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn.active {
+  background: #e3f2fd;
+  color: #0d47a1;
+  font-weight: 500;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.toggle-label { font-size: 11px; color: #555; }
+.toggle-switch {
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: #ccc;
+  transition: background .15s;
+}
+.toggle-switch.on { background: #43a047; }
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  top: 2px;
+  left: 2px;
+  transition: left .15s;
+}
+.toggle-switch.on::after { left: 14px; }
+
+.export-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f8f9fa;
+}
+
+.export-preview pre {
+  font-family: monospace;
+  font-size: 10px;
+  line-height: 1.65;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.exp-comment { color: #8a9baa; }
+.exp-key     { color: #0d47a1; }
+.exp-str     { color: #2e7d32; }
+.exp-tag     { color: #6a0572; }
+.exp-attr    { color: #b35900; }
+.exp-val     { color: #2e7d32; }
+
+.export-footer {
+  flex-shrink: 0;
+  padding: 7px 8px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 6px;
+}
+.btn-copy-exp {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #b0bec5;
+  background: white;
+  color: #37474f;
+  cursor: pointer;
+  text-align: center;
+}
+.btn-copy-exp:hover { background: #f5f5f5; }
+.btn-dl-exp {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #90caf9;
+  background: #e3f2fd;
+  color: #0d47a1;
+  cursor: pointer;
+  text-align: center;
+}
+.btn-dl-exp:hover { background: #bbdefb; }
+
+.ext-empty { font-size: 11px; color: #bbb; padding: 6px; }
+
+/* ── detail panel ── */
+detail-panel {
+  flex-shrink: 0;
+  min-width: 0;
+  height: 100vh;
+  overflow: auto;
+  padding: 18px 20px;
+  background: white;
+}
+
+.box { max-width: 860px; }
+.empty-detail { color: #aaa; font-size: 13px; padding: 8px 0; }
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px 12px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+.lbl { font-weight: 600; color: #666; font-size: 12px; display: flex; align-items: center; }
+.code { font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; }
+.list { margin: 0; padding-left: 16px; }
+.section { margin-top: 20px; }
+.section h3 { font-size: 13px; font-weight: 600; color: #444; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="panel" id="features-panel">
+  <div class="panel-header">
+    <span>Feature groups and features</span>
+  </div>
+  <div class="panel-scroll" id="features-scroll"></div>
+</div>
+
+<div class="resizer" id="rs-0"></div>
+
+<div class="panel" id="libraries-panel">
+  <div class="panel-header">
+    <span>Libraries</span>
+    <span id="lib-count" style="font-weight:normal;color:#bbb;font-size:10px;"></span>
+  </div>
+  <div class="panel-scroll" id="libraries-scroll"></div>
+</div>
+
+<div class="resizer" id="rs-1"></div>
+
+<div id="export-panel">
+  <div class="panel-header">
+    <span>Export</span>
+  </div>
+
+  <div class="export-settings">
+
+    <!-- Project name -->
+    <div class="exp-row">
+      <div class="exp-label">Project name</div>
+      <input type="text" id="exp-project" placeholder="my-jadex-app" value="my-jadex-app" />
+    </div>
+
+    <!-- Version -->
+    <div class="exp-row">
+      <div class="exp-label-row">
+        <span class="exp-label">Jadex version</span>
+        <span class="version-status loading" id="version-status">…</span>
+      </div>
+      <select id="exp-version">
+        <option value="5.0-beta1">5.0-beta1</option>
+      </select>
+      <div class="toggle-row" style="margin-top:4px;">
+        <span class="toggle-label">Include snapshots</span>
+        <div class="toggle-switch" id="toggle-snapshots"></div>
+      </div>
+    </div>
+
+    <!-- Build system -->
+    <div class="exp-row">
+      <div class="exp-label">Build system</div>
+      <div class="seg-control" id="seg-build">
+        <div class="seg-btn active" data-v="gradle">Gradle</div>
+        <div class="seg-btn" data-v="maven">Maven</div>
+        <div class="seg-btn" data-v="bazel">Bazel</div>
+        <div class="seg-btn" data-v="plain">Plain</div>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="exp-row">
+      <div class="exp-label">Comments</div>
+      <div class="seg-control" id="seg-comments">
+        <div class="seg-btn" data-v="none">None</div>
+        <div class="seg-btn active" data-v="normal">Normal</div>
+        <div class="seg-btn" data-v="verbose">Verbose</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="export-preview" id="export-preview">
+    <pre id="export-pre"><span class="exp-comment">// No features selected.</span></pre>
+  </div>
+
+  <div class="export-footer">
+    <button class="btn-copy-exp" id="btn-copy-exp">Copy</button>
+    <button class="btn-dl-exp" id="btn-dl-exp">Download</button>
+  </div>
+</div>
+
+<div class="resizer" id="rs-2"></div>
+
+<detail-panel></detail-panel>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+class App {
+  constructor() {
+    this.state = {
+      tree: {},
+      features: [],
+      selected: null,
+      enabled: new Set(),
+      implied: new Set(),
+      collapsed: new Set(),
+    };
+    this.listeners = new Set();
+  }
+
+  get featurePaths() {
+    return new Set(this.state.features.map(f => f.id));
+  }
+
+  _collectImplied(activeIds) {
+    const paths = this.featurePaths;
+    const implied = new Set();
+    const queue = [...activeIds];
+    const visited = new Set(activeIds);
+    while (queue.length) {
+      const id = queue.shift();
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.deps || [])) {
+        if (paths.has(dep) && !visited.has(dep)) {
+          visited.add(dep);
+          if (!activeIds.has(dep)) implied.add(dep);
+          queue.push(dep);
+        }
+      }
+    }
+    return implied;
+  }
+
+  _requiredBy(id, activeIds) {
+    return new Set(
+      this.state.features
+        .filter(f => activeIds.has(f.id) && (f.deps || []).includes(id))
+        .map(f => f.id)
+    );
+  }
+
+  collectTransitiveExternalDeps() {
+    const allActive = new Set([...this.state.enabled, ...this.state.implied]);
+    const coords = new Set();
+    for (const id of allActive) {
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.external_deps || [])) coords.add(dep);
+    }
+    return [...coords].sort();
+  }
+
+  collectInternalBuildDeps() {
+    const allActive = new Set([...this.state.enabled, ...this.state.implied]);
+    const paths = this.featurePaths;
+    const deps = new Set();
+    for (const id of allActive) {
+      const f = this.state.features.find(f => f.id === id);
+      if (!f) continue;
+      for (const dep of (f.deps || [])) {
+        if (!paths.has(dep)) deps.add(dep);
+      }
+    }
+    return [...deps].sort();
+  }
+
+  setState(patch) {
+    this.state = { ...this.state, ...patch };
+    this.listeners.forEach(fn => fn(this.state));
+  }
+
+  subscribe(fn) {
+    this.listeners.add(fn);
+    fn(this.state);
+    return () => this.listeners.delete(fn);
+  }
+
+  groupType(category) {
+    const g = this.state.tree[category];
+    return g ? (g.type || "or") : "or";
+  }
+
+  toggleFeature(id) {
+    const feature = this.state.features.find(f => f.id === id);
+    if (!feature) return;
+
+    const type = this.groupType(feature.category);
+    let enabled = new Set(this.state.enabled);
+    const allActive = new Set([...enabled, ...this.state.implied]);
+
+    if (type === "xor") {
+      const siblings = this.state.features
+        .filter(f => f.category === feature.category && f.kind !== "library")
+        .map(f => f.id);
+      const wasEnabled = enabled.has(id);
+      siblings.forEach(sid => enabled.delete(sid));
+      if (!wasEnabled) enabled.add(id);
+
+    } else if (type === "and") {
+      const siblings = this.state.features
+        .filter(f => f.category === feature.category && f.kind !== "library")
+        .map(f => f.id);
+      const allOn = siblings.every(sid => enabled.has(sid));
+      if (allOn) {
+        for (const sid of siblings) {
+          const rb = this._requiredBy(sid, allActive);
+          const outside = [...rb].filter(r => !siblings.includes(r));
+          if (outside.length) {
+            alert(`Cannot deactivate: "${this.state.features.find(f=>f.id===sid)?.name}" is required by: ${outside.join(", ")}`);
+            return;
+          }
+        }
+        siblings.forEach(sid => enabled.delete(sid));
+      } else {
+        siblings.forEach(sid => enabled.add(sid));
+      }
+
+    } else {
+      if (enabled.has(id)) {
+        const rb = this._requiredBy(id, allActive);
+        const blockers = [...rb].filter(r => enabled.has(r));
+        if (blockers.length) {
+          alert(`Cannot deactivate: "${feature.name}" is required by: ${blockers.map(r => this.state.features.find(f=>f.id===r)?.name||r).join(", ")}`);
+          return;
+        }
+        enabled.delete(id);
+      } else {
+        enabled.add(id);
+      }
+    }
+
+    const implied = this._collectImplied(enabled);
+    this.setState({ enabled, implied });
+  }
+
+  toggleCategory(cat) {
+    const collapsed = new Set(this.state.collapsed);
+    collapsed.has(cat) ? collapsed.delete(cat) : collapsed.add(cat);
+    this.setState({ collapsed });
+  }
+
+  select(id) { this.setState({ selected: id }); }
+
+  _recomputeImplied() {
+    this.setState({ implied: this._collectImplied(this.state.enabled) });
+  }
+}
+
+window.app = new App();
+
+/* =========================================================
+   LOAD DATA
+========================================================= */
+fetch("features.json")
+  .then(r => r.json())
+  .then(data => {
+    const tree = {};
+    const flat = [];
+    for (const [catKey, group] of Object.entries(data)) {
+      const g = Array.isArray(group)
+        ? { name: catKey, description: "", type: "or", features: group }
+        : group;
+      tree[catKey] = g;
+      for (const item of (g.features || [])) {
+        flat.push({
+          id: item.path,
+          name: item.name,
+          category: item.category || catKey,
+          description: item.description || "",
+          path: item.path,
+          kind: item.kind || item.type || "feature",
+          deps: item.deps || [],
+          external_deps: item.external_deps || [],
+        });
+      }
+    }
+    window.app.setState({ tree, features: flat });
+    window.app._recomputeImplied();
+  });
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function mavenToGradle(coord) {
+  const p = coord.split(":");
+  return p.length >= 3 ? `implementation("${p[0]}:${p[1]}:${p[2]}")` : coord;
+}
+
+/* =========================================================
+   EXPORT SETTINGS STATE
+========================================================= */
+const exportSettings = {
+  project: "my-jadex-app",
+  version: "5.0-beta1",
+  buildSystem: "gradle",
+  comments: "normal",
+  snapshots: false,
+  versions: [],        // fetched from Maven Central
+  versionsLoaded: false,
+};
+
+/* =========================================================
+   MAVEN CENTRAL VERSION FETCH
+========================================================= */
+const FALLBACK_VERSION = "5.0-beta1";
+const FALLBACK_VERSIONS = ["5.0-beta1"];
+
+async function fetchJadexVersions() {
+  const statusEl = document.getElementById("version-status");
+  const selectEl = document.getElementById("exp-version");
+  try {
+    // Maven Central search API
+    const url = "https://search.maven.org/solrsearch/select?q=g:org.activecomponents.jadex+AND+a:jadex-distribution&core=gav&rows=30&wt=json";
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    const docs = data?.response?.docs || [];
+    let versions = docs.map(d => d.v).filter(Boolean);
+
+    exportSettings.versionsLoaded = true;
+    exportSettings.versions = versions.length ? versions : FALLBACK_VERSIONS;
+
+    renderVersionSelect();
+    statusEl.textContent = versions.length ? "Maven Central" : "fallback";
+    statusEl.className = "version-status " + (versions.length ? "online" : "offline");
+  } catch (e) {
+    exportSettings.versionsLoaded = true;
+    exportSettings.versions = FALLBACK_VERSIONS;
+    renderVersionSelect();
+    statusEl.textContent = "offline";
+    statusEl.className = "version-status offline";
+  }
+}
+
+function isSnapshot(v) {
+  return /SNAPSHOT|alpha|beta|rc|m\d/i.test(v);
+}
+
+function renderVersionSelect() {
+  const selectEl = document.getElementById("exp-version");
+  const showSnapshots = exportSettings.snapshots;
+  const all = exportSettings.versions;
+  const filtered = showSnapshots ? all : all.filter(v => !isSnapshot(v));
+  const list = filtered.length ? filtered : all; // fallback: show all if filter empties
+
+  selectEl.innerHTML = "";
+  for (const v of list) {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    if (v === exportSettings.version) opt.selected = true;
+    selectEl.appendChild(opt);
+  }
+  // if current selection not in filtered list, pick first
+  if (!list.includes(exportSettings.version)) {
+    exportSettings.version = list[0] || FALLBACK_VERSION;
+    selectEl.value = exportSettings.version;
+  }
+  renderExport();
+}
+
+fetchJadexVersions();
+
+/* =========================================================
+   EXPORT SETTINGS UI WIRING
+========================================================= */
+document.getElementById("exp-project").addEventListener("input", e => {
+  exportSettings.project = e.target.value;
+  renderExport();
+});
+
+document.getElementById("exp-version").addEventListener("change", e => {
+  exportSettings.version = e.target.value;
+  renderExport();
+});
+
+// segment controls
+["seg-build", "seg-comments"].forEach(segId => {
+  document.getElementById(segId).querySelectorAll(".seg-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.getElementById(segId).querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (segId === "seg-build") exportSettings.buildSystem = btn.dataset.v;
+      if (segId === "seg-comments") exportSettings.comments = btn.dataset.v;
+      renderExport();
+    };
+  });
+});
+
+// snapshots toggle
+document.getElementById("toggle-snapshots").onclick = function() {
+  exportSettings.snapshots = !exportSettings.snapshots;
+  this.classList.toggle("on", exportSettings.snapshots);
+  renderVersionSelect();
+};
+
+/* =========================================================
+   EXPORT GENERATORS
+========================================================= */
+function mavenToGradle(coord) {
+  const p = coord.split(":");
+  return p.length >= 3 ? `implementation("${p[0]}:${p[1]}:${p[2]}")` : coord;
+}
+
+function mavenToMavenXml(coord) {
+  const p = coord.split(":");
+  if (p.length < 3) return `<!-- ${coord} -->`;
+  return `        <dependency>\n            <groupId>${p[0]}</groupId>\n            <artifactId>${p[1]}</artifactId>\n            <version>${p[2]}</version>\n        </dependency>`;
+}
+
+function coordToPlain(coord) { return coord; }
+
+function buildGradle(state, settings) {
+  const { project, version, comments } = settings;
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const activeFeatures = state.features.filter(f => allActive.has(f.id));
+  const featureArtifacts = [...new Set(activeFeatures.map(f => f.name).filter(Boolean))];
+  const externalCoords = window.app.collectTransitiveExternalDeps();
+  const internalDeps = window.app.collectInternalBuildDeps();
+  const featureNames = [...state.enabled].map(id => state.features.find(f => f.id === id)?.name || id);
+  const impliedNames = [...state.implied].map(id => state.features.find(f => f.id === id)?.name || id);
+
+  const lines = [];
+
+  if (comments !== "none") {
+    lines.push(`// ── Generated by Feature Configurator ──`);
+    if (comments === "verbose") lines.push(`// Project: ${project}`);
+    lines.push(`//`);
+    lines.push(`// Selected features:`);
+    featureNames.forEach(n => lines.push(`//   • ${n}`));
+    if (impliedNames.length) {
+      lines.push(`//`);
+      lines.push(`// Implied (pulled in via dependencies):`);
+      impliedNames.forEach(n => lines.push(`//   · ${n}`));
+    }
+    if (comments === "verbose" && internalDeps.length) {
+      lines.push(`//`);
+      lines.push(`// Internal build dependencies:`);
+      internalDeps.forEach(d => lines.push(`//   ${d}`));
+    }
+    lines.push(``);
+  }
+
+  lines.push(`plugins {`);
+  lines.push(`    id("java")`);
+  lines.push(`}`);
+  lines.push(``);
+  lines.push(`group = "com.example"`);
+  lines.push(`version = "1.0-SNAPSHOT"`);
+  lines.push(``);
+  lines.push(`repositories {`);
+  lines.push(`    mavenCentral()`);
+  lines.push(`}`);
+  lines.push(``);
+  lines.push(`dependencies {`);
+
+  if (featureArtifacts.length === 0) {
+    lines.push(`    // no features selected`);
+  } else {
+    featureArtifacts.forEach(a => {
+      lines.push(`    implementation("org.activecomponents.jadex:${a}:${version}")`);
+    });
+  }
+
+  if (externalCoords.length > 0) {
+    if (comments !== "none") lines.push(`    // external dependencies`);
+    externalCoords.forEach(dep => lines.push(`    ${mavenToGradle(dep)}`));
+  }
+
+  lines.push(`}`);
+  return lines.join("\n");
+}
+
+function buildMaven(state, settings) {
+  const { project, version, comments } = settings;
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const activeFeatures = state.features.filter(f => allActive.has(f.id));
+  const featureArtifacts = [...new Set(activeFeatures.map(f => f.name).filter(Boolean))];
+
+  const externalCoords = window.app.collectTransitiveExternalDeps();
+
+  const featureNames = [...state.enabled]
+    .map(id => state.features.find(f => f.id === id)?.name || id);
+  const impliedNames = [...state.implied]
+    .map(id => state.features.find(f => f.id === id)?.name || id);
+
+  const safeId = (project || "my-jadex-app")
+    .replace(/[^a-zA-Z0-9\-_.]/g, "-")
+    .toLowerCase();
+
+  const lines = [];
+
+  function depToXml(dep) {
+    if (typeof dep === "string") {
+      // fallback: g:a:v:c
+      const [g, a, v, c] = dep.split(":");
+      dep = { groupId: g, artifactId: a, version: v, classifier: c };
+    }
+
+    const { groupId, artifactId, version, classifier } = dep;
+
+    const xml = [];
+    xml.push(`        <dependency>`);
+    xml.push(`            <groupId>${groupId}</groupId>`);
+    xml.push(`            <artifactId>${artifactId}</artifactId>`);
+
+    if (version) {
+      xml.push(`            <version>${version}</version>`);
+    }
+
+    if (classifier && classifier.trim() !== "") {
+      xml.push(`            <classifier>${classifier}</classifier>`);
+    }
+
+    xml.push(`        </dependency>`);
+    return xml.join("\n");
+  }
+
+  if (comments !== "none") {
+    lines.push(`<!-- ── Generated by Feature Configurator ── -->`);
+    lines.push(`<!-- Selected: ${featureNames.join(", ") || "none"} -->`);
+    if (impliedNames.length && comments === "verbose") {
+      lines.push(`<!-- Implied: ${impliedNames.join(", ")} -->`);
+    }
+    lines.push(``);
+  }
+
+  lines.push(`<project xmlns="http://maven.apache.org/POM/4.0.0"`);
+  lines.push(`         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"`);
+  lines.push(`         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0`);
+  lines.push(`             http://maven.apache.org/xsd/maven-4.0.0.xsd">`);
+  lines.push(`    <modelVersion>4.0.0</modelVersion>`);
+  lines.push(``);
+  lines.push(`    <groupId>com.example</groupId>`);
+  lines.push(`    <artifactId>${safeId}</artifactId>`);
+  lines.push(`    <version>1.0-SNAPSHOT</version>`);
+  lines.push(``);
+  lines.push(`    <properties>`);
+  lines.push(`      <maven.compiler.release>21</maven.compiler.release>`);
+  lines.push(`    </properties>`);
+  lines.push(``);
+  lines.push(`    <dependencies>`);
+
+  if (featureArtifacts.length === 0) {
+    lines.push(`        <!-- no features selected -->`);
+  } else {
+    featureArtifacts.forEach(a => {
+      lines.push(`        <dependency>`);
+      lines.push(`            <groupId>org.activecomponents.jadex</groupId>`);
+      lines.push(`            <artifactId>${a}</artifactId>`);
+      lines.push(`            <version>${version}</version>`);
+      lines.push(`        </dependency>`);
+    });
+  }
+
+  if (externalCoords.length > 0) {
+    if (comments !== "none") {
+      lines.push(`        <!-- external dependencies -->`);
+    }
+    externalCoords.forEach(dep => {
+      lines.push(depToXml(dep));
+    });
+  }
+
+  lines.push(`    </dependencies>`);
+
+  lines.push(`    <build>`);
+  lines.push(`        <plugins>`);
+  lines.push(`            <plugin>`);
+  lines.push(`                <groupId>org.apache.maven.plugins</groupId>`);
+  lines.push(`                <artifactId>maven-compiler-plugin</artifactId>`);
+  lines.push(`                <version>3.11.0</version>`);
+  lines.push(`                <configuration>`);
+  lines.push(`                    <release>21</release>`);
+  lines.push(`                </configuration>`);
+  lines.push(`            </plugin>`);
+  lines.push(`        </plugins>`);
+  lines.push(`    </build>`);
+
+  lines.push(`</project>`);
+
+  return lines.join("\n");
+}
+
+function buildBazel(state, settings) {
+  const { project, version, comments } = settings;
+
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const activeFeatures = state.features.filter(f => allActive.has(f.id));
+
+  const featureArtifacts =
+    [...new Set(activeFeatures.map(f => f.name).filter(Boolean))];
+
+  const externalCoords =
+    window.app.collectTransitiveExternalDeps();
+
+  const featureNames =
+    [...state.enabled]
+      .map(id => state.features.find(f => f.id === id)?.name || id);
+
+  const impliedNames =
+    [...state.implied]
+      .map(id => state.features.find(f => f.id === id)?.name || id);
+
+  const safeProject =
+    (project || "my-jadex-app")
+      .replace(/[^a-zA-Z0-9_]/g, "_");
+
+  const lines = [];
+
+  // ============================================================
+  // MODULE.bazel
+  // ============================================================
+
+  lines.push(`# ============================================================`);
+  lines.push(`# FILE: MODULE.bazel`);
+  lines.push(`# ============================================================`);
+  lines.push(``);
+
+  if (comments !== "none") {
+    lines.push(`# Generated by Feature Configurator`);
+    lines.push(`# Selected: ${featureNames.join(", ") || "none"}`);
+
+    if (impliedNames.length && comments === "verbose") {
+      lines.push(`# Implied: ${impliedNames.join(", ")}`);
+    }
+
+    lines.push(``);
+  }
+
+  lines.push(`bazel_dep(name = "rules_java", version = "9.1.0")`);
+  lines.push(`bazel_dep(name = "rules_jvm_external", version = "6.7")`);
+  lines.push(``);
+
+  lines.push(`maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")`);
+  lines.push(``);
+
+  lines.push(`maven.install(`);
+  lines.push(`    name = "maven",`);
+  lines.push(`    artifacts = [`);
+
+  if (featureArtifacts.length === 0 && externalCoords.length === 0) {
+    lines.push(`        # no dependencies`);
+  }
+
+  featureArtifacts.forEach(a => {
+    lines.push(`        "org.activecomponents.jadex:${a}:${version}",`);
+  });
+
+  externalCoords.forEach(dep => {
+    lines.push(`        "${dep}",`);
+  });
+
+  lines.push(`    ],`);
+  lines.push(`    repositories = [`);
+  lines.push(`        "https://repo1.maven.org/maven2",`);
+  lines.push(`    ],`);
+  lines.push(`)`);
+
+  lines.push(``);
+  lines.push(`use_repo(maven, "maven")`);
+  lines.push(``);
+
+  // ============================================================
+  // BUILD.bazel
+  // ============================================================
+
+  lines.push(`# ============================================================`);
+  lines.push(`# FILE: BUILD.bazel`);
+  lines.push(`# ============================================================`);
+  lines.push(``);
+
+  lines.push(`load("@rules_java//java:defs.bzl", "java_binary")`);
+  lines.push(``);
+
+  const deps = [];
+  const runtime_deps = [];
+
+  const isNative = (d) =>
+    d.includes("natives") || d.includes(":natives");
+
+  // Jadex features
+  featureArtifacts.forEach(a => {
+    deps.push(`@maven//:org_activecomponents_jadex_${a}`);
+  });
+
+  // external deps (Maven coords)
+  externalCoords.forEach(dep => {
+    const parts = dep.split(":");
+    const group = parts[0];
+    const artifact = parts[1];
+    const classifier = parts[3];
+
+    const baseLabel =
+      `${group}_${artifact}`.replace(/[.\-]/g, "_");
+
+    // natives raus aus deps
+    if (classifier === "natives-desktop" || isNative(dep)) {
+      runtime_deps.push(`@maven//:${baseLabel}_natives_desktop`);
+    } else {
+      deps.push(`@maven//:${baseLabel}`);
+    }
+  });
+
+  lines.push(`java_binary(`);
+  lines.push(`    name = "${safeProject}",`);
+  lines.push(`    srcs = glob(["src/**/*.java"]),`);
+  lines.push(`    main_class = "com.example.Main",`);
+  lines.push(`    deps = [`);
+
+  if (deps.length === 0) {
+    lines.push(`        # no dependencies`);
+  } else {
+    deps.forEach(d => lines.push(`        "${d}",`));
+  }
+
+  lines.push(`    ],`);
+
+  if (runtime_deps.length > 0) {
+    lines.push(`    runtime_deps = [`);
+
+    runtime_deps.forEach(d => lines.push(`        "${d}",`));
+
+    lines.push(`    ],`);
+  }
+
+  lines.push(`)`);
+
+  return lines.join("\n");
+}
+
+
+function buildPlain(state, settings) {
+  const { version, comments } = settings;
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const activeFeatures = state.features.filter(f => allActive.has(f.id));
+  const featureArtifacts = [...new Set(activeFeatures.map(f => f.name).filter(Boolean))];
+  const externalCoords = window.app.collectTransitiveExternalDeps();
+  const featureNames = [...state.enabled].map(id => state.features.find(f => f.id === id)?.name || id);
+  const impliedNames = [...state.implied].map(id => state.features.find(f => f.id === id)?.name || id);
+
+  const lines = [];
+
+  if (comments !== "none") {
+    lines.push(`# ── Jadex dependencies ──`);
+    lines.push(`# Selected: ${featureNames.join(", ") || "none"}`);
+    if (impliedNames.length) lines.push(`# Implied: ${impliedNames.join(", ")}`);
+    lines.push(``);
+  }
+
+  featureArtifacts.forEach(a => lines.push(`org.activecomponents.jadex:${a}:${version}`));
+
+  if (externalCoords.length > 0) {
+    if (comments !== "none") lines.push(`\n# external dependencies`);
+    externalCoords.forEach(dep => lines.push(dep));
+  }
+
+  if (featureArtifacts.length === 0 && externalCoords.length === 0) {
+    lines.push("# no features selected");
+  }
+
+  return lines.join("\n");
+}
+
+/* =========================================================
+   SYNTAX HIGHLIGHT
+   Strategy: tokenise each line into segments, classify each
+   segment, then emit spans. Never run a second regex over
+   already-emitted HTML.
+========================================================= */
+function esc(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function spanWrap(cls, text) {
+  return `<span class="${cls}">${text}</span>`;
+}
+
+// Split a line into alternating [outside-string, string, outside, string, ...]
+// Returns array of {type:"str"|"text", raw:string}
+function tokeniseStrings(line) {
+  const tokens = [];
+  let i = 0;
+  let cur = "";
+  while (i < line.length) {
+    if (line[i] === '"') {
+      if (cur) { tokens.push({type:"text", raw:cur}); cur = ""; }
+      let s = '"';
+      i++;
+      while (i < line.length) {
+        if (line[i] === '\\') { s += line[i] + (line[i+1]||""); i += 2; continue; }
+        if (line[i] === '"') { s += '"'; i++; break; }
+        s += line[i++];
+      }
+      tokens.push({type:"str", raw:s});
+    } else {
+      cur += line[i++];
+    }
+  }
+  if (cur) tokens.push({type:"text", raw:cur});
+  return tokens;
+}
+
+const GRADLE_KW = /\b(plugins|dependencies|repositories|implementation|api|compileOnly|testImplementation|mavenCentral|gradleApi|localGroovy|id|group|version)\b/g;
+const BAZEL_KW  = /\b(load|maven_install|java_binary|java_library|name|artifacts|repositories|deps|srcs|main_class)\b/g;
+
+function highlightGradleLine(line) {
+  if (line.trim().startsWith("//")) return spanWrap("exp-comment", esc(line));
+  const tokens = tokeniseStrings(line);
+  return tokens.map(tok => {
+    if (tok.type === "str") return spanWrap("exp-str", esc(tok.raw));
+    // highlight keywords in plain text segments
+    return esc(tok.raw).replace(GRADLE_KW, m => spanWrap("exp-key", m));
+  }).join("");
+}
+
+function highlightBazelLine(line) {
+  if (line.trim().startsWith("#")) return spanWrap("exp-comment", esc(line));
+  const tokens = tokeniseStrings(line);
+  return tokens.map(tok => {
+    if (tok.type === "str") return spanWrap("exp-str", esc(tok.raw));
+    return esc(tok.raw).replace(BAZEL_KW, m => spanWrap("exp-key", m));
+  }).join("");
+}
+
+// Maven: work on raw text, escape each piece individually at output time
+function highlightMavenLine(line) {
+  if (line.trim().startsWith("<!--")) return spanWrap("exp-comment", esc(line));
+
+  // Tokenise into alternating text and <tag...> segments
+  const out = [];
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === '<') {
+      const end = line.indexOf('>', i);
+      if (end === -1) { out.push(esc(line.slice(i))); break; }
+      const raw = line.slice(i, end + 1);
+      const inner = raw.slice(1, -1);
+      const isClose = inner.startsWith('/');
+      const tagName = isClose ? inner.slice(1) : inner.split(/[\s/]/)[0];
+      const rest = inner.slice(isClose ? tagName.length + 1 : tagName.length);
+      out.push(
+        '<span class="exp-comment">&lt;</span>' +
+        (isClose ? '<span class="exp-comment">/</span>' : '') +
+        spanWrap("exp-tag", esc(tagName)) +
+        (rest ? esc(rest) : '') +
+        '<span class="exp-comment">&gt;</span>'
+      );
+      i = end + 1;
+    } else {
+      const next = line.indexOf('<', i);
+      const chunk = next === -1 ? line.slice(i) : line.slice(i, next);
+      if (chunk) out.push(esc(chunk));
+      i = next === -1 ? line.length : next;
+    }
+  }
+  return out.join("");
+}
+
+function highlight(text, buildSystem) {
+  // Reset stateful regexes before use
+  GRADLE_KW.lastIndex = 0;
+  BAZEL_KW.lastIndex = 0;
+
+  return text.split("\n").map(line => {
+    if (buildSystem === "gradle") return highlightGradleLine(line);
+    if (buildSystem === "bazel")  return highlightBazelLine(line);
+    if (buildSystem === "maven")  return highlightMavenLine(line);
+    // plain
+    if (line.trim().startsWith("#")) return spanWrap("exp-comment", esc(line));
+    return esc(line);
+  }).join("\n");
+}
+
+/* =========================================================
+   RENDER EXPORT PREVIEW
+========================================================= */
+function renderExport() {
+  const state = window.app.state;
+  const settings = exportSettings;
+  let text = "";
+
+  switch (settings.buildSystem) {
+    case "gradle":  text = buildGradle(state, settings); break;
+    case "maven":   text = buildMaven(state, settings); break;
+    case "bazel":   text = buildBazel(state, settings); break;
+    case "plain":   text = buildPlain(state, settings); break;
+    default:        text = buildGradle(state, settings);
+  }
+
+  exportSettings._lastText = text;
+  document.getElementById("export-pre").innerHTML = highlight(text, settings.buildSystem);
+}
+
+/* =========================================================
+   COPY / DOWNLOAD
+========================================================= */
+document.getElementById("btn-copy-exp").onclick = () => {
+  const text = exportSettings._lastText || "";
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("btn-copy-exp");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 1500);
+  });
+};
+
+document.getElementById("btn-dl-exp").onclick = () => {
+  const text = exportSettings._lastText || "";
+  const bs = exportSettings.buildSystem;
+  const ext = bs === "maven" ? "pom.xml" : bs === "gradle" ? "build.gradle" : bs === "bazel" ? "BUILD.bazel" : "deps.txt";
+  const fname = bs === "maven" ? "pom.xml" : `${(exportSettings.project||"project").replace(/\s+/g,"-")}.${ext}`;
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* =========================================================
+   RE-RENDER EXPORT ON APP STATE CHANGE
+========================================================= */
+window.app.subscribe(() => renderExport());
+
+/* =========================================================
+   FEATURES PANEL
+========================================================= */
+window.app.subscribe(state => {
+  const scroll = document.getElementById("features-scroll");
+  if (!scroll) return;
+
+  scroll.innerHTML = Object.entries(state.tree).map(([catKey, group]) => {
+    const collapsed = state.collapsed.has(catKey);
+    const type = group.type || "or";
+    const label = group.name || catKey;
+    const desc = group.description || "";
+
+    const featureItems = (group.features || []).filter(i => i.kind !== "library");
+    if (featureItems.length === 0) return "";
+
+    return `
+      <div class="category">
+        <div class="category-header" data-cat="${catKey}">
+          <div class="category-header-left">
+            <span class="category-name">${label}</span>
+            ${desc ? `<span class="category-desc">${desc}</span>` : ""}
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <span class="group-type-badge ${type}">${type}</span>
+            <span style="font-size:10px;color:#aaa;">${collapsed ? "▶" : "▼"}</span>
+          </div>
+        </div>
+        ${collapsed ? "" : `
+          <div class="features">
+            ${featureItems.map(item => {
+              const itemId = item.path;
+              const checked = state.enabled.has(itemId);
+              const isImplied = state.implied.has(itemId);
+              let inp = "";
+              if (isImplied) {
+                inp = `<input type="checkbox" class="implied-check" data-id="${itemId}" checked />`;
+              } else if (type === "xor") {
+                inp = `<input type="radio" name="xor-${catKey}" data-id="${itemId}" ${checked?"checked":""} />`;
+              } else if (type === "and") {
+                inp = `<input type="checkbox" class="and-check" data-id="${itemId}" ${checked?"checked":""} />`;
+              } else {
+                inp = `<input type="checkbox" data-id="${itemId}" ${checked?"checked":""} />`;
+              }
+              return `
+                <div class="item ${isImplied?"implied":""}">
+                  ${inp}
+                  <span class="name" data-select="${itemId}">${item.name}</span>
+                  ${isImplied
+                    ? `<span class="implied-badge">implied</span>`
+                    : `<span class="badge feature">feature</span>`}
+                </div>`;
+            }).join("")}
+          </div>`}
+      </div>`;
+  }).join("");
+
+  scroll.querySelectorAll(".category-header").forEach(el =>
+    el.onclick = () => window.app.toggleCategory(el.dataset.cat));
+
+  scroll.querySelectorAll("input[type=checkbox]:not(.and-check):not(.implied-check)").forEach(el =>
+    el.onchange = () => window.app.toggleFeature(el.dataset.id));
+
+  scroll.querySelectorAll("input[type=radio]").forEach(el =>
+    el.onclick = e => { window.app.toggleFeature(el.dataset.id); e.preventDefault(); });
+
+  scroll.querySelectorAll(".and-check").forEach(el =>
+    el.parentElement.onclick = () => window.app.toggleFeature(el.dataset.id));
+
+  scroll.querySelectorAll("[data-select]").forEach(el =>
+    el.onclick = e => { e.stopPropagation(); window.app.select(el.dataset.select); });
+});
+
+/* =========================================================
+   LIBRARIES PANEL
+========================================================= */
+window.app.subscribe(state => {
+  const scroll = document.getElementById("libraries-scroll");
+  const countEl = document.getElementById("lib-count");
+  if (!scroll) return;
+
+  const allActive = new Set([...state.enabled, ...state.implied]);
+  const libs = state.features.filter(f => f.kind === "library");
+  const activeLibs = libs.filter(f => allActive.has(f.id));
+
+  countEl.textContent = activeLibs.length ? `${activeLibs.length} active` : "";
+
+  if (libs.length === 0) {
+    scroll.innerHTML = `<div class="ext-empty">No libraries.</div>`;
+    return;
+  }
+
+  const bycat = {};
+  for (const lib of libs) {
+    if (!bycat[lib.category]) bycat[lib.category] = [];
+    bycat[lib.category].push(lib);
+  }
+
+  scroll.innerHTML = Object.entries(bycat).map(([cat, items]) => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:10px;font-weight:bold;color:#bbb;padding:3px 6px 2px;text-transform:uppercase;letter-spacing:.04em;">${cat}</div>
+      ${items.map(lib => {
+        const isActive = allActive.has(lib.id);
+        return `
+          <div class="lib-item ${isActive?"active":""}" data-select="${lib.id}">
+            <div class="lib-dot ${isActive?"implied":""}"></div>
+            <span class="lib-name">${lib.name}</span>
+          </div>`;
+      }).join("")}
+    </div>`).join("");
+
+  scroll.querySelectorAll("[data-select]").forEach(el =>
+    el.onclick = () => window.app.select(el.dataset.select));
+});
+
+/* =========================================================
+   DETAIL PANEL
+========================================================= */
+class DetailPanel extends HTMLElement {
+  connectedCallback() {
+    this.unsubscribe = window.app.subscribe(state => this.render(state));
+  }
+  disconnectedCallback() { this.unsubscribe?.(); }
+
+  render(state) {
+    const feature = state.features.find(f => f.id === state.selected);
+    if (!feature) {
+      this.innerHTML = `<div class="empty-detail">Select a feature or library to see details.</div>`;
+      return;
+    }
+
+    const catKey = Object.keys(state.tree).find(k =>
+      (state.tree[k].features || []).some(f => f.path === feature.id));
+    const group = catKey ? state.tree[catKey] : null;
+    const groupType = group ? (group.type || "or") : "or";
+    const groupName = group ? (group.name || catKey) : feature.category;
+
+    const isEnabled = state.enabled.has(feature.id);
+    const isImplied = state.implied.has(feature.id);
+    const allActive = new Set([...state.enabled, ...state.implied]);
+
+    const requiredBy = state.features
+      .filter(f => allActive.has(f.id) && (f.deps || []).includes(feature.id))
+      .map(f => f.name);
+
+    const paths = window.app.featurePaths;
+    const featureDeps = (feature.deps || []).filter(d => paths.has(d));
+    const buildDeps   = (feature.deps || []).filter(d => !paths.has(d));
+
+    this.innerHTML = `
+      <div class="box">
+        <h2 style="margin:0 0 4px;font-size:18px;">${feature.name}</h2>
+        <p style="margin:0 0 12px;color:#777;font-size:13px;">${feature.description || "No description."}</p>
+
+        <div class="meta-grid">
+          <div class="lbl">Group</div>
+          <div>${groupName} <span class="group-type-badge ${groupType}" style="margin-left:4px;">${groupType}</span></div>
+
+          <div class="lbl">Kind</div>
+          <div><span class="badge ${feature.kind}">${feature.kind}</span></div>
+
+          <div class="lbl">Path</div>
+          <div class="code">${feature.path}</div>
+
+          <div class="lbl">Status</div>
+          <div>
+            ${isImplied
+              ? `<span class="implied-badge">implied by dependency</span>`
+              : isEnabled
+                ? `<span style="color:#2e7d32;font-weight:600;font-size:12px;">✓ enabled</span>`
+                : `<span style="color:#bbb;font-size:12px;">disabled</span>`}
+          </div>
+
+          ${requiredBy.length ? `
+            <div class="lbl">Required by</div>
+            <div>${requiredBy.map(n=>`<span class="implied-badge" style="margin-right:3px;">${n}</span>`).join("")}</div>
+          ` : ""}
+        </div>
+
+        ${featureDeps.length ? `
+          <div class="section">
+            <h3>Feature dependencies</h3>
+            <ul class="list">
+              ${featureDeps.map(dep => {
+                const df = state.features.find(f => f.id === dep);
+                const active = allActive.has(dep);
+                return `<li class="code" style="font-size:12px;color:${active?"#2e7d32":"#c62828"};">
+                  ${df ? df.name : dep} ${active ? "✓" : "✗ not active"}
+                </li>`;
+              }).join("")}
+            </ul>
+          </div>` : ""}
+
+        ${buildDeps.length ? `
+          <div class="section">
+            <h3>Build dependencies</h3>
+            <ul class="list">
+              ${buildDeps.map(d=>`<li class="code" style="font-size:11px;">${d}</li>`).join("")}
+            </ul>
+          </div>` : ""}
+
+        ${feature.external_deps.length ? `
+          <div class="section">
+            <h3>Maven dependencies <span style="font-size:11px;font-weight:normal;color:#aaa;">(this feature only)</span></h3>
+            <ul class="list">
+              ${feature.external_deps.map(dep=>`
+                <li class="code" style="font-size:11px;">${mavenToGradle(dep)}</li>`).join("")}
+            </ul>
+          </div>` : ""}
+      </div>`;
+  }
+}
+customElements.define("detail-panel", DetailPanel);
+
+/* =========================================================
+   PANEL RESIZE
+   Panels and resizers are discovered from the DOM in order,
+   so the layout works regardless of which panel is where.
+   Edit INITIAL_WIDTHS to change starting sizes (must sum ≤ 100).
+========================================================= */
+(function() {
+  // ── Adjust these percentages to taste ──────────────────
+  const INITIAL_WIDTHS = [20, 15, 30, 35]; // features, libraries, detail/export, detail/export
+  // ────────────────────────────────────────────────────────
+
+  // Collect all panels and resizers in DOM order
+  const panels = ["features-panel","libraries-panel","export-panel"].map(id=>document.getElementById(id)).concat([document.querySelector("detail-panel")]);
+  const resizers = [...document.querySelectorAll(".resizer")];
+
+  // Normalise so widths sum to 100
+  let widths = INITIAL_WIDTHS.slice(0, panels.length);
+  const sum = widths.reduce((a,b)=>a+b,0);
+  widths = widths.map(w => (w / sum) * 100);
+
+  function applyWidths() {
+    panels.forEach((el, i) => {
+      el.style.width = widths[i] + "%";
+    });
+  }
+
+  resizers.forEach((rs, rIdx) => {
+    let startX, startLeft, startRight;
+    rs.addEventListener("mousedown", e => {
+      e.preventDefault();
+      startX = e.clientX;
+      startLeft  = widths[rIdx];
+      startRight = widths[rIdx + 1];
+      rs.classList.add("dragging");
+      const totalW = document.body.getBoundingClientRect().width;
+
+      function onMove(e) {
+        const dPct = ((e.clientX - startX) / totalW) * 100;
+        let newLeft  = startLeft  + dPct;
+        let newRight = startRight - dPct;
+        const minPct = (80 / totalW) * 100; // ~80px minimum
+        if (newLeft  < minPct) { newLeft  = minPct; newRight = startLeft + startRight - minPct; }
+        if (newRight < minPct) { newRight = minPct; newLeft  = startLeft + startRight - minPct; }
+        widths[rIdx]     = newLeft;
+        widths[rIdx + 1] = newRight;
+        applyWidths();
+      }
+
+      function onUp() {
+        rs.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+  });
+
+  applyWidths();
+})();
+</script>
+</body>
+</html>

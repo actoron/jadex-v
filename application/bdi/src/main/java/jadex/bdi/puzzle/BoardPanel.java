@@ -41,7 +41,7 @@ public class BoardPanel extends JPanel
 	/** The board to visualize. */
 	protected IBoard board;
 
-	/** Indicates if an image rescaling is necessray. */
+	/** Indicates if an image rescaling is necessary. */
 	protected boolean rescale;
 
 	/** The white piece image. */
@@ -147,17 +147,19 @@ public class BoardPanel extends JPanel
 		if(rescale)
 		{
 			((ImageIcon)white_piece.getIcon()).setImage(
-				wp_image.getScaledInstance((int)cellw, (int)cellh, Image.SCALE_DEFAULT));
+				wp_image.getScaledInstance((int)cellw, (int)cellh, Image.SCALE_SMOOTH));
 			((ImageIcon)red_piece.getIcon()).setImage(
-				rp_image.getScaledInstance((int)cellw, (int)cellh, Image.SCALE_DEFAULT));
+				rp_image.getScaledInstance((int)cellw, (int)cellh, Image.SCALE_SMOOTH));
 			((ImageIcon)empty_field.getIcon()).setImage(
-				ef_image.getScaledInstance((int)cellw, (int)cellh,Image.SCALE_DEFAULT));
+				ef_image.getScaledInstance(bounds.width, bounds.height ,Image.SCALE_SMOOTH));
 
 			rescale	= false;
 		}
 
-		g.setColor(getBackground());
-		g.fillRect(0,0,bounds.width, bounds.height);
+//		g.setColor(getBackground());
+//		g.fillRect(0,0,bounds.width, bounds.height);
+		empty_field.setBounds(bounds);
+		empty_field.paint(g);
 
 		java.util.List pieces = board.getCurrentPosition();
 		for(int y=0; y<bsize; y++)
@@ -165,6 +167,28 @@ public class BoardPanel extends JPanel
 			for(int x=0; x<bsize; x++)
 			{
 				Piece piece = (Piece)pieces.get(y*bsize+x);
+				
+				// Draw grid
+				if(piece!=null || board.isFreePosition(new Position(x,y)))
+				{
+					for(int offset=2; offset<4; offset++)
+					{
+						Rectangle bevel = new Rectangle((int)(cellw*x)+offset, (int)(cellh*y)+offset, (int)cellw-offset*2, (int)cellh-offset*2);
+						
+						g.setColor(new Color(0,0,0,20));
+						g.fillRect(bevel.x, bevel.y, bevel.width, bevel.height);
+						
+						g.setColor(new Color(0,0,0,50));
+						g.drawLine(bevel.x, bevel.y, bevel.x+bevel.width, bevel.y);
+						g.drawLine(bevel.x, bevel.y, bevel.x, bevel.y+bevel.height);
+						
+						g.setColor(new Color(255,255,255,50));
+						g.drawLine(bevel.x+bevel.width, bevel.y, bevel.x+bevel.width, bevel.y+bevel.height);
+						g.drawLine(bevel.x, bevel.y+bevel.height, bevel.x+bevel.width, bevel.y+bevel.height);
+					}
+				}
+				
+				// Draw pieces
 				if(piece!=null)
 				{
 					if(piece.isWhite())
@@ -174,16 +198,6 @@ public class BoardPanel extends JPanel
 						SGUI.renderObject(g, red_piece, cellw, cellh, x, y, 0);
 						//g.setColor(Color.darkGray);
 					//g.fillOval((int)(cellw*x), (int)(cellh*y), (int)cellw, (int)cellh);
-				}
-				else if(board.isFreePosition(new Position(x,y)))
-				{
-					SGUI.renderObject(g, empty_field, cellw, cellh, x, y, 0);
-					//g.setColor(Color.lightGray);
-					//g.fillRect((int)(cellw*x), (int)(cellh*y), (int)cellw, (int)cellh);
-				}
-				else
-				{
-					//System.out.println("empty: "+x+" "+y);
 				}
 			}
 		}

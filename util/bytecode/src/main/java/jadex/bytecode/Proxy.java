@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -68,7 +69,7 @@ public class Proxy
     {
     	try
     	{
-    		proxy.getClass().getField("isproxy");
+    		var isproxy = proxy.getClass().getField("isproxy");
     		Field f = proxy.getClass().getField("handler");
     		return (InvocationHandler)f.get(proxy);
     	}
@@ -449,7 +450,7 @@ public class Proxy
 		{
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
 			{
-				System.out.println("Handler called: "+proxy+" "+method+" "+args);
+				System.out.println("Handler called: "+proxy+" "+method+" "+Arrays.toString(args));
 				return null;
 			}
 		});

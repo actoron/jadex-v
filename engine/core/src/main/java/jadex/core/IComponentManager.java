@@ -11,10 +11,20 @@ import jadex.future.IFuture;
  */
 public interface IComponentManager extends IComponentFactory
 {
-	public static final String COMPONENT_ADDED = "component_added";
-	public static final String COMPONENT_REMOVED = "component_removed";
-	public static final String COMPONENT_LASTREMOVED = "component_lastremoved";
-	public static final String COMPONENT_LASTREMOVEDAPP = "component_lastremovedapp";
+	/** Event types for component events. */
+	public static enum ComponentEventType
+	{
+		/** A component is added. */
+		COMPONENT_ADDED,
+		/** A component is removed. */
+		COMPONENT_REMOVED,
+		/** The last component is removed. */
+		COMPONENT_LASTREMOVED,
+		/** An application is added (happens automatically when the first component is created). */
+		APPLICATION_ADDED,
+		/** An application is removed (happens automatically when the last non-daemon component is removed). */
+		APPLICATION_REMOVED,
+	}
 	
 	/**
 	 *  Returns the component manager instance.
@@ -124,14 +134,14 @@ public interface IComponentManager extends IComponentFactory
 	 *  @param listener The listener.
 	 *  @param types The types one is interested in.
 	 */
-	public void addComponentListener(IComponentListener listener, String... types);
+	public void addComponentListener(IComponentListener listener, ComponentEventType... types);
 	
 	/**
 	 *  Remove a component listener with given types.
 	 *  @param listener The listener.
 	 *  @param types The types one is interested in.
 	 */
-	public void removeComponentListener(IComponentListener listener, String... types);
+	public void removeComponentListener(IComponentListener listener, ComponentEventType... types);
 	
 	/**
 	 *  Turns on debug messages globally.

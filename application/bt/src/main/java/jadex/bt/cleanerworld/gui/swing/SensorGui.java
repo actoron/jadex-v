@@ -12,9 +12,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import jadex.bt.cleanerworld.BTCleanerAgent;
-import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
-import jadex.execution.IExecutionFeature;
 
 
 /**
@@ -48,7 +46,7 @@ public class SensorGui
 
 			frame.getContentPane().add(BorderLayout.CENTER, map);
 			frame.setSize(300, 300);
-			frame.setLocation(SGUI.calculateMiddlePosition(frame));
+//			frame.setLocation(SGUI.calculateMiddlePosition(frame));
 			frame.setVisible(true);
 			
 			// Repaint every 50 ms.
@@ -67,29 +65,17 @@ public class SensorGui
 			{
 				public void windowClosing(WindowEvent e)
 				{
-					// todo!
-					//lifecycle.terminate();
+					handle.terminate();
 				}
 			});
+			
+			// Close window on agent kill.
+			handle.waitForTermination().then(b -> SwingUtilities.invokeLater(()->
+			{
+				timer.stop();
+				frame.dispose();
+			}));
 		});
-		
-//		// Close window on agent kill.
-//		SComponentManagementService.listenToComponent(cid, agent)
-//			//.addIntermediateResultListener(cse ->
-//			.next(cse ->
-//		{
-//			if(cse instanceof CMSTerminatedEvent)
-//			{
-//				SwingUtilities.invokeLater(new Runnable()
-//				{
-//					public void run()
-//					{
-//						timer.stop();
-//						frame.dispose();
-//					}
-//				});
-//			}
-//		});
 	}
 	
 	//-------- methods --------

@@ -1,5 +1,8 @@
 package benchmark.jason;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -72,7 +75,7 @@ public class JasonBenchmark
 		// set up the Jason agent
 		Agent	model	= new Agent();
 		model.initAg();
-		model.loadAS("JasonBenchmark.asl");
+		model.loadAS(asl("JasonBenchmark.asl"));
 		
 		BenchmarkHelper.benchmarkTime(() ->
 		{				
@@ -91,7 +94,7 @@ public class JasonBenchmark
 		// set up the Jason agent
 		Agent	model	= new Agent();
 		model.initAg();
-		model.loadAS("JasonBenchmark.asl");
+		model.loadAS(asl("JasonBenchmark.asl"));
 		
 		BenchmarkHelper.benchmarkTime(() ->
 		{				
@@ -110,7 +113,7 @@ public class JasonBenchmark
 		// set up the Jason agent
 		Agent	model	= new Agent();
 		model.initAg();
-		model.loadAS("JasonBenchmark.asl");
+		model.loadAS(asl("JasonBenchmark.asl"));
 		
 		BenchmarkHelper.benchmarkMemory(() ->
 		{				
@@ -133,7 +136,7 @@ public class JasonBenchmark
 				// set up the Jason agent
 				Agent	model	= new Agent();
 				model.initAg();
-				model.loadAS("JasonBenchmark.asl");
+				model.loadAS(asl("JasonBenchmark.asl"));
 				JasonBenchmarkAgent ag = new JasonBenchmarkAgent(model);
 				ag.run();
 				ag.fut.get();
@@ -144,4 +147,33 @@ public class JasonBenchmark
 			}
 		});
 	}
+
+	public static String asl(String filename)
+    {
+        Path local = Paths.get(filename);
+
+        if(Files.exists(local))
+        {
+            return local.toAbsolutePath().toString();
+        }
+
+        String testSrcDir = System.getenv("TEST_SRCDIR");
+        String workspace = System.getenv("TEST_WORKSPACE");
+
+        if(testSrcDir != null && workspace != null)
+        {
+            Path bazel = Paths.get(
+                testSrcDir,
+                workspace,
+                "benchmark",
+                "thirdparty",
+                filename
+            );
+
+            if(Files.exists(bazel))
+                return bazel.toAbsolutePath().toString();
+        }
+
+        throw new RuntimeException("ASL file not found: " + filename);
+    }
 }

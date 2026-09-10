@@ -12,11 +12,12 @@ public interface ITransport
     /**
      *  Sends a message to a remote host.
      *
+     *  @param origin Message origin.
      *  @param receiver Message receiver.
      *  @param rawmessage The raw message.
      *  @return Null, when sent.
      */
-    public IFuture<Void> sendMessage(ComponentIdentifier receiver, byte[] rawmessage);
+    public IFuture<Void> sendMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] rawmessage);
 
     /**
      *  Gets the priority of the transport.

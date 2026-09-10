@@ -2,11 +2,16 @@ package jadex.benchmark;
 
 import java.io.IOException;
 import java.lang.System.Logger.Level;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import javax.management.MBeanServer;
+import com.sun.management.HotSpotDiagnosticMXBean;
+import com.sun.management.VMOption;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
@@ -111,6 +116,9 @@ public class BenchmarkHelper
 				long	end	= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //				System.out.println("Used at end: "+end);
 				
+				String path	= "heapdump-"+getCaller()+"-"+System.currentTimeMillis()+".hprof";
+				dumpHeap(path);
+
 				long took	= (end-start)/cnt;
 				if(r>0 && took>0)	// Skip first for accuracy
 				{
@@ -207,6 +215,9 @@ public class BenchmarkHelper
 				Thread.sleep(sleep);
 				System.gc();
 				memvals.add(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+
+				String path	= "heapdump-"+getCaller()+"-"+System.currentTimeMillis()+".hprof";
+				dumpHeap(path);
 
 				// skip first cooldown and ignore first result
 				if(j>0)
@@ -400,4 +411,35 @@ public class BenchmarkHelper
 		
 		return pct;
 	}
+
+    private static final String HOTSPOT_BEAN = "com.sun.management:type=HotSpotDiagnostic";
+
+	public static void dumpHeap(String path)
+	{
+		dumpHeap(path, true);
+	}
+
+    public static void dumpHeap(String path, boolean ignore)
+	{
+		if(ignore)
+			return;
+
+		try
+		{
+			System.gc();
+			System.gc(); // for G1GC
+
+			MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+			HotSpotDiagnosticMXBean bean = ManagementFactory.newPlatformMXBeanProxy(
+				server, HOTSPOT_BEAN, HotSpotDiagnosticMXBean.class);
+
+			bean.dumpHeap(path, true); // true = only live objects
+			System.out.println("Heap dump written to: " + path);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+    }
 }
+

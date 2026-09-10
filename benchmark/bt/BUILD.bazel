@@ -1,0 +1,57 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "benchmark-bt")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+#load(":deps.bzl", "DEPS")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+java_test(
+    name = "bt_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--fail-if-no-tests",
+        "--select-package", "jadex.benchmark",
+        "--include-classname", ".*",
+    ],
+    deps = [
+        "//util/common:common",
+        "//engine/core",
+        "//feature/monitoring/logbase",
+        "//feature/monitoring/opentelemetry",
+        "//util/collection:collection",
+        "//feature/execution",
+        "//feature/injection",
+        "//benchmark/core:benchmark-core",
+        "//util/future",
+        "//engine/bt",
+        "//application/bt:application-bt",
+        "//feature/environment",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ],
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
+java_library(
+    name = "benchmark-bt",
+    srcs = [], #glob(["src/test/java/**/*.java"]),
+    #resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    #deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "benchmark-bt_publish",
+    target = ":benchmark-bt",
+)

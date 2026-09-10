@@ -1,0 +1,47 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(name = "application-llm")
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load(":deps.bzl", "DEPS")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/classreader",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+    "//feature/result",
+    "//feature/autostart",
+    "//feature/monitoring/logbase",
+    "//service/provided:providedservice",
+    "//service/required:requiredservice",
+    "//service/publish:publishservice",
+    "//service/publishjetty",
+    "//feature/llm",
+    "//feature/libmicro",
+    "//application/bdi:application-bdi",
+    "//engine/bt",
+    # "//feature/simulation", # mastersimfeature has memory leak
+] + DEPS
+
+java_library(
+    name = "application-llm",
+    srcs = glob(["src/main/java/**/*.java",]),
+    resources = glob(["src/main/resources/**", "src/main/java/**/*.md", "src/main/java/**/*.png"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["--release", "21"],
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "application-llm_publish",
+    target = ":application-llm",
+    deps = ALL_DEPS,
+)
+

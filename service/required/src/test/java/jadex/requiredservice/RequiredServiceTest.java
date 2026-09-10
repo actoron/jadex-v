@@ -27,7 +27,6 @@ import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
 import jadex.future.FutureTerminatedException;
 import jadex.future.IFuture;
-import jadex.future.IIntermediateResultListener;
 import jadex.future.ISubscriptionIntermediateFuture;
 import jadex.future.SubscriptionIntermediateFuture;
 import jadex.injection.annotation.Inject;

@@ -11,8 +11,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
-import jadex.bdi.cleanerworld.cleaner.CleanerAgent;
-import jadex.common.SGUI;
 import jadex.core.IComponentHandle;
 
 
@@ -37,17 +35,17 @@ public class SensorGui
 	 */
 	public SensorGui(IComponentHandle handle)
 	{
-		String id = handle.getPojoHandle(CleanerAgent.class).getCleaner().get().getId();
+		String id = handle.getId().getLocalName();
 		
 		// Open window on swing thread
 		SwingUtilities.invokeLater(()->
 		{
-			this.frame	= new JFrame(id);
+			this.frame	= new JFrame("Sensor Gui: "+id);
 			final JPanel map = new SensorPanel(handle);
 
 			frame.getContentPane().add(BorderLayout.CENTER, map);
 			frame.setSize(300, 300);
-			frame.setLocation(SGUI.calculateMiddlePosition(frame));
+//			frame.setLocation(SGUI.calculateMiddlePosition(frame));
 			frame.setVisible(true);
 			
 			// Repaint every 50 ms.
@@ -66,10 +64,16 @@ public class SensorGui
 			{
 				public void windowClosing(WindowEvent e)
 				{
-					// todo!
-					//lifecycle.terminate();
+					handle.terminate();
 				}
 			});
+			
+			// Close window on agent kill.
+			handle.waitForTermination().then(b -> SwingUtilities.invokeLater(()->
+			{
+				timer.stop();
+				frame.dispose();
+			}));
 		});
 		
 //		// Close window on agent kill.

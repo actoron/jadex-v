@@ -5,6 +5,7 @@ import java.lang.System.Logger.Level;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -155,7 +156,7 @@ public class ComponentManager implements IComponentManager
 	private boolean cidnumbermode;
 	
 	/** The component listeners. */
-	private final Map<String, Set<IComponentListener>> listeners = new HashMap<String, Set<IComponentListener>>();
+	private final Map<ComponentEventType, Set<IComponentListener>> listeners = new LinkedHashMap<>();
 
 	/** The components. */
 	private final Map<ComponentIdentifier, IComponent> components = new LinkedHashMap<ComponentIdentifier, IComponent>();
@@ -164,7 +165,7 @@ public class ComponentManager implements IComponentManager
 	private final Map<ComponentIdentifier, IComponent> daemons = new LinkedHashMap<ComponentIdentifier, IComponent>();
 	
 	/** The components per app id. */
-	private final Map<String, Set<ComponentIdentifier>> appcomps = new HashMap<>();
+	private final Map<String, Set<ComponentIdentifier>> appcomps = new LinkedHashMap<>();
 	
 	/** Global counter for components in creation. */
 	private volatile int	creationcnt = 0;
@@ -178,12 +179,12 @@ public class ComponentManager implements IComponentManager
 	/** Cache for runtime features. */
 	protected RwMapWrapper<Class<? extends IRuntimeFeature>, Future<? extends IRuntimeFeature>> featurecache = new RwMapWrapper<>(new HashMap<>());
 	
-	public void addComponentListener(IComponentListener listener, String... types)
+	public void addComponentListener(IComponentListener listener, ComponentEventType... types)
 	{
 		synchronized(listeners)
 		{	
 			//System.out.println("adding comp listener: "+Arrays.toString(types));
-			for(String type: types)
+			for(ComponentEventType type: types)
 			{
 				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
 				if(ls==null)
@@ -196,11 +197,11 @@ public class ComponentManager implements IComponentManager
 		}
 	}
 	
-	public void removeComponentListener(IComponentListener listener, String... types)
+	public void removeComponentListener(IComponentListener listener, ComponentEventType... types)
 	{
 		synchronized(listeners)
 		{
-			for(String type: types)
+			for(ComponentEventType type: types)
 			{
 				Set<IComponentListener> ls = ComponentManager.get().listeners.get(type);
 				if(ls!=null)
@@ -798,7 +799,8 @@ public class ComponentManager implements IComponentManager
 			try
 			{
 				// Check for overridden toString() (raises exception if not found)
-				comp.getPojo().getClass().getDeclaredMethod("toString");
+				@SuppressWarnings("unused")
+				Method unused = comp.getPojo().getClass().getDeclaredMethod("toString");
 				ret	= comp.getPojo().toString();
 			}
 			catch(Exception e)
@@ -880,7 +882,7 @@ public class ComponentManager implements IComponentManager
 		if (!(pojo instanceof IDaemonComponent))
 			initializeFeatures();
 
-		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(localname);
+		ComponentIdentifier cid = localname==null? null: new ComponentIdentifier(app, localname);
 		if(pojo==null)
 		{
 			// Plain component for null pojo
@@ -924,7 +926,7 @@ public class ComponentManager implements IComponentManager
 			IComponentLifecycleManager	creator	= SComponentFeatureProvider.getCreator(pojo.getClass());
 			if(creator!=null)
 			{
-				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(localname), app, async);
+				return creator.run(pojo, localname==null ? null : new ComponentIdentifier(app, localname), app, async);
 			}
 			else
 			{
@@ -959,6 +961,7 @@ public class ComponentManager implements IComponentManager
 		}
 		else
 		{
+			boolean	app_added	= false;
 			synchronized(components)
 			{
 				IComponent	old	= components.put(comp.getId(), comp);
@@ -982,16 +985,21 @@ public class ComponentManager implements IComponentManager
 					Set<ComponentIdentifier> appcompset = appcomps.get(appid);
 					if(appcompset==null)
 					{
-						appcompset = new HashSet<ComponentIdentifier>();
+						appcompset = new LinkedHashSet<ComponentIdentifier>();
 						appcomps.put(appid, appcompset);
+						app_added = true;
 					}
 					appcompset.add(comp.getId());
 				}
 			}
+			if(app_added)
+			{
+				notifyEventListener(ComponentEventType.APPLICATION_ADDED, comp.getId(), comp.getApplication());
+			}
 		}
 		
 		// TODO: Added event for daemon components?
-		notifyEventListener(COMPONENT_ADDED, comp.getId());
+		notifyEventListener(ComponentEventType.COMPONENT_ADDED, comp.getId(), comp.getApplication());
 	}
 	
 	/**
@@ -1005,13 +1013,16 @@ public class ComponentManager implements IComponentManager
 			getLogger().log(Level.INFO, "Component removed: "+cid);
 		//System.out.println("Component removed: "+cid);
 		
+		boolean last	= false;
+		boolean app_removed = false;
+		
 		//System.out.println("removing: "+cid);
 		if(comp.getPojo() instanceof IDaemonComponent)
 		{
 			// Daemon component
 			synchronized(daemons)
 			{
-				IComponent old = daemons.remove(comp.getId());
+				IComponent old = daemons.remove(cid);
 				if(old==null)
 				{
 					throw new RuntimeException("Unknown daemon component id: "+cid);
@@ -1020,8 +1031,6 @@ public class ComponentManager implements IComponentManager
 		}
 		else
 		{
-			boolean last;
-			boolean lastapp = false;
 			String appid = null;
 			synchronized(components)
 			{
@@ -1043,18 +1052,23 @@ public class ComponentManager implements IComponentManager
 					if(appcompset.isEmpty())
 					{
 						appcomps.remove(appid);
-						lastapp = appcreationcnt.getOrDefault(appid, 0) <= 1;
+						app_removed = appcreationcnt.getOrDefault(appid, 0) <= 1;
 					}
 				}
 			}
-			if(lastapp)
-				notifyEventListener(COMPONENT_LASTREMOVEDAPP, cid);
-			if(last)
-				notifyEventListener(COMPONENT_LASTREMOVED, cid);
 		}
 		//System.out.println("size: "+components.size()+" "+cid);
 
-		notifyEventListener(COMPONENT_REMOVED, comp.getId());
+		notifyEventListener(ComponentEventType.COMPONENT_REMOVED, cid, comp.getApplication());
+		
+		if(app_removed)
+		{
+			notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, comp.getApplication());
+		}
+		if(last)
+		{
+			notifyEventListener(ComponentEventType.COMPONENT_LASTREMOVED, cid, comp.getApplication());
+		}
 	}
 
 	// Caching for small speedup (detected in PlainComponentBenchmark)
@@ -1170,7 +1184,7 @@ public class ComponentManager implements IComponentManager
 		return appcontext;
 	}*/
 	
-	public void notifyEventListener(String type, ComponentIdentifier cid)
+	public void notifyEventListener(ComponentEventType type, ComponentIdentifier cid, Application app)
 	{
 		//System.out.println("ComponentManager notify event listener: "+type+" "+cid);
 
@@ -1190,13 +1204,16 @@ public class ComponentManager implements IComponentManager
 				Set<IComponentListener> fmylisteners	= mylisteners;
 				Runnable	notify	= () ->
 				{
-					if(COMPONENT_ADDED.equals(type))
+					if(ComponentEventType.COMPONENT_ADDED.equals(type))
 						fmylisteners.stream().forEach(lis -> lis.componentAdded(cid));
-					else if(COMPONENT_REMOVED.equals(type))
+					else if(ComponentEventType.COMPONENT_REMOVED.equals(type))
 						fmylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-					else if(COMPONENT_LASTREMOVED.equals(type)
-						|| COMPONENT_LASTREMOVEDAPP.equals(type))
+					else if(ComponentEventType.COMPONENT_LASTREMOVED.equals(type))
 						fmylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+					else if(ComponentEventType.APPLICATION_ADDED.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.applicationAdded(app));
+					else if(ComponentEventType.APPLICATION_REMOVED.equals(type))
+						fmylisteners.stream().forEach(lis -> lis.applicationRemoved(app));
 				};
 
 				getGlobalRunner().getComponentHandle().scheduleStep(notify)
@@ -1206,13 +1223,16 @@ public class ComponentManager implements IComponentManager
 			{
 				try
 				{
-					if(COMPONENT_ADDED.equals(type))
+					if(ComponentEventType.COMPONENT_ADDED.equals(type))
 						mylisteners.stream().forEach(lis -> lis.componentAdded(cid));
-					else if(COMPONENT_REMOVED.equals(type))
+					else if(ComponentEventType.COMPONENT_REMOVED.equals(type))
 						mylisteners.stream().forEach(lis -> lis.componentRemoved(cid));
-					else if(COMPONENT_LASTREMOVED.equals(type)
-						|| COMPONENT_LASTREMOVEDAPP.equals(type))
+					else if(ComponentEventType.COMPONENT_LASTREMOVED.equals(type))
 						mylisteners.stream().forEach(lis -> lis.lastComponentRemoved(cid));
+					else if(ComponentEventType.APPLICATION_ADDED.equals(type))
+						mylisteners.stream().forEach(lis -> lis.applicationAdded(app));
+					else if(ComponentEventType.APPLICATION_REMOVED.equals(type))
+						mylisteners.stream().forEach(lis -> lis.applicationRemoved(app));
 				}
 				catch(Exception e)
 				{
@@ -1250,7 +1270,7 @@ public class ComponentManager implements IComponentManager
 			{
 				if(globalrunner==null)
 				{
-					Component comp = new Component(new IDaemonComponent(){}, new ComponentIdentifier("__globalrunner__"), null)
+					Component comp = new Component(new IDaemonComponent(){}, new ComponentIdentifier(null, "__globalrunner__"), null)
 					{
 						public void handleException(Exception exception)
 						{
@@ -1293,11 +1313,25 @@ public class ComponentManager implements IComponentManager
 		    		: appcreationcnt.getOrDefault(app.getId(), 0)!=0 || getNumberOfComponents(app.getId())!=0;
 		        if(dowait) 
 		        {
-		        	String eventtype = app==null ? IComponentManager.COMPONENT_LASTREMOVED : IComponentManager.COMPONENT_LASTREMOVEDAPP;
+		        	ComponentEventType eventtype = app==null ? ComponentEventType.COMPONENT_LASTREMOVED : ComponentEventType.APPLICATION_REMOVED;
 			        IComponentManager.get().addComponentListener(new IComponentListener() 
 			        {
 			            @Override
 			            public void lastComponentRemoved(ComponentIdentifier cid) 
+			            {
+			            	doSignal();
+			            }
+			            
+			            @Override
+			            public void applicationRemoved(Application removed_app) 
+			            {
+			            	if(removed_app.getId().equals(app.getId()))
+			            	{
+			            		doSignal();
+			            	}
+			            }
+			            
+			            void doSignal()
 			            {
 							//System.out.println("Notified last component removed: "+cid);
 			        	    try 
@@ -1372,11 +1406,11 @@ public class ComponentManager implements IComponentManager
 		
 		if(last)
 		{
-			notifyEventListener(IComponentManager.COMPONENT_LASTREMOVED, cid);
+			notifyEventListener(ComponentEventType.COMPONENT_LASTREMOVED, cid, app);
 		}
 		if(lastapp)
 		{
-			notifyEventListener(IComponentManager.COMPONENT_LASTREMOVEDAPP, cid);
+			notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, app);
 		}
 	}
 

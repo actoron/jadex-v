@@ -65,7 +65,7 @@ public class IdGenerator
 	 */
 	public IdGenerator(int idsize, Random random)
 	{
-		this(DEFAULT_ID_SIZE, false, random);
+		this(idsize, false, random);
 	}
 	
 	/**

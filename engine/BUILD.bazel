@@ -1,0 +1,5 @@
+load("//feature/configurator:feature.bzl", "feature_group")
+
+feature_group(
+  description="Engines for different active component types such as goal driven (BDI) or behavior-tree schemas.",
+)

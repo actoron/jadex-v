@@ -27,6 +27,9 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 	/** Key type for the owner. */
 	public static final String KEY_TYPE_OWNER = "owner";
 	
+	/** Key type for the app id. */
+	public static final String KEY_TYPE_APPID = "appid";
+	
 	// TODO: support provider in query
 //	/** Key type for the service provider. */
 //	public static final String KEY_TYPE_PROVIDER = "provider";
@@ -60,7 +63,7 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 	public static final String[] QUERY_KEY_TYPES;
 	
 	/** The indexable types. */
-	public static final String[] QUERY_KEY_TYPES_INDEXABLE = {KEY_TYPE_INTERFACE, KEY_TYPE_TAGS, KEY_TYPE_OWNER, /*KEY_TYPE_PROVIDER,*/ KEY_TYPE_PLATFORM, KEY_TYPE_OWNER_PLATORM, KEY_TYPE_ID, KEY_TYPE_SID, KEY_TYPE_NETWORKS, KEY_TYPE_UNRESTRICTED, ServiceKeyExtractor.KEY_TYPE_ANNOTATIONS};//, KEY_TYPE_ISREMOTE};
+	public static final String[] QUERY_KEY_TYPES_INDEXABLE = {KEY_TYPE_INTERFACE, KEY_TYPE_TAGS, KEY_TYPE_OWNER, KEY_TYPE_APPID, /*KEY_TYPE_PROVIDER,*/ KEY_TYPE_PLATFORM, KEY_TYPE_OWNER_PLATORM, KEY_TYPE_ID, KEY_TYPE_SID, KEY_TYPE_NETWORKS, KEY_TYPE_UNRESTRICTED, ServiceKeyExtractor.KEY_TYPE_ANNOTATIONS};//, KEY_TYPE_ISREMOTE};
 	
 	static
 	{
@@ -124,6 +127,11 @@ public class QueryInfoExtractor implements IKeyExtractor<ServiceQueryInfo<?>>
 		{
 			if(query.getOwner()!=null)
 				ret = new SetWrapper<String>(query.getOwner().toString());
+		}
+		else if(KEY_TYPE_APPID.equals(keytype))
+		{
+			if(query.getAppId()!=null)
+				ret = new SetWrapper<String>(query.getAppId());
 		}
 		/*else if(KEY_TYPE_PROVIDER.equals(keytype))
 		{

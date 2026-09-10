@@ -1,6 +1,6 @@
 package jadex.micro.breakfast;
 
-import jadex.core.IComponentManager;
+import jadex.core.Application;
 import jadex.execution.IExecutionFeature;
 import jadex.future.FutureBarrier;
 import jadex.future.IFuture;
@@ -17,26 +17,31 @@ public class Main
 	public static void main(String[] args) 
 	{
 		long start = System.currentTimeMillis();
+		Application	app = new Application("Breakfast");	// Optional - IComponentManager.get().run... vs. app.run... 
 		
 		// Synchronous (i.e. blocking) lambda agent.
-		IFuture<String> eggs = IComponentManager.get().run(agent ->
+		System.out.println("Frying bacon...");
+		IFuture<String> eggs = app.run(agent ->
 		{
-			agent.getFeature(IExecutionFeature.class).waitForDelay(5000).get();
-			System.out.println("Eggs ready");
-			return "Eggs ready";
+			agent.getFeature(IExecutionFeature.class).waitForDelay(7000).get();
+			System.out.println("Bacon ready");
+			return "Bacon ready";
 		});
 		
 		// Asynchronous lambda agent.
-		IFuture<String>	bacon	= IComponentManager.get().runAsync(agent ->
-			agent.getFeature(IExecutionFeature.class).waitForDelay(7000)
-				.thenApply(done -> "Bacon ready")
+		System.out.println("Frying eggs...");
+		IFuture<String>	bacon	= app.runAsync(agent ->
+			agent.getFeature(IExecutionFeature.class).waitForDelay(5000)
+				.thenApply(done -> "Eggs ready")
 				.then(System.out::println));
 		
 		// Explicit class using manual result.
-		IFuture<String> coffee = IComponentManager.get().run(new CoffeeMaker());
+		System.out.println("Making coffee...");
+		IFuture<String> coffee = app.run(new CoffeeMaker());
 				
 		// Explicit class using injection result.
-		IFuture<String> toast = IComponentManager.get().run(new Toaster());
+		System.out.println("Toasting bread...");
+		IFuture<String> toast = app.run(new Toaster());
 		
 		
 		// Now put it all together
@@ -50,7 +55,7 @@ public class Main
 		
 		System.out.println("breakfast ready: "+((end-start)/1000.0));
 		
-		IComponentManager.get().waitForLastComponentTerminated();
+		app.waitForLastComponentTerminated();
 	}
 	
 	/**

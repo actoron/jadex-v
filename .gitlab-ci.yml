@@ -1,101 +1,147 @@
-image: eclipse-temurin:21-jdk-alpine
+image: ubuntu:22.04
+
+variables:
+  BAZELISK_VERSION: "latest"
+  JAVA_HOME: "/usr/lib/jvm/java-21-openjdk-amd64"
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
 
 before_script:
-  - GRADLE_USER_HOME="$(pwd)/.gradle"
-  - export GRADLE_USER_HOME
+  - apt-get update
+  - apt-get install -y curl git python3 sshpass build-essential openjdk-21-jdk libxml2-utils zip maven xvfb libxtst6 libxi6
+  - Xvfb :99 &
+  - export DISPLAY=:99
+  - curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazel
+  - chmod +x /usr/local/bin/bazel
+  - export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+  - export PATH="$JAVA_HOME/bin:$PATH"
+  - which java
+  - java -version
+  - javac -version
+  - jar --version
+  - echo $JAVA_HOME
+  - . release/01_prepare_env.sh
 
 stages:
   - build
   - test
-  - benchmark
   - deploy
+  - benchmark
 
 build:
   stage: build
-  script: 
-    - cat build.gradle
-    - ./gradlew --build-cache assemble
+  script:
+    - bazel build //...
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: push
     paths:
-      - '**/build'
-      - .gradle
+      - .bazel
+      - ~/.cache/bazel
 
 test:
   stage: test
-  script: ./gradlew test
+  script:
+    - bazel test $(bazel query '//... except //benchmark/...')
+
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - '**/build'
-      - .gradle
+      - .bazel
+      - ~/.cache/bazel
 
 benchmark:
-  stage: benchmark
+  stage: test
   script:
-    - ./benchmark.sh
-  #timeout: 48h
-  # needs: ["build"]
+    - bazel test //benchmark/... --test_output=errors
   allow_failure: true
   cache:
     - key: "$CI_COMMIT_REF_NAME"
       policy: pull
       paths:
-        - '**/build'
-        - .gradle
-    
-    # cache benchmark values to check against previous vals (pct)
-    - key: benchmarks-$CI_COMMIT_REF_SLUG
-      paths:
-        - benchmark/*/.benchmark_gradle
-      # also store benchmark data on failed job
-      when: 'always'
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
-  tags: [benchmark]
+        - .bazel
+        - ~/.cache/bazel
 
-purge_benchmarks:
-  stage: benchmark
-  script: ./gradlew benchmark:purge
-  cache:
-    - key: "$CI_COMMIT_REF_NAME"
-      policy: pull
-      paths:
-        - '**/build'
-        - .gradle
-    
-    # cache benchmark values to check against previous vals (pct)
     - key: benchmarks-$CI_COMMIT_REF_SLUG
       paths:
-        - benchmark/*/.benchmark_gradle
-  when: manual
-  tags: [benchmark]
-  
-deployZip:
-  stage: deploy
-  script:
-    - ./gradlew deployZip
-  cache:
-    key: "$CI_COMMIT_REF_NAME"
-    policy: pull
-    paths:
-      - '**/build'
-      - .gradle
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
+        - benchmark/*/.benchmark_bazel
+      when: always
+  #rules:
+  #  - if: '$CI_COMMIT_REF_SLUG =~ /main/'
+  tags:
+    - benchmark
+
+# purge_benchmarks:
+#  stage: benchmark
+#  script:
+#    - bazel run //benchmark:purge
+#  cache:
+#    - key: "$CI_COMMIT_REF_NAME"
+#      policy: pull
+#      paths:
+#        - .bazel
+#        - ~/.cache/bazel
+#
+#    - key: benchmarks-$CI_COMMIT_REF_SLUG
+#      paths:
+#        - benchmark/*/.benchmark_bazel
+#  when: manual
+#  tags:
+#    - benchmark
 
 deployCentral:
   stage: deploy
   script:
-    - ./gradlew publish -P repos=central closeStagingRepo releaseStagingRepo
+    - bazel build //...  
+#    - release/01_prepare_env.sh
+    - release/02_create_staging.sh
+    - release/03_sign.sh
+    - release/04_smoke_test.sh
+    - release/05_upload.sh --automatic
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
     paths:
-      - '**/build'
-      - .gradle
-  rules:
-    - if: $CI_COMMIT_REF_SLUG=~"main"
+      - .bazel
+      - ~/.cache/bazel
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deployZip:
+  stage: deploy
+  script:
+    - echo "PASSWORD_LENGTH=${#SSH_PASSWORD}"
+    - bazel build //application/launcher:launcher_deploy.jar
+
+    - BAZEL_BIN=$(bazel info bazel-bin)
+    - JAR="$BAZEL_BIN/application/launcher/launcher_deploy.jar"
+    - echo "JAR=$JAR"
+    - ls -l "$JAR"
+
+    - sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -rf /www/releases/$JADEX_VERSION && mkdir -p /www/releases/$JADEX_VERSION"
+
+    - sshpass -p "$SSH_PASSWORD" scp -P "$SSH_PORT" "$JAR" "$SSH_USER@$SSH_HOST:/www/releases/$JADEX_VERSION/"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - .bazel
+      - ~/.cache/bazel
+  #rules:
+  #  - if: '$JADEX_VERSION' #'$CI_COMMIT_BRANCH == "main" &&
+  #rules:
+  #  - if: '$CI_COMMIT_BRANCH == "main"'
+
+
+
+
+
+
+
+
 

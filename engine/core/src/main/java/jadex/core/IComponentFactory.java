@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import jadex.core.IComponentManager.ComponentEventType;
 import jadex.core.impl.Component;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.StepAborted;
@@ -130,7 +131,8 @@ public interface IComponentFactory
 		}
 		else
 		{
-			iter	= Arrays.asList(cids);
+			// terminate in inverse order to handle dependencies better
+			iter	= Arrays.asList(cids).reversed();
 		}
 		
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
@@ -226,11 +228,11 @@ public interface IComponentFactory
 					{
 						if(cid.equals(ccid))
 						{
-							IComponentManager.get().removeComponentListener(this, IComponentManager.COMPONENT_REMOVED);
+							IComponentManager.get().removeComponentListener(this, ComponentEventType.COMPONENT_REMOVED);
 							ret.setResult(true);
 						}
 					}
-				}, IComponentManager.COMPONENT_REMOVED);
+				}, ComponentEventType.COMPONENT_REMOVED);
 			}
 		});
 		if(!found[0])

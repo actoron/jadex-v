@@ -338,6 +338,10 @@ public class RequiredServiceFeature implements IRequiredServiceFeature
 		if(query.getOwner()==null)
 			query.setOwner(getComponent().getId());
 		
+		// Set app id if not set
+		if(ServiceQuery.APPID_NOT_SET.equals(query.getAppId()))
+			query.setAppId(getComponent().getAppId());
+		
 		if(query.getMultiplicity()==null)
 		{
 			// Fix multiple flag according to single/multi method 

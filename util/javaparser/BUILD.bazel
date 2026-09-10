@@ -1,0 +1,53 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(
+    type = "library",
+)
+
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+] #+ DEPS
+
+java_library(
+    name = "javaparser",
+    srcs = glob(["src/main/java/**/*.java", "src/generated/javacc/**/*.java",
+        "src/generated/jjtree/**/*.java",]),
+    resources = glob(["src/main/resources/**"], allow_empty = True),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ALL_DEPS,
+)
+
+java_test(
+    name = "javaparser_test",
+    srcs = glob(["src/test/java/**/*.java"]),
+    resources = glob(["src/test/resources/**"], allow_empty = True),
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
+    args = [
+        "--select-package", "jadex.javaparser",
+        "--fail-if-no-tests",
+    ],
+    deps = [
+        ":javaparser",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_platform_junit_platform_suite_api",
+    ] + ALL_DEPS,
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_suite_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+    ],
+)
+
+maven_publish_jars(
+    name = "javaparser_publish",
+    target = ":javaparser",
+    deps = ALL_DEPS,
+)

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.activecomponents.jadex</groupId>
+  <artifactId>bytecode</artifactId>
+  <version>5.0-beta5</version>
+  <name>jadex-v</name>
+  <description>Jadex V agent framework</description>
+  <url>https://github.com/actoron/jadex-v</url>
+  <scm>
+    <url>https://github.com/actoron/jadex-v.git</url>
+  </scm>
+  <licenses>
+    <license>
+      <name>GPL-3.0</name>
+      <url>https://gnu.org/licenses/gpl-3.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>alex</id>
+      <name>Alexander Pokahr</name>
+      <email>ap@actoron.com</email>
+      <organization>Actoron GmbH</organization>
+      <organizationUrl>https://actoron.com/</organizationUrl>
+    </developer>
+    <developer>
+      <id>lars</id>
+      <name>Lars Braubach</name>
+      <email>lb@actoron.com</email>
+      <organization>Actoron GmbH</organization>
+      <organizationUrl>https://actoron.com/</organizationUrl>
+    </developer>
+    <developer>
+      <id>kai</id>
+      <name>Kai Jander</name>
+      <email>kj@actoron.com</email>
+      <organization>Actoron GmbH</organization>
+      <organizationUrl>https://actoron.com/</organizationUrl>
+    </developer>
+  </developers>
+  <dependencies>
+    <dependency>
+      <groupId>org.activecomponents.jadex</groupId>
+      <artifactId>common</artifactId>
+      <version>5.0-beta5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.activecomponents.jadex</groupId>
+      <artifactId>collection</artifactId>
+      <version>5.0-beta5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.activecomponents.jadex</groupId>
+      <artifactId>nativetools</artifactId>
+      <version>5.0-beta5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>9.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>9.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-util</artifactId>
+      <version>9.9</version>
+    </dependency>
+  </dependencies>
+</project>

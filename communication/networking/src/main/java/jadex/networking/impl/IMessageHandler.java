@@ -15,5 +15,5 @@ public interface IMessageHandler
      *  @param receiver Receiver of the message from the transport perspective.
      *  @param message The raw message.
      */
-    public void handleMessage(String senderhost, ComponentIdentifier receiver, byte[] message);
+    public void handleMessage(GlobalProcessIdentifier origin, ComponentIdentifier receiver, byte[] message);
 }

@@ -2,7 +2,6 @@ package jadex.providedservice;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.Collections;
 
 import jadex.common.ClassInfo;
 import jadex.core.ComponentIdentifier;

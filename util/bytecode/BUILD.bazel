@@ -1,0 +1,29 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+feature(type = "library",)
+
+load("@rules_java//java:defs.bzl", "java_library")
+load(":deps.bzl", "DEPS")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/nativetools",
+] + DEPS
+
+java_library(
+    name = "bytecode",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "bytecode_publish",
+    target = ":bytecode",
+    deps = ALL_DEPS,
+)

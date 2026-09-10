@@ -3,7 +3,6 @@ package jadex.messaging.ipc;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import jadex.messaging.IIpcFeature;
 import jadex.messaging.impl.ipc.IpcFeature;
 import org.junit.jupiter.api.Test;
 
@@ -90,7 +89,7 @@ public class IpcTest
 		ipc1.sendMessage(cid2, hw);
 		done2.get(5000);
 		
-		System.out.println("Unencrypted IPC works.");
+		System.out.println("Raw, unencrypted IPC works.");
 	}
 	
 	/**
@@ -150,7 +149,7 @@ public class IpcTest
 	private ComponentIdentifier getIpcComponentTestId(String compname)
 	{
 		String pid = 1000000000 + (Math.abs(SSecurity.getSecureRandom().nextInt()) % 10000000) +"";
-		ComponentIdentifier ret = new ComponentIdentifier(compname, new GlobalProcessIdentifier(pid, GlobalProcessIdentifier.getSelf().host()));
+		ComponentIdentifier ret = new ComponentIdentifier(null, compname, new GlobalProcessIdentifier(pid, GlobalProcessIdentifier.getSelf().host()));
 		return ret;
 	}
 }

@@ -1,0 +1,40 @@
+load("//feature/configurator:feature.bzl", "feature")
+
+# Environment module for agents
+# Handles runtime abstraction and environment interactions
+
+feature(
+    name = "environment",
+)
+
+load("@rules_java//java:defs.bzl", "java_library")
+
+#load(":deps.bzl", "DEPS")
+
+load("//:maven_artifacts.bzl", "maven_publish_jars")
+
+ALL_DEPS = [
+    "//util/common",
+    "//util/collection",
+    "//util/future",
+    "//engine/core",
+    "//feature/execution",
+    "//feature/injection",
+] #+ DEPS
+
+java_library(
+    name = "environment",
+    srcs = glob(["src/main/java/**/*.java"]),
+    resources = glob(["src/main/resources/**", "src/main/java/**/*.png"], allow_empty = True,),
+    visibility = ["//visibility:public"],
+    javacopts = ["-source", "21", "-target", "21"],
+    deps = ALL_DEPS,
+)
+
+maven_publish_jars(
+    name = "environment_publish",
+    target = ":environment",
+    deps = ALL_DEPS,
+)
+
+

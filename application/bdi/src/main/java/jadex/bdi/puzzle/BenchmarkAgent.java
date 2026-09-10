@@ -3,7 +3,7 @@ package jadex.bdi.puzzle;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 
-public class BenchmarkAgent extends SokratesV3Agent
+public class BenchmarkAgent extends SokratesAgent
 {
 	/**
 	 *  Overwrite wait time.

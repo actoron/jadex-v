@@ -88,9 +88,12 @@ public class JsonTest extends Test
 	public void testException() {
 		String nullString = null;
 		NullPointerException npe = null;
-		try {
-			nullString.length();
-		} catch (NullPointerException e) {
+		try 
+		{
+			int unused =nullString.length();
+		} 
+		catch (NullPointerException e) 
+		{
 			npe = e;
 		}
 		String s = JsonTraverser.objectToString(npe, null);
