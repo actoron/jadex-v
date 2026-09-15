@@ -21,6 +21,13 @@ filegroup(
 )
 
 config_setting(
+    name = "apmn",
+    values = {
+        "define": "apmn=true",
+    },
+)
+
+config_setting(
     name = "autostart",
     values = {
         "define": "autostart=true",
@@ -170,6 +177,10 @@ config_setting(
 java_library(
     name = "feature_bundle",
     deps =
+        select({
+                ":apmn": ["//feature/apmn"],
+                "//conditions:default": [],
+            }) +
         select({
             ":autostart": ["//feature/autostart"],
             "//conditions:default": [],
