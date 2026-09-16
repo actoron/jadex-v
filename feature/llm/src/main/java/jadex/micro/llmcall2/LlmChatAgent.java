@@ -248,7 +248,13 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 	{
 		return new Future<>(max_token_count);
 	}
-	
+
+	@ComponentMethod
+	public ITerminableIntermediateFuture<ChatFragment> getCurrentChat()
+	{
+		return current_loop;
+	}
+
 	//-------- internal methods --------
 	
 	/**

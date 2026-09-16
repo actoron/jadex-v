@@ -24,6 +24,7 @@ import dev.langchain4j.exception.RateLimitException;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.common.SUtil;
 import jadex.core.Application;
+import jadex.core.ComponentIdentifier;
 import jadex.core.ComponentTerminatedException;
 import jadex.core.IComponentManager;
 import jadex.errorhandling.IErrorHandlingFeature;
@@ -234,7 +235,7 @@ public class LlmBenchmark
 	/**
 	 * Small helper GUI to mark current run as failed and terminate the active future.
 	 */
-	protected static JFrame showFailureGui(String benchmark, String model, int run, int runs, ITerminableIntermediateFuture<ChatFragment> results)
+	protected static JFrame showFailureGui(String benchmark, String model, int run, int runs, Application app)
 	{
 		JFrame[] frame = new JFrame[1];
 		try
@@ -253,6 +254,12 @@ public class LlmBenchmark
 				{
 					try
 					{
+						ComponentIdentifier	cid	= app.getAllComponents().stream()
+							.filter(c -> c.getLocalName().equals("Chat"))
+							.findFirst()
+							.orElseThrow(() -> new IllegalStateException("No 'Chat' agent found in the application."));
+						ITerminableIntermediateFuture<ChatFragment>	results	= app.getComponentHandle(cid)
+							.getPojoHandle(LlmChatAgent.class).getCurrentChat();
 						results.terminate(new RuntimeException("Manual failure triggered via GUI"));
 					}
 					catch(Exception ex)
@@ -396,27 +403,6 @@ public class LlmBenchmark
 		
 		// Run benchmarks for available Unsloth models
 		include_models	= Arrays.asList(
-			// vLLM
-//			"Qwen/Qwen2.5-1.5B-Instruct"
-//			"unsloth/Qwen3.5-4B-MTP-GGUF:Q4_K_M"
-//			"unsloth/Qwen3.5-4B-GGUF:UD-Q4_K_XL"
-//			"unsloth/Qwen3.5-4B-GGUF:Q8_0"
-//			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
-//			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
-//			"google/gemma-4-E4B-it-qat-w4a16-ct"
-//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
-//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
-//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ3_S"
-//			"useful-quants/Ministral-3-3B-Instruct-2512-W4A16-BF16Vision"
-//			"inference-optimization/Ministral-3-14B-Instruct-2512.w4a16"
-//			"unsloth/Ministral-3-14B-Instruct-2512-GGUF:UD-Q4_K_XL"				
-				
 //			"ibm-granite/granite-4.2-30b-GGUF",
 //			"ibm-granite/granite-4.2-3b-GGUF",
 //			"ibm-granite/granite-4.2-8b-GGUF",
@@ -468,14 +454,13 @@ public class LlmBenchmark
 		);
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.UNSLOTH, true);
 
-		// Run benchmarks for available Unsloth models
+		// Run benchmarks for available vLLM models
 		include_models	= Arrays.asList(
-			// vLLM
 //			"Qwen/Qwen2.5-1.5B-Instruct"
 //			"unsloth/Qwen3.5-4B-MTP-GGUF:Q4_K_M"
 //			"unsloth/Qwen3.5-4B-GGUF:UD-Q4_K_XL"
 //			"unsloth/Qwen3.5-4B-GGUF:Q8_0"
-			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
+//			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
 //			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S"
@@ -483,6 +468,7 @@ public class LlmBenchmark
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
+			"google/gemma-4-12B-it-qat-w4a16-ct"
 //			"google/gemma-4-E4B-it-qat-w4a16-ct"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
@@ -667,7 +653,7 @@ public class LlmBenchmark
 				
 				long	start	= System.currentTimeMillis();
 				ITerminableIntermediateFuture<ChatFragment> results = chat.chat(prompt);
-				JFrame failureFrame = showFailureGui(benchmark_name, model_name, fi+1, runs, results);
+				JFrame failureFrame = showFailureGui(benchmark_name, model_name, fi+1, runs, app);
 				LlmChatAgent.printResults(results);
 				try
 				{
@@ -810,7 +796,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.OLLAMA_REMOTE;
+		Provider provider = Provider.VLLM;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");
