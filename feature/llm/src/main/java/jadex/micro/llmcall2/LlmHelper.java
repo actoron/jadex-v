@@ -78,26 +78,18 @@ public class LlmHelper
 	
 	public static enum Provider
 	{
-		OLLAMA_LOCAL("Ollama (local)",
-			(model, think, json) -> createOllamaChatModel("http://localhost:11434", model, think),
-			() -> fetchOllamaModels("http://localhost:11434"),
-			(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
 		OLLAMA_REMOTE("Ollama (remote)", 
 			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
-		OPENAI_HCI("Ollama (remote)", 
+		OLLAMA_LOCAL("Ollama (local)",
+			(model, think, json) -> createOllamaChatModel("http://localhost:11434", model, think),
+			() -> fetchOllamaModels("http://localhost:11434"),
+			(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
+		OPENAI_HCI("OpenAI (HCI)", 
 			(model, think, json) -> createOpenAiChatModel(System.getenv("OPENAI_BASE_URL"), System.getenv("OPENAI_API_KEY"),model, think, json),
 			() -> fetchOllamaModels(System.getenv("OPENAI_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OPENAI_BASE_URL"), model)),
-		OLLAMA("Ollama", 
-			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
-			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
-			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
-//		OLLAMA_LOCAL("Ollama (local)",
-//		(model, think) -> createOllamaChatModel("http://localhost:11434", model, think),
-//		() -> fetchOllamaModels("http://localhost:11434"),
-//		(model) -> fetchOllamaContextSize("http://localhost:11434", model)),
 		GOOGLE_GEMINI("Google Gemini",
 			(model, think, json) -> createGoogleGeminiChatModel(model, think),
 //			(model, think) -> createGoogleGenAiChatModel(model, think),
@@ -111,30 +103,18 @@ public class LlmHelper
 			(model, think, json) -> createOpenAiChatModel("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model, think, json),
 			() -> fetchOpenAiModels("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), true),
 			(model) -> fetchOpenAiContextSize("https://openrouter.ai/api/v1", System.getenv("OPENAI_API_KEY"), model)),
-//		LOCAL_AI("Local AI",
-//			(model, think) -> createLocalAiChatModel(model, think),
-//			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
-//			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
-//		LOCAL_AI("Local AI",
-//			(model, think) -> createOllamaChatModel("http://localhost:8080", model, think),
-//			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
-//			(model) -> fetchOllamaContextSize("http://localhost:8080", model)),
-		LOCAL_AI("Local AI",
-			(model, think, json) -> createOpenAiChatModel("http://localhost:8080/v1", "", model, think, json),
-			() -> fetchOpenAiModels("http://localhost:8080/v1", "", false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8080/v1", "", model)),
-		LM_STUDIO("LM Studio",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:1234/v1", "nix", model, think),
-			() -> fetchOpenAiModels("http://localhost:1234/v1", "nix", false),
-			(model) -> fetchOpenAiContextSize("http://localhost:1234/v1", "", model)),
 		LLAMA_SERVER("Llama Server",
 			(model, think, json) -> createOpenAiChatModel("http://localhost:8033/v1", "nix", model, think, json),
 			() -> fetchOpenAiModels("http://localhost:8033/v1", "nix", false),
 			(model) -> fetchOpenAiContextSize("http://localhost:8033/v1", "", model)),
 		UNSLOTH("Unsloth",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
-			() -> fetchOpenAiModels("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", System.getenv("UNSLOTH_API_KEY"), model));
+			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
+			() -> fetchOpenAiModels("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model)),
+		VLLM("vLLM",
+			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8000/v1", null, model, think),
+			() -> fetchOpenAiModels("http://localhost:8000/v1", null, false),
+			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", null, model));
 		
 		private final String name;
 		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
@@ -178,7 +158,7 @@ public class LlmHelper
 	
 	public static final Map<Provider, String>	DEFAULT_MODELS = Collections.unmodifiableMap(
 		Map.of(
-			Provider.OLLAMA, "gemma4:31b",
+			Provider.OLLAMA_REMOTE, "gemma4:31b",
 //			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
 			Provider.UNSLOTH, "unsloth/Ministral-3-3B-Instruct-2512-GGUF:UD-Q4_K_XL"
 		));
