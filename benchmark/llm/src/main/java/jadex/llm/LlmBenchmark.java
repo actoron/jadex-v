@@ -36,7 +36,7 @@ import jadex.micro.llmcall2.LlmHelper.Provider;
 public class LlmBenchmark
 {
 	private static final int DEFAULT_RUNS = 100;
-	public static final int MAX_PARALLEL_RUNS = 5;
+	public static final int MAX_PARALLEL_RUNS = 10;
 	
 	private static final String CSV_HEADER =
 		"Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
@@ -404,11 +404,15 @@ public class LlmBenchmark
 //			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
 //			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
-			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
 //			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
 //			"google/gemma-4-E4B-it-qat-w4a16-ct"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ3_S"
 //			"useful-quants/Ministral-3-3B-Instruct-2512-W4A16-BF16Vision"
 //			"inference-optimization/Ministral-3-14B-Instruct-2512.w4a16"
 //			"unsloth/Ministral-3-14B-Instruct-2512-GGUF:UD-Q4_K_XL"				
@@ -417,6 +421,7 @@ public class LlmBenchmark
 //			"ibm-granite/granite-4.2-3b-GGUF",
 //			"ibm-granite/granite-4.2-8b-GGUF",
 //			"ibm-granite/granite-vision-4.1-4b-GGUF",
+//			"openbmb/MiniCPM5-2B-GGUF"
 //			"poolside/Laguna-XS-2.1-GGUF",
 //			"unsloth/Apertus-70B-Instruct-2509-GGUF"
 //			"unsloth/Apertus-8B-Instruct-2509-GGUF"
@@ -450,18 +455,44 @@ public class LlmBenchmark
 //			"unsloth/Qwen3.5-2B-MTP-GGUF",
 //			"unsloth/Qwen3.5-4B-MTP-GGUF",
 //			"unsloth/Qwen3.5-9B-MTP-GGUF",
-//			"unsloth/Qwen3.6-35B-A3B-MTP-GGUF",
+			"unsloth/Qwen3.5-9B-GGUF"
+//			"unsloth/Qwen3.6-35B-A3B-MTP-GGUF"
 //			"unsloth/Qwen3.8-27B-GGUF",
 //			"unsloth/Qwen3.8-Flash-Next-GGUF",
 //			"unsloth/gemma-4-12B-it-qat-GGUF",
-//			"unsloth/gemma-4-26B-A4B-it-GGUF",
+//			"unsloth/gemma-4-26B-A4B-it-GGUF"
 //			"unsloth/gemma-4-31B-it-GGUF",
 //			"unsloth/gemma-4-E2B-it-qat-GGUF",
 //			"unsloth/gemma-4-E4B-it-qat-GGUF",
 //			"unsloth/gpt-oss-20b-GGUF"
 		);
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.UNSLOTH, true);
-		
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.UNSLOTH, true);
+
+		// Run benchmarks for available Unsloth models
+		include_models	= Arrays.asList(
+			// vLLM
+//			"Qwen/Qwen2.5-1.5B-Instruct"
+//			"unsloth/Qwen3.5-4B-MTP-GGUF:Q4_K_M"
+//			"unsloth/Qwen3.5-4B-GGUF:UD-Q4_K_XL"
+//			"unsloth/Qwen3.5-4B-GGUF:Q8_0"
+			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
+//			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
+//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
+//			"google/gemma-4-E4B-it-qat-w4a16-ct"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
+//			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ3_S"
+//			"useful-quants/Ministral-3-3B-Instruct-2512-W4A16-BF16Vision"
+//			"inference-optimization/Ministral-3-14B-Instruct-2512.w4a16"
+//			"unsloth/Ministral-3-14B-Instruct-2512-GGUF:UD-Q4_K_XL"
+		);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.VLLM, true);
+
 		// Run benchmarks for available Llama server models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LLAMA_SERVER, false);
 		
@@ -779,7 +810,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.UNSLOTH;
+		Provider provider = Provider.OLLAMA_REMOTE;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");
