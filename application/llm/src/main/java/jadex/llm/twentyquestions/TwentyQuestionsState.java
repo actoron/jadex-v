@@ -15,7 +15,7 @@ import jadex.micro.llmcall2.ChatFragment;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
 
-public class TwentyQuestions implements ITwentyQuestionsService
+public class TwentyQuestionsState implements ITwentyQuestionsStateService
 {
 	protected Map<String, String> gamestate = new LinkedHashMap<>();
 	
@@ -52,7 +52,7 @@ public class TwentyQuestions implements ITwentyQuestionsService
 	public static void main(String[] args)
 	{
 		Application app = new Application("Twenty Questions");
-		TwentyQuestions tq = new TwentyQuestions();
+		TwentyQuestionsState tq = new TwentyQuestionsState();
 		app.create(tq).get();
 		
 		String	prompt = """
@@ -83,8 +83,8 @@ public class TwentyQuestions implements ITwentyQuestionsService
 				The player can't see your text output, thus you **must use the tool** to talk to the player and get the player's reply in each turn.
 				""";
 		
-		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "qwen3.6:35b", true, false);
-//		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:26b-a4b-it-q4_K_M", true, false);
+//		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "qwen3.6:35b", true, false);
+		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:26b-a4b-it-q4_K_M", true, false);
 //		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.UNSLOTH, "unsloth/Qwen3.6-35B-A3B-MTP-GGUF:UD-Q2_K_XL", true, false);
 //		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.UNSLOTH, "unsloth/gemma-4-E4B-it-qat-GGUF", true, false);
 //		StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.UNSLOTH, "unsloth/GLM-4.7-Flash-GGUF", true, false);

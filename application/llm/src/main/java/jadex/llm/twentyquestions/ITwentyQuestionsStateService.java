@@ -6,9 +6,9 @@ import jadex.future.IFuture;
 import jadex.providedservice.annotation.Service;
 
 @Service
-public interface ITwentyQuestionsService	extends IDaemonComponent
+public interface ITwentyQuestionsStateService	extends IDaemonComponent
 {	
-	@Tool("Send text to the user and receive the user's reply. ")
+	@Tool("Send text to the player and receive the player's reply. ")
 	IFuture<String> getPlayerReply(String text);
 	
 	@Tool("Get the value of the game state for the given key.")
