@@ -1,10 +1,12 @@
 package jadex.bding;
 
+import jadex.bding.impl.planbody.strategic.StrategicContainer;
+
 public class Plan extends ModelElement
 {
     protected Intention intention;
 
-    protected StrategicPlan strategicplan;
+    protected StrategicContainer strategicplan;
 
     protected IPlanBody body;
 
@@ -37,12 +39,12 @@ public class Plan extends ModelElement
         return this;
     }
 
-    public StrategicPlan getStrategicPlan() 
+    public StrategicContainer getStrategicPlan() 
     {
         return strategicplan;
     }
 
-    public void setStrategicPlan(StrategicPlan strategicplan) 
+    public void setStrategicPlan(StrategicContainer strategicplan) 
     {
         this.strategicplan = strategicplan;
     }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jadex.bding.Plan;
-import jadex.bding.StrategicPlan;
 
 public class PlanHistory 
 {

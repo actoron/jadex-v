@@ -14,6 +14,7 @@ import jadex.bding.IReasoner;
 import jadex.bding.annotation.Belief;
 import jadex.bding.annotation.Model;
 import jadex.bding.annotation.Reasoner;
+import jadex.bding.impl.reasoner.LlmReasoner;
 import jadex.core.impl.ILifecycle;
 import jadex.future.Future;
 import jadex.future.IFuture;

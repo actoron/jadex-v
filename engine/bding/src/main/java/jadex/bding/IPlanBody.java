@@ -25,9 +25,9 @@ A plan step can be one of:
    expressed using available tools or subgoals.
 */
 
-public interface IPlanBody 
+public interface IPlanBody extends IPlanStepContainer
 {
     public IFuture<Void> execute(IComponent component, PlanExecutionContext context);
 
-    public List<IPlanStep> getSteps();
+    //public List<IPlanStep> getSteps();
 }

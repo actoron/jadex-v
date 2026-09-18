@@ -5,13 +5,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import jadex.bding.AgentModel;
 import jadex.bding.Belief;
+import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.Plan;
-import jadex.bding.impl.planbody.IncrementalPlanBody;
 import jadex.bding.impl.planbody.PlanExecutionContext;
 import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.core.IComponent;
@@ -42,35 +41,40 @@ public class RPlan extends RIdElement
     {
         Future<Void> ret = new Future<>();
 
-        // prepare the context map with beliefs and goal parameter
         Map<String, Object> params = createContext(getAgent(), intention.getGoal());
         PlanExecutionContext context = new PlanExecutionContext(this, params);
 
-        if(getPlan().getBody()!=null)
+        if(getPlan().getBody() != null)
         {
-            getPlan().getBody().execute(getAgent(), context)
-            .then(res ->
+            getPlan().getBody().execute(getAgent(), context).then(res ->
             {
-                System.out.println("plan execution led to: "+res);
+                System.out.println("plan execution led to: " + res);
 
+                writeBackContext(context, intention.getGoal(), getAgent());
                 ret.setResult(null);
-            }).catchEx(ret);
+            })
+            .catchEx(ret);
         }
-        else if(getPlan().getStrategicPlan()!=null)
+        else if(getPlan().getStrategicPlan() != null)
         {
-            IncrementalPlanBody ibody = new IncrementalPlanBody(getPlan().getStrategicPlan());
-            ibody.execute(getAgent(), context)
-            .then(res ->
+
+            getPlan().getStrategicPlan().getExecutableStep(agent.getFeature(IBDINGAgentFeature.class).getReasoner(), 
+                this, context.getParameters()).then(step ->
             {
-                System.out.println("plan execution led to: "+res);
+                step.execute(getAgent(), context)
+                .then(res ->
+                {
+                    System.out.println("plan execution led to: " + res);
 
-                ret.setResult(null);
-
+                    writeBackContext(context, intention.getGoal(), getAgent());
+                    ret.setResult(null);
+                })
+                .catchEx(ret);
             }).catchEx(ret);
         }
         else
         {
-            // todo
+            ret.setException(new RuntimeException("Plan '" + getPlan().getName()+ "' has neither a body nor a strategic plan."));
         }
 
         return ret;

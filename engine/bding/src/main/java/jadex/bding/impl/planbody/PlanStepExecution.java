@@ -20,24 +20,39 @@ public class PlanStepExecution
 
     protected Exception exception;
 
-    public PlanStepExecution(IPlanStep step)
+    /*public PlanStepExecution(IPlanStep step)
     {
         this.step = step;
-    }
+    }*/
 
-    public void setInputs(Map<String, Object> inputs)
+    public PlanStepExecution(IPlanStep step, Map<String, Object> inputs)
     {
+        this.step = step;
         this.inputs = inputs==null? Collections.emptyMap(): (Map<String, Object>)SCloner.clone(inputs);
     }
 
-    public void setOutputs(Map<String, Object> outputs)
+    public PlanStepExecution setStep(IPlanStep step)
     {
-        this.outputs = outputs==null? Collections.emptyMap(): (Map<String, Object>)SCloner.clone(outputs);
+        this.step = step;
+        return this;
     }
 
-    public void setState(PlanStepState state)
+    public PlanStepExecution setInputs(Map<String, Object> inputs)
+    {
+        this.inputs = inputs==null? Collections.emptyMap(): (Map<String, Object>)SCloner.clone(inputs);
+        return this;
+    }
+
+    public PlanStepExecution setOutputs(Map<String, Object> outputs)
+    {
+        this.outputs = outputs==null? Collections.emptyMap(): (Map<String, Object>)SCloner.clone(outputs);
+        return this;
+    }
+
+    public PlanStepExecution setState(PlanStepState state)
     {
         this.state = state;
+        return this;
     }
 
     public Map<String, Object> getInputParameter(Map<String, String> mapping)
@@ -69,11 +84,6 @@ public class PlanStepExecution
         return step;
     }
 
-    public void setStep(IPlanStep step) 
-    {
-        this.step = step;
-    }
-
     public Map<String, Object> getInputs() 
     {
         return inputs;
@@ -94,9 +104,10 @@ public class PlanStepExecution
         return exception;
     }
 
-    public void setException(Exception exception) 
+    public PlanStepExecution setException(Exception exception) 
     {
         this.exception = exception;
+        return this;
     }
     
 }
