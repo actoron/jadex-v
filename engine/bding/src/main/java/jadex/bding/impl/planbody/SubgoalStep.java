@@ -6,30 +6,29 @@ import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
+
 public class SubgoalStep extends PlanStep
 {
     protected String goal;
-
     protected String resultmapping;
 
     public SubgoalStep(String goal, String resultmapping)
     {
-        super("subgoalstep_"+goal, null, resultmapping);
+        super("subgoalstep_" + goal, null, resultmapping);
         this.goal = goal;
         this.resultmapping = resultmapping;
     }
 
-   @Override
+    @Override
     public IFuture<PlanStepExecution> execute(IComponent component, PlanExecutionContext context)
     {
-        IBDINGAgentFeature feature = component.getFeature(IBDINGAgentFeature.class);
-
         Future<PlanStepExecution> ret = new Future<>();
-        PlanStepExecution exe = new PlanStepExecution(this);
+
+        PlanStepExecution exe = new PlanStepExecution(this, context.getParameters());
 
         try
         {
-            exe.setInputs(context.getParameters());
+            IBDINGAgentFeature feature = component.getFeature(IBDINGAgentFeature.class);
 
             feature.dispatchSubgoal(goal, context.getPlan()).then(subgoal ->
             {
@@ -40,75 +39,71 @@ public class SubgoalStep extends PlanStep
                         if(resultmapping != null)
                             context.set(resultmapping, result);
 
-                        exe.setOutputs(context.getParameters());
-                        exe.setState(IPlanStep.PlanStepState.SUCCEEDED);
-
-                        ret.setResult(exe);
+                        finish(exe, ret, context);
                     }
-                    catch(Exception e)
+                    catch(Exception ex)
                     {
-                        exe.setException(e);
-                        exe.setState(IPlanStep.PlanStepState.FAILED);
-                        ret.setResult(exe);
+                        fail(exe, ret, context, ex);
                     }
-                }).catchEx(ex ->
+                })
+                .catchEx(ex ->
                 {
-                    exe.setException(ex);
-                    exe.setState(IPlanStep.PlanStepState.FAILED);
-                    ret.setResult(exe);
+                    fail(exe, ret, context, ex);
                 });
-            }).catchEx(ex ->
+            })
+            .catchEx(ex ->
             {
-                exe.setException(ex);
-                exe.setState(IPlanStep.PlanStepState.FAILED);
-                ret.setResult(exe);
+                fail(exe, ret, context, ex);
             });
         }
-        catch(Exception e)
+        catch(Exception ex)
         {
-            exe.setException(e);
-            exe.setState(IPlanStep.PlanStepState.FAILED);
-            ret.setResult(exe);
+            fail(exe, ret, context, ex);
         }
 
         return ret;
     }
 
-    public String getGoal() 
+    protected void finish(PlanStepExecution exe, Future<PlanStepExecution> ret, PlanExecutionContext context)
+    {
+        exe.setOutputs(context.getParameters()).setState(IPlanStep.PlanStepState.SUCCEEDED);
+        ret.setResult(exe);
+    }
+
+    protected void fail(PlanStepExecution exe, Future<PlanStepExecution> ret, PlanExecutionContext context, Exception ex)
+    {
+        exe.setException(ex).setOutputs(context.getParameters()).setState(IPlanStep.PlanStepState.FAILED);
+        ret.setResult(exe);
+    }
+
+    public String getGoal()
     {
         return goal;
     }
- 
-    public String getId() 
+
+    public String getId()
     {
         return id;
     }
 
     @Override
-    public int hashCode() 
+    public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
+        return id != null ? id.hashCode() : 0;
     }
 
     @Override
-    public boolean equals(Object obj) 
+    public boolean equals(Object obj)
     {
-        if (this == obj)
+        if(this == obj)
             return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SubgoalStep other = (SubgoalStep) obj;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        return true;
-    }
 
+        if(obj == null || getClass() != obj.getClass())
+            return false;
+
+        SubgoalStep other = (SubgoalStep)obj;
+
+        return id == null ? other.id == null : id.equals(other.id);
+    }
 }
+

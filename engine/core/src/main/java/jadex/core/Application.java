@@ -1,7 +1,7 @@
 package jadex.core;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -78,7 +78,7 @@ public class Application implements IComponentFactory
 	}
 
 	@Override
-	public Set<ComponentIdentifier> getAllComponents()
+	public List<ComponentIdentifier> getAllComponents()
 	{
 		return ComponentManager.get().getAllComponents(this);
 	}

@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -37,8 +36,6 @@ import jadex.bding.IPlanStep;
 import jadex.bding.Intention;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
-import jadex.bding.StrategicPlan;
-import jadex.bding.StrategicStep;
 import jadex.bding.impl.IntentionHistory.IntentionHistoryEntry;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
@@ -47,7 +44,9 @@ import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.bding.impl.planbody.ReasoningStep;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
-import jadex.bding.tool.BDIViewer.FixedHeightPanel;
+import jadex.bding.impl.planbody.strategic.StrategicActionStep;
+import jadex.bding.impl.planbody.strategic.StrategicContainer;
+import jadex.bding.impl.planbody.strategic.StrategicStep;
 import jadex.common.SEmoji;
 import jadex.core.IComponentHandle;
 
@@ -644,7 +643,7 @@ public class BDIViewer extends JFrame
                 expanded -> treePanel.setExpanded(plan.getId()+"_model", expanded), 
                 () -> selectionListener.accept(model));
 
-            StrategicPlan splan = model.getStrategicPlan();
+            StrategicContainer splan = model.getStrategicPlan();
 
             if(splan != null)
             {
@@ -674,14 +673,14 @@ public class BDIViewer extends JFrame
 
                 int stepno = 0;
 
-                for(IPlanStep step : body.getSteps())
+                /*for(IPlanStep step : body.getSteps())
                 {
                     bodyNode.getContent().add(new PlanStepNode(
                     step,
                     stepno++,
                     depth + 3,
                     selectionListener));
-                }
+                }*/
 
                 modelNode.getContent().add(bodyNode);
             }
@@ -798,11 +797,10 @@ public class BDIViewer extends JFrame
         }
     }
 
-    
-
     protected static class StrategicStepNode extends StepNode
     {
-        public StrategicStepNode(StrategicStep step, int stepno, int depth, Consumer<Object> selectionListener)
+        public StrategicStepNode(StrategicStep step, int stepno, int depth,
+            Consumer<Object> selectionListener)
         {
             super(
                 getIcon(step),
@@ -816,24 +814,34 @@ public class BDIViewer extends JFrame
 
         protected static String getIcon(StrategicStep step)
         {
-            return switch(step.getType())
+            if(step instanceof StrategicActionStep action)
             {
-                case TOOL -> "🔧";
-                case REASONING -> "🧠";
-                case SUBGOAL -> "🎯";
-                default -> "•";
-            };
+                return switch(action.getType())
+                {
+                    case TOOL -> "🔧";
+                    case REASONING -> "🧠";
+                    case SUBGOAL -> "🎯";
+                    default -> "•";
+                };
+            }
+
+            return "•";
         }
 
         protected static String getTitle(StrategicStep step)
         {
-            return switch(step.getType())
+            if(step instanceof StrategicActionStep action)
             {
-                case TOOL -> "Tool: " + step.getName();
-                case REASONING -> "Reasoning";
-                case SUBGOAL -> "Subgoal: " + step.getName();
-                default -> step.getName();
-            };
+                return switch(action.getType())
+                {
+                    case TOOL -> "Tool: " + step.getName();
+                    case REASONING -> "Reasoning: " + step.getName();
+                    case SUBGOAL -> "Subgoal: " + step.getName();
+                    default -> step.getName();
+                };
+            }
+
+            return step.getName();
         }
 
         protected static String getDescription(StrategicStep step)

@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.cronutils.model.Cron;
 
+import jadex.common.TimeoutException;
 import jadex.core.Application;
 import jadex.core.impl.ComponentManager;
+import jadex.future.ITerminableFuture;
 import jadex.llm.LlmBenchmark;
 import jadex.llm.smarthome.IAlarmService.AlarmState;
 import jadex.micro.llmcall2.IRuleSystemService;
@@ -57,7 +59,7 @@ public class LlmSmartHomeBenchmark
 				
 				// Check first use case: trigger motion sensor, check if alarm is (not) triggered
 				IMotionSensorService sensor = getService(app, IMotionSensorService.class, "Bewegungsmelder A");
-				sensor.motionDetected().get(300000);
+				sensor.motionDetected().get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 				if(alarm.getAlarmState().get()==AlarmState.TRIGGERED)
 				{
 					return false;
@@ -65,7 +67,7 @@ public class LlmSmartHomeBenchmark
 				
 				ICameraService camera = getService(app, ICameraService.class, "Kamera 1");
 				camera.setCurrentImage("a burglar breaking into a house at night").get();
-				sensor.motionDetected().get(300000);
+				sensor.motionDetected().get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
 				if(alarm.getAlarmState().get()!=AlarmState.TRIGGERED)
 				{
 					return false;
@@ -79,7 +81,17 @@ public class LlmSmartHomeBenchmark
 					String	prompt2	= 
 						"Überprüfe alle 30 Sekunden die aktuellen Bilder von Kamera 2 und 3 "
 						+ "und löse Alarm aus, wenn du eine verdächtige Situation bemerkst.";
-					rule_system.executePrompt(prompt2).get(300000);
+					ITerminableFuture<Void>	fut	= rule_system.executePrompt(prompt2);
+					try
+					{
+						fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
+					}
+					catch(TimeoutException e)
+					{
+						fut.terminate();
+						return false;
+					}
+					
 					rules	= rule_system.listRules().get();
 					
 					// Check if motion sensor rule is still present
@@ -118,7 +130,16 @@ public class LlmSmartHomeBenchmark
 							
 							String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 									+ rule.prompt();
-							rule_system.executePrompt(fprompt).get(300000);
+							fut	= rule_system.executePrompt(fprompt);
+							try
+							{
+								fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
+							}
+							catch(TimeoutException e)
+							{
+								fut.terminate();
+								return false;
+							}
 //						}
 //						catch (ParseException e)
 //						{
@@ -140,7 +161,16 @@ public class LlmSmartHomeBenchmark
 					{
 						String	fprompt	= "The rule "+rule.rule_id()+" has been activated. Thus you as the LLM should perform the following action(s):\n"
 							+ rule.prompt();
-						rule_system.executePrompt(fprompt).get(300000);
+						fut	= rule_system.executePrompt(fprompt);
+						try
+						{
+							fut.get(300000*LlmBenchmark.MAX_PARALLEL_RUNS);
+						}
+						catch(TimeoutException e)
+						{
+							fut.terminate();
+							return false;
+						}
 					}
 					return alarm.getAlarmState().get()==AlarmState.TRIGGERED;
 				}

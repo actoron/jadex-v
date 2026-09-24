@@ -41,3 +41,5 @@ jadex-deploy-vars.sh
 /application/llm/generated_images
 /.bazel
 **/__pycache__
+/benchmark/llm/analysis_output_qwen3.8-27b
+/benchmark/llm/qwen3.5-9b

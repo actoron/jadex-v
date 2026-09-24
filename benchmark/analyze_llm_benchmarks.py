@@ -846,6 +846,8 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
                 agg_cols["success_rate"] = ("Success Rate Num", "mean")
             if "Avg Time" in df.columns:
                 agg_cols["avg_time"] = ("Avg Time", "mean")
+            if "Avg Tokens" in df.columns:
+                agg_cols["avg_tokens"] = ("Avg Tokens", "mean")
                 
             groupby_cols = ["Model", "Thinking Bool", "Deployment Type"]
             existing_groupby_cols = [col for col in groupby_cols if col in df.columns]
@@ -857,6 +859,11 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
                 )
         
         for _, row in model_agg.iterrows():
+            avg_time_value = row.get("avg_time", pd.NA)
+            avg_tokens_value = row.get("avg_tokens", pd.NA)
+            avg_tokens_per_second_value = pd.NA
+            if pd.notna(avg_time_value) and pd.notna(avg_tokens_value) and float(avg_time_value) > 0:
+                avg_tokens_per_second_value = float(avg_tokens_value) / float(avg_time_value)
             model_benchmark_rows.append(
                 {
                     "Model": row.get("Model", "N/A"),
@@ -864,7 +871,9 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
                     "Deployment Type": row.get("Deployment Type", "N/A"),
                     "Benchmark": benchmark_display,
                     "Success Rate": round(float(row.get("success_rate", 0)), 1) if "success_rate" in row.index else 0,
-                    "Avg Time": round(float(row.get("avg_time", 0)), 2) if "avg_time" in row.index else 0,
+                    "Avg Time": round(float(avg_time_value), 2) if pd.notna(avg_time_value) else pd.NA,
+                    "Avg Tokens": float(avg_tokens_value) if pd.notna(avg_tokens_value) else pd.NA,
+                    "Avg Token/s": avg_tokens_per_second_value,
                 }
             )
 
@@ -927,6 +936,73 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
             ascending=[False, False, True, True],
         )
         model_compare_df["Avg Success"] = model_compare_df["Avg Success"].map(lambda v: f"{v:.1f}%")
+
+    all_models_by_success_df = pd.DataFrame()
+    full_coverage_models_df = pd.DataFrame()
+    partial_coverage_models_df = pd.DataFrame()
+    if not score_pivot.empty:
+        total_benchmarks = len(benchmark_display_names)
+        all_models_by_success_df = pd.DataFrame(index=score_pivot.index)
+        all_models_by_success_df["Benchmarks Run"] = score_pivot.notna().sum(axis=1)
+        all_models_by_success_df["Missing Benchmarks"] = total_benchmarks - all_models_by_success_df["Benchmarks Run"]
+        all_models_by_success_df["Avg Success"] = score_pivot.mean(axis=1, skipna=True)
+        if not time_pivot.empty:
+            all_models_by_success_df["Avg Runtime"] = time_pivot.mean(axis=1, skipna=True)
+        else:
+            all_models_by_success_df["Avg Runtime"] = pd.NA
+        for benchmark_display in benchmark_display_names:
+            if benchmark_display in score_pivot.columns:
+                all_models_by_success_df[f"{benchmark_display} Success %"] = score_pivot[benchmark_display].map(
+                    lambda v: f"{v:.1f}%" if pd.notna(v) else "-"
+                )
+        all_models_by_success_df = all_models_by_success_df.reset_index().sort_values(
+            ["Avg Success", "Benchmarks Run", "Model", "Thinking"],
+            ascending=[False, False, True, True],
+        )
+        all_models_by_success_df["Avg Success"] = all_models_by_success_df["Avg Success"].map(
+            lambda v: f"{v:.1f}%" if pd.notna(v) else "-"
+        )
+        all_models_by_success_df["Avg Runtime"] = all_models_by_success_df["Avg Runtime"].map(
+            lambda v: f"{v:.2f}" if pd.notna(v) else "-"
+        )
+
+        full_coverage_models_df = all_models_by_success_df[
+            all_models_by_success_df["Benchmarks Run"] == total_benchmarks
+        ].copy()
+        partial_coverage_models_df = all_models_by_success_df[
+            all_models_by_success_df["Benchmarks Run"] < total_benchmarks
+        ].copy()
+
+    tokens_ranked_models_df = pd.DataFrame()
+    if not model_benchmark_df.empty:
+        if not score_pivot.empty:
+            base_index = score_pivot.index
+        else:
+            base_index = model_benchmark_df.set_index(["Model", "Thinking"]).index.unique()
+
+        tokens_ranked_models_df = pd.DataFrame(index=base_index)
+        if "Avg Token/s" in model_benchmark_df.columns:
+            token_rate_pivot = model_benchmark_df.pivot(index=["Model", "Thinking"], columns="Benchmark", values="Avg Token/s")
+            tokens_ranked_models_df["Benchmarks with Token/s"] = token_rate_pivot.reindex(base_index).notna().sum(axis=1)
+            tokens_ranked_models_df["Overall Avg Token/s"] = token_rate_pivot.reindex(base_index).mean(axis=1, skipna=True)
+        else:
+            tokens_ranked_models_df["Benchmarks with Token/s"] = 0
+            tokens_ranked_models_df["Overall Avg Token/s"] = pd.NA
+
+        for benchmark_display in benchmark_display_names:
+            if benchmark_display in score_pivot.columns:
+                tokens_ranked_models_df[f"{benchmark_display} Success %"] = score_pivot[benchmark_display].map(
+                    lambda v: f"{v:.1f}%" if pd.notna(v) else "-"
+                )
+
+        tokens_ranked_models_df = tokens_ranked_models_df.reset_index().sort_values(
+            ["Overall Avg Token/s", "Benchmarks with Token/s", "Model", "Thinking"],
+            ascending=[False, False, True, True],
+            na_position="last",
+        )
+        tokens_ranked_models_df["Overall Avg Token/s"] = tokens_ranked_models_df["Overall Avg Token/s"].map(
+            lambda v: f"{v:.2f}" if pd.notna(v) else "-"
+        )
 
     model_size_scatter_df = model_benchmark_df.copy() if not model_benchmark_df.empty else pd.DataFrame()
     if not model_size_scatter_df.empty and "Model" in model_size_scatter_df.columns:
@@ -1013,8 +1089,35 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     lines.append("## 3) Best performers per benchmark (top by success, then time)")
     lines.append("")
     lines.extend(build_top_sections(benchmark_frames))
+    lines.append("## 4) All models ordered by average success rate")
+    lines.append("")
+    lines.append("### Models with full benchmark coverage")
+    lines.append("")
+    if full_coverage_models_df.empty:
+        lines.append("No models ran on all benchmarks.")
+    else:
+        full_coverage_display_df = full_coverage_models_df.drop(columns=["Missing Benchmarks"], errors="ignore")
+        lines.append(full_coverage_display_df.to_markdown(index=False))
+    lines.append("")
+
+    lines.append("### Models with partial benchmark coverage")
+    lines.append("")
+    if partial_coverage_models_df.empty:
+        lines.append("No partially covered models.")
+    else:
+        lines.append(partial_coverage_models_df.to_markdown(index=False))
+    lines.append("")
+
+    lines.append("## 5) Models ranked by overall average token/s (descending)")
+    lines.append("")
+    if tokens_ranked_models_df.empty:
+        lines.append("No token data available.")
+    else:
+        lines.append(tokens_ranked_models_df.to_markdown(index=False))
+    lines.append("")
+
     if not model_size_scatter_df.empty:
-        lines.append("## 4) Model size vs. success rate")
+        lines.append("## 6) Model size vs. success rate")
         lines.append("")
         lines.append("![Model size vs. success rate by benchmark](model_size_vs_success_scatter_by_benchmark.png)")
         lines.append("")
@@ -1023,7 +1126,7 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
         )
         lines.append("")
     if not model_benchmark_df.empty:
-        lines.append("## 5) Runtime vs. success rate")
+        lines.append("## 7) Runtime vs. success rate")
         lines.append("")
         lines.append(
             "![Runtime vs. success rate by benchmark](time_vs_success_scatter_by_benchmark.png)"
@@ -1032,7 +1135,7 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
         lines.append("Colors and markers encode benchmarks.")
         lines.append("")
 
-    lines.append("## 6) Best model per family across benchmarks")
+    lines.append("## 8) Best model per family across benchmarks")
     lines.append("")
     lines.append("![Best model per family across benchmarks](best_model_per_family_chart.png)")
     lines.append("")
@@ -1040,7 +1143,7 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
     lines.append("")
 
     if overall_family_charts:
-        lines.append("## 7) Family model-size charts (accumulated over benchmarks)")
+        lines.append("## 9) Family model-size charts (accumulated over benchmarks)")
         lines.append("")
         lines.append("Each chart aggregates all benchmarks for one model family and compares Thinking vs non-thinking bars.")
         lines.append("")
@@ -1059,7 +1162,7 @@ def build_overall_summary(benchmark_frames: dict[str, pd.DataFrame], overall_fam
                 )
             lines.append("")
 
-    lines.append("## 8) Links to individual analyses")
+    lines.append("## 10) Links to individual analyses")
     lines.append("")
     lines.append("- [Cloud analysis](cloud_analysis.md)")
     lines.append("- [Local analysis](local_analysis.md)")
