@@ -154,6 +154,13 @@ config_setting(
 )
 
 config_setting(
+    name = "application_bdi_llm",
+    values = {
+        "define": "application_bdi_llm=true",
+    },
+)
+
+config_setting(
     name = "application_bdi",
     values = {
         "define": "application_bdi=false",
@@ -257,6 +264,10 @@ java_library(
             ":application_bdi": ["//application/bdi:application-bdi"],
             "//conditions:default": [],
         }) +
+        select({
+                    ":application_bdi_llm": ["//application/bdi-llm:application-bdi-llm"],
+                    "//conditions:default": [],
+                }) +
         select({
             ":application_bt": ["//application/bt:application-bt"],
             "//conditions:default": [],
