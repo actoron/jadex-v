@@ -111,7 +111,7 @@ public final class GenerateIntentionsPrompt
             }
         };
 
-        return new ReasoningPrompt<Set<Intention>>(prompt, SCHEMA, parser);
+        return new ReasoningPrompt<Set<Intention>>(prompt, SCHEMA, parser, null);
     }
 
     private static final String SCHEMA = """

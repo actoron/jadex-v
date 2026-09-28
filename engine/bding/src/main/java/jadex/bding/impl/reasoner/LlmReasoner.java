@@ -1,47 +1,21 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
-import com.eclipsesource.json.Json;
-import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
-
-import dev.langchain4j.agent.tool.ToolSpecification;
 import jadex.bding.AgentModel;
-import jadex.bding.Belief;
-import jadex.bding.ElementType;
-import jadex.bding.Goal;
 import jadex.bding.IBDINGAgentFeature;
-import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
 import jadex.bding.Intention;
-import jadex.bding.Parameter;
-import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
-import jadex.bding.impl.JsonHelper;
-import jadex.bding.impl.PlanHistory;
 import jadex.bding.impl.RGoal;
+import jadex.bding.impl.RGoal.GoalState;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
-import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
-import jadex.bding.impl.RGoal.GoalState;
-import jadex.bding.impl.planbody.FailStep;
-import jadex.bding.impl.planbody.ReasoningStep;
-import jadex.bding.impl.planbody.SubgoalStep;
-import jadex.bding.impl.planbody.ToolCallStep;
-import jadex.bding.impl.planbody.strategic.StepType;
-import jadex.bding.impl.planbody.strategic.StrategicActionStep;
-import jadex.bding.impl.planbody.strategic.StrategicConditionContainer;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
-import jadex.bding.impl.planbody.strategic.StrategicLoopContainer;
-import jadex.bding.impl.planbody.strategic.StrategicStep;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -51,7 +25,6 @@ import jadex.micro.llmcall2.ChatFragment;
 import jadex.micro.llmcall2.ILlmChatService2;
 import jadex.micro.llmcall2.LlmChatAgent;
 import jadex.micro.llmcall2.LlmHelper;
-import jadex.micro.llmcall2.ToolRef;
 import jadex.requiredservice.IRequiredServiceFeature;
 import jadex.requiredservice.ServiceNotFoundException;
 
@@ -355,7 +328,20 @@ public class LlmReasoner implements IReasoner
 
             T result = prompt.parse(response);
 
-            finishReasoning(entry, response, result);
+            ValidationResult valres = prompt.validate(result);
+
+            if(valres==null || valres.isValid())
+            {
+                finishReasoning(entry, response, result);
+            }
+            else
+            {
+                System.out.println("validation: "+valres.toString());
+                RuntimeException ex = new RuntimeException("Validation problem: "+valres);
+                finishReasoning(entry, response, result);
+                //failReasoning(entry, ex);
+                //throw ex;
+            }
 
             return result;
         }

@@ -35,7 +35,7 @@ public class IsSameIntentionPrompt
             in1.getDescription(),
             in2.getDescription());
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json));
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
     }
 
     private static final String SCHEMA = """

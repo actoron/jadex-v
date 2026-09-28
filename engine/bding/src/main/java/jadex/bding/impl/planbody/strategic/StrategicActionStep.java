@@ -31,6 +31,8 @@ public class StrategicActionStep extends StrategicStep
     {
         super(name, description);
         this.type = type;
+        this.tool = tool;
+        this.goal = goal;
         this.inputs = inputs;
         this.output = output;
     }

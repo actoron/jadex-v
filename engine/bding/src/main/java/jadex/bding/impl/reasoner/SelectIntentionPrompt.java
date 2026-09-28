@@ -109,7 +109,7 @@ public final class SelectIntentionPrompt
             }
         };
 
-        return new ReasoningPrompt<Intention>(prompt, SCHEMA, parser);
+        return new ReasoningPrompt<Intention>(prompt, SCHEMA, parser, null);
     }
 
     private static final String SCHEMA = """

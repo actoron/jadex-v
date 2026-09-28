@@ -7,6 +7,7 @@ import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanParser;
+import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
 import jadex.core.IComponent;
 
 public class GenerateStrategicPlanPrompt 
@@ -25,96 +26,125 @@ public class GenerateStrategicPlanPrompt
             {
                 Plan plan = entry.getPlan().getPlan();
 
-                history.append("- ").append(plan.getName()).append(": ").append(plan.getDescription()).append("\n");
+                history.append("- ")
+                    .append(plan.getName())
+                    .append(": ")
+                    .append(plan.getDescription())
+                    .append("\n");
             }
         }
 
         String prompt = """
-        Generate one coherent strategic plan for achieving the given intention.
+        Generate ONE coherent strategic plan for achieving the given intention.
 
         This is PHASE 1: STRATEGIC PLANNING.
 
-        The strategic plan defines ONLY the hierarchical execution structure.
-        It describes WHAT has to happen and in WHICH ORDER, but not how data is
-        passed between steps or how individual actions are implemented.
+        The strategic plan defines the hierarchical strategy:
+        WHAT has to happen, WHICH decisions have to be made, and IN WHICH ORDER.
 
-        The planner composes the strategy from:
+        Phase 1 must be sufficiently precise that Phase 2 can later transform the
+        strategy into an executable plan without having to invent missing strategic
+        behavior.
 
-        1. the concrete capabilities available in the agent repertoire, and
-        2. the control structures and abstract action types defined by this
-        planning language.
-
-        The plan must be the simplest sufficient strategy for achieving the
-        intention.
+        At the same time, Phase 1 must remain independent of runtime implementation.
 
         ================================================================
         PHASE BOUNDARY
         ================================================================
 
-        Do NOT determine or generate any of the following:
+        Phase 1 MAY describe:
 
-        - inputs
-        - outputs
-        - input sources
-        - output destinations
-        - parameter mappings
-        - result mappings
-        - variable names
-        - belief/goal/plan scopes
-        - runtime values
-        - data dependencies
+        - semantic actions
+        - semantic decisions
+        - semantic state changes
+        - semantic conditions
+        - semantic repetition
+        - semantic outcomes
+        - abstract information that must be available
+        - the purpose of reasoning operations
+
+        Phase 1 MUST NOT specify:
+
+        - runtime variable names
+        - goal.*, belief.*, or plan.* references
+        - concrete parameter values
+        - concrete input mappings
+        - concrete result mappings
+        - runtime expressions
         - concrete STATE expressions
+        - concrete CONDITION expressions
         - concrete LOOP condition expressions
-        - concrete counter variable mappings
-        - concrete TOOL parameter mappings
-        - concrete SUBGOAL parameter mappings
-        - internal implementations of SUBGOALs
+        - tool parameter mappings
+        - subgoal parameter mappings
+        - internal implementations of subgoals
+        - runtime bookkeeping
 
-        These belong to later planning phases.
+        IMPORTANT:
 
-        The strategic plan must therefore remain semantic and
-        implementation-independent.
+        Phase 1 may refer to a STATE or condition using a semantic description,
+        but must never invent its runtime representation.
+
+        For example:
+
+            "the user has correctly guessed the secret person"
+
+        is a valid semantic state.
+
+        The following are NOT valid Phase 1 output:
+
+            "goal.userGuessedCorrectly"
+            "belief.guessCorrect"
+            "plan.correct"
+
+        Phase 2 determines how semantic state is represented and connected to
+        runtime data.
 
         ================================================================
-        WHAT THE STRATEGY MUST DECIDE
+        STRATEGIC COMPLETENESS
         ================================================================
 
-        The strategy answers:
+        The plan must make all strategically relevant behavior explicit.
 
-        - What actions have to be performed?
-        - In which order?
-        - Which actions are alternatives?
-        - Which actions have to be repeated?
-        - What is the meaningful maximum number of repetitions?
-        - What reasoning operations are required?
-        - Which tools or subgoals are required?
-        - Which deterministic state operations are required?
-        - Where can the current execution path fail?
+        In particular:
+
+        - If a later CONDITION depends on a fact or outcome, the strategy must
+          contain an action that establishes or determines that fact.
+        - If a later action depends on a decision, the decision must be produced
+          by an earlier TOOL, REASONING, or STATE operation.
+        - If a LOOP condition refers to a changing state, the loop body must contain
+          the strategic action that can change that state.
+        - Do not refer to semantic state that appears from nowhere.
+        - Do not introduce an outcome only in a description without providing a
+          strategic step that determines or establishes it.
+
+        Phase 1 does NOT need to specify how such state is represented technically.
+        It only needs to make the required semantic dependency explicit.
 
         ================================================================
         PLANNING LANGUAGE
         ================================================================
 
-        The following are planning constructs:
+        Containers:
 
         - SEQUENCE
         - CONDITION
         - LOOP
-        - FAIL
 
-        The following are leaf action types:
+        Leaf actions:
 
         - TOOL
         - REASONING
         - SUBGOAL
         - STATE
+        - FAIL
 
         There is no parallel execution.
 
         Every step must have:
 
-        - a unique name
-        - a short semantic description
+        - a unique name within the plan
+        - a concise semantic description
+        - a valid type
 
         Leaf actions have no child steps.
 
@@ -127,91 +157,80 @@ public class GenerateStrategicPlanPrompt
         - TOOLS
         - GOALS
 
-        These are the concrete repertoire elements available to the planner.
+        TOOL steps MUST reference an available tool by its exact name.
 
-        TOOL steps must reference an available tool by its exact name.
+        Ordinary SUBGOAL steps MUST reference an available goal by its exact name.
 
-        Ordinary SUBGOAL steps must reference an available goal by its exact
-        name.
+        Never invent a TOOL.
 
-        REASONING and STATE are abstract action types of this planning language.
-        They are not concrete repertoire elements in this phase.
+        Prefer existing repertoire capabilities whenever they provide the required
+        behavior.
 
-        FAIL is a planning construct and is not a repertoire element.
+        REASONING and STATE are abstract planning actions and are not repertoire
+        elements.
 
         ================================================================
         REPERTOIRE-FIRST PRINCIPLE
         ================================================================
 
-        Prefer existing repertoire capabilities whenever they provide the
-        required behavior.
+        Prefer:
 
-        In particular:
+        1. an existing TOOL when it provides the required behavior
+        2. an existing GOAL when it provides the required behavior
+        3. deterministic STATE when the required operation is genuinely
+          deterministic
+        4. REASONING when interpretation, evaluation, inference, or decision making
+          is genuinely required
+        5. composition of existing capabilities
 
-        - Prefer an available TOOL over inventing a new capability.
-        - Prefer an available GOAL over inventing a new subgoal.
-        - Prefer an available TOOL or GOAL over using REASONING when it already
-        provides the required behavior.
-        - Prefer deterministic STATE operations for simple deterministic
-        calculations or state updates.
-        - Prefer composition of existing capabilities through SEQUENCE,
-        CONDITION and LOOP over inventing new capabilities.
+        Do not use REASONING merely to hide a missing deterministic operation.
 
-        The existence of a repertoire element does not mean that it must be
-        used. Use a capability only when it contributes to the intention.
+        Do not create a SUBGOAL merely to make the plan easier to describe.
 
-        The objective is NOT to maximize repertoire usage.
-
-        The objective is to achieve the intention using the simplest sufficient
-        composition of capabilities.
-
-        Do not introduce a new capability merely because it makes the plan
-        shorter or easier to describe.
+        The objective is the simplest sufficient strategy, not maximum reuse of
+        repertoire elements.
 
         ================================================================
         MISSING CAPABILITIES / NEW SUBGOALS
         ================================================================
 
-        A new kind of SUBGOAL is allowed only as an explicit capability
-        requirement when all of the following hold:
+        A new SUBGOAL may be introduced only when:
 
         - the required capability is genuinely missing,
-        - it cannot reasonably be composed from the available tools and goals,
-        - it is necessary to achieve the intention, and
+        - it cannot reasonably be composed from available tools and goals,
+        - it is necessary for achieving the intention, and
         - it represents a meaningful reusable capability.
 
-        Do NOT introduce a new SUBGOAL for:
+        Do NOT introduce a SUBGOAL for:
 
         - sequencing
-        - conditions
+        - branching
         - repetition
-        - deterministic calculations
         - bookkeeping
-        - operations already provided by a TOOL
-        - operations already represented by an available GOAL
-        - operations that can reasonably be composed from existing capabilities
+        - simple deterministic state updates
+        - loop counting
+        - functionality already provided by a TOOL
+        - functionality already provided by a GOAL
 
-        A new SUBGOAL must represent WHAT capability is missing.
-        Do not describe HOW that subgoal would be implemented.
+        A new SUBGOAL describes only the missing capability.
 
         ================================================================
         SEQUENCE
         ================================================================
 
-        A SEQUENCE executes its child steps in the specified order.
+        A SEQUENCE executes child steps in order.
 
-        Use a SEQUENCE whenever multiple actions have to be performed
-        sequentially.
+        Use SEQUENCE when multiple actions must happen sequentially.
 
-        The ordering must represent the required strategic execution order.
+        Avoid unnecessary nesting.
 
-        Do not introduce unnecessary SEQUENCE nesting.
+        A SEQUENCE must contain at least one step.
 
         ================================================================
         CONDITION
         ================================================================
 
-        A CONDITION represents a meaningful strategic decision.
+        A CONDITION represents a genuine strategic decision.
 
         It contains:
 
@@ -219,24 +238,31 @@ public class GenerateStrategicPlanPrompt
         - then
         - else
 
-        The condition must be expressed semantically in natural language.
-
-        Do NOT generate a concrete runtime expression.
-
         Both branches are mandatory.
 
-        Each branch contains exactly one step.
+        Each branch contains exactly ONE step.
 
-        If a branch requires multiple actions, use a SEQUENCE in that branch.
+        If a branch requires multiple actions, use a SEQUENCE.
 
-        Do not introduce artificial actions merely to populate a branch.
+        The condition MUST be semantic natural language.
+
+        Do NOT generate a runtime expression.
+
+        The condition must refer to a meaningful fact, decision, or outcome that
+        is available at that point in the strategy.
+
+        Do not use CONDITION merely to simulate sequencing.
+
+        Do not use CONDITION merely to populate an otherwise empty branch.
 
         Example:
 
-        CONDITION:
-            condition: "the account contains enough money"
+            condition:
+                "the account contains enough money"
+
             then:
-                buy the required item
+                perform the purchase
+
             else:
                 FAIL
 
@@ -244,7 +270,7 @@ public class GenerateStrategicPlanPrompt
         LOOP
         ================================================================
 
-        A LOOP represents genuine repeated execution of a strategy.
+        A LOOP represents genuine repeated execution.
 
         It contains:
 
@@ -252,72 +278,71 @@ public class GenerateStrategicPlanPrompt
         - max
         - steps
 
-        The steps are executed sequentially on every iteration.
-
-        Use a LOOP whenever repetition is genuinely part of the strategy.
-
-        Do not duplicate repeated actions instead of using a LOOP.
-
-        The runtime provides an implicit loop counter. It automatically
-        initializes and increments this counter.
-
-        Therefore the planner MUST NOT create:
-
-        - a counter STATE step
-        - a counter initialization step
-        - a counter increment step
-        - a LOOPSTART step
-        - a LOOPCONDITION step
-        - any other explicit counter-management action
-
-        The loop counter is implicit and is not represented as a separate
-        planning step or JSON field.
-
         A LOOP must have at least one of:
 
-        - a condition
-        - a max
+        - condition
+        - max
 
-        The condition describes semantically when repetition should continue.
+        The loop body must contain at least one step.
 
-        Do NOT generate a concrete runtime expression.
+        The condition describes SEMANTICALLY why another iteration is required.
 
-        The max specifies the meaningful upper bound on iterations.
+        The condition must refer to a semantic state or outcome that can change
+        through execution of the loop body or through an external interaction
+        represented by a TOOL or GOAL.
 
-        If max is used, it must represent a meaningful strategic upper bound,
-        not an arbitrary safety number.
+        Do NOT generate a runtime expression.
 
-        The planner does not specify how the loop counter is mapped or
-        represented at runtime.
+        max is OPTIONAL.
 
-        Examples of meaningful repetition concepts include:
+        If max is specified, it must be a meaningful strategic upper bound on the
+        number of iterations.
 
-        - retrying an operation a limited number of times
-        - asking questions until the answer is known
-        - processing a bounded number of items
-        - attempting alternative approaches up to a meaningful limit
+        If no meaningful maximum exists, OMIT max entirely.
 
-        Use both condition and max when repetition should stop either because
-        the strategic continuation condition is no longer satisfied or because
-        the meaningful maximum has been reached.
+        NEVER output:
 
-        LOOP steps must contain one or more child steps.
+            "max": ""
 
-        If multiple actions have to be performed during each iteration,
-        put them into the LOOP steps in their required execution order.
+        Do not invent arbitrary values such as 5, 10, or 100 merely as a safety
+        limit.
 
-        Do not use STATE for loop counting or loop control.
+        The runtime may maintain an implicit technical iteration counter, but this
+        counter is NOT part of the strategic plan.
+
+        Therefore NEVER create:
+
+        - a loop counter STATE
+        - counter initialization
+        - counter increment
+        - LOOPSTART
+        - LOOPCOUNT
+        - LOOPCONDITION
+        - explicit runtime counter variables
+
+        If the strategy requires a meaningful business/domain count, describe that
+        semantic state explicitly, but do not implement it as a technical loop
+        counter.
+
+        Example:
+
+            LOOP
+                condition:
+                    "more items still need to be processed"
+                max:
+                    100
+                steps:
+                    process the next item
 
         ================================================================
         TOOL
         ================================================================
 
-        A TOOL represents the use of a concrete capability provided by the
-        agent repertoire.
+        TOOL represents an available concrete capability.
 
-        TOOL steps MUST reference an available tool using its exact name.
+        TOOL MUST reference an available tool using its exact name.
 
-        Describe:
+        The description must state:
 
         - what the tool accomplishes
         - why it is required by the strategy
@@ -326,91 +351,71 @@ public class GenerateStrategicPlanPrompt
 
         - parameters
         - parameter values
-        - parameter mappings
-        - input sources
-        - output destinations
+        - mappings
         - variable names
-        - belief/goal/plan references
-
-        These belong to later phases.
-
-        Never invent a tool.
+        - runtime scopes
 
         ================================================================
         REASONING
         ================================================================
 
-        REASONING represents an abstract reasoning operation required by the
-        strategy.
+        REASONING represents a genuine reasoning operation.
 
-        Use REASONING only when actual reasoning is necessary and no simpler
-        available TOOL, GOAL or deterministic STATE operation is sufficient.
+        Every REASONING step must clearly describe:
 
-        Examples include:
+        - what information is interpreted, evaluated, compared, or inferred
+        - what semantic conclusion or decision is produced
+        - why that conclusion is required by the strategy
 
-        - evaluating information
-        - interpreting information
-        - comparing alternatives
-        - deriving a conclusion
-        - selecting an option
-        - determining whether a condition holds
-        - transforming information through reasoning
+        A REASONING step must produce a meaningful semantic result that can be
+        consumed by a later strategic step.
 
-        Describe only the semantic reasoning operation and its purpose.
+        Do NOT specify:
 
-        Do NOT generate:
-
-        - concrete prompts
-        - concrete inputs
-        - concrete outputs
+        - prompts
+        - schemas
+        - runtime variables
         - mappings
+        - concrete inputs or outputs
         - runtime expressions
-        - variable names
-        - belief/goal/plan references
 
-        Do not use REASONING merely because an operation could theoretically
-        be described as reasoning.
-
-        Prefer deterministic operations and existing tools/goals whenever they
-        are sufficient.
+        Do not use REASONING as a generic "do something intelligent" step.
 
         ================================================================
         STATE
         ================================================================
 
-        STATE represents an explicit deterministic state operation required
-        by the strategy.
+        STATE represents a deterministic semantic state operation.
 
-        Examples include:
+        Every STATE step must describe an actual state change or deterministic
+        derivation.
 
-        - calculating a derived value
-        - adding or combining values
-        - updating deterministic state
-        - deriving a simple deterministic value from existing state
+        Examples:
 
-        STATE must represent an actual semantic state operation.
+        - record that an attempt has been completed
+        - calculate a derived value
+        - update a deterministic game state
+        - derive a value from already available information
+
+        A STATE step must make clear WHAT semantic state is changed or derived.
+
+        Do NOT specify:
+
+        - runtime variable names
+        - scopes
+        - concrete expressions
+        - mappings
+        - implementation details
 
         Do NOT use STATE for:
 
-        - loop counters
         - loop control
         - branch control
-        - conditions
-        - runtime bookkeeping
+        - generic bookkeeping with no strategic purpose
+        - reasoning
         - external actions
         - tool functionality
-        - complex reasoning
-        - capabilities better represented by a TOOL or GOAL
-
-        Do NOT generate:
-
-        - concrete expressions
-        - variable names
-        - scopes
-        - input mappings
-        - result mappings
-
-        These belong to later phases.
+        - functionality provided by an existing TOOL or GOAL
 
         ================================================================
         FAIL
@@ -418,15 +423,56 @@ public class GenerateStrategicPlanPrompt
 
         FAIL represents an intentional failure endpoint.
 
-        Use FAIL when the current execution path cannot or should not achieve
-        the intention.
+        Use FAIL when the current execution path cannot or should not achieve the
+        intention.
 
         FAIL has no child steps.
 
-        Do not add recovery actions below FAIL.
+        Do not place recovery actions below FAIL.
 
-        If an alternative strategy exists, represent that alternative explicitly
-        using CONDITION rather than immediately terminating with FAIL.
+        If an alternative strategy exists, represent the alternative explicitly
+        using CONDITION.
+
+        ================================================================
+        STRATEGIC DATAFLOW WITHOUT RUNTIME DATAFLOW
+        ================================================================
+
+        Phase 1 must not define technical data mappings.
+
+        However, the strategy must still be semantically coherent.
+
+        Whenever one step produces information required by a later step, describe
+        that semantic dependency in the step descriptions.
+
+        Example:
+
+            REASONING:
+                "Determine whether the user's answer identifies the secret person."
+
+            CONDITION:
+                "the user has correctly identified the secret person"
+
+        This is valid.
+
+        Do NOT turn it into:
+
+            goal.guessCorrect = true
+
+        Phase 2 will determine the concrete dataflow.
+
+        ================================================================
+        FAILURE AND TERMINATION
+        ================================================================
+
+        Every execution path must have a meaningful outcome.
+
+        Do not describe an action as "terminate the loop" unless the planning
+        language contains an explicit mechanism for doing so.
+
+        Instead, model termination through the strategic state that makes the loop
+        condition false, or through an explicit FAIL endpoint where appropriate.
+
+        The plan must not rely on undocumented control-flow mechanisms.
 
         ================================================================
         OCCAM / STRATEGY QUALITY
@@ -439,60 +485,98 @@ public class GenerateStrategicPlanPrompt
         Avoid:
 
         - unnecessary steps
-        - unnecessary abstractions
-        - unnecessary reasoning
-        - unnecessary transformations
-        - unnecessary state operations
+        - duplicate actions
+        - unnecessary REASONING
+        - unnecessary STATE
         - unnecessary SEQUENCE nesting
         - invented capabilities
-        - duplicate actions
-        - artificial bookkeeping actions
+        - artificial bookkeeping
+        - actions whose only purpose is satisfying the schema
 
         Prefer:
 
-        - existing repertoire capabilities
-        - deterministic operations where sufficient
-        - direct tool usage
+        - existing tools
         - existing goals
-        - meaningful strategic decisions
-        - genuine loops
+        - deterministic operations where sufficient
+        - genuine reasoning
+        - meaningful decisions
+        - genuine repetition
         - explicit failure endpoints
 
         Do not over-decompose simple actions.
-
-        The strategy describes WHAT needs to happen,
-        not HOW the runtime implements it.
 
         ================================================================
         VALIDITY REQUIREMENTS
         ================================================================
 
-        The generated plan must satisfy all of the following:
+        Before producing the JSON, verify the plan against ALL of these rules:
 
-        1. It directly addresses the intention.
+        1. The plan directly addresses the intention.
+
         2. Every step contributes to achieving the intention.
-        3. Every TOOL references an available tool by exact name.
-        4. Every ordinary SUBGOAL references an available goal by exact name.
-        5. New SUBGOALs are introduced only when a genuinely missing capability
-        is necessary and cannot reasonably be composed.
-        6. Every CONDITION represents a meaningful strategic decision.
-        7. Every CONDITION has both then and else branches.
-        8. Every CONDITION branch contains exactly one step.
-        9. Every LOOP represents genuine repetition.
-        10. Every LOOP has a condition, a max, or both.
-        11. A LOOP max represents a meaningful maximum number of iterations.
-        12. A LOOP counter describes semantically what is being counted.
-        13. LOOP counters are implicit runtime counters.
-        14. No STATE step is used for loop counting or control flow.
-        15. Every SEQUENCE contains an ordered list of steps.
-        16. Leaf actions contain no child steps.
-        17. REASONING is used only for actual reasoning.
-        18. STATE is used only for explicit deterministic state operations.
-        19. Every execution path either achieves the intention or ends explicitly
-            in FAIL.
-        20. The strategy uses existing repertoire capabilities wherever
-            reasonably possible.
-        21. The strategy is the simplest sufficient solution.
+
+        3. Every step has a unique name.
+
+        4. Every step has a concise semantic description.
+
+        5. Every type is one of the defined planning types.
+
+        6. Every TOOL references an available tool by exact name.
+
+        7. Every ordinary SUBGOAL references an available goal by exact name.
+
+        8. New SUBGOALs are introduced only for genuinely missing necessary
+          capabilities.
+
+        9. Every CONDITION represents a genuine strategic decision.
+
+        10. Every CONDITION has exactly one then step and exactly one else step.
+
+        11. Every CONDITION branch is either a meaningful action, a SEQUENCE, or
+            FAIL.
+
+        12. Every CONDITION refers to a meaningful semantic fact, decision, or
+            outcome.
+
+        13. Every LOOP represents genuine repetition.
+
+        14. Every LOOP has a condition, a max, or both.
+
+        15. A LOOP max is omitted when no meaningful maximum exists.
+
+        16. A LOOP max is NEVER an empty string.
+
+        17. A LOOP max is meaningful rather than an arbitrary safety number.
+
+        18. No explicit technical loop counter is introduced.
+
+        19. No STATE step is used for technical loop counting or loop control.
+
+        20. Every REASONING step has a clearly described semantic conclusion or
+            decision.
+
+        21. Every STATE step describes a real deterministic semantic state
+            operation.
+
+        22. A semantic state referenced by a later condition must be established,
+            determined, or changed by an earlier or repeated action.
+
+        23. The plan does not rely on undocumented control-flow operations such as
+            "terminate loop".
+
+        24. Leaf actions contain no child steps.
+
+        25. SEQUENCE contains ordered child steps.
+
+        26. Every execution path either achieves the intention or ends explicitly
+            in FAIL or another explicit successful outcome.
+
+        27. No step exists only to satisfy a structural requirement.
+
+        28. No runtime variable names, mappings, scopes, or expressions are
+            generated.
+
+        29. The plan is the simplest sufficient strategy.
 
         ================================================================
         CURRENT STATE
@@ -517,18 +601,29 @@ public class GenerateStrategicPlanPrompt
         ### Previous plans
         %s
 
+        ================================================================
+        FINAL INSTRUCTION
+        ================================================================
+
         Generate ONE coherent hierarchical strategic plan.
+
+        Before returning it, mentally validate the complete plan against the
+        validity requirements above.
+
+        Return ONLY the strategic plan in the required JSON format.
         """.formatted(
             PromptHelper.formatGoal(in.getGoal()),
             in.getIntention().getName(),
             in.getIntention().getDescription(),
-            PromptHelper.formatContext(in.getIntention().getModel(), context),
+            PromptHelper.formatContext(
+                in.getIntention().getModel(), context),
             PromptHelper.formatTools(agent),
             PromptHelper.formatGoals(in.getIntention().getModel()),
             history.length() == 0 ? "None" : history.toString()
         );
 
-        return new ReasoningPrompt<StrategicContainer>(prompt, SCHEMA, StrategicPlanParser::parse);
+        return new ReasoningPrompt<StrategicContainer>(
+            prompt, SCHEMA, StrategicPlanParser::parse, StrategicPlanValidator::validate);
     }
 
     private static final String SCHEMA = """

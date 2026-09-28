@@ -61,7 +61,7 @@ public final class IsRetryAllowedPrompt
             PromptHelper.formatContext(plan.getIntention().getGoal().getGoal().getModel(), context),
             PromptHelper.formatPlan(plan.getPlan()));
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json));
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
     }
 
     private static final String SCHEMA = """

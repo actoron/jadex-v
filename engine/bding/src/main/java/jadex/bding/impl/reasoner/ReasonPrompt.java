@@ -7,7 +7,6 @@ import com.eclipsesource.json.JsonObject;
 
 import jadex.bding.AgentModel;
 import jadex.bding.IReasoner.ReasoningType;
-import jadex.bding.Intention;
 
 public class ReasonPrompt 
 {
@@ -137,7 +136,7 @@ public class ReasonPrompt
             }
         };
 
-        return new ReasoningPrompt<Object>(prompt, schema, parser);
+        return new ReasoningPrompt<Object>(prompt, schema, parser, null);
     }
 
     public static Object parse(String json, ReasoningType type)

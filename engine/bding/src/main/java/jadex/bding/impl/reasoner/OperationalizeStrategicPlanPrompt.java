@@ -6,6 +6,7 @@ import jadex.bding.impl.RIntention;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanFormatter;
 import jadex.bding.impl.planbody.strategic.StrategicPlanParser;
+import jadex.bding.impl.planbody.strategic.StrategicPlanPhase2Validator;
 import jadex.core.IComponent;
 
 public class OperationalizeStrategicPlanPrompt 
@@ -14,16 +15,20 @@ public class OperationalizeStrategicPlanPrompt
     {
     }
 
-    public static ReasoningPrompt<StrategicContainer> create(RIntention intention, Map<String, Object> context, StrategicContainer plan, IComponent agent)
+    public static ReasoningPrompt<StrategicContainer> create(
+        RIntention intention,
+        Map<String, Object> context,
+        StrategicContainer plan,
+        IComponent agent)
     {
         String prompt = """
         Operationalize the given strategic plan so that it becomes executable.
 
         This is PHASE 2: PLAN OPERATIONALIZATION.
 
-        The strategic plan was already generated in Phase 1. Its strategy,
-        hierarchy, ordering, alternatives, selected tools and selected goals
-        are final.
+        The strategic plan was generated in Phase 1. Its strategy, hierarchy,
+        ordering, alternatives, selected tools, selected goals, and semantic
+        behavior are final.
 
         Your task is to add the concrete execution and data-flow information
         required to execute this exact plan.
@@ -52,11 +57,82 @@ public class OperationalizeStrategicPlanPrompt
         - change the semantic decision of a CONDITION
         - change the repetition semantics of a LOOP
 
-        You may ONLY add the concrete implementation and data-flow information
+        You may ONLY add concrete implementation and data-flow information
         required to make the existing plan executable.
 
         The resulting plan MUST have exactly the same tree structure as the
         Phase 1 plan.
+
+        "Same tree structure" means:
+
+        - same number of nodes
+        - same node ordering
+        - same parent-child relationships
+        - same node names
+        - same node types
+        - same selected tools
+        - same selected goals
+
+        Phase 2 may modify ONLY operational fields of existing nodes.
+
+        ================================================================
+        OPERATIONALIZATION MUST NOT INVENT DATA
+        ================================================================
+
+        Phase 2 may introduce a plan-local value only when:
+
+        1. it is the direct result of an existing Phase 1 step, OR
+        2. it is deterministic state explicitly required by an existing Phase 1
+          operation and has a valid initial source.
+
+        Every plan-local value MUST have a clear producer.
+
+        A plan-local value becomes available only after its producer has executed.
+
+        NEVER reference a plan-local value before its producer has executed.
+
+        Do NOT invent a plan-local value merely because an expression, condition,
+        input mapping, or output mapping needs a convenient variable.
+
+        Do NOT silently initialize missing values with:
+
+        - false
+        - true
+        - 0
+        - an empty string
+        - null
+        - an arbitrary default
+
+        unless that initialization is explicitly justified by an existing goal
+        parameter, belief, context value, or an existing preceding operation.
+
+        If the Phase 1 strategy requires a value that has no valid source, do not
+        invent one.
+
+        ================================================================
+        DO NOT REPAIR PHASE 1 DATA-FLOW ERRORS
+        ================================================================
+
+        Phase 2 is NOT allowed to repair a data-flow error in Phase 1.
+
+        If Phase 1 contains a reference to a value that has no valid source at
+        the point where it is used, this is an unresolved dependency.
+
+        In that case:
+
+        - do NOT add an initialization step
+        - do NOT add a STATE step
+        - do NOT move an existing step
+        - do NOT change the condition
+        - do NOT change the loop
+        - do NOT invent a default value
+        - do NOT reinterpret the semantic meaning
+        - do NOT add a hidden prerequisite
+
+        Preserve the Phase 1 tree exactly.
+
+        Phase 2 operationalizes.
+        Phase 2 does NOT repair or redesign Phase 1.
 
         ================================================================
         WHAT PHASE 2 ADDS
@@ -102,7 +178,7 @@ public class OperationalizeStrategicPlanPrompt
         Inputs describe the values required by an action.
 
         The "inputs" list contains the actual parameter names required by the
-        selected tool, goal or reasoning operation.
+        selected tool, goal, or reasoning operation.
 
         "inputmapping" maps each input name to the value from which it is obtained.
 
@@ -114,7 +190,7 @@ public class OperationalizeStrategicPlanPrompt
                 "to": "goal.destination"
             }
 
-        An action has at most one output.
+        An action has at most ONE output.
 
         The "output" field names the single relevant result produced by the
         action. If no result is required by the plan, output may be null.
@@ -129,8 +205,15 @@ public class OperationalizeStrategicPlanPrompt
         Do not create an output merely because the underlying operation returns
         a value.
 
-        Only define an output when that result is actually required by the
-        remaining plan or by the goal.
+        Only define an output when that result is actually required by:
+
+        - a later step
+        - a condition
+        - a loop
+        - the goal
+        - another explicitly required operation
+
+        Every non-null output MUST have a valid result destination.
 
         ================================================================
         AVAILABLE DATA
@@ -147,7 +230,7 @@ public class OperationalizeStrategicPlanPrompt
         - plan.<name>
             Values produced or maintained during execution of this plan.
 
-        Use only values that actually exist or are produced by the plan.
+        Use ONLY values that actually exist or are produced by the plan.
 
         Do NOT invent:
 
@@ -161,30 +244,311 @@ public class OperationalizeStrategicPlanPrompt
 
         Do NOT introduce new beliefs.
 
-        Plan-local values may be introduced when necessary to connect the output
-        of one step with the input of another step.
+        Plan-local values may be introduced only when they have a real producer
+        in the existing Phase 1 plan.
 
         ================================================================
-        DATA FLOW
+        DATA-FLOW ANALYSIS IS REQUIRED BEFORE GENERATION
         ================================================================
 
-        Trace the data flow through the complete plan.
+        BEFORE generating the operationalized plan, perform a complete
+        data-flow analysis of the Phase 1 tree.
 
-        If one step produces a value required by a later step, store that value
-        in an appropriate plan-local location or existing state.
+        Treat the plan as a statically analyzable program.
+
+        For every value referenced anywhere in the plan, determine:
+
+        1. its source,
+        2. the exact step that produces it, if applicable,
+        3. the execution point at which it first becomes available,
+        4. every consumer,
+        5. whether the producer is guaranteed to execute before every consumer.
+
+        Do NOT generate the final JSON until this analysis is complete.
+
+        ================================================================
+        VALUE AVAILABILITY
+        ================================================================
+
+        A value is:
+
+        - PRE-EXISTING if it comes from goal.*, belief.*, or execution context.
+        - PRODUCED if an executed TOOL, REASONING, SUBGOAL, or STATE step creates it.
+        - UNAVAILABLE if its producer has not necessarily executed.
+
+        "Appears somewhere earlier in the JSON" does NOT mean that a value is
+        available.
+
+        Availability is determined by EXECUTION FLOW, not JSON position alone.
+
+        ================================================================
+        EXECUTION ORDER
+        ================================================================
+
+        Trace the data flow through the COMPLETE plan according to its actual
+        execution order.
+
+        A value is available only if:
+
+        1. it is an existing goal parameter,
+        2. it is an existing belief,
+        3. it is provided by the current execution context, or
+        4. it has already been produced by an executed preceding step.
+
+        A value produced by a step that has not yet executed is NOT available.
+
+        This rule applies to:
+
+        - TOOL inputs
+        - REASONING inputs
+        - SUBGOAL inputs
+        - STATE expressions
+        - CONDITION expressions
+        - LOOP conditions
+        - result mappings
+
+        For every plan-local value there must be a valid forward data flow:
+
+            producer step
+                ->
+            plan-local value
+                ->
+            consumer step(s)
+
+        NEVER create cyclic data dependencies.
+
+        Example of INVALID data flow:
+
+            TOOL A reads plan.response
+
+            ...
+
+            TOOL B produces plan.response
+
+        The first use occurs before the value exists.
+
+        Example of VALID data flow:
+
+            TOOL A produces plan.userInput
+
+            REASONING B reads plan.userInput
+
+            CONDITION C reads plan.classification
+
+        A value should only be stored when it is required by:
+
+        - a later step
+        - a condition
+        - a loop
+        - the goal
+        - another explicitly required operation
 
         Prefer direct mappings whenever possible.
 
         Avoid unnecessary intermediate values.
 
-        Every input MUST have a well-defined source.
+        ================================================================
+        FIRST-USE RULE
+        ================================================================
 
-        Every non-null output MUST have a well-defined result destination.
+        For every plan-local value, identify its FIRST READ.
 
-        A value should only be stored when it is required by a later step,
-        a condition, a loop, the goal, or another explicitly required operation.
+        The first read of a plan-local value MUST occur after its first
+        guaranteed write.
 
-        Do not duplicate values unnecessarily.
+        INVALID:
+
+            LOOP condition reads plan.x
+
+            LOOP body writes plan.x
+
+        VALID:
+
+            preceding STATE writes plan.x
+
+            LOOP condition reads plan.x
+
+        INVALID:
+
+            CONDITION reads plan.x
+
+            THEN branch writes plan.x
+
+        VALID:
+
+            THEN branch reads a value produced by an earlier step in THEN.
+
+        ================================================================
+        READ-BEFORE-WRITE CHECK
+        ================================================================
+
+        Perform an explicit READ-BEFORE-WRITE check for every plan-local value.
+
+        For each occurrence of:
+
+            plan.<name>
+
+        determine whether the value has already been established on ALL
+        execution paths that can reach that occurrence.
+
+        If not, the reference is invalid.
+
+        Do NOT repair an invalid reference by inventing an initialization.
+
+        Do NOT repair it by moving a STATE step.
+
+        Do NOT repair it by adding a step.
+
+        Do NOT repair it by changing the loop or condition semantics.
+
+        The Phase 1 tree is immutable.
+
+        ================================================================
+        CONTROL-FLOW RULES
+        ================================================================
+
+        SEQUENCE:
+
+            A value produced by step A is available to later steps in the
+            same sequence.
+
+        CONDITION:
+
+            A value produced in the THEN branch is available only inside
+            that THEN branch after its producer.
+
+            A value produced in the ELSE branch is available only inside
+            that ELSE branch after its producer.
+
+            A value produced in either branch is NOT automatically available
+            after the CONDITION, because the other branch may have executed.
+
+        LOOP:
+
+            The LOOP condition is evaluated BEFORE every iteration.
+
+            Therefore values produced only inside the LOOP body are NOT
+            available to the LOOP condition.
+
+            A value produced inside the LOOP body becomes available only
+            after that producer has executed during the current iteration.
+
+            A value produced during one iteration may only be used in a later
+            iteration if the execution model preserves that plan state.
+
+            In particular, a value cannot be assumed to exist during the
+            FIRST iteration merely because the LOOP body produces it.
+
+        ================================================================
+        BRANCH MERGE RULE
+        ================================================================
+
+        At the point after a CONDITION, only values that are available on
+        ALL possible branches may be assumed to exist.
+
+        Example:
+
+            IF condition
+                THEN: plan.x = ...
+                ELSE: no plan.x
+
+            AFTER CONDITION:
+
+                plan.x is NOT available.
+
+        Likewise:
+
+            IF condition
+                THEN: plan.x = A
+                ELSE: plan.x = B
+
+            AFTER CONDITION:
+
+                plan.x IS available, because both branches establish it.
+
+        ================================================================
+        LOOP ENTRY RULE
+        ================================================================
+
+        Treat the LOOP entry as a separate execution point.
+
+        At LOOP ENTRY:
+
+            no step inside the LOOP body has executed yet.
+
+        Therefore the set of values available at LOOP ENTRY must be determined
+        independently from the values produced by the LOOP body.
+
+        The LOOP condition may reference only:
+
+            - goal.*
+            - belief.*
+            - execution-context values
+            - plan.* values established before LOOP ENTRY
+
+        It MUST NOT reference a plan-local value whose only producer is inside
+        the LOOP body.
+
+        ================================================================
+        LOOP-CARRIED STATE
+        ================================================================
+
+        A plan-local value produced inside a LOOP may be loop-carried state.
+
+        However, loop-carried state MUST have a valid initial value before
+        the first iteration.
+
+        Example:
+
+            BEFORE LOOP:
+                plan.counter = <valid existing source>
+
+            LOOP:
+                plan.counter = plan.counter + 1
+
+        is valid.
+
+        But:
+
+            LOOP condition:
+                plan.counter < goal.max
+
+            LOOP body:
+                plan.counter = plan.counter + 1
+
+        is INVALID if plan.counter has no value before LOOP ENTRY.
+
+        Do NOT invent the initial value.
+
+        ================================================================
+        TOOL AND GOAL SIGNATURES
+        ================================================================
+
+        The supplied TOOL and GOAL descriptions are authoritative.
+
+        For every TOOL and SUBGOAL:
+
+        - inspect the actual signature
+        - use only parameter names explicitly provided by that signature
+        - use only result values explicitly provided by that signature
+
+        NEVER invent generic parameter names such as:
+
+            arg0
+            arg1
+            input
+            value
+            data
+            result
+
+        unless that exact name exists in the actual signature.
+
+        NEVER invent a tool result or goal result.
+
+        If a required parameter cannot be mapped from an available value, do not
+        invent a value.
+
+        If a required result does not exist, do not invent one.
 
         ================================================================
         TOOL OPERATIONALIZATION
@@ -209,7 +573,10 @@ public class OperationalizeStrategicPlanPrompt
         Do NOT invent tool results.
 
         If the tool produces multiple results, retain only the single result
-        that is actually required by the plan.
+        that is actually required by the remaining plan.
+
+        Every tool input must have a valid source at the point where the tool
+        executes.
 
         ================================================================
         SUBGOAL OPERATIONALIZATION
@@ -232,6 +599,9 @@ public class OperationalizeStrategicPlanPrompt
 
         The internal implementation of the subgoal is outside this plan.
 
+        Every subgoal input must have a valid source at the point where the
+        subgoal executes.
+
         ================================================================
         REASONING OPERATIONALIZATION
         ================================================================
@@ -248,11 +618,44 @@ public class OperationalizeStrategicPlanPrompt
         - at most one output
         - the result mapping
 
+        The output should represent the semantic result described by the Phase 1
+        reasoning step.
+
         Do NOT introduce reasoning that was not present in Phase 1.
 
         Do NOT turn deterministic operations into reasoning.
 
         Do NOT create multiple outputs.
+
+        Every reasoning input must have a valid source at the point where the
+        reasoning step executes.
+
+        ================================================================
+        STRUCTURED RESULT RULE
+        ================================================================
+
+        If a result is structured, its fields may only be referenced when the
+        supplied operation/schema explicitly defines those fields.
+
+        For example, if a reasoning result is:
+
+            evaluation = {
+                "correctGuess": ...,
+                "conciseAnswer": ...
+            }
+
+        then:
+
+            plan.evaluation.correctGuess
+
+        and:
+
+            plan.evaluation.conciseAnswer
+
+        may be valid.
+
+        If the result schema does not explicitly define those fields, they
+        MUST NOT be invented.
 
         ================================================================
         STATE OPERATIONALIZATION
@@ -260,8 +663,8 @@ public class OperationalizeStrategicPlanPrompt
 
         For every STATE step:
 
-        Generate a concrete deterministic expression implementing exactly
-        the state operation described by the Phase 1 step.
+        Generate a concrete deterministic expression implementing exactly the
+        state operation described by the Phase 1 step.
 
         The expression may use:
 
@@ -271,7 +674,12 @@ public class OperationalizeStrategicPlanPrompt
 
         and values produced by preceding steps.
 
-        Store the resulting value at the specified result destination.
+        Every value referenced by the expression must already exist when the
+        STATE step executes.
+
+        A STATE step may create or modify a plan-local value.
+
+        However, such a value is NOT available before the STATE step executes.
 
         Do NOT use STATE for:
 
@@ -282,6 +690,9 @@ public class OperationalizeStrategicPlanPrompt
         - loop counters
         - explicit loop control
 
+        Do NOT invent an initialization value merely because a later expression
+        requires it.
+
         ================================================================
         CONDITION OPERATIONALIZATION
         ================================================================
@@ -289,23 +700,38 @@ public class OperationalizeStrategicPlanPrompt
         The semantic decision represented by the Phase 1 CONDITION is fixed.
 
         Phase 2 must translate that semantic decision into a concrete runtime
-        expression using available goal, belief and plan values.
+        expression using available goal, belief, and plan values.
 
-        Do NOT change the decision represented by the condition.
+        The generated expression MUST use values that actually exist at the exact
+        point where the CONDITION is evaluated.
+
+        The condition MUST NOT reference:
+
+        - a value produced only by a later step
+        - a value produced only inside a branch that has not executed
+        - a value produced only inside the current branch
+        - an invented plan-local value
+        - an invented belief
+        - an invented goal parameter
+
+        If the condition refers to a semantic result produced by an earlier step,
+        map it to the plan-local value produced by that step.
 
         Example:
 
-        Phase 1 semantic condition:
+            REASONING
+                output: classification
+                resultmapping: plan.classification
 
-            "the account contains enough money"
+            CONDITION
+                condition: plan.classification == "correctGuess"
 
-        Phase 2:
+        This is valid because classification was produced before the condition.
 
-            belief.money >= plan.requiredAmount
+        Do NOT operationalize a condition by inventing a state variable merely
+        because the semantic condition mentions a concept.
 
-        The generated expression MUST use values that actually exist.
-
-        Do not invent values merely to make the condition executable.
+        If a required semantic value has no valid producer, do not invent one.
 
         ================================================================
         LOOP OPERATIONALIZATION
@@ -313,18 +739,57 @@ public class OperationalizeStrategicPlanPrompt
 
         The repetition semantics represented by the Phase 1 LOOP are fixed.
 
-        Translate the Phase 1 loop semantics into a concrete runtime
-        continuation condition.
+        Translate the Phase 1 loop semantics into a concrete runtime continuation
+        condition.
 
-        The loop counter is implicit.
+        The LOOP condition is evaluated BEFORE each iteration.
 
-        Do NOT create:
+        Therefore every value referenced by the LOOP condition must be available
+        before the first iteration.
 
-        - counter STATE steps
-        - counter variables
-        - counter initialization
-        - counter increment steps
-        - explicit loop-control steps
+        A value produced only inside the LOOP body cannot be used by the initial
+        LOOP condition unless it already has an independent valid source.
+
+        Do NOT invent such an initialization source.
+
+        Example of INVALID operationalization:
+
+            LOOP condition:
+                plan.finished == false
+
+            LOOP body:
+                STATE produces plan.finished
+
+        This is invalid unless plan.finished already has a valid value before
+        the loop.
+
+        Example of VALID operationalization:
+
+            LOOP condition:
+                goal.finished == false
+
+        when goal.finished is an existing goal parameter.
+
+        The same rule applies to semantic counters:
+
+            plan.questionsAsked < goal.maxQuestions
+
+        is valid only if plan.questionsAsked has a valid initial value before
+        the loop.
+
+        Do NOT silently initialize it to 0.
+
+        The implicit runtime loop counter MUST NOT be confused with domain-specific
+        state such as:
+
+            questionsAsked
+            attempts
+            processedItems
+            retries
+            questionsRemaining
+
+        The implicit loop counter only controls iteration limits through "max".
+        It does not automatically provide domain-specific state values.
 
         If Phase 1 specifies a meaningful maximum, operationalize that maximum.
 
@@ -332,70 +797,191 @@ public class OperationalizeStrategicPlanPrompt
 
         If no meaningful maximum was specified in Phase 1, keep "max" null.
 
-        ================================================================
-        PHASE 1 PLAN
-        ================================================================
-
-        %s
+        Never output an empty string for max.
 
         ================================================================
-        CURRENT GOAL
+        INITIALIZATION
         ================================================================
 
-        %s
+        When a value is required before the first use, determine whether it is
+        already available from:
+
+        - a goal parameter
+        - a belief
+        - the execution context
+        - an earlier executed step
+
+        If so, use that source.
+
+        If not, determine whether the Phase 1 plan explicitly contains an
+        operation that establishes the semantic state.
+
+        If there is no valid source, DO NOT invent one.
+
+        In particular, do not automatically create or assume initial values for:
+
+        - booleans
+        - counters
+        - strings
+        - collections
+        - status values
+
+        merely because they are needed by an expression.
 
         ================================================================
-        CURRENT BELIEFS AND CONTEXT
+        FINAL SYMBOLIC EXECUTION WALK
         ================================================================
 
-        %s
+        Before returning the JSON, simulate execution of the COMPLETE plan
+        symbolically.
+
+        Start with the set of values available before the root executes:
+
+            AVAILABLE =
+                goal.*
+                belief.*
+                execution-context values
+
+        Then traverse the plan in actual execution order.
+
+        When a step produces:
+
+            plan.x
+
+        add "plan.x" to AVAILABLE only AFTER that step executes.
+
+        When a step reads:
+
+            plan.x
+
+        verify that "plan.x" is already in AVAILABLE.
+
+        For a CONDITION:
+
+            evaluate the condition using the current AVAILABLE set.
+
+            Analyze THEN and ELSE separately.
+
+            After the CONDITION, retain only values guaranteed by every
+            reachable branch.
+
+        For a LOOP:
+
+            verify the LOOP condition using AVAILABLE BEFORE the first
+            iteration.
+
+            Do not add any LOOP-body-produced values before checking the
+            LOOP condition.
+
+            During an iteration, update AVAILABLE only after the corresponding
+            body step executes.
+
+        Perform this symbolic walk for the entire tree.
+
+        If any read occurs while its value is absent from AVAILABLE, the
+        operationalization is invalid.
+
+        Do not output the plan until this check succeeds.
 
         ================================================================
-        AVAILABLE TOOLS
+        FINAL VALIDATION BEFORE OUTPUT
         ================================================================
 
-        %s
+        Before returning the operationalized plan, verify ALL of the following:
 
-        ================================================================
-        AVAILABLE GOALS
-        ================================================================
+        1. The tree structure is exactly identical to Phase 1.
 
-        %s
+        2. No step was added, removed, reordered, or replaced.
 
-        ================================================================
-        OPERATIONALIZATION RULES
-        ================================================================
+        3. No selected tool or goal was changed.
 
-        1. Preserve the exact Phase 1 tree.
-        2. Do not replan.
-        3. Do not add or remove steps.
-        4. Do not change the order of steps.
-        5. Do not change the selected tools or goals.
-        6. Do not invent capabilities.
-        7. Do not invent runtime values.
-        8. Use existing goal parameters and beliefs whenever possible.
-        9. Use plan-local values only when required for data flow.
-        10. Every input must have a valid source.
-        11. Every non-null output must have a valid destination.
-        12. An action step may have at most one output.
-        13. Do not introduce new beliefs.
-        14. Keep mappings direct and simple.
-        15. Do not create unnecessary intermediate values.
-        16. Every concrete expression must reference valid values.
-        17. Keep the operationalization as simple as possible.
-        18. The resulting plan must be executable without further planning.
+        4. No new reasoning or state operation was introduced.
 
-        Return the fully operationalized plan.
+        5. Every TOOL uses a real tool from the supplied repertoire.
+
+        6. Every SUBGOAL uses a real goal from the supplied repertoire.
+
+        7. Every tool and goal parameter exists in its actual signature.
+
+        8. Every tool and goal result exists in its actual signature.
+
+        9. No generic or invented parameter name is used.
+
+        10. Every input has a valid source at the point where the action executes.
+
+        11. Every non-null output has a valid destination.
+
+        12. Every plan-local value has a real producer.
+
+        13. No value is read before its producer has executed.
+
+        14. No cyclic data dependency exists.
+
+        15. Every CONDITION references only values available when it is evaluated.
+
+        16. Every LOOP condition references only values available before its
+            first iteration.
+
+        17. No missing value was silently initialized with an invented default.
+
+        18. No new belief or goal parameter was invented.
+
+        19. No arbitrary LOOP maximum was invented.
+
+        20. LOOP max is either a meaningful value from Phase 1 or null.
+
+        21. LOOP max is never an empty string.
+
+        22. The implicit runtime loop counter is not represented as plan state.
+
+        23. Every STATE expression implements exactly the semantic STATE operation
+            specified by Phase 1.
+
+        24. Every concrete expression references valid available values.
+
+        25. Every REASONING output represents the semantic result required by
+            Phase 1.
+
+        26. Every mapping is necessary and as direct as possible.
+
+        27. No unnecessary intermediate values were introduced.
+
+        28. No hidden replanning was performed.
+
+        29. The resulting plan can be executed without requiring another planning
+            decision.
+
+        30. A symbolic execution walk found ZERO read-before-write references.
+
+        31. Every value referenced by a LOOP condition is available at LOOP ENTRY.
+
+        32. Every value referenced after a CONDITION is established on ALL
+            reachable branches.
+
+        33. Every structured result field referenced by the plan is explicitly
+            defined by the corresponding result schema.
+
+        If any required value has no valid source, do NOT invent it.
+        Preserve the Phase 1 plan and leave the missing dependency unresolved
+        rather than changing the strategy.
+
+        Return ONLY the fully operationalized plan in the required JSON format.
         """.formatted(
             StrategicPlanFormatter.format(plan),
             PromptHelper.formatGoal(intention.getGoal()),
-            PromptHelper.formatContext(intention.getIntention().getModel(), context),
+            PromptHelper.formatContext(
+                intention.getIntention().getModel(), context),
             PromptHelper.formatTools(agent),
             PromptHelper.formatGoals(intention.getIntention().getModel())
         );
 
-        return new ReasoningPrompt<StrategicContainer>(prompt, SCHEMA, StrategicPlanParser::parse);
+        return new ReasoningPrompt<StrategicContainer>(
+            prompt,
+            SCHEMA,
+            StrategicPlanParser::parse,
+            StrategicPlanPhase2Validator::validate);
     }
+
 
     private static final String SCHEMA = """
     {

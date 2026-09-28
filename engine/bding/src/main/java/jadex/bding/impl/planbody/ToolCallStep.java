@@ -13,7 +13,7 @@ public class ToolCallStep extends PlanStep
 {
     protected String toolname;
 
-    protected Map<String, String> mapping;
+    protected Map<String, String> mapping = new LinkedHashMap<>();
 
     protected String resultmapping;
 
@@ -21,7 +21,8 @@ public class ToolCallStep extends PlanStep
     {
         super("toolcallstep_" + toolname, mapping, resultmapping);
         this.toolname = toolname;
-        this.mapping = mapping;
+        if(mapping!=null)
+            this.mapping.putAll(mapping);
         this.resultmapping = resultmapping;
     }
 

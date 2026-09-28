@@ -44,7 +44,7 @@ public final class EvaluateGoalStatePrompt
             PromptHelper.formatContext(goal.getGoal().getModel(), context),
             PromptHelper.formatGoal(goal));
 
-        return new ReasoningPrompt<GoalState>(prompt, SCHEMA, (json) -> parse(json));
+        return new ReasoningPrompt<GoalState>(prompt, SCHEMA, (json) -> parse(json), null);
     }
 
     private static final String SCHEMA = """

@@ -54,7 +54,7 @@ public final class IsIntentionAchievedPrompt
             in.getPlan().getPlan().getName(),
             in.getPlan().getPlan().getDescription());
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json));
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
     }
 
     private static final String SCHEMA = """

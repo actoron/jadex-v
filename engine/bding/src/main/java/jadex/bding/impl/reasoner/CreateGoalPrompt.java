@@ -80,7 +80,7 @@ public final class CreateGoalPrompt
             }
         };
 
-        return new ReasoningPrompt<RGoal>(prompt, SCHEMA, parser);
+        return new ReasoningPrompt<RGoal>(prompt, SCHEMA, parser, null);
     }
 
     private static final String SCHEMA = """
