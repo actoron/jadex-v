@@ -884,6 +884,101 @@ public class OperationalizeStrategicPlanPrompt
         Do not output the plan until this check succeeds.
 
         ================================================================
+        AVAILABLE INPUTS
+        ================================================================
+
+        The following information is supplied below this instruction:
+
+        1. PHASE 1 STRATEGIC PLAN
+           The exact plan that must be operationalized.
+
+           It is the authoritative source for:
+           - tree structure
+           - node names
+           - node types
+           - ordering
+           - selected tools
+           - selected goals
+           - strategic semantics
+
+        2. CURRENT GOAL
+           The parameters and state of the current goal.
+
+           Use this information to determine which goal.* values actually
+           exist and are available before plan execution.
+
+           NEVER invent goal parameters.
+
+        3. EXECUTION CONTEXT
+           Values supplied by the current execution context.
+
+           These values are available before plan execution when explicitly
+           provided by the context.
+
+           NEVER invent context values.
+
+        4. AVAILABLE TOOLS
+           The actual TOOL operations and their signatures.
+
+           Use this information to determine:
+           - valid tool names
+           - valid input parameter names
+           - valid result values
+
+           NEVER invent tool parameters or results.
+
+        5. AVAILABLE GOALS
+           The actual SUBGOAL operations and their signatures.
+
+           Use this information to determine:
+           - valid goal names
+           - valid input parameter names
+           - valid result values
+
+           NEVER invent goal parameters or results.
+
+        These five inputs are authoritative.
+
+        In particular:
+
+        - the Phase 1 plan defines WHAT must happen
+        - the current goal defines which goal.* values exist
+        - the execution context defines which context values exist
+        - the tool descriptions define which TOOL inputs and results exist
+        - the goal descriptions define which SUBGOAL inputs and results exist
+
+        Before generating the operationalized plan, inspect ALL of these
+        inputs and build the available-value set from their actual contents.
+
+        Do not infer a variable merely from its name.
+
+        A value is available only when it is explicitly present in one of
+        these inputs or is produced by an existing plan step.
+
+        ================================================================
+        INPUT DATA
+        ================================================================
+
+        PHASE 1 STRATEGIC PLAN:
+        %s
+
+        CURRENT GOAL:
+        %s
+
+        EXECUTION CONTEXT:
+        %s
+
+        AVAILABLE TOOLS:
+        %s
+
+        AVAILABLE GOALS:
+        %s
+
+        ================================================================
+        END INPUT DATA
+        ================================================================
+
+        ================================================================
         FINAL VALIDATION BEFORE OUTPUT
         ================================================================
 
