@@ -15,7 +15,7 @@ import java.util.List;
 
 public class Starter
 {
-    private static File FILE = new File("application/bdi-llm/src/main/java/jadex/apmn/MissionExtended.json");
+    private static File FILE = new File("application/bdi-llm/src/main/java/jadex/apmn/Mission.json");
 
     public static void main(String[] args)
     {

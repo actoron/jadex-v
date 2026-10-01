@@ -40,6 +40,7 @@ maven.install(
 "com.github.docker-java:docker-java-api:3.7.1",
 "com.google.auto.service:auto-service:1.1.1",
 "com.google.auto.service:auto-service-annotations:1.1.1",
+"com.googlecode.json-simple:json-simple:1.1.1",
 "com.squareup:javapoet:1.13.0",
 "dev.langchain4j:langchain4j:1.18.1",
 "dev.langchain4j:langchain4j-anthropic:1.18.1",

@@ -16,13 +16,17 @@ public class Test
         AgentBuilder builder = new AgentBuilder();
         try
         {
+            System.out.println("try");
             builder.createAgent();
+            System.out.println("agent created");
         }
         catch (Exception e)
         {
             throw new RuntimeException(e);
         }
+        System.out.println("before get class");
         Class<?> clazz = builder.getAgentClass();
+        System.out.println("After get class");
 
         MAgentStarterNode node1 = new MAgentStarterNode(clazz);
         node1.setId("node1");

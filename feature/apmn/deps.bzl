@@ -6,7 +6,7 @@ def _maven_to_bazel(coord):
     return "@maven//:" + group + "_" + artifact
     
 MAVEN_DEPS = [
-    "net.bytebuddy:byte-buddy:1.17.8"
+    'net.bytebuddy:byte-buddy:1.17.8'
 ]
 
 DEPS = [_maven_to_bazel(artifact) for artifact in MAVEN_DEPS]

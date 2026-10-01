@@ -27,18 +27,18 @@ public class AgentBuilder
 {
     private Class<?> agentClass;
 
-    public static void main(String[] args)
-    {
-        AgentBuilder agentBuilder = new AgentBuilder();
-        try
-        {
-            agentBuilder.createAgent();
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
+//    public static void main(String[] args)
+//    {
+//        AgentBuilder agentBuilder = new AgentBuilder();
+//        try
+//        {
+//            agentBuilder.createAgent();
+//        }
+//        catch (Exception e)
+//        {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void createAgent() throws Exception
     {
@@ -188,7 +188,8 @@ public class AgentBuilder
 
         this.agentClass = loaded.getLoaded();
 
-        loaded.saveIn(new File("application/bdi-llm/build/classes/java/main"));
+        //todo: Pfad von gradle? bazel classpath /application/bdi-llm/bin
+        loaded.saveIn(new File("application/bdi-llm/bin/classes/java/main"));
     }
 
     public Class<?> getAgentClass()

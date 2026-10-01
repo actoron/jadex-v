@@ -27,6 +27,10 @@ ALL_DEPS = [
     "//feature/libmicro",
     "//application/bdi:application-bdi",
     "//engine/bt",
+    "//feature/apmn",
+    "//serialization/traverser",
+    "//engine/bdi",
+    "//serialization/json"
     # "//feature/simulation", # mastersimfeature has memory leak
 ] + DEPS
 

@@ -265,9 +265,9 @@ java_library(
             "//conditions:default": [],
         }) +
         select({
-                    ":application_bdi_llm": ["//application/bdi-llm:application-bdi-llm"],
-                    "//conditions:default": [],
-                }) +
+            ":application_bdi_llm": ["//application/bdi-llm:application-bdi-llm"],
+            "//conditions:default": [],
+        }) +
         select({
             ":application_bt": ["//application/bt:application-bt"],
             "//conditions:default": [],

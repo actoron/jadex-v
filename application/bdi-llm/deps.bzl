@@ -14,6 +14,7 @@ MAVEN_DEPS = [
     'dev.langchain4j:langchain4j:1.18.1',
     'dev.langchain4j:langchain4j-core:1.18.1',
     'dev.langchain4j:langchain4j-open-ai:1.18.1',
+    'com.googlecode.json-simple:json-simple:1.1.1',
 ]
 
 DEPS = [_maven_to_bazel(artifact) for artifact in MAVEN_DEPS]  
