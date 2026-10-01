@@ -1,6 +1,7 @@
 package jadex.micro.llmcall2;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -22,8 +23,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 
 import dev.langchain4j.model.chat.StreamingChatModel;
+import io.github.raghultech.markdown.swing.integration.SwingMarkdownRenderer;
 import jadex.core.Application;
 import jadex.core.IComponentHandle;
 import jadex.future.ITerminableIntermediateFuture;
@@ -144,10 +148,33 @@ public class LlmChatAgentGui extends JFrame
 		status_panel.add(button_panel, BorderLayout.EAST);
 		status_panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
 
-		// The chat view.
+		// The chat view with a flat, light sans-serif theme.
 		chat	= new JEditorPane("text/html", "");
 		chat.setEditable(false);
-		chat.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+		{
+			HTMLEditorKit	kit	= new HTMLEditorKit();
+			StyleSheet		sheet	= kit.getStyleSheet();
+			// Base sans-serif, light modern palette
+			sheet.addRule("body { font-family: sans-serif; color: #1a1a2e; }");
+			sheet.addRule("h1 { font-size: 1.5em; font-weight: bold; color: #111; margin: 1em 0 0.5em; }");
+			sheet.addRule("h2 { font-size: 1.3em; font-weight: bold; color: #222; margin: 1em 0 0.5em; }");
+			sheet.addRule("h3 { font-size: 1.15em; font-weight: bold; color: #333; margin: 1em 0 0.4em; }");
+			// Inline code: subtle tint, monospace override
+			sheet.addRule("code { font-family: monospace; background-color: #f0f0f5; padding: 2px 4px; }");
+			// Code blocks: light grey box with border
+			sheet.addRule("pre { background-color: #f6f8fa; border: 1px solid #dcdcdc; padding: 8px; }");
+			// Tables: clean bordered flat look
+			sheet.addRule("table { border-collapse: collapse; }");
+			sheet.addRule("th { background-color: #f4f4f8; border: 1px solid #c8c8d0; padding: 6px 10px; font-weight: bold; }");
+			sheet.addRule("td { border: 1px solid #d0d0d8; padding: 6px 10px; }");
+			// Blockquote: left accent bar
+			sheet.addRule("blockquote { border-left: 4px solid #b0b0c0; background-color: #f9f9fc; padding: 0.5em 1em; }");
+			// Links: modern blue
+			sheet.addRule("a { color: #3572ff; }");
+			chat.setEditorKit(kit);
+		}
+		chat.setBackground(Color.WHITE);
+		chat.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 
 		// The input line.
 		input	= new JTextField();
@@ -480,7 +507,7 @@ public class LlmChatAgentGui extends JFrame
 	protected void appendUser(String prompt)
 	{
 		flushPending();
-		history.append("<p><b>You:</b></p>").append(Markdown.toHtml(prompt)).append("\n");
+		history.append("<p><b>You:</b></p>").append(renderMarkdown(prompt)).append("\n");
 		updateView();
 	}
 
@@ -535,7 +562,7 @@ public class LlmChatAgentGui extends JFrame
 	{
 		if(pending.length()==0 || pending_type==null)
 			return "";
-		String	body	= Markdown.toHtml(pending.toString());
+		String	body	= renderMarkdown(pending.toString());
 		return switch(pending_type)
 		{
 			case THINKING -> "<div style=\"color:#808080;font-style:italic;\">" + body + "</div>\n";
@@ -553,6 +580,19 @@ public class LlmChatAgentGui extends JFrame
 	{
 		chat.setText("<html><body>" + history + renderPending() + "</body></html>");
 		chat.setCaretPosition(chat.getDocument().getLength());
+	}
+
+	/**
+	 *  Render a Markdown text to Swing-compatible HTML
+	 *  using the Swing-Markdown-Preview library
+	 *  (Flexmark GFM renderer, including tables, task lists,
+	 *  strikethrough, and emoji).
+	 *  @param markdown The Markdown source.
+	 *  @return The Swing-compatible HTML.
+	 */
+	protected static String renderMarkdown(String markdown)
+	{
+		return SwingMarkdownRenderer.getInstance().renderMarkdown(markdown);
 	}
 
 	/**
