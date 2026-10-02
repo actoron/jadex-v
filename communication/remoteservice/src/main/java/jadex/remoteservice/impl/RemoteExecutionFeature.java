@@ -69,7 +69,6 @@ public class RemoteExecutionFeature implements ILifecycle, IRemoteExecutionFeatu
     Set.of(
         RemoteFinishedCommand.class,
 		RemoteForwardCmdCommand.class,
-		RemoteForwardCmdCommand.class,
 		RemoteIntermediateResultCommand.class,
 		RemotePullCommand.class,
 		RemoteBackwardCommand.class,
