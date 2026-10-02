@@ -33,7 +33,8 @@ public class IpcTest
 		byte[] bytes = new byte[16];
 		SUtil.FAST_RANDOM.nextBytes(bytes);
 		
-		ipcdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("ipc_test_"+SUtil.hex(bytes));
+		//ipcdir = Path.of(System.getProperty("java.io.tmpdir")).resolve("ipc_test_"+SUtil.hex(bytes));
+		ipcdir = IpcFeature.getTempDirPathfixBrokenBazelOne("ipc_test_" + SUtil.hex(bytes));
 		ipcdir.toFile().mkdir();
 		ipcdir.toFile().deleteOnExit();
 		System.out.println("IPC Test Path is " + ipcdir);

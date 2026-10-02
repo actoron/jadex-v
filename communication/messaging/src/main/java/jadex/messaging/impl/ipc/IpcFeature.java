@@ -98,8 +98,7 @@ public class IpcFeature implements IIpcFeature
 	 */
 	public IpcFeature(GlobalProcessIdentifier gpid)
 	{
-		socketdir = Path.of(System.getProperty("java.io.tmpdir")).resolve(IMessageFeature.COM_DIRECTORY_NAME)
-																 .resolve(IPC_SUBDIR);
+		socketdir = getTempDirPathfixBrokenBazelOne(IMessageFeature.COM_DIRECTORY_NAME, IPC_SUBDIR);
 
 		this.gpid = gpid;
 		connections = new RwMapWrapper<>(new HashMap<>());
@@ -436,9 +435,8 @@ public class IpcFeature implements IIpcFeature
     public GlobalProcessIdentifier readNetworkProcess()
     {
         GlobalProcessIdentifier ret = null;
-		File conffile = Path.of(System.getProperty("java.io.tmpdir"))
-                                      .resolve(IMessageFeature.COM_DIRECTORY_NAME)
-									  .resolve("network.cfg").toFile();
+		File conffile = getTempDirPathfixBrokenBazelOne(IMessageFeature.COM_DIRECTORY_NAME, "network.cfg").toFile();
+
         try (FileInputStream fis = new FileInputStream(conffile))
         {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
@@ -489,6 +487,30 @@ public class IpcFeature implements IIpcFeature
 		//System.out.println("IPC sending to with new conn "+receiver.getGlobalProcessIdentifier().pid() + " from " + gpid);
 		connection = connect(targetpid);
 		connection.add(smsg);
+	}
+
+	/**
+	 * Gets a temp dir and fixes the really strange bazel version that is too long.
+	 *  @param exts Path extensions.
+	 *  @return The path.
+	 */
+	public static Path getTempDirPathfixBrokenBazelOne(String... exts)
+	{
+		Path path = Path.of(System.getProperty("java.io.tmpdir"));
+		// Hack detecting weird bazel sandbox mode that generates a huge, broken path.
+		if (path.toString().contains("execroot"))
+		{
+			String strpath = File.separator + "tmp";
+			for (int i = 0; i < exts.length; ++i)
+				strpath = strpath + File.separator + exts[i];
+			path = Path.of(strpath);
+		}
+		else
+		{
+			for (int i = 0; i < exts.length; ++i)
+				path = path.resolve(exts[i]);
+		}
+		return path;
 	}
 	
 	/**
