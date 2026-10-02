@@ -82,6 +82,10 @@ public class LlmHelper
 			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
+		SGLANG("SGLang",
+			(model, think, json) -> createOpenAiResponsesChatModel("https://sglang.myhomedns.net/v1", System.getenv("SGLANG_API_KEY"), model, think),
+			() -> fetchOpenAiModels("https://sglang.myhomedns.net/v1", System.getenv("SGLANG_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("https://sglang.myhomedns.net/v1", System.getenv("SGLANG_API_KEY"), model)),
 		OLLAMA_LOCAL("Ollama (local)",
 			(model, think, json) -> createOllamaChatModel("http://localhost:11434", model, think),
 			() -> fetchOllamaModels("http://localhost:11434"),
@@ -114,16 +118,7 @@ public class LlmHelper
 		VLLM("vLLM",
 			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8000/v1", null, model, think),
 			() -> fetchOpenAiModels("http://localhost:8000/v1", null, false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", null, model)),
-		VLLM5060("vLLM5060",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://192.168.0.138:8000/v1", null, model, think),
-			() -> fetchOpenAiModels("http://192.168.0.138:8000/v1", null, false),
-			(model) -> fetchOpenAiContextSize("http://192.168.0.138:8000/v1", null, model)),
-		SGLANG("SGLang",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://192.168.0.138:30000/v1", null, model, think),
-			() -> fetchOpenAiModels("http://192.168.0.138:30000/v1", null, false),
-			(model) -> fetchOpenAiContextSize("http://192.168.0.138:30000/v1", null, model));
-		
+			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", null, model));		
 		private final String name;
 		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
@@ -169,8 +164,7 @@ public class LlmHelper
 			Provider.OLLAMA_REMOTE, "gemma4:31b",
 //			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
 			Provider.UNSLOTH, "unsloth/Ministral-3-3B-Instruct-2512-GGUF:UD-Q4_K_XL",
-//			Provider.VLLM5060, "nvidia/Gemma-4-26B-A4B-NVFP4"
-			Provider.VLLM5060, "nvidia/Qwen3.8-27B-NVFP4"
+			Provider.SGLANG, "Qwen3.8-27B"
 		));
 	
 	public static StreamingChatModel createChatModel()

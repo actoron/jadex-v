@@ -492,7 +492,8 @@ public class LlmBenchmark
 
 		// Run benchmarks for available SGLang models
 		include_models	= Arrays.asList(
-			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
+//			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
+			"Qwen3.8-27B"
 		);
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.SGLANG, true);
 		
