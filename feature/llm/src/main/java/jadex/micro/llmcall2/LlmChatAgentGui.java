@@ -511,17 +511,24 @@ public class LlmChatAgentGui extends JFrame
 		updateView();
 	}
 
+	/**
+	 *  LLM fragments are Markdown. Consecutive fragments of the same type
+	 *  are accumulated into a single block and rendered as ONE markdown
+	 *  document, so the view shows a growing block instead of one line
+	 *  per token.
+	 *  <p>
+	 *  The agent emits "\n" markers between sentences (to keep lines
+	 *  reasonably short) and on type change / completion. Those "\n"
+	 *  markers are appended to the pending block as part of the markdown
+	 *  source and are NOT treated as block boundaries: flushing on them
+	 *  would split an open code fence and shatter its rendering. The
+	 *  pending block is only flushed on a type change or on request
+	 *  completion, so a whole message of one type always renders as a
+	 *  single markdown document.
+	 *  Call on the EDT.
+	 */
 	protected void appendFragment(ChatFragment frag)
 	{
-		// LLM fragments are Markdown. Consecutive fragments of the same type
-		// are accumulated into a single block, so the view shows a growing
-		// block instead of one line per token.
-		//
-		// A fragment that starts with a line break ends the current block:
-		// the agent emits "\n" markers between sentences (to keep lines
-		// reasonably short) and on type change / completion.
-		if(frag.text().startsWith("\n"))
-			flushPending();
 		if(pending_type!=frag.type())
 		{
 			flushPending();
@@ -539,8 +546,11 @@ public class LlmChatAgentGui extends JFrame
 
 	/**
 	 *  Write the pending block to the conversation history.
-	 *  Call on block boundaries: fragment type change, line break marker,
-	 *  and request completion.
+	 *  Call on block boundaries: fragment type change and
+	 *  request completion. The whole accumulated block is
+	 *  rendered as a single markdown document, so code fences
+	 *  and other constructs that span multiple fragments stay
+	 *  intact.
 	 *  Call on the EDT.
 	 */
 	protected void flushPending()
