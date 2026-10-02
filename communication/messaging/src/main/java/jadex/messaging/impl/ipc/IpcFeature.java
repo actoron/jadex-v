@@ -500,7 +500,12 @@ public class IpcFeature implements IIpcFeature
 		// Hack detecting weird bazel sandbox mode that generates a huge, broken path.
 		if (path.toString().contains("execroot"))
 		{
-			String strpath = File.separator + "tmp";
+			String strpath = "";
+			if (System.getProperty("os.name").startsWith("Windows"))
+				strpath = "C:" + File.separator + "Windows" + File.separator + "Temp";
+			else
+				strpath = File.separator + "tmp";
+
 			for (int i = 0; i < exts.length; ++i)
 				strpath = strpath + File.separator + exts[i];
 			path = Path.of(strpath);
