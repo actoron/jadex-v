@@ -16,6 +16,7 @@ import jadex.core.impl.ComponentFeatureProvider;
 import jadex.core.impl.ComponentManager;
 import jadex.core.impl.IBootstrapping;
 import jadex.core.impl.IComponentLifecycleManager;
+import jadex.core.impl.IDaemonComponent;
 import jadex.core.impl.SComponentFeatureProvider;
 import jadex.execution.IExecutionFeature;
 import jadex.future.Future;
@@ -66,6 +67,9 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 	public <T extends Component> IFuture<IComponentHandle>	bootstrap(T component)
 	{
 		IExecutionFeature	exe	= doCreateFeatureInstance(component);
+		
+		// Non-daemon components are counted as creating, so that waitForLastComponent() works correctly.
+		boolean daemon	= component.getPojo() instanceof IDaemonComponent;
 		
 		// Fast Lambda Agent -> optimized lifecycle
 		if(component instanceof FastLambda)
@@ -180,11 +184,17 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 					}
 					finally
 					{
-						ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
+						if(!daemon)
+						{
+							ComponentManager.get().decreaseCreating(fself.getId(), fself.getApplication());
+						}
 					}
 				}
 			};
-			ComponentManager.get().increaseCreating(component.getApplication());
+			if(!daemon)
+			{
+				ComponentManager.get().increaseCreating(component.getApplication());
+			}
 //			System.out.println("Creating fast lambda agent: "+type);
 			@SuppressWarnings("unchecked")
 			IFuture<Object>	resfut	= fself.isAsync() ? exe.scheduleAsyncStep(step) : exe.scheduleStep(step);
@@ -197,7 +207,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 		// Normal component
 		else
 		{
-			ComponentManager.get().increaseCreating(component.getApplication());
+			if(!daemon)
+			{
+				ComponentManager.get().increaseCreating(component.getApplication());
+			}
 			return exe.scheduleStep(() -> 
 			{
 				try
@@ -275,7 +288,10 @@ public class ExecutionFeatureProvider extends ComponentFeatureProvider<IExecutio
 				}
 				finally
 				{
-					ComponentManager.get().decreaseCreating(component.getId(), component.getApplication());
+					if(!daemon)
+					{
+						ComponentManager.get().decreaseCreating(component.getId(), component.getApplication());
+					}
 				}
 			});
 		}

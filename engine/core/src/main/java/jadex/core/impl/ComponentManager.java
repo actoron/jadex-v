@@ -14,11 +14,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 
 import jadex.collection.RwMapWrapper;
@@ -166,6 +168,9 @@ public class ComponentManager implements IComponentManager
 	
 	/** The components per app id. */
 	private final Map<String, Set<ComponentIdentifier>> appcomps = new LinkedHashMap<>();
+	
+	/** The daemon components per app id. */
+	private final Map<String, Set<ComponentIdentifier>> appdaemons = new LinkedHashMap<>();
 	
 	/** Global counter for components in creation. */
 	private volatile int	creationcnt = 0;
@@ -941,14 +946,15 @@ public class ComponentManager implements IComponentManager
 	 */
 	public void addComponent(IComponent comp)
 	{
-		//System.out.println("added: "+comp.getId());
+//		System.out.println("added: "+comp.getId());
 		if(getLogger().isLoggable(Level.INFO))
 			getLogger().log(Level.INFO, "Component created: "+comp.getId());
 		
-		if(comp.getPojo() instanceof IDaemonComponent)
+		boolean	new_app	= false;
+		boolean daemon	= comp.getPojo() instanceof IDaemonComponent;
+		synchronized(components)
 		{
-			// Daemon component
-			synchronized(daemons)
+			if(daemon)
 			{
 				IComponent	old	= daemons.put(comp.getId(), comp);
 				if(old!=null)
@@ -956,13 +962,9 @@ public class ComponentManager implements IComponentManager
 					daemons.put(comp.getId(), old); // restore
 					throw new IllegalArgumentException("Daemon component with same CID already exists: "+comp.getId()+" "+ComponentManager.get().getNumberOfComponents());
 				}
+				//System.out.println("added daemon: "+comp.getId());
 			}
-			//System.out.println("added daemon: "+comp.getId());
-		}
-		else
-		{
-			boolean	app_added	= false;
-			synchronized(components)
+			else
 			{
 				IComponent	old	= components.put(comp.getId(), comp);
 				if(old!=null)
@@ -977,25 +979,34 @@ public class ComponentManager implements IComponentManager
 				{
 					first	= comp;
 				}
-				
-				// Add component to application, if any.
-				String appid = comp.getAppId();
-				if(appid!=null)
-				{
-					Set<ComponentIdentifier> appcompset = appcomps.get(appid);
-					if(appcompset==null)
-					{
-						appcompset = new LinkedHashSet<ComponentIdentifier>();
-						appcomps.put(appid, appcompset);
-						app_added = true;
-					}
-					appcompset.add(comp.getId());
-				}
 			}
-			if(app_added)
+			
+			// Add component to application, if any.
+			String appid = comp.getAppId();
+			if(appid!=null)
 			{
-				notifyEventListener(ComponentEventType.APPLICATION_ADDED, comp.getId(), comp.getApplication());
+	//			System.out.println("addComponent: "+comp.getId()+" appid="+appid);
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				Set<ComponentIdentifier> appdaemset = appdaemons.get(appid);
+				new_app = appcompset==null && appdaemset==null;
+				
+				if(!daemon && appcompset==null)
+				{
+					appcompset = new LinkedHashSet<ComponentIdentifier>();
+					appcomps.put(appid, appcompset);
+				}
+				else if(daemon && appdaemset==null)
+				{
+					appdaemset = new LinkedHashSet<ComponentIdentifier>();
+					appdaemons.put(appid, appdaemset);
+				}
+				(daemon ? appdaemset : appcompset).add(comp.getId());
 			}
+		}
+		
+		if(new_app)
+		{
+			notifyEventListener(ComponentEventType.APPLICATION_ADDED, comp.getId(), comp.getApplication());
 		}
 		
 		// TODO: Added event for daemon components?
@@ -1015,12 +1026,11 @@ public class ComponentManager implements IComponentManager
 		
 		boolean last	= false;
 		boolean app_removed = false;
-		
-		//System.out.println("removing: "+cid);
-		if(comp.getPojo() instanceof IDaemonComponent)
+		synchronized(components)
 		{
-			// Daemon component
-			synchronized(daemons)
+			//System.out.println("removing: "+cid);
+			boolean daemon = comp.getPojo() instanceof IDaemonComponent;
+			if(daemon)
 			{
 				IComponent old = daemons.remove(cid);
 				if(old==null)
@@ -1028,11 +1038,7 @@ public class ComponentManager implements IComponentManager
 					throw new RuntimeException("Unknown daemon component id: "+cid);
 				}
 			}
-		}
-		else
-		{
-			String appid = null;
-			synchronized(components)
+			else
 			{
 				IComponent old = components.remove(cid);
 				if(old==null)
@@ -1040,21 +1046,31 @@ public class ComponentManager implements IComponentManager
 					throw new RuntimeException("Unknown component id: "+cid);
 				}
 				last = creationcnt==0 && components.isEmpty();
-				//System.out.println("removeComponent: last="+last+" "+components.size()+" "+creationcnt+" "+components);
+//				System.out.println("removeComponent: last="+last+" "+components.size()+" "+creationcnt+" "+components);
+			}
+			
+			String appid = comp.getAppId();
+			if(appid!=null)
+			{
+				Set<ComponentIdentifier> appcompset = appcomps.get(appid);
+				Set<ComponentIdentifier> appdaemset = appdaemons.get(appid);
+				if(!daemon && appcompset==null || daemon && appdaemset==null)
+					throw new RuntimeException("Unknown app id: "+appid);
+				(daemon ? appdaemset : appcompset).remove(cid);
 				
-				appid = comp.getAppId();
-				if(appid!=null)
+				// Last non-daemon component of an app removed -> remove/terminate app
+				if(!daemon && appcompset.isEmpty())
 				{
-					Set<ComponentIdentifier> appcompset = appcomps.get(appid);
-					if(appcompset==null)
-						throw new RuntimeException("Unknown app id: "+appid);
-					appcompset.remove(cid);
-					if(appcompset.isEmpty())
-					{
-						appcomps.remove(appid);
-						app_removed = appcreationcnt.getOrDefault(appid, 0) <= 1;
-					}
+					appcomps.remove(appid);
+					app_removed = appcreationcnt.getOrDefault(appid, 0) <= 1;
 				}
+				
+				else if(daemon && appdaemset.isEmpty())
+				{
+					appdaemons.remove(appid);
+				}
+				
+//				System.out.println("removeComponent: "+comp.getId()+" appid="+appid+" daemon="+daemon+" app_removed="+app_removed+" last="+last);
 			}
 		}
 		//System.out.println("size: "+components.size()+" "+cid);
@@ -1063,9 +1079,23 @@ public class ComponentManager implements IComponentManager
 		
 		if(app_removed)
 		{
-			notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, comp.getApplication());
+			boolean	flast = last;
+			Consumer<Object> notify = v ->
+			{
+				notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, comp.getApplication());
+				if(flast)
+				{
+					notifyEventListener(ComponentEventType.COMPONENT_LASTREMOVED, cid, comp.getApplication());
+				}
+			};
+			
+			// componentRemoved is called on terminated component thread
+			// -> run app termination on extra comp to avoid future backscheduling issues.
+			getGlobalRunner().getComponentHandle().scheduleStep(() -> 
+				comp.getApplication().terminate()
+					.then(notify).catchEx(notify));
 		}
-		if(last)
+		else if(last)
 		{
 			notifyEventListener(ComponentEventType.COMPONENT_LASTREMOVED, cid, comp.getApplication());
 		}
@@ -1102,10 +1132,7 @@ public class ComponentManager implements IComponentManager
 		synchronized(components)
 		{
 			comp	= components.get(cid);
-		}
-		if(comp==null)
-		{
-			synchronized(daemons)
+			if(comp==null)
 			{
 				comp	= daemons.get(cid);
 			}
@@ -1157,11 +1184,11 @@ public class ComponentManager implements IComponentManager
 	}
 	
 	@Override
-	public Set<ComponentIdentifier> getAllComponents()
+	public List<ComponentIdentifier> getAllComponents()
 	{
 		synchronized(components)
 		{
-			return new LinkedHashSet<ComponentIdentifier>(components.keySet());
+			return new ArrayList<>(components.keySet());
 		}
 	}
 	
@@ -1186,7 +1213,7 @@ public class ComponentManager implements IComponentManager
 	
 	public void notifyEventListener(ComponentEventType type, ComponentIdentifier cid, Application app)
 	{
-		//System.out.println("ComponentManager notify event listener: "+type+" "+cid);
+//		System.out.println("ComponentManager notify event listener: "+type+" "+cid+" "+app);
 
 		Set<IComponentListener> mylisteners = null;
 		
@@ -1388,7 +1415,7 @@ public class ComponentManager implements IComponentManager
 		{
 			creationcnt--;			
 			last = creationcnt==0 && getNumberOfComponents()==0;
-			
+		
 			if(app!=null)
 			{
 				int cnt = appcreationcnt.getOrDefault(app.getId(), 0);
@@ -1404,13 +1431,15 @@ public class ComponentManager implements IComponentManager
 			}
 		}
 		
+		if(lastapp)
+		{
+			app.terminate()
+				.then(v -> notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, app))
+				.catchEx(ex -> notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, app));
+		}
 		if(last)
 		{
 			notifyEventListener(ComponentEventType.COMPONENT_LASTREMOVED, cid, app);
-		}
-		if(lastapp)
-		{
-			notifyEventListener(ComponentEventType.APPLICATION_REMOVED, cid, app);
 		}
 	}
 
@@ -1418,19 +1447,19 @@ public class ComponentManager implements IComponentManager
 	 *  Get all components of the given application.
 	 *  @return The set of all component ids belonging to the application.
 	 */
-	public Set<ComponentIdentifier> getAllComponents(Application application)
+	public List<ComponentIdentifier> getAllComponents(Application application)
 	{
 		synchronized(components)
 		{
 			Set<ComponentIdentifier> ret = appcomps.get(application.getId());
-			if(ret==null)
-			{
-				return Collections.emptySet();
-			}
-			else
-			{
-				return new LinkedHashSet<ComponentIdentifier>(ret);
-			}
+			Set<ComponentIdentifier> ret2 = appdaemons.get(application.getId());
+			List<ComponentIdentifier> retlist = new ArrayList<>((ret!=null ? ret.size() : 0) + (ret2!=null ? ret2.size() : 0));
+			// Add daemons first, so that they are terminated last. (termination order is reverse of creation order)
+			if(ret2!=null)
+				retlist.addAll(ret2);
+			if(ret!=null)
+				retlist.addAll(ret);
+			return retlist;
 		}
 	}
 

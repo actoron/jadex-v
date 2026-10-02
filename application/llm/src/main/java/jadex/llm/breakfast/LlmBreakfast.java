@@ -25,6 +25,7 @@ public class LlmBreakfast
 			static enum Flour { White, Wholegrain }
 			static List<String> TYPES = Arrays.asList("Rye", "Spelt", "Wheat");
 			
+//			@JsonProperty(required = false)
 			Flour flour;
 			String type;
 			

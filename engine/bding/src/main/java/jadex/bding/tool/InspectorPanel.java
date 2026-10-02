@@ -23,8 +23,6 @@ import jadex.bding.Intention;
 import jadex.bding.Parameter;
 import jadex.bding.Plan;
 import jadex.bding.ReasoningEntry;
-import jadex.bding.StrategicPlan;
-import jadex.bding.StrategicStep;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
@@ -32,6 +30,9 @@ import jadex.bding.impl.planbody.PlanStepExecution;
 import jadex.bding.impl.planbody.ReasoningStep;
 import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
+import jadex.bding.impl.planbody.strategic.StrategicActionStep;
+import jadex.bding.impl.planbody.strategic.StrategicContainer;
+import jadex.bding.impl.planbody.strategic.StrategicStep;
 import jadex.common.SEmoji;
 
 public class InspectorPanel extends JPanel
@@ -91,7 +92,7 @@ public class InspectorPanel extends JPanel
         {
             showStrategicStep(step);
         }
-        else if(object instanceof StrategicPlan splan)
+        else if(object instanceof StrategicContainer splan)
         {
             showStrategicPlan(splan);
         }
@@ -301,7 +302,7 @@ public class InspectorPanel extends JPanel
         {
             addSection("Plan body");
 
-            addField("Steps", Integer.toString(body.getSteps().size()));
+            //addField("Steps", Integer.toString(body.getSteps().size()));
         }
     }
 
@@ -331,23 +332,27 @@ public class InspectorPanel extends JPanel
 
         addSection("Strategic step");
 
-        addField(
-            "Type",
-            step.getType() != null
-                ? step.getType().toString()
-                : "Unknown");
+        if(step instanceof StrategicActionStep action)
+        {
+            addField("Type", action.getType() != null ? action.getType().toString(): "Unknown");
 
-        addField("Name", step.getName());
-        addField("Description", step.getDescription());
+            addField("Name", action.getName());
+            addField("Description", action.getDescription());
 
-        addSection("Inputs");
-        addStringList(step.getInputs());
+            addSection("Inputs");
+            addStringList(action.getInputs());
 
-        addSection("Outputs");
-        addStringList(step.getOutputs());
+            addSection("Output");
+            addField("Output", action.getOutput());
+        }
+        else
+        {
+            addField("Name", step.getName());
+            addField("Description", step.getDescription());
+        }
     }
 
-    protected void showStrategicPlan(StrategicPlan splan)
+    protected void showStrategicPlan(StrategicContainer splan)
     {
         //addTitle("📋 ", splan.getName());
         //addField("Description", splan.getDescription());
@@ -382,38 +387,48 @@ public class InspectorPanel extends JPanel
 
     protected String getStrategicStepIcon(StrategicStep step)
     {
-        switch(step.getType())
+        if(step instanceof StrategicActionStep action)
         {
-            case TOOL:
-                return "🔧";
+            switch(action.getType())
+            {
+                case TOOL:
+                    return "🔧";
 
-            case REASONING:
-                return "🧠";
+                case REASONING:
+                    return "🧠";
 
-            case SUBGOAL:
-                return "🎯";
+                case SUBGOAL:
+                    return "🎯";
 
-            default:
-                return "•";
+                default:
+                    return "•";
+            }
         }
+
+        return "•";
     }
 
     protected String getStrategicStepTitle(StrategicStep step)
     {
-        switch(step.getType())
+        if(step instanceof StrategicActionStep action)
         {
-            case TOOL:
-                return "Tool: " + step.getName();
+            switch(action.getType())
+            {
+                case TOOL:
+                    return "Tool: " + action.getName();
 
-            case SUBGOAL:
-                return "Subgoal: " + step.getName();
+                case SUBGOAL:
+                    return "Subgoal: " + action.getName();
 
-            case REASONING:
-                return "Reasoning";
+                case REASONING:
+                    return "Reasoning: " + action.getName();
 
-            default:
-                return step.getName();
+                default:
+                    return action.getName();
+            }
         }
+
+        return step.getName();
     }
 
     protected void showPlanStepExecution(PlanStepExecution execution)

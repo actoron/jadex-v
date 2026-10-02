@@ -1,7 +1,7 @@
 package jadex.core;
 
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import jadex.core.IComponentManager.ComponentEventType;
@@ -110,7 +110,7 @@ public interface IComponentFactory
 	 *  Get all components.
 	 *  @return The component ids.
 	 */
-	public Set<ComponentIdentifier> getAllComponents();
+	public List<ComponentIdentifier> getAllComponents();
 	
 	/**
 	 *  Terminate components
@@ -123,7 +123,8 @@ public interface IComponentFactory
 		
 		if(cids==null || cids.length==0)
 		{
-			iter	= getAllComponents();
+			// terminate in inverse order to handle dependencies better
+			iter	= getAllComponents().reversed();
 		}
 		else if(cids.length==1)
 		{
@@ -131,10 +132,10 @@ public interface IComponentFactory
 		}
 		else
 		{
-			// terminate in inverse order to handle dependencies better
-			iter	= Arrays.asList(cids).reversed();
+			iter	= Arrays.asList(cids);
 		}
 		
+//		System.out.println("Terminating components: "+iter);
 		FutureBarrier<Void> bar = new FutureBarrier<Void>();
 		for(ComponentIdentifier cid: iter)
 		{
@@ -151,15 +152,19 @@ public interface IComponentFactory
 			IComponent comp = ComponentManager.get().getComponent(cid);
 			if(comp==null)
 			{
-				throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+//				throw new IllegalArgumentException("Component with id '"+cid+"' does not exist.");
+				// Component already terminated, so just return.
+				// Cannot be avoided without holding components lock.
+				return IFuture.DONE;
 			}
 			IComponentHandle	exta = comp.getComponentHandle();
 			//ComponentManager.get().removeComponent(cid); // done in Component
 			if(Component.isExecutable())
 			{
-				// Don't use async step, because icomp.terminate() is sync anyways (when no cid is given).
-				return exta.scheduleStep(icomp ->
+				Future<Void> fut = new Future<>();
+				exta.scheduleStep(icomp ->
 				{
+//					System.out.println("Terminating component: "+cid);
 					try
 					{
 						((Component)icomp).doTerminate();
@@ -168,8 +173,26 @@ public interface IComponentFactory
 					{
 						// Skip abortion of user code when called from outside.
 					}
+//					System.out.println("Terminated component: "+cid);
 					return (Void)null;
+				})
+				.then(v -> {
+//					System.out.println("Component terminated: "+cid);
+					fut.setResult(v);
+				})
+				.catchEx(ex ->
+				{
+					if(ex instanceof ComponentTerminatedException)
+					{
+						// Ignore, component already terminated.
+						fut.setResult(null);
+					}
+					else
+					{
+						fut.setException(ex);
+					}
 				});
+				return fut;
 			}
 			else
 			{

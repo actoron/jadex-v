@@ -10,6 +10,8 @@ import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
 import jadex.bding.impl.RGoal.GoalState;
+import jadex.bding.impl.planbody.strategic.StrategicActionStep;
+import jadex.bding.impl.planbody.strategic.StrategicContainer;
 
 /**
  * Cognitive reasoning operations:
@@ -36,9 +38,11 @@ public interface IReasoner
 
     public IFuture<Intention> selectIntention(RGoal goal, Set<Intention> intentions, Map<String, Object> context);
 
-    public IFuture<Plan> generateStrategicPlan(RIntention intention, Map<String, Object> context);
+    public IFuture<StrategicContainer> generateStrategicPlan(RIntention intention, Map<String, Object> context);
+
+    public IFuture<StrategicContainer> operationalizeStrategicPlan(RIntention intention, Map<String, Object> context, StrategicContainer plan);
     
-    public IFuture<IPlanStep> generatePlanStep(RPlan plan, StrategicStep step, Map<String, Object> context);
+    //public IFuture<IPlanStep> generateActionPlanStep(RPlan plan, StrategicActionStep step, Map<String, Object> context);
 
     public IFuture<Boolean> isRetryAllowed(RPlan plan, Map<String, Object> context);
 

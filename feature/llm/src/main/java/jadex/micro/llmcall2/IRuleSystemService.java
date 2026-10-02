@@ -8,6 +8,8 @@ import dev.langchain4j.agent.tool.Tool;
 import jadex.core.ChangeEvent;
 import jadex.future.IFuture;
 import jadex.future.ISubscriptionIntermediateFuture;
+import jadex.future.ITerminableFuture;
+import jadex.future.ITerminableIntermediateFuture;
 import jadex.providedservice.annotation.Service;
 
 /**
@@ -89,7 +91,7 @@ public interface IRuleSystemService
 	 *  If a prompt is currently being executed, the new execution will wait until the current execution is finished,
 	 *  to avoid concurrent executions of prompts.
 	 */
-	public IFuture<Void>	executePrompt(String prompt);
+	public ITerminableFuture<Void>	executePrompt(String prompt);
 	
 	//-------- UI only methods --------
 	

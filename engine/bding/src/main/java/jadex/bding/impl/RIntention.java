@@ -32,7 +32,7 @@ public class RIntention extends RIdElement
 
     public IFuture<Void> execute()
     {
-        System.out.println("Intention execute() called: "+intention.getName());
+        System.out.println("Intention execute() called: " + intention.getName());
 
         Future<Void> ret = new Future<>();
 
@@ -41,16 +41,27 @@ public class RIntention extends RIdElement
 
         Map<String, Object> beliefs = BeliefExtractor.extract(component);
 
-        reasoner.generateStrategicPlan(this, beliefs).then(plan ->
+        reasoner.generateStrategicPlan(this, beliefs).then(splan ->
         {
-            if(plan == null)
+            if(splan == null)
             {
-                ret.setException(
-                    new RuntimeException("No plan could be generated for intention"));
+                ret.setException(new RuntimeException("No strategic plan could be generated for intention"));
             }
             else
             {
-                executePlan(plan).delegateTo(ret);
+                reasoner.operationalizeStrategicPlan(this, beliefs, splan).then(operationalPlan ->
+                {
+                    if(operationalPlan == null)
+                    {
+                        ret.setException(new RuntimeException("No operational plan could be generated for intention"));
+                    }
+                    else
+                    {
+                        Plan plan = new Plan(operationalPlan.getName(), operationalPlan.getDescription(), getIntention(), getIntention().getModel());
+                        plan.setStrategicPlan(splan);
+                        executePlan(plan).delegateTo(ret);
+                    }
+                }).catchEx(ret);
             }
         }).catchEx(ret);
 
@@ -63,8 +74,7 @@ public class RIntention extends RIdElement
 
         IComponent component = IComponentManager.get().getCurrentComponent();
 
-        IReasoner reasoner =
-            component.getFeature(IBDINGAgentFeature.class).getReasoner();
+        IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
         this.plan = new RPlan(plan, this, component);
 
@@ -94,12 +104,13 @@ public class RIntention extends RIdElement
 
                             replan().delegateTo(ret);
                         }
-                    }).catchEx(ret);
+                    }).catchEx(ret).printOnEx();
                 }
-            }).catchEx(ret);
+            }).catchEx(ret).printOnEx();
 
         }).catchEx(ex ->
         {
+            ex.printStackTrace();
             replan().delegateTo(ret);
         });
 
