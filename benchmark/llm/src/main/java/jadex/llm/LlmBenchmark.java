@@ -485,17 +485,18 @@ public class LlmBenchmark
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ3_S"
 			
-			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
+			"Qwen3.8-27B"
+//			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
 //			"nvidia/Gemma-4-26B-A4B-NVFP4"
 		);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.VLLM5060, true);
+		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.VLLM, true);
 
 		// Run benchmarks for available SGLang models
 		include_models	= Arrays.asList(
 //			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
 			"Qwen3.8-27B"
 		);
-		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.SGLANG, true);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.SGLANG, true);
 		
 		// Run benchmarks for available Llama server models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LLAMA_SERVER, false);

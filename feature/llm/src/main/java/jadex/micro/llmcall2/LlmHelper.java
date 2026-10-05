@@ -82,6 +82,10 @@ public class LlmHelper
 			(model, think, json) -> createOllamaChatModel(System.getenv("OLLAMA_BASE_URL"), model, think),
 			() -> fetchOllamaModels(System.getenv("OLLAMA_BASE_URL")),
 			(model) -> fetchOllamaContextSize(System.getenv("OLLAMA_BASE_URL"), model)),
+		VLLM("vLLM",
+			(model, think, json) -> createOpenAiResponsesChatModel("https://vllm.myhomedns.net/v1", System.getenv("VLLM_API_KEY"), model, think),
+			() -> fetchOpenAiModels("https://vllm.myhomedns.net/v1", System.getenv("VLLM_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("https://vllm.myhomedns.net/v1", System.getenv("VLLM_API_KEY"), model)),		
 		SGLANG("SGLang",
 			(model, think, json) -> createOpenAiResponsesChatModel("https://sglang.myhomedns.net/v1", System.getenv("SGLANG_API_KEY"), model, think),
 			() -> fetchOpenAiModels("https://sglang.myhomedns.net/v1", System.getenv("SGLANG_API_KEY"), false),
@@ -114,11 +118,8 @@ public class LlmHelper
 		UNSLOTH("Unsloth",
 			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
 			() -> fetchOpenAiModels("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model)),
-		VLLM("vLLM",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8000/v1", null, model, think),
-			() -> fetchOpenAiModels("http://localhost:8000/v1", null, false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8000/v1", null, model));		
+			(model) -> fetchOpenAiContextSize("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model));
+		
 		private final String name;
 		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
 		private final Supplier<List<String>> modelfetcher;
@@ -863,7 +864,7 @@ public class LlmHelper
 	 */
 	public static boolean supportsVision(StreamingChatModel llm)
 	{
-		RenderedImage testImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+		RenderedImage testImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
 		ITerminableIntermediateFuture<ChatFragment>	fut	= IComponentManager.get().runAsync(new LlmChatAgent(llm, "Describe the image.", testImage));
 		LlmChatAgent.printResults(fut, false);
 		try
