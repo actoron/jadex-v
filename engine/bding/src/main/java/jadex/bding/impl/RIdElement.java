@@ -1,6 +1,11 @@
 package jadex.bding.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import jadex.bding.Belief;
+import jadex.core.IComponent;
 
 public class RIdElement 
 {
@@ -48,6 +53,19 @@ public class RIdElement
         } else if (!id.equals(other.id))
             return false;
         return true;
+    }
+
+    // todo: put in parameters of all goals in hierachy (plans?!)
+    public static Map<String, Object> createContext(RGoal goal, IComponent agent)
+    {
+        Map<String, Object> context = new HashMap<>();
+
+        Map<String, Object> bels = BeliefExtractor.extract(agent);
+        bels.keySet().forEach(name -> context.put("belief." + name, bels.get(name)));
+
+        goal.getParameters().keySet().forEach(name -> context.put("goal." + name, goal.getParameters().get(name)));
+        
+        return context;
     }
     
 }

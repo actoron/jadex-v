@@ -10,6 +10,7 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
+import jadex.bding.IReasoner.ReasoningType;
 import jadex.micro.llmcall2.LlmHelper;
 
 public class StrategicPlanParser
@@ -20,7 +21,11 @@ public class StrategicPlanParser
 
         JsonObject jsonobj = Json.parse(san).asObject();
 
-        return parseContainer(jsonobj);
+        StrategicContainer ret = parseContainer(jsonobj);
+
+        ret.setJson(json);
+
+        return ret;
     }
 
     /**
@@ -29,14 +34,12 @@ public class StrategicPlanParser
     protected static StrategicStep parseStep(JsonObject json)
     {
         if(json == null)
-            throw new IllegalArgumentException(
-                "Strategic step is null.");
+            throw new IllegalArgumentException("Strategic step is null.");
 
         String type = getString(json, "type");
 
         if(type == null || type.isBlank())
-            throw new IllegalArgumentException(
-                "Strategic step has no type.");
+            throw new IllegalArgumentException("Strategic step has no type.");
 
         return switch(type)
         {
@@ -103,11 +106,9 @@ public class StrategicPlanParser
             throw new IllegalArgumentException(
                 "CONDITION has no 'else' branch.");
 
-        StrategicContainer trueContainer =
-            parseContainer(thenJson);
+        StrategicContainer trueContainer = parseContainer(thenJson);
 
-        StrategicContainer falseContainer =
-            parseContainer(elseJson);
+        StrategicContainer falseContainer = parseContainer(elseJson);
 
         StrategicConditionContainer ret =
             new StrategicConditionContainer(
@@ -116,7 +117,20 @@ public class StrategicPlanParser
                 trueContainer,
                 falseContainer);
 
-        ret.setCondition(getString(json, "condition"));
+        /*
+         * Functional dataflow of the condition.
+         */
+        ret.setInputs(
+            parseStrings(json, "inputs"));
+
+        ret.setCondition(
+            getString(json, "condition"));
+
+        //Map<String, String> inputmapping =
+        //    parseMapping(json, "inputmapping");
+
+        //if(inputmapping != null)
+        //    ret.setInputMapping(inputmapping);
 
         return ret;
     }
@@ -135,8 +149,22 @@ public class StrategicPlanParser
                 getString(json, "description"),
                 parseSteps(json));
 
-        ret.setCondition(getString(json, "condition"));
-        ret.setMax(getString(json, "max"));
+        ret.setCondition(
+            getString(json, "condition"));
+
+        ret.setMax(
+            getString(json, "max"));
+
+        /*
+         * Functional dataflow of the loop condition.
+         */
+        //ret.setInputs(parseStrings(json, "inputs"));
+
+        //Map<String, String> inputmapping =
+        //    parseMapping(json, "inputmapping");
+
+        //if(inputmapping != null)
+        //    ret.setInputMapping(inputmapping);
 
         return ret;
     }
@@ -144,19 +172,17 @@ public class StrategicPlanParser
     /**
      * Parses an action/leaf step.
      */
-    protected static StrategicActionStep parseAction(
-        JsonObject json, StepType type)
+    protected static StrategicActionStep parseAction(JsonObject json, StepType type)
     {
         String name = getString(json, "name");
+
         String description = getString(json, "description");
 
         String tool = null;
         String goal = null;
         String exp = null;
+        ReasoningType reasoningType = null;
 
-        /*
-         * Phase 1 semantic fields.
-         */
         switch(type)
         {
             case TOOL ->
@@ -168,29 +194,38 @@ public class StrategicPlanParser
             case STATE ->
                 exp = getString(json, "exp");
 
-            case REASONING, FAIL ->
+            case REASONING ->
             {
-                // No additional Phase-1 field.
+                String value = getString(json, "reasoningType");
+
+                if(value == null || value.isBlank())
+                    throw new IllegalArgumentException("REASONING step '" + name + "' has no reasoningType.");
+
+                try
+                {
+                    reasoningType = ReasoningType.valueOf(value.toUpperCase());
+                }
+                catch(IllegalArgumentException e)
+                {
+                    throw new IllegalArgumentException("REASONING step '" + name+ "' has invalid reasoningType: " + value,e);
+                }
+            }
+            case FAIL ->
+            {
+                // No additional field.
             }
         }
 
         /*
-         * Phase 2 fields.
-         *
-         * They are parsed when present so that the same parser can
-         * also read an operationalized plan.
+         * Functional interface and dataflow.
          */
-        List<String> inputs =
-            parseStrings(json, "inputs");
+        List<String> inputs = parseStrings(json, "inputs");
 
-        String output =
-            getString(json, "output");
+        String output = getString(json, "output");
 
-        Map<String, String> inputmapping =
-            parseMapping(json, "inputmapping");
+        Map<String, String> inputmapping = parseMapping(json, "inputmapping");
 
-        String resultmapping =
-            getString(json, "resultmapping");
+        String resultmapping = getString(json, "resultmapping");
 
         StrategicActionStep ret =
             new StrategicActionStep(
@@ -211,11 +246,13 @@ public class StrategicPlanParser
         if(exp != null)
             ret.setExp(exp);
 
+        if(reasoningType!=null)
+            ret.setReasoningType(reasoningType);
+
         return ret;
     }
 
-    protected static List<String> parseStrings(
-        JsonObject json, String name)
+    protected static List<String> parseStrings(JsonObject json, String name)
     {
         JsonValue value = json.get(name);
 
@@ -236,19 +273,33 @@ public class StrategicPlanParser
 
             if(element == null || element.isNull())
             {
-                ret.add(null);
+                throw new IllegalArgumentException(
+                    "'" + name + "' must not contain null.");
+            }
+
+            if(element.isString())
+            {
+                ret.add(element.asString());
+            }
+            else if(element.isNumber())
+            {
+                ret.add(element.toString());
+            }
+            else if(element.isBoolean())
+            {
+                ret.add(element.toString());
             }
             else
             {
-                ret.add(element.asString());
+                throw new IllegalArgumentException(
+                    "'" + name + "' must contain strings, numbers or booleans.");
             }
         }
 
         return ret;
     }
 
-    protected static Map<String, String> parseMapping(
-        JsonObject json, String name)
+    protected static Map<String, String> parseMapping(JsonObject json, String name)
     {
         JsonValue value = json.get(name);
 
@@ -256,13 +307,11 @@ public class StrategicPlanParser
             return null;
 
         if(!value.isObject())
-            throw new IllegalArgumentException(
-                "'" + name + "' must be an object.");
+            throw new IllegalArgumentException("'" + name + "' must be an object.");
 
         JsonObject object = value.asObject();
 
-        Map<String, String> ret =
-            new LinkedHashMap<>();
+        Map<String, String> ret = new LinkedHashMap<>();
 
         for(String key : object.names())
         {
@@ -277,30 +326,24 @@ public class StrategicPlanParser
         JsonValue value = json.get("steps");
 
         if(value == null || value.isNull())
-            throw new IllegalArgumentException(
-                "Strategic container has no steps.");
+            throw new IllegalArgumentException("Strategic container has no steps.");
 
         if(!value.isArray())
-            throw new IllegalArgumentException(
-                "Strategic container 'steps' must be an array.");
+            throw new IllegalArgumentException("Strategic container 'steps' must be an array.");
 
         JsonArray array = value.asArray();
 
-        List<StrategicStep> ret =
-            new ArrayList<>();
+        List<StrategicStep> ret = new ArrayList<>();
 
         for(int i = 0; i < array.size(); i++)
         {
             JsonValue step = array.get(i);
 
             if(step == null || step.isNull())
-                throw new IllegalArgumentException(
-                    "Strategic step at index " + i + " is null.");
+                throw new IllegalArgumentException("Strategic step at index " + i + " is null.");
 
             if(!step.isObject())
-                throw new IllegalArgumentException(
-                    "Strategic step at index " + i
-                        + " is not an object.");
+                throw new IllegalArgumentException("Strategic step at index " + i + " is not an object.");
 
             ret.add(parseStep(step.asObject()));
         }
@@ -320,8 +363,7 @@ public class StrategicPlanParser
     protected static StrategicContainer parseContainer(JsonObject json)
     {
         if(json == null)
-            throw new IllegalArgumentException(
-                "Expected strategic container, but got null.");
+            throw new IllegalArgumentException("Expected strategic container, but got null.");
 
         String type = getString(json, "type");
 
@@ -329,29 +371,25 @@ public class StrategicPlanParser
          * A StrategicContainer represents SEQUENCE.
          *
          * For compatibility, accept an omitted type as SEQUENCE.
-         * This is useful if a branch is represented simply by
-         * { name, description, steps }.
          */
-        if(type == null || type.isBlank()
-            || "SEQUENCE".equals(type))
+        if(type == null || type.isBlank() || "SEQUENCE".equals(type))
         {
             return parseSequence(json);
         }
 
-        throw new IllegalArgumentException(
-            "Expected strategic container, but got: " + type);
+        throw new IllegalArgumentException("Expected strategic container, but got: " + type);
     }
 
     /**
      * Returns null if the member does not exist or contains JSON null.
      */
-    protected static String getString(
-        JsonObject json, String name)
+    protected static String getString(JsonObject json, String name)
     {
         if(json == null)
             return null;
 
-        JsonValue value = json.get(name);
+        JsonValue value =
+            json.get(name);
 
         if(value == null || value.isNull())
             return null;
@@ -362,8 +400,7 @@ public class StrategicPlanParser
     /**
      * Returns null if the member does not exist or contains JSON null.
      */
-    protected static JsonObject getObject(
-        JsonObject json, String name)
+    protected static JsonObject getObject(JsonObject json, String name)
     {
         if(json == null)
             return null;

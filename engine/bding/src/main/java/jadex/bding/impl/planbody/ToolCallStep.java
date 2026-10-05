@@ -7,6 +7,7 @@ import jadex.bding.IPlanStep;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
+import jadex.javaparser.SJavaParser;
 import jadex.micro.llmcall2.LlmHelper;
 
 public class ToolCallStep extends PlanStep
@@ -20,9 +21,12 @@ public class ToolCallStep extends PlanStep
     public ToolCallStep(String toolname, Map<String, String> mapping, String resultmapping)
     {
         super("toolcallstep_" + toolname, mapping, resultmapping);
+
         this.toolname = toolname;
-        if(mapping!=null)
+
+        if(mapping != null)
             this.mapping.putAll(mapping);
+
         this.resultmapping = resultmapping;
     }
 
@@ -40,24 +44,34 @@ public class ToolCallStep extends PlanStep
             for(Map.Entry<String, String> entry : mapping.entrySet())
             {
                 String source = entry.getKey();
+
                 String target = entry.getValue();
 
-                if(!context.has(target))
+                Object value;
+
+                if(context.has(source))
                 {
-                    throw new RuntimeException("Missing plan parameter: " + target);
+                    value = context.get(source);
+                }
+                else
+                {
+                    value = SJavaParser.evaluateExpression(source, name -> context.get(name));
                 }
 
-                args.put(source, context.get(target));
+                args.put(target, value);
             }
 
             exe.setInputs(args);
 
-            LlmHelper.callTool(agent, toolname, args).then(result ->
+            LlmHelper.callTool(agent, toolname, args)
+            .then(result ->
             {
                 try
                 {
                     if(resultmapping != null)
+                    {
                         context.set(resultmapping, result);
+                    }
 
                     finish(exe, ret, result);
                 }
@@ -79,7 +93,7 @@ public class ToolCallStep extends PlanStep
         return ret;
     }
 
-    protected void finish(PlanStepExecution exe, Future<PlanStepExecution> ret, Object result)
+    protected void finish(PlanStepExecution exe, Future<PlanStepExecution> ret, Object result) 
     {
         Map<String, Object> outputs = new LinkedHashMap<>();
 
@@ -87,12 +101,14 @@ public class ToolCallStep extends PlanStep
             outputs.put(resultmapping, result);
 
         exe.setOutputs(outputs).setState(IPlanStep.PlanStepState.SUCCEEDED);
+
         ret.setResult(exe);
     }
 
     protected void fail(PlanStepExecution exe, Future<PlanStepExecution> ret, Exception ex)
     {
         exe.setException(ex).setState(IPlanStep.PlanStepState.FAILED);
+
         ret.setResult(exe);
     }
 

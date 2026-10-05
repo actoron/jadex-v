@@ -131,6 +131,19 @@ public class JsonHelper
         if(type == JsonValue.class)
             return type.cast(value);
 
+        // Support typed value wrappers such as:
+        // {"value":10,"type":"Integer"}
+        // {"value":true,"type":"Boolean"}
+        // {"value":"hello","type":"String"}
+        if(value.isObject())
+        {
+            JsonObject object = value.asObject();
+            JsonValue wrapped = object.get("value");
+
+            if(wrapped != null && !wrapped.isNull() && object.get("type") != null)
+                value = wrapped;
+        }
+
         if(type == String.class)
             return type.cast(value.asString());
 

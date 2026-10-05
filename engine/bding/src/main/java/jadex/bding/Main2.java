@@ -30,9 +30,11 @@ public class Main2
     @Service
     public interface IAppTools
     {
-        @Tool("Get a user question regarding the secret person you have in mind. "
-            + "The info parameter contains information to show to the user first.")
-        IFuture<String> getUserQuestion(String info);
+        @Tool("Display a message to the user.")
+        IFuture<Void> displayMessageToUser(String message);
+
+        @Tool("Wait for and return the user's next question or guess.")
+        IFuture<String> fetchUserQuestion();
     }
 
     @BDINGAgent
@@ -44,7 +46,7 @@ public class Main2
         public WhoAmIAgent()
         {
         }
-        
+
         @OnStart
         protected void onStart()
         {
@@ -66,26 +68,27 @@ public class Main2
                 questions. Otherwise, the agent wins.
                 """;
 
-            agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(gamegoal)
-            .then(goal ->
-            {
-                goal.getFinished().then(Void ->
+            agent.getFeature(IBDINGAgentFeature.class)
+                .dispatchTopLevelGoal(gamegoal)
+                .then(goal ->
                 {
-                    System.out.println("goal finished: " + goal.getState());
-                    agent.terminate();
-                }).catchEx(ex ->
+                    goal.getFinished().then(Void ->
+                    {
+                        System.out.println("goal finished: " + goal.getState());
+                        agent.terminate();
+                    }).catchEx(ex ->
+                    {
+                        System.out.println("goal finished with ex: " + ex.getMessage());
+                        ex.printStackTrace();
+                        agent.terminate();
+                    });
+                })
+                .catchEx(ex ->
                 {
-                    System.out.println("goal finished with ex: " + ex.getMessage());
+                    System.out.println("dispatch failed: " + ex.getMessage());
                     ex.printStackTrace();
                     agent.terminate();
                 });
-            })
-            .catchEx(ex ->
-            {
-                System.out.println("dispatch failed: " + ex.getMessage());
-                ex.printStackTrace();
-                agent.terminate();
-            });
         }
     }
 
@@ -129,14 +132,32 @@ public class Main2
         }
 
         @Override
-        public IFuture<String> getUserQuestion(String info)
+        public IFuture<Void> displayMessageToUser(String message)
+        {
+            Future<Void> ret = new Future<>();
+
+            SwingUtilities.invokeLater(() ->
+            {
+                if(message != null && !message.isBlank())
+                    dialog.append("Agent: " + message + "\n\n");
+
+                input.setEnabled(true);
+                input.requestFocusInWindow();
+
+                ret.setResult(null);
+            });
+
+            return ret;
+        }
+
+        @Override
+        public IFuture<String> fetchUserQuestion()
         {
             Future<String> ret = new Future<>();
             questionFuture = ret;
 
             SwingUtilities.invokeLater(() ->
             {
-                dialog.append("Agent: " + info + "\n\n");
                 input.setEnabled(true);
                 input.requestFocusInWindow();
             });
@@ -152,6 +173,7 @@ public class Main2
                 return;
 
             Future<String> future = questionFuture;
+
             if(future == null)
                 return;
 
@@ -165,15 +187,14 @@ public class Main2
         }
     }
 
-
-    public static void main(String[] args) 
+    public static void main(String[] args)
     {
         ComponentManager.get().create(new UserAgent()).get();
 
-        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false, true);
-        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA, "gemma4:31b", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false,true);
+
         StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
-        
+
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 
         IComponentHandle ua = ComponentManager.get().create(new WhoAmIAgent()).get();

@@ -1,5 +1,6 @@
 package jadex.bding.impl.planbody.strategic;
 
+import java.util.List;
 import java.util.Map;
 
 import jadex.bding.IPlanStep;
@@ -9,52 +10,72 @@ import jadex.bding.impl.planbody.ConditionalPlanStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
+
 public class StrategicConditionContainer extends StrategicStep
 {
     protected String condition;
 
+    protected List<String> inputs;
+
     protected StrategicContainer trueContainer;
     protected StrategicContainer falseContainer;
 
-    public StrategicConditionContainer(String name, String description, StrategicContainer trueContainer, StrategicContainer falseContainer)
+    public StrategicConditionContainer(
+        String name,
+        String description,
+        StrategicContainer trueContainer,
+        StrategicContainer falseContainer)
     {
         super(name, description);
         this.trueContainer = trueContainer;
         this.falseContainer = falseContainer;
     }
 
-    public String getCondition() 
+    public String getCondition()
     {
         return condition;
     }
 
-    public void setCondition(String condition) 
+    public void setCondition(String condition)
     {
         this.condition = condition;
     }
 
-    public StrategicContainer getTrueContainer() 
+    public List<String> getInputs()
+    {
+        return inputs;
+    }
+
+    public void setInputs(List<String> inputs)
+    {
+        this.inputs = inputs;
+    }
+
+    public StrategicContainer getTrueContainer()
     {
         return trueContainer;
     }
 
-    public void setTrueContainer(StrategicContainer trueContainer) 
+    public void setTrueContainer(StrategicContainer trueContainer)
     {
         this.trueContainer = trueContainer;
     }
 
-    public StrategicContainer getFalseContainer() 
+    public StrategicContainer getFalseContainer()
     {
         return falseContainer;
     }
 
-    public void setFalseContainer(StrategicContainer falseContainer) 
+    public void setFalseContainer(StrategicContainer falseContainer)
     {
         this.falseContainer = falseContainer;
     }
 
     @Override
-    protected IFuture<IPlanStep> createExecutableStep(IReasoner reasoner, RPlan plan, Map<String, Object> context)
+    protected IFuture<IPlanStep> createExecutableStep(
+        IReasoner reasoner,
+        RPlan plan,
+        Map<String, Object> context)
     {
         if(executableStep != null)
             return new Future<>(executableStep);
@@ -64,4 +85,3 @@ public class StrategicConditionContainer extends StrategicStep
         return new Future<>(executableStep);
     }
 }
-

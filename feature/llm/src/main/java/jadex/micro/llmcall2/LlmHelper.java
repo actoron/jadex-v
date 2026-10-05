@@ -793,7 +793,61 @@ public class LlmHelper
 		}
 	}
 
-	public static String sanitizeJson(String text)
+	/** Escapes raw line breaks / control characters inside JSON strings (models emit them). */
+	public static String sanitizeJson(String json)
+	{
+		StringBuilder sb = new StringBuilder(json.length() + 16);
+		boolean inString = false;
+		boolean escaped = false;
+
+		for(int i = 0; i < json.length(); i++)
+		{
+			char c = json.charAt(i);
+
+			if(!inString)
+			{
+				if(c == '"')
+					inString = true;
+
+				sb.append(c);
+			}
+			else if(escaped)
+			{
+				escaped = false;
+				sb.append(c);
+			}
+			else if(c == '\\')
+			{
+				escaped = true;
+				sb.append(c);
+			}
+			else if(c == '"')
+			{
+				inString = false;
+				sb.append(c);
+			}
+			else if(c == '\n')
+			{
+				sb.append("\\n");
+			}
+			else if(c == '\t')
+			{
+				sb.append("\\t");
+			}
+			else if(c < 0x20)
+			{
+				// drop \r and other control characters
+			}
+			else
+			{
+				sb.append(c);
+			}
+		}
+
+		return sb.toString();
+	}
+
+	/*public static String sanitizeJson(String text)
 	{
 		StringBuilder ret = new StringBuilder(text.length());
 
@@ -852,7 +906,7 @@ public class LlmHelper
 		}
 
 		return ret.toString();
-	}
+	}*/
 
 	/**
 	 *  Does the model support vision (image input)?

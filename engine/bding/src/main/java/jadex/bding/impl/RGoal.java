@@ -91,14 +91,14 @@ public class RGoal extends RIdElement
 
             while(true)
             {
-                Map<String, Object> beliefs = BeliefExtractor.extract(component);
+                Map<String, Object> context = RIdElement.createContext(this, component);
 
                 Set<Intention> intentions = getGoal().getIntentions();
 
                 if(!igen)
                 {
                     igen = true;
-                    intentions = reasoner.generateIntentions(this, beliefs).get();
+                    intentions = reasoner.generateIntentions(this, context).get();
                     getGoal().setIntentions(intentions);
                 }
 
@@ -122,7 +122,7 @@ public class RGoal extends RIdElement
 
                 Intention intention = possible.size() == 1
                     ? possible.iterator().next()
-                    : reasoner.selectIntention(this, possible, beliefs).get();
+                    : reasoner.selectIntention(this, possible, context).get();
 
                 RIntention rintention = new RIntention(intention, this);
                 setIntention(rintention);
@@ -220,8 +220,8 @@ public class RGoal extends RIdElement
     public IFuture<GoalState> evaluateGoalState()
     {
         IComponent component = IComponentManager.get().getCurrentComponent();
-        Map<String, Object> beliefs = BeliefExtractor.extract(component);
-        return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
+        Map<String, Object> context = RIdElement.createContext(this, component);
+        return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, context);
     }
 
 	/**

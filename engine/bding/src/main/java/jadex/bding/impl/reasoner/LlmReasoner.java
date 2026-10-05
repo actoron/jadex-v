@@ -16,6 +16,7 @@ import jadex.bding.impl.RGoal.GoalState;
 import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
+import jadex.bding.impl.planbody.strategic.StrategicPlanCompiler;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -247,7 +248,13 @@ public class LlmReasoner implements IReasoner
 
             ITerminableIntermediateFuture<ChatFragment> res = chatser.chat(systemprompt, prompt, schema);
 
-            return LlmHelper.cleanJsonResponse(LlmChatAgent.getResponse(res));
+            String response = LlmChatAgent.getResponse(res);
+
+            System.out.println("========== LLM RESPONSE ==========");
+            System.out.println(response);
+            System.out.println("========== END LLM RESPONSE ==========");
+
+            return LlmHelper.cleanJsonResponse(response);
         }
         catch(ServiceNotFoundException e)
         {
@@ -318,38 +325,63 @@ public class LlmReasoner implements IReasoner
         addHistoryEntry(history);
     }
 
+    protected static final int MAX_ATTEMPTS = 3;
+
     protected <T> T reason(String method, ReasoningPrompt<T> prompt, RGoal goal, Intention intention)
     {
         ReasoningEntry entry = startReasoning(method, prompt, goal, intention);
 
         try
         {
-            String response = ask(SYSTEMPROMPT_BDI, prompt.prompt(), prompt.schema());
+            String feedback = "";
 
-            T result = prompt.parse(response);
-
-            ValidationResult valres = prompt.validate(result);
-
-            if(valres==null || valres.isValid())
+            for(int attempt = 1; ; attempt++)
             {
-                finishReasoning(entry, response, result);
-            }
-            else
-            {
-                System.out.println("validation: "+valres.toString());
-                RuntimeException ex = new RuntimeException("Validation problem: "+valres);
-                finishReasoning(entry, response, result);
-                //failReasoning(entry, ex);
-                //throw ex;
-            }
 
-            return result;
+                String response = ask(SYSTEMPROMPT_BDI, prompt.prompt() + feedback, prompt.schema());
+
+                T result = prompt.parse(response);
+
+                ValidationResult valres = prompt.validate(result);
+
+                if(valres==null || valres.isValid())
+                {
+                    finishReasoning(entry, response, result);
+                    return result;
+                }
+                else
+                {
+                    System.out.println("validation: "+valres.toString());
+                    RuntimeException ex = new RuntimeException("Validation problem: "+valres);
+
+                    if(attempt >= MAX_ATTEMPTS)
+                    {
+                        throw ex;
+                    }
+                    else
+                    {
+                        feedback = retryFeedback(response, valres);
+                    }
+                }
+            }
         }
         catch(Exception e)
         {
             failReasoning(entry, e);
             throw e;
         }
+    }
+
+    /** Appended to the original prompt for the next attempt. */
+    protected static String retryFeedback(String response, ValidationResult report)
+    {
+        System.out.println("Retry llm call: "+report);
+
+        return "\n\n================ YOUR PREVIOUS ANSWER WAS REJECTED ================\n"
+            + "Previous answer:\n" + response + "\n\n"
+            + "Problems:\n" + report + "\n\n"
+            + "Return a corrected answer in the same format. Fix every problem listed. "
+            + "Change nothing else.\n";
     }
 
     @Override
@@ -499,18 +531,40 @@ public class LlmReasoner implements IReasoner
 
         StrategicContainer res = reason("generateStrategicPlan", prompt, intention.getGoal(), null);
 
+        System.out.println("Strategic plan phase 1: "+StrategicContainer.toTreeString(res));
+
         ret.setResult(res);
 
         return ret;
     }
 
-    public IFuture<StrategicContainer> operationalizeStrategicPlan(RIntention intention, Map<String, Object> context, StrategicContainer plan)
+    /*public IFuture<StrategicContainer> operationalizeStrategicPlan(RIntention intention, Map<String, Object> context, StrategicContainer plan)
     {
         Future<StrategicContainer> ret = new Future<>();
 
         ReasoningPrompt<StrategicContainer> prompt = OperationalizeStrategicPlanPrompt.create(intention, context, plan, IComponentManager.get().getCurrentComponent());
 
         StrategicContainer res = reason("operationalizeStrategicPlan", prompt, intention.getGoal(), null);
+
+        ret.setResult(res);
+
+        return ret;
+    }*/
+
+    public IFuture<StrategicContainer> createPlanDataFlow(RIntention intention, Map<String, Object> context, StrategicContainer plan)
+    {
+        Future<StrategicContainer> ret = new Future<>();
+
+        ReasoningPrompt<StrategicContainer> prompt = CreatePlanDataFlowPrompt.create(intention, context, plan, IComponentManager.get().getCurrentComponent());
+
+        StrategicContainer res = reason("operationalizeStrategicPlan", prompt, intention.getGoal(), null);
+
+        System.out.println("Strategic plan phase 2: "+StrategicContainer.toTreeString(res));
+
+        System.out.println("context is: "+context.keySet()+" "+context);
+        StrategicPlanCompiler.compile(res, context);
+
+        System.out.println("Strategic plan phase 3: "+StrategicContainer.toTreeString(res));
 
         ret.setResult(res);
 
