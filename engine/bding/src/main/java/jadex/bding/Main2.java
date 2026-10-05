@@ -10,6 +10,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.bding.annotation.BDINGAgent;
@@ -31,7 +32,7 @@ public class Main2
     public interface IAppTools
     {
         @Tool("Display a message to the user.")
-        IFuture<Void> displayMessageToUser(String message);
+        IFuture<Void> displayMessageToUser(@P(name="message", description="The message to show the user.") String message);
 
         @Tool("Wait for and return the user's next question or guess.")
         IFuture<String> fetchUserQuestion();
@@ -193,7 +194,9 @@ public class Main2
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false,true);
 
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        //treamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
 
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 

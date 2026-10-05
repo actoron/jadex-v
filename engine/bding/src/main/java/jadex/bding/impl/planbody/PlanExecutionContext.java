@@ -19,6 +19,16 @@ public class PlanExecutionContext
     {
         this.plan = plan;
         this.parameters = parameters;
+
+        try
+        {
+            if(parameters!=null)
+                parameters.put("a", null);
+        }
+        catch(Exception e)
+        {
+            System.out.println("dreck");
+        }
     }
 
     public RPlan getPlan()
