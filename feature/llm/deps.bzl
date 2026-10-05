@@ -23,6 +23,8 @@ MAVEN_DEPS = [
     'com.github.docker-java:docker-java-api:3.7.1',
     'com.eclipsesource.minimal-json:minimal-json:0.9.5',
     'com.cronutils:cron-utils:9.2.1',
+    'com.vladsch.flexmark:flexmark-all:0.64.8',
+    'io.github.raghul-tech:swing-markdown-preview:1.0.0',
 ]
 
 DEPS = [_maven_to_bazel(artifact) for artifact in MAVEN_DEPS]	

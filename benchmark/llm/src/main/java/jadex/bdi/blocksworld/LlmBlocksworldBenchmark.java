@@ -14,7 +14,7 @@ public class LlmBlocksworldBenchmark
 {
 	static Map<Application, LlmBlocksworldAgent>	POJO	= Collections.synchronizedMap(new LinkedHashMap<>());
 	
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args)
 	{
 		String	prompt	= "Move the red block onto the green one.";
 		String	benchmark_name	= LlmBlocksworldBenchmark.class.getSimpleName();

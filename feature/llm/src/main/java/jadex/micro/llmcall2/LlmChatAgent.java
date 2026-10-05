@@ -249,6 +249,29 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 		return new Future<>(max_token_count);
 	}
 
+	/**
+	 *  Set the flag that indicates whether the agent should clear the conversation
+	 *  history after each completed chat interaction, to save tokens.
+	 *  @param clear_history The flag value.
+	 */
+	@ComponentMethod
+	public IFuture<Void> setClearHistory(boolean clear_history)
+	{
+		this.clear_history = clear_history;
+		return IFuture.DONE;
+	}
+
+	/**
+	 *  Clear the conversation history, i.e. reset the conversation.
+	 *  The system prompt is re-added, so the agent is ready for a fresh chat.
+	 */
+	@ComponentMethod
+	public IFuture<Void> resetConversation()
+	{
+		clearHistory();
+		return IFuture.DONE;
+	}
+
 	@ComponentMethod
 	public ITerminableIntermediateFuture<ChatFragment> getCurrentChat()
 	{

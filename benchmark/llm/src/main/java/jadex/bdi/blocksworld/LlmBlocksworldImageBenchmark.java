@@ -13,7 +13,7 @@ public class LlmBlocksworldImageBenchmark
 {
 	static final Map<Application, LlmBlocksworldImageAgent>	POJO	= new ConcurrentHashMap<>();
 	
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args)
 	{
 		String	prompt	= "Move the red block onto the green one.";
 		String	benchmark_name	= LlmBlocksworldImageBenchmark.class.getSimpleName();

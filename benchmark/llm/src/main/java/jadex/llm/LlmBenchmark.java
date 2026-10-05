@@ -37,7 +37,7 @@ import jadex.micro.llmcall2.LlmHelper.Provider;
 public class LlmBenchmark
 {
 	private static final int DEFAULT_RUNS = 100;
-	public static final int MAX_PARALLEL_RUNS = 10;
+	public static final int MAX_PARALLEL_RUNS = 20;
 	
 	private static final String CSV_HEADER =
 		"Benchmark;Model;Provider;Thinking;Success Rate;Avg Time;Min Time;Max Time"
@@ -244,6 +244,27 @@ public class LlmBenchmark
 			{
 				frame[0] = new JFrame(benchmark);
 				frame[0].setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				frame[0].addWindowListener(new java.awt.event.WindowAdapter()
+				{
+					@Override
+					public void windowClosing(java.awt.event.WindowEvent e)
+					{
+						try
+						{
+							ComponentIdentifier	cid	= app.getAllComponents().stream()
+								.filter(c -> c.getLocalName().equals("Chat"))
+								.findFirst()
+								.orElseThrow(() -> new IllegalStateException("No 'Chat' agent found in the application."));
+							ITerminableIntermediateFuture<ChatFragment>	results	= app.getComponentHandle(cid)
+								.getPojoHandle(LlmChatAgent.class).getCurrentChat();
+							results.terminate(new RuntimeException("Manual failure triggered via GUI"));
+						}
+						catch(Exception ex)
+						{
+							// Ignore termination races/late termination.
+						}
+					}
+				});
 
 				JPanel panel = new JPanel(new BorderLayout(0, 6));
 				panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10));
@@ -377,7 +398,7 @@ public class LlmBenchmark
 		
 		// Run benchmarks for remote Ollama models
 		include_models	= Arrays.asList(
-			"gemma4:12b-it-qat"
+//			"gemma4:12b-it-qat",
 //			"gemma4:26b-a4b-it-q4_K_M",
 //			"gemma4:31b",
 //			"hf.co/unsloth/Qwen3-14B-GGUF:latest",
@@ -390,13 +411,9 @@ public class LlmBenchmark
 //			"qwen3-8b:latest",
 //			"qwen3.6:27b",
 //			"qwen3.6:35b",
-//			"qwen3.8:latest",
-//			"gemma4:26b-a4b-it-q4_K_M",
-//			"gemma4:31b",
-//			"qwen3.6:27b",
-//			"qwen3.6:35b"
-			);
-//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.OLLAMA, true);
+			"qwen3.8:latest"
+		);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.OLLAMA_REMOTE, false);
 		
 //		// Run benchmarks for Local Ai models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LOCAL_AI, false);
@@ -441,7 +458,7 @@ public class LlmBenchmark
 //			"unsloth/Qwen3.5-2B-MTP-GGUF",
 //			"unsloth/Qwen3.5-4B-MTP-GGUF",
 //			"unsloth/Qwen3.5-9B-MTP-GGUF",
-			"unsloth/Qwen3.5-9B-GGUF"
+//			"unsloth/Qwen3.5-9B-GGUF"
 //			"unsloth/Qwen3.6-35B-A3B-MTP-GGUF"
 //			"unsloth/Qwen3.8-27B-GGUF",
 //			"unsloth/Qwen3.8-Flash-Next-GGUF",
@@ -456,29 +473,31 @@ public class LlmBenchmark
 
 		// Run benchmarks for available vLLM models
 		include_models	= Arrays.asList(
-//			"Qwen/Qwen2.5-1.5B-Instruct"
-//			"unsloth/Qwen3.5-4B-MTP-GGUF:Q4_K_M"
-//			"unsloth/Qwen3.5-4B-GGUF:UD-Q4_K_XL"
-//			"unsloth/Qwen3.5-4B-GGUF:Q8_0"
-//			"unsloth/Qwen3.5-9B-GGUF:UD-Q4_K_XL"
-//			"unsloth/Qwen3.5-9B-GGUF:Q8_0"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S"
-//			"unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M"
-			"google/gemma-4-12B-it-qat-w4a16-ct"
+//			"nvidia/Qwen3.8-27B-NVFP4"
+//			"nvidia/Qwen3.6-35B-A3B-NVFP4"
+//			"unsloth/Qwen3.6-35B-A3B-NVFP4-Fast"
+//			"unsloth/Qwen3.8-27B-GGUF"//:UD-Q4_K_XL"
+//			"google/gemma-4-12B-it-qat-w4a16-ct"
+//			"unsloth/gemma-4-12b-it-NVFP4"
+//			"RedHatAI/gemma-4-12B-it-NVFP4"
 //			"google/gemma-4-E4B-it-qat-w4a16-ct"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_XXS"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ2_M"
 //			"unsloth/gemma-4-26B-A4B-it-GGUF:UD-IQ3_S"
-//			"useful-quants/Ministral-3-3B-Instruct-2512-W4A16-BF16Vision"
-//			"inference-optimization/Ministral-3-14B-Instruct-2512.w4a16"
-//			"unsloth/Ministral-3-14B-Instruct-2512-GGUF:UD-Q4_K_XL"
+			
+			"Qwen3.8-27B"
+//			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
+//			"nvidia/Gemma-4-26B-A4B-NVFP4"
 		);
 		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.VLLM, true);
 
+		// Run benchmarks for available SGLang models
+		include_models	= Arrays.asList(
+//			"gittensor-model-hub/Qwen3.8-27B-NVFP4-RTX5090"
+			"Qwen3.8-27B"
+		);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.SGLANG, true);
+		
 		// Run benchmarks for available Llama server models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LLAMA_SERVER, false);
 		
@@ -796,7 +815,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.VLLM;
+		Provider provider = Provider.OLLAMA_REMOTE;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");

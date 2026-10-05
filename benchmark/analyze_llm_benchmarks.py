@@ -19,7 +19,7 @@ THINKING_PALETTE = {
     "Non-thinking": "#4C72B0",
     "Thinking": "#DD8452",
 }
-LOCAL_PROVIDER_KEYWORDS = ("local", "ollama", "unsloth")
+LOCAL_PROVIDER_KEYWORDS = ("local", "ollama", "unsloth", "vllm")
 MODEL_LABEL_PREFIX_RE = re.compile(r"^(?:ollama|unsloth|openrouter|openai|anthropic|google|groq)\s*[:/]\s*", re.IGNORECASE)
 MODEL_LABEL_SUFFIX_PATTERNS = [
     re.compile(r"(?:[-_](?:instruct|instruction|chat|preview|latest|base))+$", re.IGNORECASE),
