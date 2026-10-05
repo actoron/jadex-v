@@ -596,13 +596,16 @@ public class LlmChatAgentGui extends JFrame
 	 *  Render a Markdown text to Swing-compatible HTML
 	 *  using the Swing-Markdown-Preview library
 	 *  (Flexmark GFM renderer, including tables, task lists,
-	 *  strikethrough, and emoji).
+	 *  strikethrough, and emoji). TeX math in the text is
+	 *  replaced by images of the rendered formula first, so
+	 *  the chat view shows the math instead of the raw TeX.
 	 *  @param markdown The Markdown source.
 	 *  @return The Swing-compatible HTML.
 	 */
 	protected static String renderMarkdown(String markdown)
 	{
-		return SwingMarkdownRenderer.getInstance().renderMarkdown(markdown);
+		String	processed	= MathRenderer.preprocess(markdown);
+		return SwingMarkdownRenderer.getInstance().renderMarkdown(processed);
 	}
 
 	/**

@@ -165,7 +165,8 @@ public class LlmHelper
 			Provider.OLLAMA_REMOTE, "gemma4:31b",
 //			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
 			Provider.UNSLOTH, "unsloth/Ministral-3-3B-Instruct-2512-GGUF:UD-Q4_K_XL",
-			Provider.SGLANG, "Qwen3.8-27B"
+			Provider.SGLANG, "Qwen3.8-27B",
+			Provider.VLLM, "Qwen3.8-27B"
 		));
 	
 	public static StreamingChatModel createChatModel()
