@@ -493,9 +493,33 @@ public class StrategicPlanCompiler
         step.setInputMapping(mappings);
 
         /*
-         * Register the produced value only after all inputs
-         * have been resolved.
+         * TOOL steps must have a concrete mapping for every
+         * declared input. Fail during compilation instead of
+         * letting the error surface later in LlmHelper.callTool().
          */
+        if(type == StepType.TOOL)
+        {
+            for(int i = 0; i < inputs.size(); i++)
+            {
+                String input = inputs.get(i);
+
+                if(input == null || input.isBlank())
+                    continue;
+
+                String target = argumentResolver.resolve(step, input, i);
+
+                if(target == null || target.isBlank())
+                {
+                    error(step, "Missing input mapping for tool argument at index "+ i + ": " + input);
+                }
+
+                if(!mappings.containsValue(target))
+                {
+                    error(step, "No input mapping created for tool argument " + target + " (input: " + input + ")");
+                }
+            }
+        }
+
         String output = step.getOutput();
 
         if(output != null && !output.isBlank())

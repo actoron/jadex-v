@@ -130,11 +130,23 @@ public class GenerateStrategicPlanPrompt
     REASONING
     Interpret, classify, calculate, formulate or decide. Exactly one "output"
     and one "reasoningType", chosen by the type of the RESULT:
-    - BOOLEAN: true or false.
-    - SELECTION: exactly one of a finite set. Name ALL alternatives in the
-      description, e.g. "Classify userInput as exactly one of: GUESS, QUESTION."
-    - COMPUTATION: a number.
-    - EXPLANATION: free text.
+
+    - BOOLEAN:
+      The reasoning result is a boolean value representing whether the required
+      statement or property holds.
+
+    - SELECTION:
+      The reasoning result is one selected value from multiple possible alternatives.
+
+    - COMPUTATION:
+      The reasoning result is a calculated numeric value.
+
+    - EXPLANATION:
+      The reasoning result is generated textual content.
+    
+    Choose BOOLEAN when the required decision has only two possible outcomes.
+    Choose SELECTION only when the result must distinguish between more than two
+    alternatives or select one value from a set of alternatives.
 
     SUBGOAL
     Delegates a non-trivial subproblem to a goal from AVAILABLE GOALS ("goal"
@@ -179,6 +191,19 @@ public class GenerateStrategicPlanPrompt
 
     "output" is a concise semantic identifier (userInput, guessIsCorrect),
     never a path or a generic name like result.
+
+    EXPRESSIONS VS. REASONING
+
+    Prefer a dynamic expression over a REASONING step when the required result
+    can be obtained by directly combining, formatting or referencing existing
+    values.
+
+    REASONING is for actual interpretation, inference, classification,
+    calculation or generation. Do not use it merely to combine existing values
+    or construct a result whose content is already determined by its inputs.
+
+    Prefer the simplest deterministic expression whenever no reasoning is
+    required.
 
     Rules:
     - Output names are unique, except that several STATE steps may set the

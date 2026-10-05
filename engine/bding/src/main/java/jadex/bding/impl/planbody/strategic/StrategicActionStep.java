@@ -31,14 +31,8 @@ public class StrategicActionStep extends StrategicStep
     protected Map<String, String> inputmapping;
     protected String resultmapping;
 
-    public StrategicActionStep(
-        String name,
-        String description,
-        StepType type,
-        String tool,
-        String goal,
-        List<String> inputs,
-        String output)
+    public StrategicActionStep(String name, String description, StepType type, String tool,
+        String goal, List<String> inputs, String output, Map<String, String> inputmapping, String resultmapping)
     {
         super(name, description);
         this.type = type;
@@ -46,6 +40,10 @@ public class StrategicActionStep extends StrategicStep
         this.goal = goal;
         this.inputs = inputs;
         this.output = output;
+        this.inputmapping = inputmapping;
+        this.resultmapping = resultmapping;
+
+        System.out.println("created step: "+name+" "+inputmapping);
     }
 
     public StepType getType()
@@ -116,6 +114,7 @@ public class StrategicActionStep extends StrategicStep
     public void setInputMapping(Map<String, String> inputmapping)
     {
         this.inputmapping = inputmapping;
+        //System.out.println("input mapping set: "+name+" "+inputmapping);
     }
 
     public String getResultMapping()
@@ -139,10 +138,7 @@ public class StrategicActionStep extends StrategicStep
     }
 
     @Override
-    protected IFuture<IPlanStep> createExecutableStep(
-        IReasoner reasoner,
-        RPlan plan,
-        Map<String, Object> context)
+    protected IFuture<IPlanStep> createExecutableStep(IReasoner reasoner, RPlan plan, Map<String, Object> context)
     {
         if(executableStep != null)
             return new Future<>(executableStep);
@@ -161,9 +157,7 @@ public class StrategicActionStep extends StrategicStep
         }
     }
 
-    protected IPlanStep doCreateExecutableStep(
-        RPlan plan,
-        Map<String, Object> context)
+    protected IPlanStep doCreateExecutableStep(RPlan plan, Map<String, Object> context)
     {
         return switch(type)
         {
@@ -174,16 +168,10 @@ public class StrategicActionStep extends StrategicStep
                 new SubgoalStep(goal, resultmapping);
 
             case REASONING ->
-                new ReasoningStep(
-                    getName(),
-                    reasoningType,
-                    resultmapping);
+                new ReasoningStep(getName(), reasoningType, resultmapping);
 
             case STATE ->
-                new StateStep(
-                    getName(),
-                    getExp(),
-                    resultmapping);
+                new StateStep(getName(), getExp(), resultmapping);
 
             case FAIL ->
                 new FailStep(getName());

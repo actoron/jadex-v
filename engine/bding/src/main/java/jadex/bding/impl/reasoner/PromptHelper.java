@@ -10,6 +10,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonValue;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import jadex.bding.AgentModel;
 import jadex.bding.Belief;
 import jadex.bding.Goal;
@@ -224,6 +225,13 @@ public class PromptHelper
             if(spec.description() != null && !spec.description().isBlank())
             {
                 descs.append(": ").append(spec.description());
+            }
+
+            JsonObjectSchema parameters = spec.parameters();
+
+            if(parameters != null)
+            {
+                descs.append(" (parameters: ").append(parameters).append(")");
             }
 
             descs.append("\n");

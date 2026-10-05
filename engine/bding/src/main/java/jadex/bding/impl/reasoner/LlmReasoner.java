@@ -331,15 +331,14 @@ public class LlmReasoner implements IReasoner
     {
         ReasoningEntry entry = startReasoning(method, prompt, goal, intention);
 
-        try
+       
+        String feedback = "";
+
+        for(int attempt = 1; ; attempt++)
         {
-            String feedback = "";
-
-            for(int attempt = 1; ; attempt++)
+            String response = ask(SYSTEMPROMPT_BDI, prompt.prompt() + feedback, prompt.schema());
+            try
             {
-
-                String response = ask(SYSTEMPROMPT_BDI, prompt.prompt() + feedback, prompt.schema());
-
                 T result = prompt.parse(response);
 
                 ValidationResult valres = prompt.validate(result);
@@ -356,30 +355,38 @@ public class LlmReasoner implements IReasoner
 
                     if(attempt >= MAX_ATTEMPTS)
                     {
+                        failReasoning(entry, ex);
                         throw ex;
                     }
                     else
                     {
-                        feedback = retryFeedback(response, valres);
+                        feedback = retryFeedback(response, valres.toString());
                     }
                 }
             }
-        }
-        catch(Exception e)
-        {
-            failReasoning(entry, e);
-            throw e;
+            catch(Exception e)
+            {
+                if(attempt >= MAX_ATTEMPTS)
+                {
+                    failReasoning(entry, e);
+                    throw e;
+                }
+                else
+                {
+                    feedback = retryFeedback(response, e.getMessage());
+                }
+            }
         }
     }
 
     /** Appended to the original prompt for the next attempt. */
-    protected static String retryFeedback(String response, ValidationResult report)
+    protected static String retryFeedback(String response, String problems)
     {
-        System.out.println("Retry llm call: "+report);
+        System.out.println("Retry llm call: "+problems);
 
         return "\n\n================ YOUR PREVIOUS ANSWER WAS REJECTED ================\n"
             + "Previous answer:\n" + response + "\n\n"
-            + "Problems:\n" + report + "\n\n"
+            + "Problems:\n" + problems + "\n\n"
             + "Return a corrected answer in the same format. Fix every problem listed. "
             + "Change nothing else.\n";
     }

@@ -49,13 +49,19 @@ public class ToolCallStep extends PlanStep
 
                 Object value;
 
-                if(context.has(source))
+
+                if(source.startsWith("="))
+                {
+                    value = SJavaParser.evaluateExpression(source.substring(1), name -> context.get(name));
+                }
+                else if(context.has(source))
                 {
                     value = context.get(source);
                 }
                 else
                 {
-                    value = SJavaParser.evaluateExpression(source, name -> context.get(name));
+                    System.out.println("Parameter not found: "+source);
+                    throw new RuntimeException("Parameter not found: "+source);
                 }
 
                 args.put(target, value);

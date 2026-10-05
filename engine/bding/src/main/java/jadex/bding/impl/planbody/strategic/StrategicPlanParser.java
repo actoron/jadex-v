@@ -227,21 +227,13 @@ public class StrategicPlanParser
 
         String resultmapping = getString(json, "resultmapping");
 
-        StrategicActionStep ret =
-            new StrategicActionStep(
-                name,
-                description,
-                type,
-                tool,
-                goal,
-                inputs,
-                output);
+        StrategicActionStep ret = new StrategicActionStep(name, description, type, tool, goal, inputs, output, inputmapping, resultmapping);
 
-        if(inputmapping != null)
+        /*if(inputmapping != null)
             ret.setInputMapping(inputmapping);
 
         if(resultmapping != null)
-            ret.setResultMapping(resultmapping);
+            ret.setResultMapping(resultmapping);*/
 
         if(exp != null)
             ret.setExp(exp);

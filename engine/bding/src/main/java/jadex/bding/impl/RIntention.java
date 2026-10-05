@@ -61,7 +61,7 @@ public class RIntention extends RIdElement
                     else
                     {
                         Plan plan = new Plan(operationalPlan.getName(), operationalPlan.getDescription(), getIntention(), getIntention().getModel());
-                        plan.setStrategicPlan(splan);
+                        plan.setStrategicPlan(operationalPlan);
                         executePlan(plan).delegateTo(ret);
                     }
                 }).catchEx(ret);
