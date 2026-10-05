@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -33,12 +35,11 @@ import org.scilab.forge.jlatexmath.TeXFormula;
  *      own paragraph</li>
  *  <li>{@code $...$} inline formulas are replaced by inline image
  *      references in the running text</li>
- *  <li>backtick-wrapped TeX (an LLM common escape hatch, e.g.
- *      <code>`\frac{a}{b}`</code>) is replaced by an image reference
- *      when it parses as a formula, otherwise it is kept as-is and the
- *      Markdown renderer displays the raw source in a monospaced
- *      <code>code</code> block</li>
  *  </ul>
+ *  Fenced code blocks and inline code spans are left verbatim:
+ *  the rewrite never applies inside code, so code that shows TeX
+ *  commands or shell variables is displayed as code, not as
+ *  formula images.
  *  The image references are plain Markdown image syntax with
  *  {@code file:} URLs into a per-JVM cache directory, so the Markdown
  *  renderer turns them into {@code img} elements that the Swing HTML
@@ -85,6 +86,11 @@ public final class MathRenderer
 	 *  JLaTeXMath cannot parse are left in the source unchanged, so
 	 *  the user still sees the TeX source instead of nothing, and
 	 *  no failure can ever break the chat view.
+	 *  <p>
+	 *  Code blocks and code spans are protected: math replacement
+	 *  never applies inside fenced ({@code ```}) or backtick code,
+	 *  so code that shows TeX, shell variables, or dollar amounts
+	 *  renders verbatim as code.
 	 *  @param markdown The Markdown source of a chat fragment.
 	 *  @return The Markdown with the TeX markup replaced by image
 	 *         references, or the original string if it contains no
@@ -96,11 +102,16 @@ public final class MathRenderer
 			return markdown;
 		if(!markdown.contains("$") && !markdown.contains("\\"))
 			return markdown;
-		String	result	= markdown;
+		// Protect code from the math rewrite: fenced blocks first, then
+		// inline code spans. Placeholders contain no $ or backslash, so
+		// the math patterns cannot touch them.
+		List<String>	code	= new ArrayList<>();
+		String	result	= protectFencedCode(markdown, code);
+		result	= protectInlineCode(result, code);
 		// Display formulas first, so the inline patterns never see the $$ delimiters.
 		result	= apply(DISPLAY_MATH, result, TeXConstants.STYLE_DISPLAY, DISPLAY_SIZE, true);
 		result	= apply(INLINE_MATH, result, TeXConstants.STYLE_TEXT, TEXT_SIZE, false);
-		result	= apply(CODE_MATH, result, TeXConstants.STYLE_TEXT, TEXT_SIZE, false);
+		result	= restoreCode(result, code);
 		return result;
 	}
 
@@ -221,6 +232,97 @@ public final class MathRenderer
 		return out.toByteArray();
 	}
 
+	//-------- code protection --------
+
+	/**
+	 *  Replace every fenced code block in the source by a placeholder
+	 *  that survives the math rewrite. A fence is a line of {@code ```}
+	 *  (optionally followed by a language tag); the block ends at the
+	 *  next {@code ```} line or at the end of the source (an LLM that
+	 *  is cut off mid-block still gets its code kept verbatim).
+	 *  @param input The Markdown source.
+	 *  @param code Out parameter that collects the code blocks in
+	 *             order; restoreCode puts them back.
+	 *  @return The source with the code blocks removed.
+	 */
+	private static String protectFencedCode(String input, List<String> code)
+	{
+		Matcher	m	= FENCED_CODE.matcher(input);
+		StringBuilder	sb	= new StringBuilder(input.length());
+		int	last	= 0;
+		while(m.find())
+		{
+			sb.append(input, last, m.start());
+			code.add(m.group());
+			sb.append(placeholder(code.size() - 1, true));
+			last	= m.end();
+		}
+		sb.append(input, last, input.length());
+		return sb.toString();
+	}
+
+	/**
+	 *  Replace every inline code span in the source by a placeholder
+	 *  that survives the math rewrite.
+	 *  @param input The Markdown source, already fence-stripped.
+	 *  @param code Out parameter that collects the code spans in order.
+	 *  @return The source with the code spans removed.
+	 */
+	private static String protectInlineCode(String input, List<String> code)
+	{
+		Matcher	m	= INLINE_CODE.matcher(input);
+		StringBuilder	sb	= new StringBuilder(input.length());
+		int	last	= 0;
+		while(m.find())
+		{
+			sb.append(input, last, m.start());
+			code.add(m.group());	// include the backticks
+			sb.append(placeholder(code.size() - 1, false));
+			last	= m.end();
+		}
+		sb.append(input, last, input.length());
+		return sb.toString();
+	}
+
+	/**
+	 *  Put the protected code back into the rewritten source.
+	 *  @param input The math-rewritten source.
+	 *  @param code The collected code blocks and spans, in order.
+	 *  @return The source with the code reinserted verbatim.
+	 */
+	private static String restoreCode(String input, List<String> code)
+	{
+		if(code.isEmpty())
+			return input;
+		StringBuilder	sb	= new StringBuilder(input.length() + code.toString().length());
+		Matcher	m	= PLACEHOLDER.matcher(input);
+		int	last	= 0;
+		while(m.find())
+		{
+			int	index	= Integer.parseInt(m.group(1));
+			sb.append(input, last, m.start());
+			sb.append(index>=0 && index<code.size()? code.get(index): m.group());
+			last	= m.end();
+		}
+		sb.append(input, last, input.length());
+		return sb.toString();
+	}
+
+	/**
+	 *  The placeholder that stands in for one protected code
+	 *  block or span: a word character run that no math pattern
+	 *  can match.
+	 *  @param index The 0-based index into the code list.
+	 *  @param block Whether the placeholder stands for a whole
+	 *              fenced block (which needs its own line).
+	 *  @return The placeholder text.
+	 */
+	private static String placeholder(int index, boolean block)
+	{
+		return block? ("\n\n@jadexcode" + index + "@\n\n")
+			: "@jadexcode" + index + "@";
+	}
+
 	//-------- cache directory --------
 
 	/**
@@ -285,8 +387,23 @@ public final class MathRenderer
 		Pattern.compile("\\$([^$\\n]+?)\\$");
 
 	/**
-	 *  Backtick-wrapped TeX: `...` containing a backslash command.
+	 *  ```...``` fenced code blocks, language tag allowed, may span lines;
+	 *  an unterminated fence (a cut-off LLM answer) runs to the end of the
+	 *  source.
 	 */
-	private static final Pattern	CODE_MATH	=
-		Pattern.compile("`([^`\\n]*\\\\[^`\\n]*)`");
+	private static final Pattern	FENCED_CODE	=
+		Pattern.compile("(?m)^\\s*```[^\n]*\\n(?:\\n|[\\s\\S])*?```|^\\s*```[^\n]*\\n(?:\\n|[\\s\\S]*)$", Pattern.MULTILINE);
+
+	/**
+	 *  `...` inline code spans; no backtick or line break inside.
+	 */
+	private static final Pattern	INLINE_CODE	=
+		Pattern.compile("`([^`\\n]+)`");
+
+	/**
+	 *  The placeholders that the code protection inserts, keyed by
+	 *  their 0-based index into the code list.
+	 */
+	private static final Pattern	PLACEHOLDER	=
+		Pattern.compile("@jadexcode(\\d+)@");
 }
