@@ -28,7 +28,7 @@ public IFuture<PlanStepExecution> execute(IComponent agent, PlanExecutionContext
 {
     Future<PlanStepExecution> ret = new Future<>();
 
-    PlanStepExecution exe = new PlanStepExecution(this);
+    PlanStepExecution exe = new PlanStepExecution(this, context.getParameters());
 
     IBDINGAgentFeature bdif = agent.getFeature(IBDINGAgentFeature.class);
 
