@@ -2,9 +2,12 @@ package jadex.micro.llmcall2;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -130,23 +133,46 @@ public class LlmChatAgentGui extends JFrame
 		provider_combo	= new JComboBox<>(LlmHelper.Provider.values());
 		model_combo	= new JComboBox<>();
 		model_combo.setEditable(true);
-		clear	= new JButton("Clear");
+		clear	= new JButton("Clear conversation");
+		clear.setToolTipText("Reset the chat history so the model starts a fresh conversation");
 		clear.setEnabled(false);
 		status	= new JLabel("Not connected");
 
-		JPanel	select_panel	= new JPanel(new GridLayout(2, 2, 5, 5));
-		select_panel.add(new JLabel("Provider:"));
-		select_panel.add(provider_combo);
-		select_panel.add(new JLabel("Model:"));
-		select_panel.add(model_combo);
-		select_panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+		// Connection bar: labels and combos laid out in a grid so the
+		// combos are left-aligned below the labels, the clear button
+		// sits on the right, and everything stays in a single row.
+		JLabel	provider_label	= new JLabel("Provider:");
+		JLabel	model_label	= new JLabel("Model:");
+		provider_label.setLabelFor(provider_combo);
+		model_label.setLabelFor(model_combo);
+		provider_label.setAlignmentX(JLabel.RIGHT);
+		model_label.setAlignmentX(JLabel.RIGHT);
 
-		JPanel	button_panel	= new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-		button_panel.add(clear);
+		JPanel	select_panel	= new JPanel(new GridBagLayout());
+		GridBagConstraints	gb	= new GridBagConstraints();
+		gb.insets	= new Insets(5, 8, 5, 8);
+		gb.anchor	= GridBagConstraints.WEST;
+
+		gb.gridx	= 0; gb.gridy	= 0;
+		select_panel.add(provider_label, gb);
+		gb.gridx	= 1; gb.fill	= GridBagConstraints.HORIZONTAL; gb.weightx	= 1.0;
+		select_panel.add(provider_combo, gb);
+		gb.gridx	= 0; gb.gridy	= 1; gb.fill	= GridBagConstraints.NONE; gb.weightx	= 0.0;
+		select_panel.add(model_label, gb);
+		gb.gridx	= 1; gb.fill	= GridBagConstraints.HORIZONTAL; gb.weightx	= 1.0;
+		select_panel.add(model_combo, gb);
+		select_panel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(new Color(0xd0, 0xd0, 0xd8)),
+			BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
+		// Status line below the connection bar: connection state on the
+		// left, and the "Clear conversation" button on the right, so the
+		// conversation control sits with the chat view it acts on instead
+		// of in the connection bar (where it reads as a connection action).
 		JPanel	status_panel	= new JPanel(new BorderLayout());
-		status_panel.add(status, BorderLayout.CENTER);
-		status_panel.add(button_panel, BorderLayout.EAST);
-		status_panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+		status_panel.add(status, BorderLayout.WEST);
+		status_panel.add(clear, BorderLayout.EAST);
+		status_panel.setBorder(BorderFactory.createEmptyBorder(3, 10, 6, 10));
 
 		// The chat view with a flat, light sans-serif theme.
 		chat	= new JEditorPane("text/html", "");
@@ -176,14 +202,19 @@ public class LlmChatAgentGui extends JFrame
 		chat.setBackground(Color.WHITE);
 		chat.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
 
-		// The input line.
+		// The input line: a wide, comfortable text field with the
+		// send button pinned to the right.
 		input	= new JTextField();
+		input.setPreferredSize(new Dimension(0, 30));
 		send	= new JButton("Send");
 		send.setEnabled(false);
-		JPanel	panel	= new JPanel(new BorderLayout());
+		send.setMinimumSize(new Dimension(70, 28));
+		JPanel	panel	= new JPanel(new BorderLayout(8, 0));
 		panel.add(input, BorderLayout.CENTER);
-		panel.add(send, BorderLayout.EAST);
-		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		JPanel	send_panel	= new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		send_panel.add(send);
+		panel.add(send_panel, BorderLayout.EAST);
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 8, 8, 8));
 
 		JPanel	top_panel	= new JPanel(new BorderLayout());
 		top_panel.add(select_panel, BorderLayout.NORTH);
@@ -244,7 +275,10 @@ public class LlmChatAgentGui extends JFrame
 		setModelToDefault();
 		fetchModels();
 
+		// A comfortable default size; the frame can grow, but not
+		// shrink so far that the connection bar gets cut off.
 		setSize(700, 500);
+		setMinimumSize(new Dimension(500, 380));
 		setLocationRelativeTo(null);
 		setVisible(true);
 	}
