@@ -188,8 +188,7 @@ public class AgentBuilder
 
         this.agentClass = loaded.getLoaded();
 
-        //todo: Pfad von gradle? bazel classpath /application/bdi-llm/bin
-        loaded.saveIn(new File("application/bdi-llm/bin/classes/java/main"));
+        loaded.saveIn(new File("application/bdi-llm/bin"));
     }
 
     public Class<?> getAgentClass()
