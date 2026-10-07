@@ -95,16 +95,48 @@ public class LlmChatAgentGui extends JFrame
 	 *  doesn't report the termination as an error. */
 	boolean	stopped	= false;
 
-	/** The HTML buffer of the whole conversation. */
+	/** The raw Markdown source of the whole conversation.
+	 *  Used only when clearing / resetting; the view is driven
+	 *  by {@link #history_html}, which holds already-rendered HTML. */
 	StringBuilder	history	= new StringBuilder();
+
+	/** The rendered HTML of the whole conversation.
+	 *  Completed blocks are appended here once when flushed, so
+	 *  {@link #updateView()} never re-renders finished messages. */
+	StringBuilder	history_html	= new StringBuilder();
 
 	/** The raw text of the current open block, not yet written to the history.
 	 *  Consecutive fragments of the same type are accumulated here so the
-	 *  view shows a single growing block instead of one line per token. */
+	 *  view shows a single growing block instead of one line per token.
+	 *  Only accessed on the EDT. */
 	StringBuilder	pending	= new StringBuilder();
 
-	/** The fragment type of the pending block, null if no block is open. */
+	/** The fragment type of the pending block, null if no block is open.
+	 *  Only accessed on the EDT. */
 	ChatFragment.Type	pending_type	= null;
+
+	/** The last completed async render of the pending block, written by the
+	 *  render thread and read on the EDT. Empty when no block is open. */
+	volatile String	rendered_pending	= "";
+
+	/** True while an async render is in flight on the render pool.
+	 *  Only accessed on the EDT. */
+	boolean		render_in_flight	= false;
+
+	/** Monotonically increasing generation counter. Incremented on the EDT
+	 *  whenever the pending state changes (token appended, flush, clear) so
+	 *  that a stale async render result can be detected and discarded.
+	 *  Only accessed on the EDT. */
+	int		render_generation	= 0;
+
+	/** Single-threaded executor that renders the pending block off the EDT.
+	 *  Daemon thread so the JVM can exit when the GUI is closed. */
+	final ExecutorService	render_pool	= Executors.newSingleThreadExecutor(r ->
+	{
+		Thread	t	= new Thread(r, "chat-render");
+		t.setDaemon(true);
+		return t;
+	});
 
 	/** Guard flag so programmatic model list updates don't trigger a reconnect. */
 	boolean	updating_models	= false;
@@ -123,6 +155,9 @@ public class LlmChatAgentGui extends JFrame
 	/**
 	 *  Create the chat GUI.
 	 *  Must be called on the EDT.
+	 *  The default provider ({@link LlmHelper#DEFAULT_PROVIDER}) and its
+	 *  default model are pre-selected, and the chat agent is connected
+	 *  automatically on startup.
 	 *  @param app The application that will create the chat agents.
 	 *  @param title The window title.
 	 */
@@ -131,8 +166,9 @@ public class LlmChatAgentGui extends JFrame
 		super(title);
 		this.app	= app;
 
-		// The provider / model selection.
+		// The provider / model selection, with the default provider pre-selected.
 		provider_combo	= new JComboBox<>(LlmHelper.Provider.values());
+		provider_combo.setSelectedItem(LlmHelper.DEFAULT_PROVIDER);
 		model_combo	= new JComboBox<>();
 		model_combo.setEditable(true);
 		clear	= new JButton("Clear conversation");
@@ -268,9 +304,12 @@ public class LlmChatAgentGui extends JFrame
 			{
 				agent.resetConversation().printOnEx();
 				history.setLength(0);
+				history_html.setLength(0);
 				pending.setLength(0);
 				pending_type	= null;
-				updateView();
+				render_generation++;
+				rendered_pending	= "";
+				doUpdateView();
 			}
 		});
 
@@ -290,11 +329,14 @@ public class LlmChatAgentGui extends JFrame
 			}
 		});
 
-		// Fetch the model list of the default provider initially,
+		// Pre-select the default provider's default model
+		// (LlmHelper.DEFAULT_MODELS) and fetch the model list initially,
 		// so the model combo box is populated when the GUI is shown.
-		// Pre-select the provider's default model (LlmHelper.DEFAULT_MODELS).
 		setModelToDefault();
 		fetchModels();
+
+		// Automatically connect the chat agent on startup.
+		connectAgent();
 
 		// A comfortable default size; the frame can grow, but not
 		// shrink so far that the connection bar gets cut off.
@@ -476,9 +518,12 @@ public class LlmChatAgentGui extends JFrame
 
 		// New agent -> new conversation.
 		history.setLength(0);
+		history_html.setLength(0);
 		pending.setLength(0);
 		pending_type	= null;
-		updateView();
+		render_generation++;
+		rendered_pending	= "";
+		doUpdateView();
 
 		enableSelection();
 		send.setEnabled(true);
@@ -512,7 +557,7 @@ public class LlmChatAgentGui extends JFrame
 			flushPending();
 			if(ex!=null && !stopped)
 				appendError(ex);
-			updateView();
+			doUpdateView();
 			busy	= false;
 			running	= null;
 			updateSendButton();
@@ -562,8 +607,10 @@ public class LlmChatAgentGui extends JFrame
 	protected void appendUser(String prompt)
 	{
 		flushPending();
-		history.append("<p><b>You:</b></p>").append(renderMarkdown(prompt)).append("\n");
-		updateView();
+		String	html	= "<p><b>You:</b></p>" + renderMarkdown(prompt) + "\n";
+		history.append(html);
+		history_html.append(html);
+		doUpdateView();
 	}
 
 	/**
@@ -590,17 +637,24 @@ public class LlmChatAgentGui extends JFrame
 			pending_type	= frag.type();
 		}
 		pending.append(frag.text());
+		render_generation++;
+		schedulePendingRender();
 		updateView();
 	}
 
 	protected void appendError(Exception ex)
 	{
-		history.append("<p><font color=\"#cc0000\"><b>Error: ").append(escape(ex.toString())).append("</b></font></p>");
-		updateView();
+		String	html	= "<p><font color=\"#cc0000\"><b>Error: " + escape(ex.toString()) + "</b></font></p>";
+		history.append(html);
+		history_html.append(html);
+		doUpdateView();
 	}
 
 	/**
 	 *  Write the pending block to the conversation history.
+	 *  The raw Markdown is kept in {@link #history}; the rendered
+	 *  HTML is appended to {@link #history_html} so that
+	 *  {@link #updateView()} does not re-render finished blocks.
 	 *  Call on block boundaries: fragment type change and
 	 *  request completion. The whole accumulated block is
 	 *  rendered as a single markdown document, so code fences
@@ -612,10 +666,67 @@ public class LlmChatAgentGui extends JFrame
 	{
 		if(pending.length()>0)
 		{
-			history.append(renderPending());
+			// Invalidate any in-flight async render: its result will be
+			// discarded by the generation check in schedulePendingRender.
+			render_generation++;
+			String	html	= renderPending();
+			history.append(pending).append('\n');
+			history_html.append(html);
 			pending.setLength(0);
 			pending_type	= null;
+			rendered_pending	= "";
 		}
+	}
+
+	/**
+	 *  Schedule an async render of the pending block on the render pool.
+	 *  The snapshot of pending/pending_type is taken on the EDT (where
+	 *  those fields are written) and passed to the background task;
+	 *  the task computes the HTML and publishes it back to the EDT via
+	 *  {@link #rendered_pending}. At most one render is in flight at a
+	 *  time: if a render completes and the pending block has grown since
+	 *  the snapshot, the next token arrival will schedule a fresh render.
+	 *  Call on the EDT.
+	 */
+	protected void schedulePendingRender()
+	{
+		if(pending.length()==0 || pending_type==null)
+			return;
+		if(render_in_flight)
+			return; // a render is already queued; it will pick up the latest pending
+		render_in_flight	= true;
+		final int		gen	= render_generation;
+		final String	snap	= pending.toString();
+		final ChatFragment.Type	type	= pending_type;
+		render_pool.submit(() ->
+		{
+			String	result;
+			try
+			{
+				String	body	= renderMarkdown(snap);
+				result	= switch(type)
+				{
+					case THINKING -> "<div style=\"color:#808080;font-style:italic;\">" + body + "</div>\n";
+					case TOOL_CALL -> "<div style=\"color:#660099;\">" + body + "</div>\n";
+					case TOOL_RESULT -> "<div style=\"color:#006633;\">" + body + "</div>\n";
+					default -> body + "\n";
+				};
+			}
+			catch(Exception ex)
+			{
+				result	= snap + "\n";
+			}
+			final String	fin	= result;
+			javax.swing.SwingUtilities.invokeLater(() ->
+			{
+				render_in_flight	= false;
+				if(gen==render_generation)
+				{
+					rendered_pending	= fin;
+					doUpdateView();
+				}
+			});
+		});
 	}
 
 	/**
@@ -638,12 +749,50 @@ public class LlmChatAgentGui extends JFrame
 	}
 
 	/**
-	 *  Update the chat view with the current conversation history
+	 *  Update the chat view with the rendered conversation history
 	 *  plus the pending block, and scroll to the bottom.
+	 *  Finished blocks are served from the cached {@link #history_html};
+	 *  only the pending block is re-rendered on every call.
+	 *  Throttled to at most one update per {@link #VIEW_UPDATE_INTERVAL_MS}
+	 *  so that a burst of streamed tokens does not keep the EDT
+	 *  busy re-parsing the document.
+	 */
+	protected static final long	VIEW_UPDATE_INTERVAL_MS	= 100;
+	long		last_view_update	= 0;
+	boolean		view_update_scheduled	= false;
+
+	/**
+	 *  Throttled version of {@link #updateView()}: schedules the
+	 *  actual update at most every {@link #VIEW_UPDATE_INTERVAL_MS}.
+	 *  Call on the EDT.
 	 */
 	protected void updateView()
 	{
-		chat.setText("<html><body>" + history + renderPending() + "</body></html>");
+		long	now	= System.currentTimeMillis();
+		if(now - last_view_update >= VIEW_UPDATE_INTERVAL_MS)
+			doUpdateView();
+		else if(!view_update_scheduled)
+		{
+			view_update_scheduled	= true;
+			long	delay	= VIEW_UPDATE_INTERVAL_MS - (now - last_view_update);
+			// Use SwingUtilities.invokeLater via the EDT-safe timer so
+			// the final update is not lost when tokens stop arriving.
+			javax.swing.Timer	timer	= new javax.swing.Timer((int)delay, e ->
+			{
+				view_update_scheduled	= false;
+				doUpdateView();
+			});
+			timer.setRepeats(false);
+			timer.start();
+		}
+	}
+
+	/** The actual view update: set the HTML and scroll to the bottom.
+	 *  Call on the EDT. */
+	protected void doUpdateView()
+	{
+		last_view_update	= System.currentTimeMillis();
+		chat.setText("<html><body>" + history_html + rendered_pending + "</body></html>");
 		chat.setCaretPosition(chat.getDocument().getLength());
 	}
 
@@ -680,8 +829,9 @@ public class LlmChatAgentGui extends JFrame
 
 	/**
 	 *  Start a standalone chat GUI.
-	 *  No agent is connected initially; a chat agent is created
-	 *  automatically as soon as a provider / model selection is made.
+	 *  The default provider ({@link LlmHelper#DEFAULT_PROVIDER}) and its
+	 *  default model are pre-selected, and a chat agent is connected
+	 *  automatically on startup.
 	 */
 	public static void main(String[] args)
 	{

@@ -136,6 +136,7 @@ public abstract class LlmBlocksworldBaseAgent	extends BlocksworldAgent	implement
 			center.setEditable(false);
 			
 			JComboBox<Provider>	provider	= new JComboBox<>(Provider.values());
+			provider.setSelectedItem(LlmHelper.DEFAULT_PROVIDER);
 			JComboBox<String>	model		= new JComboBox<>();
 			JCheckBox	think	= new JCheckBox("Think");
 			think.setToolTipText("Show the thinking process of the agent, if supported by the model.");
