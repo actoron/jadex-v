@@ -654,13 +654,16 @@ public class LlmChatAgentGui extends JFrame
 	 *  strikethrough, and emoji). TeX math in the text is
 	 *  replaced by images of the rendered formula first, so
 	 *  the chat view shows the math instead of the raw TeX.
+	 *  Fenced code blocks are additionally post-processed
+	 *  into token-colored syntax highlighting.
 	 *  @param markdown The Markdown source.
 	 *  @return The Swing-compatible HTML.
 	 */
 	protected static String renderMarkdown(String markdown)
 	{
 		String	processed	= MathRenderer.preprocess(markdown);
-		return SwingMarkdownRenderer.getInstance().renderMarkdown(processed);
+		String html		= SwingMarkdownRenderer.getInstance().renderMarkdown(processed);
+		return CodeHighlighter.highlightBlocks(html);
 	}
 
 	/**

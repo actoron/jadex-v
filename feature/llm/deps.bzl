@@ -27,6 +27,7 @@ MAVEN_DEPS = [
     'com.eclipsesource.minimal-json:minimal-json:0.9.5',
     'com.cronutils:cron-utils:9.2.1',
     'com.vladsch.flexmark:flexmark-all:0.64.8',
+    'com.fifesoft:rsyntaxtextarea:4.0.1',
     'io.github.raghul-tech:swing-markdown-preview:1.0.0',
 ]
 

@@ -36,6 +36,7 @@ maven.install(
 "com.eclipsesource.minimal-json:minimal-json:0.9.5",
 "com.fasterxml.jackson.core:jackson-core:2.15.2",
 "com.fasterxml.jackson.core:jackson-databind:2.15.2",
+"com.fifesoft:rsyntaxtextarea:4.0.1",
 "com.formdev:flatlaf:3.7.1",
 "com.github.docker-java:docker-java-api:3.7.1",
 "com.google.auto.service:auto-service-annotations:1.1.1",
