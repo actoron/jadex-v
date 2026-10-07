@@ -3,6 +3,7 @@ package jadex.micro.llmcall2;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -26,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
@@ -201,6 +203,25 @@ public class LlmChatAgentGui extends JFrame
 		}
 		chat.setBackground(Color.WHITE);
 		chat.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+
+		// Open clicked links (rendered by the markdown renderer as
+		// standard <a> anchors) in the system's default browser.
+		chat.addHyperlinkListener(e ->
+		{
+			if(e.getEventType()==HyperlinkEvent.EventType.ACTIVATED
+					&& Desktop.isDesktopSupported()
+					&& Desktop.getDesktop().isSupported(Desktop.Action.BROWSE))
+			{
+				try
+				{
+					Desktop.getDesktop().browse(e.getURL().toURI());
+				}
+				catch(Exception ex)
+				{
+					status.setText("Could not open link: "+ex.getMessage());
+				}
+			}
+		});
 
 		// The input line: a wide, comfortable text field with the
 		// send button pinned to the right.
