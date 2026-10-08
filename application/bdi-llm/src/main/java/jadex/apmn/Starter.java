@@ -1,8 +1,6 @@
 package jadex.apmn;
 
 import jadex.bdi.annotation.BDIAgent;
-import jadex.bdi.annotation.Goal;
-import jadex.bdi.annotation.Goals;
 import jadex.common.SUtil;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;

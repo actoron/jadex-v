@@ -4,6 +4,7 @@ import apmn.AgentBuilder;
 import apmn.model.MApmnModel;
 import apmn.model.edge.MEdge;
 import apmn.model.node.MAgentStarterNode;
+import apmn.model.node.MAiNode;
 import apmn.model.node.MPrintNode;
 import apmn.runtime.RApmnProcess;
 import jadex.common.SUtil;
@@ -27,7 +28,7 @@ public class Test
         MAgentStarterNode node1 = new MAgentStarterNode(clazz);
         node1.setId("node1");
         model.addNode(node1);
-        MPrintNode node2 = new MPrintNode();
+        MAiNode node2 = new MAiNode();
         node2.setId("node2");
         model.addNode(node2);
         MPrintNode node3 = new MPrintNode();
