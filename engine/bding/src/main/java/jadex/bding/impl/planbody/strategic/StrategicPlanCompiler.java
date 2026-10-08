@@ -1,73 +1,65 @@
 package jadex.bding.impl.planbody.strategic;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonValue;
+
+import jadex.bding.IReasoner.ReasoningType;
+
 /**
  * Compiles a phase-2 strategic plan into an executable plan.
  *
- * The compiler performs a static dataflow analysis:
+ * Phase 2 delivers finished data flow:
+ * - inputs: a bare reference (userInput, goal.x, loop.x.counter) or "=expression"
+ *   (already qualified with plan./goal./belief./loop., strings already escaped)
+ * - problem (REASONING): "=expression", qualified
+ * - exp (STATE, CONDITION, LOOP): qualified Java expression
+ * - options (SELECTION): semantic alternatives from phase 1
  *
- * - Inputs must be available in the current compile context.
- * - Outputs are registered in the context after a step.
- * - Conditions compile their branches independently.
- * - Only values available in all condition branches survive the condition.
- * - Loop-local values do not automatically survive the loop because
- *   the loop may execute zero times.
- * - Every LOOP implicitly provides:
- *     loop.<loop-name>.counter
- *     loop.<loop-name>.max
+ * The compiler therefore does NOT rewrite expressions. It performs static dataflow
+ * analysis, resolves inputs to runtime mappings and converts reasoning problem and
+ * options into the runtime representation expected by ReasoningStep.
  *
- * Default values: every output whose type has a natural default (BOOLEAN false,
- * COMPUTATION 0, SELECTION/EXPLANATION "", STATE derived from its expression) gets an entry
- * in the output-default table. The caller puts these defaults into the runtime plan map
- * before execution (putIfAbsent). A value that is only produced conditionally (in one
- * branch, or inside a loop body) may therefore be read afterwards: if its producer did
- * not run, the default is read. Reads of values that are never produced before the
- * reading step remain compile errors.
+ * Outputs of REASONING and STATE have runtime defaults. They are readable anywhere
+ * in the plan; the caller installs the defaults (compileWithDefaults) into the runtime
+ * plan map with putIfAbsent() before execution.
  *
- * Concrete operation signatures (e.g. tool parameters) are deliberately
- * separated from the dataflow analysis and can be supplied by an
- * ArgumentResolver.
+ * NOTE: compiling is not idempotent (problem/options are overwritten by their compiled
+ * form). Compile each plan exactly once.
  */
 public class StrategicPlanCompiler
 {
     /** Runtime prefix of step outputs. */
     protected static final String PLAN_PREFIX = "plan.";
 
-    /**
-     * Default argument resolver.
-     *
-     * This is only a fallback until actual operation signatures are
-     * available to the compiler.
-     */
-    protected static final ArgumentResolver DEFAULT_ARGUMENT_RESOLVER = (step, input, index) -> "arg" + index;
-
+    /** Default argument resolver. */
+    protected static final ArgumentResolver DEFAULT_ARGUMENT_RESOLVER =
+        (step, input, index) -> "arg" + index;
 
     protected final ArgumentResolver argumentResolver;
 
-    /** Output name -> default value (only outputs whose type has a default). */
+    /** Output name -> default runtime value (REASONING and STATE outputs). */
     protected final Map<String, Object> outputDefaults = new LinkedHashMap<>();
 
     /**
-     * Names of outputs that were produced only conditionally (in one condition branch or
-     * inside a loop body) and were therefore dropped from the static context afterwards.
+     * Outputs which are only conditionally produced and therefore are not
+     * definitely available in the static dataflow context afterwards.
      */
     protected final Set<String> conditionalNames = new HashSet<>();
 
-    /**
-     * Describes where a semantic value comes from.
-     */
+    /** Describes the runtime source of a semantic value. */
     public record ValueSource(String expression, StrategicStep producer)
     {
     }
 
-    /**
-     * Static dataflow context during compilation.
-     */
+    /** Static dataflow context during compilation. */
     public static class CompileContext
     {
         protected final Map<String, ValueSource> values = new LinkedHashMap<>();
@@ -76,9 +68,6 @@ public class StrategicPlanCompiler
         {
         }
 
-        /**
-         * Copy constructor.
-         */
         public CompileContext(CompileContext other)
         {
             values.putAll(other.values);
@@ -110,19 +99,11 @@ public class StrategicPlanCompiler
             return values;
         }
 
-        /**
-         * Add all values from another context.
-         */
         public void putAll(CompileContext other)
         {
             values.putAll(other.values);
         }
 
-        /**
-         * Keep only values which are present in both contexts.
-         *
-         * This is used after CONDITION branches.
-         */
         public void retainCommon(CompileContext other)
         {
             values.entrySet().removeIf(entry -> !other.values.containsKey(entry.getKey()));
@@ -132,16 +113,7 @@ public class StrategicPlanCompiler
     /**
      * Resolves the concrete target parameter of an operation.
      *
-     * Example:
-     *
-     *     semantic input "userInput"
-     *         ->
-     *     concrete argument "arg0"
-     *
-     * The default implementation uses the input position.
-     *
-     * This is intentionally isolated because the real implementation
-     * should inspect the actual tool/reasoning/goal signature.
+     * Example: semantic input "userInput" -> concrete argument "arg0".
      */
     @FunctionalInterface
     public interface ArgumentResolver
@@ -149,35 +121,15 @@ public class StrategicPlanCompiler
         String resolve(StrategicActionStep step, String input, int inputIndex);
     }
 
+    // ------------------------------------------------------------ entry points
 
-    /**
-     * Compile with initial runtime context values.
-     *
-     * The keys of the supplied context become available semantic values.
-     *
-     * Example:
-     *
-     *     context = {
-     *         "goal.secretPerson": ...,
-     *         "goal.maxQuestions": ...
-     *     }
-     *
-     * produces:
-     *
-     *     secretPerson -> goal.secretPerson
-     *     maxQuestions -> goal.maxQuestions
-     *
-     * NOTE: this variant discards the output defaults. Use
-     * {@link #compileWithDefaults} and put the defaults into the runtime plan map.
-     */
+    /** Compile with the default positional argument resolver (defaults are discarded). */
     public static void compile(StrategicContainer plan, Map<String, Object> initialContext)
     {
         compile(plan, initialContext, DEFAULT_ARGUMENT_RESOLVER);
     }
 
-    /**
-     * Compile with a custom operation argument resolver (defaults are discarded).
-     */
+    /** Compile with a custom operation argument resolver (defaults are discarded). */
     public static void compile(StrategicContainer plan, Map<String, Object> initialContext, ArgumentResolver argumentResolver)
     {
         compileWithDefaults(plan, initialContext, argumentResolver);
@@ -185,11 +137,7 @@ public class StrategicPlanCompiler
 
     /**
      * Compile and return the default values of the plan outputs.
-     *
-     * Before executing the plan, the caller must do
-     *
-     *     defaults.forEach(planValues::putIfAbsent);
-     *
+     * Before executing the plan the caller does: defaults.forEach(planValues::putIfAbsent)
      * where planValues is the map behind "plan.<name>".
      */
     public static Map<String, Object> compileWithDefaults(StrategicContainer plan, Map<String, Object> initialContext)
@@ -197,8 +145,7 @@ public class StrategicPlanCompiler
         return compileWithDefaults(plan, initialContext, DEFAULT_ARGUMENT_RESOLVER);
     }
 
-    public static Map<String, Object> compileWithDefaults(StrategicContainer plan, Map<String, Object> initialContext,
-        ArgumentResolver argumentResolver)
+    public static Map<String, Object> compileWithDefaults(StrategicContainer plan, Map<String, Object> initialContext, ArgumentResolver argumentResolver)
     {
         if(plan == null)
             throw new IllegalArgumentException("Plan must not be null.");
@@ -207,11 +154,9 @@ public class StrategicPlanCompiler
             argumentResolver = DEFAULT_ARGUMENT_RESOLVER;
 
         StrategicPlanCompiler compiler = new StrategicPlanCompiler(argumentResolver);
-
         compiler.collectDefaultsInContainer(plan);
 
         CompileContext context = compiler.createInitialContext(initialContext);
-
         compiler.compileContainer(plan, context);
 
         return compiler.outputDefaults;
@@ -222,10 +167,8 @@ public class StrategicPlanCompiler
         this.argumentResolver = argumentResolver;
     }
 
+    // ------------------------------------------------------ initial context
 
-    /**
-     * Create the initial dataflow context.
-     */
     protected CompileContext createInitialContext(Map<String, Object> initialContext)
     {
         CompileContext context = new CompileContext();
@@ -244,22 +187,17 @@ public class StrategicPlanCompiler
                 continue;
 
             String prefix = name.substring(0, index);
-
             String valueName = name.substring(index + 1);
 
-            context.put(
-                valueName, new ValueSource(prefix + "." + normalize(valueName), null));
+            context.put(valueName, new ValueSource(prefix + "." + normalize(valueName), null));
         }
 
         return context;
     }
 
-
     // ------------------------------------------------------ output defaults
 
-    /**
-     * Pre-scan: collects the default value of every output in the whole plan.
-     */
+    /** Pre-scan: collects the default value of every REASONING/STATE output in the whole plan. */
     protected void collectDefaultsInContainer(StrategicContainer container)
     {
         if(container == null || container.getSteps() == null)
@@ -297,23 +235,18 @@ public class StrategicPlanCompiler
         }
     }
 
-    /**
-     * Default value of the output of an action, or null if the type has no sensible default
-     * (TOOL and SUBGOAL results stay strict).
-     *
-     * ADAPT HERE if your step class names differ: getReasoningType() and getExp().
-     */
+    /** Default of an action output, or null (TOOL and SUBGOAL results stay strict). */
     protected Object defaultFor(StrategicActionStep step)
     {
         StepType type = step.getType();
 
         if(type == StepType.REASONING)
         {
-            return switch(String.valueOf(step.getReasoningType()))
+            return switch(step.getReasoningType())
             {
-                case "BOOLEAN" -> Boolean.FALSE;
-                case "COMPUTATION" -> Integer.valueOf(0);
-                case "SELECTION", "EXPLANATION" -> "";
+                case BOOLEAN -> Boolean.FALSE;
+                case COMPUTATION -> Double.valueOf(0.0);
+                case SELECTION, EXPLANATION -> "";
                 default -> null;
             };
         }
@@ -324,9 +257,7 @@ public class StrategicPlanCompiler
         return null;
     }
 
-    /**
-     * Derives the type of a STATE value from its expression.
-     */
+    /** Derives the type of a STATE value from its (qualified) expression. */
     protected static Object defaultForExpression(String exp)
     {
         if(exp == null || exp.isBlank())
@@ -343,20 +274,20 @@ public class StrategicPlanCompiler
         if(e.matches("-?[0-9]+\\.[0-9]+"))
             return Double.valueOf(0.0);
 
-        if(e.startsWith("\""))
-            return "";
+        // string contents must not influence the operator analysis
+        String m = e.replaceAll("\"(\\\\.|[^\"\\\\])*\"", "S");
 
-        if(e.startsWith("!") || e.contains("&&") || e.contains("||") || e.contains("==")
-            || e.contains("!=") || e.contains("<") || e.contains(">") || e.contains(".equals("))
+        if(m.startsWith("!") || m.contains("&&") || m.contains("||") || m.contains("==") || m.contains("!=")
+            || m.contains("<") || m.contains(">") || m.contains(".equals("))
             return Boolean.FALSE;
+
+        if(m.contains("S"))     // string concatenation or string ternary
+            return "";
 
         return null;
     }
 
-    /**
-     * Remember names that were present in a derived context but are not in the outer one
-     * (they are dropped from the static analysis, but have a runtime default).
-     */
+    /** Remember names that were produced in a derived context but are not in the outer one. */
     protected void recordConditional(CompileContext outer, CompileContext inner)
     {
         for(String name : inner.getValues().keySet())
@@ -366,71 +297,46 @@ public class StrategicPlanCompiler
         }
     }
 
+    // ----------------------------------------------------------- compilation
 
-    /**
-     * Compile all steps in sequence.
-     *
-     * The same context is passed from step to step.
-     * Each functional step can therefore consume values
-     * produced by preceding steps.
-     */
     protected void compileContainer(StrategicContainer container, CompileContext context)
     {
         if(container == null || container.getSteps() == null)
-        {
             return;
-        }
 
         for(StrategicStep step : container.getSteps())
-        {
             compileStep(step, context);
-        }
     }
 
-
-    /**
-     * Compile one strategic step.
-     */
     protected void compileStep(StrategicStep step, CompileContext context)
     {
         if(step == null)
             return;
 
         if(step instanceof StrategicActionStep action)
-        {
             compileAction(action, context);
-        }
         else if(step instanceof StrategicConditionContainer condition)
-        {
             compileCondition(condition, context);
-        }
         else if(step instanceof StrategicLoopContainer loop)
-        {
             compileLoop(loop, context);
-        }
         else if(step instanceof StrategicContainer sequence)
-        {
             compileContainer(sequence, context);
-        }
         else
-        {
             error(step, "Unknown strategic step type.");
-        }
     }
 
+    // -------------------------------------------------------------- actions
 
-    /**
-     * Compile a functional action.
-     *
-     * Inputs are resolved against the context first.
-     * Only afterwards is the output registered in the context.
-     *
-     * This guarantees that a step cannot consume its own
-     * not-yet-produced result.
-     */
     protected void compileAction(StrategicActionStep step, CompileContext context)
     {
         StepType type = step.getType();
+
+        if(type == StepType.REASONING && !step.isCompiled())
+        {
+            compileReasoningProblem(step);
+            compileReasoningOptions(step, context);
+            step.setCompiled(true);
+        }
 
         if(type == null)
         {
@@ -448,10 +354,6 @@ public class StrategicPlanCompiler
 
         Map<String, String> mappings = new LinkedHashMap<>();
 
-        /*
-         * Resolve every semantic input against the current
-         * dataflow context.
-         */
         for(int i = 0; i < inputs.size(); i++)
         {
             String input = inputs.get(i);
@@ -470,33 +372,29 @@ public class StrategicPlanCompiler
                 continue;
             }
 
-            String target = argumentResolver.resolve(step, input, i);
-
-            if(target == null || target.isBlank())
+            if(type == StepType.TOOL || type == StepType.SUBGOAL)
             {
-                error( step, "Could not resolve target argument for input: " + input);
-                continue;
-            }
+                String target = argumentResolver.resolve(step, input, i);
 
-            /*
-             * inputmapping:
-             *
-             *     source expression -> concrete target
-             *
-             * Example:
-             *
-             *     plan.userInput -> arg0
-             */
-            mappings.put(source.expression(), target);
+                if(target == null || target.isBlank())
+                {
+                    error(step, "Could not resolve target argument for input: " + input);
+                    continue;
+                }
+
+                mappings.put(source.expression(), target);
+            }
+            else if(type == StepType.REASONING)
+            {
+                mappings.put(source.expression(), input);
+            }
         }
 
-        step.setInputMapping(mappings);
+        if(type == StepType.TOOL || type == StepType.SUBGOAL || type == StepType.REASONING)
+            step.setInputMapping(mappings);
+        else
+            step.setInputMapping(Map.of());
 
-        /*
-         * TOOL steps must have a concrete mapping for every
-         * declared input. Fail during compilation instead of
-         * letting the error surface later in LlmHelper.callTool().
-         */
         if(type == StepType.TOOL)
         {
             for(int i = 0; i < inputs.size(); i++)
@@ -509,14 +407,10 @@ public class StrategicPlanCompiler
                 String target = argumentResolver.resolve(step, input, i);
 
                 if(target == null || target.isBlank())
-                {
-                    error(step, "Missing input mapping for tool argument at index "+ i + ": " + input);
-                }
+                    error(step, "Missing input mapping for tool argument at index " + i + ": " + input);
 
                 if(!mappings.containsValue(target))
-                {
                     error(step, "No input mapping created for tool argument " + target + " (input: " + input + ")");
-                }
             }
         }
 
@@ -525,147 +419,220 @@ public class StrategicPlanCompiler
         if(output != null && !output.isBlank())
         {
             String expression = createResultExpression(output);
-
             step.setResultMapping(expression);
-
             context.put(output, new ValueSource(expression, step));
         }
     }
 
+    // ------------------------------------------------------ reasoning problem
 
     /**
-     * Resolve a semantic input in the current dataflow context.
+     * Phase 2 delivers the problem as "=expression" (already qualified and escaped).
+     * The compiler only removes the marker. A problem without marker is a safety net
+     * and becomes a string literal.
+     */
+    protected void compileReasoningProblem(StrategicActionStep step)
+    {
+        String problem = step.getProblem();
+
+        if(problem == null || problem.isBlank())
+        {
+            error(step, "REASONING step requires a problem.");
+            return;
+        }
+
+        String t = problem.trim();
+
+        if(t.startsWith("="))
+        {
+            String expression = t.substring(1).trim();
+
+            if(expression.isBlank())
+                error(step, "REASONING problem expression must not be empty.");
+            else
+                step.setProblem(expression);
+        }
+        else
+        {
+            step.setProblem("\"" + escapeJavaString(problem) + "\"");
+        }
+    }
+
+    // ------------------------------------------------------ reasoning options
+
+    /**
+     * Converts semantic options into the runtime representation of ReasoningStep.
      *
-     * Supports:
-     *
-     *     concrete runtime paths (plan./goal./belief./loop.)
-     *     literals ('text', numbers, true/false/null)
-     *     derived expressions ("=" + expression, evaluated at runtime)
-     *     exact / normalized semantic names
-     *     conditionally produced outputs that have a runtime default
+     *   ["QUESTION", "GUESS"]      -> new String[]{"QUESTION", "GUESS"}
+     *   ["availableCategories"]    -> plan.availableCategories (if produced by an earlier step)
+     */
+    protected void compileReasoningOptions(StrategicActionStep step, CompileContext context)
+    {
+        if(step.getReasoningType() != ReasoningType.SELECTION)
+            return;
+
+        String options = step.getOptions();
+
+        if(options == null || options.isBlank())
+        {
+            error(step, "SELECTION reasoning requires an options array.");
+            return;
+        }
+
+        JsonValue value;
+
+        try
+        {
+            value = Json.parse(options);
+        }
+        catch(Exception e)
+        {
+            error(step, "Invalid SELECTION options array: " + options);
+            return;
+        }
+
+        if(!value.isArray())
+        {
+            error(step, "SELECTION options must be a JSON array: " + options);
+            return;
+        }
+
+        JsonArray array = value.asArray();
+
+        if(array.isEmpty())
+        {
+            error(step, "SELECTION options must not be empty.");
+            return;
+        }
+
+        List<String> values = new ArrayList<>();
+
+        for(JsonValue optionValue : array)
+        {
+            if(!optionValue.isString())
+            {
+                error(step, "SELECTION options must contain only strings: " + options);
+                return;
+            }
+
+            String option = optionValue.asString().trim();
+
+            if(option.isEmpty())
+            {
+                error(step, "SELECTION options must not contain empty alternatives.");
+                return;
+            }
+
+            values.add(option);
+        }
+
+        // a single entry naming an earlier value: dynamically produced alternatives
+        if(values.size() == 1)
+        {
+            ValueSource source = context.get(values.get(0));
+
+            if(source != null)
+            {
+                if(source.expression() == null || source.expression().isBlank())
+                {
+                    error(step, "Could not resolve SELECTION options source: " + values.get(0));
+                    return;
+                }
+
+                step.setOptions(source.expression());
+                return;
+            }
+        }
+
+        StringBuilder expression = new StringBuilder("new String[]{");
+
+        for(int i = 0; i < values.size(); i++)
+        {
+            if(i > 0)
+                expression.append(", ");
+
+            expression.append("\"").append(escapeJavaString(values.get(i))).append("\"");
+        }
+
+        expression.append("}");
+
+        step.setOptions(expression.toString());
+    }
+
+    protected static String escapeJavaString(String value)
+    {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", "\\n");
+    }
+
+    // --------------------------------------------------------------- inputs
+
+    /**
+     * Resolves one input:
+     *   "=expression"                  fully qualified by phase 2, used as is
+     *   goal./belief./loop./plan. path concrete runtime path
+     *   number / true / false / "..."  literal
+     *   semantic name                  via compile context, or via runtime default
+     * Anything else is an error. There is no silent text-literal fallback anymore:
+     * text arrives as "=expression", so an unknown name is a mistake.
      */
     protected ValueSource resolveInput(String input, CompileContext context)
     {
         if(input == null || input.isBlank())
-        {
             return null;
-        }
 
-        /*
-         * Derived expression: the identifiers are already qualified
-         * (plan.x, goal.x, loop.x) by the previous phase, evaluated at runtime.
-         */
         if(input.startsWith("="))
-        {
             return new ValueSource(input, null);
-        }
 
-        /*
-         * Concrete expressions do not need a producer.
-         */
-        if(isRuntimePath(input))
-        {
+        if(isRuntimePath(input) || isLiteral(input))
             return new ValueSource(input, null);
-        }
 
-        /*
-         * Literal values likewise need no producer.
-         */
-        if(isLiteral(input))
-        {
-            return new ValueSource(input, null);
-        }
-
-        /*
-         * Normal semantic lookup.
-         */
         ValueSource source = context.get(input);
 
         if(source != null)
             return source;
 
-        /*
-         * Small amount of normalization for LLM-produced
-         * names such as:
-         *
-         *     "user input"
-         *     "userInput"
-         */
         String normalized = normalize(input);
-
         source = context.get(normalized);
 
         if(source != null)
             return source;
 
-        /*
-         * Output that was produced only conditionally (one branch or loop body)
-         * and has a runtime default: read it from the plan, the default is used
-         * if its producer did not run.
-         */
-        if(conditionalNames.contains(normalized) && outputDefaults.containsKey(normalized))
-        {
+        // REASONING/STATE output anywhere in the plan: readable through its runtime default
+        if(outputDefaults.containsKey(normalized))
             return new ValueSource(createResultExpression(normalized), null);
-        }
 
         return null;
     }
 
+    // ------------------------------------------------------------ conditions
 
     /**
-     * Compile a CONDITION.
-     *
-     * Each branch gets its own copy of the context.
-     *
-     * Values produced only in one branch are therefore not
-     * considered available afterwards (except conditional outputs
-     * with a runtime default, see resolveInput).
+     * Each branch gets its own copy of the context. Values produced in only one branch
+     * are not statically available afterwards (REASONING/STATE outputs stay readable
+     * through their defaults, see resolveInput). The "exp" of the condition is left untouched.
      */
     protected void compileCondition(StrategicConditionContainer condition, CompileContext context)
     {
         StrategicContainer trueContainer = condition.getTrueContainer();
-
         StrategicContainer falseContainer = condition.getFalseContainer();
 
         CompileContext trueContext = new CompileContext(context);
-
         CompileContext falseContext = new CompileContext(context);
 
         if(hasSteps(trueContainer))
-        {
             compileContainer(trueContainer, trueContext);
-        }
 
         if(hasSteps(falseContainer))
-        {
             compileContainer(falseContainer, falseContext);
-        }
 
-        /*
-         * A value is definitely available after a condition
-         * only when it existed before the condition or was
-         * produced in both branches.
-         */
         mergeConditionContexts(context, trueContext, falseContext);
 
-        /*
-         * Everything a branch produced that did not survive the merge is
-         * conditional: readable later through its runtime default.
-         */
         recordConditional(context, trueContext);
         recordConditional(context, falseContext);
     }
 
-
-    /**
-     * Merge the dataflow information after a CONDITION.
-     */
     protected void mergeConditionContexts(CompileContext target, CompileContext trueContext, CompileContext falseContext)
     {
-        /*
-         * Start with the values that were already available.
-         * Then add values that exist in both branches.
-         */
         Map<String, ValueSource> original = new LinkedHashMap<>(target.getValues());
 
         target.getValues().clear();
@@ -676,21 +643,10 @@ public class StrategicPlanCompiler
             String name = entry.getKey();
 
             if(falseContext.getValues().containsKey(name))
-            {
                 target.getValues().put(name, chooseMergedSource(entry.getValue(), falseContext.getValues().get(name)));
-            }
         }
     }
 
-
-    /**
-     * Select a representative source for a value which is
-     * available in both branches.
-     *
-     * The actual runtime destination should normally be the
-     * same for both mappings. Therefore the existing target
-     * expression can be reused when equal.
-     */
     protected ValueSource chooseMergedSource(ValueSource first, ValueSource second)
     {
         if(first == null)
@@ -699,86 +655,39 @@ public class StrategicPlanCompiler
         if(second == null)
             return first;
 
-        if(first.expression().equals(second.expression()))
-        {
-            return first;
-        }
-
-        /*
-         * Both branches produce the same semantic value but
-         * through different producers. At this level we only
-         * need to know that it is definitely available.
-         *
-         * Keep the first producer as representative.
-         */
         return first;
     }
 
+    // ---------------------------------------------------------------- loops
 
     /**
-     * Compile a LOOP.
-     *
-     * The loop body gets a copy of the current context.
-     *
-     * Before compiling the body, the LOOP provides two
-     * implicit values:
-     *
-     *     loop.<loop-name>.counter
-     *     loop.<loop-name>.max
-     *
-     * Values created only inside the loop are not exported
-     * to the static context afterwards because the loop may execute
-     * zero times. Outputs with a runtime default stay readable
-     * (see resolveInput).
+     * The loop provides loop.<name>.counter and, with a max, loop.<name>.max.
+     * The loop condition is NOT rewritten: phase 2 supplies a finished "exp" where the
+     * sentence could be made precise, otherwise the sentence is evaluated by reasoning.
+     * Values created only inside the loop do not enter the outer static context.
      */
     protected void compileLoop(StrategicLoopContainer loop, CompileContext context)
     {
         CompileContext loopContext = new CompileContext(context);
-
         String loopName = loop.getName();
 
-        /*
-         * The loop counter is an implicit value.
-         */
         String counterName = "loop." + loopName + ".counter";
-
         loopContext.put(counterName, new ValueSource(counterName, loop));
 
-        /*
-         * The configured maximum is also an implicit value.
-         *
-         * It is only available when the LOOP actually has
-         * a max expression.
-         */
         String max = loop.getMax();
 
         if(max != null && !max.isBlank())
         {
             String maxName = "loop." + loopName + ".max";
-
             loopContext.put(maxName, new ValueSource(maxName, loop));
         }
 
-        /*
-         * Compile the body with the loop-local values
-         * available. Outputs of steps inside the body are
-         * immediately added to loopContext and are therefore
-         * available to subsequent steps in the same iteration.
-         */
         compileContainer(loop, loopContext);
-
-        /*
-         * Deliberately do NOT copy loop-local values back
-         * into the outer context. Remember them as conditional,
-         * so that they remain readable through their defaults.
-         */
         recordConditional(context, loopContext);
     }
 
+    // ------------------------------------------------------------- helpers
 
-    /**
-     * Create the runtime destination for a semantic output.
-     */
     protected String createResultExpression(String output)
     {
         if(isRuntimePath(output))
@@ -787,20 +696,11 @@ public class StrategicPlanCompiler
         return PLAN_PREFIX + normalize(output);
     }
 
-
-    /**
-     * Check whether a container contains executable steps.
-     */
     protected boolean hasSteps(StrategicContainer container)
     {
         return container != null && container.getSteps() != null && !container.getSteps().isEmpty();
     }
 
-
-    /**
-     * Test whether a string is already a concrete runtime
-     * expression.
-     */
     protected static boolean isRuntimePath(String value)
     {
         if(value == null)
@@ -812,14 +712,6 @@ public class StrategicPlanCompiler
             || value.startsWith("loop.");
     }
 
-
-    /**
-     * Very small literal-expression check.
-     *
-     * This deliberately does not try to parse arbitrary
-     * expressions. Expression evaluation belongs to the
-     * runtime/compiler stage dealing with expressions.
-     */
     protected static boolean isLiteral(String value)
     {
         if(value == null)
@@ -830,16 +722,9 @@ public class StrategicPlanCompiler
         if(v.isEmpty())
             return false;
 
-        if("true".equalsIgnoreCase(v) ||
-            "false".equalsIgnoreCase(v) ||
-            "null".equalsIgnoreCase(v))
-        {
+        if("true".equalsIgnoreCase(v) || "false".equalsIgnoreCase(v) || "null".equalsIgnoreCase(v))
             return true;
-        }
 
-        /*
-         * Numeric literals.
-         */
         try
         {
             Double.parseDouble(v);
@@ -847,58 +732,28 @@ public class StrategicPlanCompiler
         }
         catch(NumberFormatException e)
         {
-            // Not numeric.
+            // not numeric
         }
 
-        /*
-         * Quoted strings.
-         */
         return (v.startsWith("\"") && v.endsWith("\""))
             || (v.startsWith("'") && v.endsWith("'"));
     }
 
-
-    /**
-     * Normalize semantic names sufficiently for matching.
-     *
-     * This is intentionally conservative. It is not an
-     * LLM/semantic similarity mechanism.
-     */
     protected static String normalize(String value)
     {
         if(value == null)
             return null;
 
-        String result = value.trim();
-
-        /*
-         * Remove surrounding whitespace and collapse
-         * whitespace differences.
-         */
-        result = result.replaceAll("\\s+", " ");
-
-        return result;
+        return value.trim().replaceAll("\\s+", " ");
     }
 
-
-    /**
-     * Normalize names used as context keys.
-     */
     protected static String normalizeName(String value)
     {
         return normalize(value);
     }
 
-
-    /**
-     * Report a compile error.
-     *
-     * For the first version compilation fails immediately.
-     * This can later be replaced by ValidationResult so that
-     * all dataflow errors are reported at once.
-     */
     protected void error(StrategicStep step, String message)
     {
-        throw new IllegalStateException("Compile error [" + (step == null? "unknown": step.getName()) +"]: " +message);
+        throw new IllegalStateException("Compile error [" + (step == null ? "unknown" : step.getName()) + "]: " + message);
     }
 }

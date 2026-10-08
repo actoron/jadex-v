@@ -26,6 +26,11 @@ public class RIntention extends RIdElement
 
     protected PlanHistory history = new PlanHistory();
 
+    // Bean contructor
+    public RIntention()
+    {
+    }
+
     public RIntention(Intention intention, RGoal goal)
     {
         super("intention_"+intention.getName());

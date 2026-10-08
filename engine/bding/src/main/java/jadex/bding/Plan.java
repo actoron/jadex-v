@@ -10,6 +10,11 @@ public class Plan extends ModelElement
 
     protected IPlanBody body;
 
+    // Bean constructor
+    public Plan()
+    {
+    }
+
     public Plan(String name, String desciption, Intention intention, AgentModel model)
     {
         super(name, desciption, model);

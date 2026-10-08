@@ -13,6 +13,7 @@ import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.Plan;
 import jadex.bding.impl.planbody.PlanExecutionContext;
 import jadex.bding.impl.planbody.PlanStepExecution;
+import jadex.collection.PathMap;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -29,6 +30,11 @@ public class RPlan extends RIdElement
 
     protected IComponent agent;
 
+    // Bean constructor
+    public RPlan()
+    {
+    }
+
     public RPlan(Plan plan, RIntention intention, IComponent agent) 
     {
         super("plan_"+plan.getName());
@@ -42,6 +48,7 @@ public class RPlan extends RIdElement
         Future<Void> ret = new Future<>();
 
         Map<String, Object> params = createContext(getAgent(), intention.getGoal());
+        
         PlanExecutionContext context = new PlanExecutionContext(this, params);
 
         if(getPlan().getBody() != null)
@@ -85,6 +92,11 @@ public class RPlan extends RIdElement
         return plan;
     }
 
+    public void setPlan(Plan plan) 
+    {
+        this.plan = plan;
+    }
+
     public IComponent getAgent() 
     {
         return agent;
@@ -109,11 +121,6 @@ public class RPlan extends RIdElement
     public String toString() 
     {
         return "RPlan [id=" + id + ", plan=" + plan + "]";
-    }
-
-    public void setPlan(Plan plan) 
-    {
-        this.plan = plan;
     }
 
     public void setSubgoals(Set<RGoal> subgoals) 
@@ -153,18 +160,17 @@ public class RPlan extends RIdElement
 
     public static Map<String, Object> createContext(IComponent agent, RGoal goal)
     {
-        Map<String, Object> params = new HashMap<>();
-        
-        Map<String, Object> bels = BeliefExtractor.extract(agent);
-        for(Entry<String, Object> b: bels.entrySet())
+        Map<String, Object> params = new PathMap();
+
+        for(String name: goal.getParameters().keySet())
         {
-            params.put("belief."+b.getKey(), b.getValue());
+            params.put("goal."+name, goal.getParameters().get(name));
         }
-        
-        Map<String, Object> goalparams = goal.getParameters();
-        for(Entry<String, Object> gp: goalparams.entrySet())
+
+        Map<String, Object> bels = BeliefExtractor.extract(agent);
+        for(String name: bels.keySet())
         {
-            params.put("goal."+gp.getKey(), gp.getValue());
+            params.put("belief."+name, bels.get(name));
         }
 
         return params;

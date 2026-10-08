@@ -10,6 +10,11 @@ public class ModelElement
 
     protected AgentModel model;
 
+    // Bean constructor
+    public ModelElement()
+    {
+    }
+
     public ModelElement(String name, String description)
     {
         this(name, description, null);

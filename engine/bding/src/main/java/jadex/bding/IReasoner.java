@@ -64,6 +64,15 @@ public interface IReasoner
 
     public IFuture<List<ReasoningEntry>> getReasoningHistory();
 
-    public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type);
+    //public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type);
+
+
+    public IFuture<Boolean> reasonDecision(String problem, AgentModel model, Map<String, Object> context);
+   
+    public IFuture<String> reasonSelection(String problem, String[] options, AgentModel model, Map<String, Object> context);
+
+    public IFuture<Double> reasonComputation(String problem, AgentModel model, Map<String, Object> context);
+
+    public IFuture<String> reasonExplanation(String problem, AgentModel model, Map<String, Object> context);
 }
 

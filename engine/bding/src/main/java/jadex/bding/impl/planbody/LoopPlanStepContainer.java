@@ -1,5 +1,6 @@
 package jadex.bding.impl.planbody;
 
+import java.util.List;
 import java.util.Map;
 
 import jadex.bding.IBDINGAgentFeature;
@@ -8,6 +9,7 @@ import jadex.bding.IPlanStep;
 import jadex.bding.IPlanStepContainer;
 import jadex.bding.impl.RPlan;
 import jadex.bding.impl.planbody.strategic.StrategicLoopContainer;
+import jadex.bding.impl.planbody.strategic.StrategicStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
 import jadex.core.IComponent;
@@ -27,17 +29,16 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
     {
         String prefix = "loop." + container.getName() + ".";
 
-        context.getParameters().put(prefix + "counter", count);
+        context.set(prefix + "counter", count);
 
         if(max >= 0)
         {
-            context.getParameters().put(prefix + "max", max);
+            context.set(prefix + "max", max);
         }
     }
 
     @Override
-    public IFuture<PlanStepExecution> execute(
-        IComponent component, PlanExecutionContext context)
+    public IFuture<PlanStepExecution> execute(IComponent component, PlanExecutionContext context)
     {
         Future<PlanStepExecution> ret = new Future<>();
 
@@ -47,9 +48,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
 
         if(conditionExp != null && !conditionExp.isBlank())
         {
-            this.condition = PlanStep.createCondition(
-                conditionExp,
-                component.getFeature(IBDINGAgentFeature.class).getModel(),
+            this.condition = PlanStep.createCondition(conditionExp, component.getFeature(IBDINGAgentFeature.class).getModel(),
                 component.getFeature(IBDINGAgentFeature.class).getReasoner());
         }
         else
@@ -62,29 +61,16 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
 
         if(container.getMax() != null)
         {
-            max = (Integer)PlanStep.evaluateExpression(
-                container.getMax(),
-                context.getParameters());
+            max = (Integer)PlanStep.evaluateExpression(container.getMax(), context.getParameters());
         }
 
-        executeLoop(
-            component,
-            context,
-            loopexe,
-            ret,
-            count,
-            max);
+        executeLoop(component, context, loopexe, ret, count, max);
 
         return ret;
     }
 
-    protected void executeLoop(
-        IComponent component,
-        PlanExecutionContext context,
-        PlanStepExecution loopexe,
-        Future<PlanStepExecution> ret,
-        int count,
-        int max)
+    protected void executeLoop(IComponent component, PlanExecutionContext context, PlanStepExecution loopexe,
+        Future<PlanStepExecution> ret, int count, int max)
     {
         setLoopParameters(context, count, max);
 
@@ -98,13 +84,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         // No condition means: continue the loop.
         if(condition == null)
         {
-            executeBody(
-                component,
-                context,
-                loopexe,
-                ret,
-                count,
-                max);
+            executeBody(component, context, loopexe, ret, count, max);
             return;
         }
 
@@ -117,13 +97,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
                 return;
             }
 
-            executeBody(
-                component,
-                context,
-                loopexe,
-                ret,
-                count,
-                max);
+            executeBody(component, context, loopexe, ret, count, max);
         })
         .catchEx(ex ->
         {
@@ -131,18 +105,30 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         });
     }
 
-    protected void executeBody(
-        IComponent component,
-        PlanExecutionContext context,
-        PlanStepExecution loopexe,
-        Future<PlanStepExecution> ret,
-        int count,
-        int max)
+    protected void executeBody(IComponent component, PlanExecutionContext context, PlanStepExecution loopexe,
+        Future<PlanStepExecution> ret, int count, int max)
     {
-        container.getExecutableStep(
-            component.getFeature(IBDINGAgentFeature.class).getReasoner(),
-            context.getPlan(),
-            context.getParameters())
+        executeBodyStep(component, context, loopexe, ret, count, max, 0);
+    }
+
+    protected void executeBodyStep(IComponent component, PlanExecutionContext context,
+        PlanStepExecution loopexe, Future<PlanStepExecution> ret, int count, int max, int index)
+    {
+        List<StrategicStep> steps = container.getSteps();
+
+        if(index >= steps.size())
+        {
+            RPlan.writeBackContext(context, context.getPlan().getIntention().getGoal(), component);
+
+            executeLoop(component, context, loopexe, ret, count + 1, max);
+
+            return;
+        }
+
+        StrategicStep sstep = steps.get(index);
+
+        sstep.getExecutableStep(component.getFeature(IBDINGAgentFeature.class).getReasoner(),
+            context.getPlan(), context.getParameters())
         .then(step ->
         {
             step.execute(component, context).then(exe ->
@@ -151,30 +137,14 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
                 {
                     context.getPlan().addExecutedStep(exe);
 
-                    if(exe.getState() ==
-                        IPlanStep.PlanStepState.FAILED)
+                    if(exe.getState() == IPlanStep.PlanStepState.FAILED)
                     {
-                        failLoop(
-                            loopexe,
-                            ret,
-                            context,
-                            exe.getException());
+                        failLoop(loopexe, ret, context, exe.getException());
                         return;
                     }
                 }
 
-                RPlan.writeBackContext(
-                    context,
-                    context.getPlan().getIntention().getGoal(),
-                    component);
-
-                executeLoop(
-                    component,
-                    context,
-                    loopexe,
-                    ret,
-                    count + 1,
-                    max);
+                executeBodyStep(component, context, loopexe, ret, count, max, index + 1);
             })
             .catchEx(ex ->
             {
@@ -186,21 +156,15 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
             failLoop(loopexe, ret, context, ex);
         });
     }
-
-    protected void finishLoop(
-        PlanStepExecution loopexe,
-        Future<PlanStepExecution> ret,
-        PlanExecutionContext context)
+  
+    protected void finishLoop(PlanStepExecution loopexe, Future<PlanStepExecution> ret, PlanExecutionContext context)
     {
         loopexe.setOutputs(context.getParameters());
         ret.setResult(loopexe);
     }
 
-    protected void failLoop(
-        PlanStepExecution loopexe,
-        Future<PlanStepExecution> ret,
-        PlanExecutionContext context,
-        Exception ex)
+    protected void failLoop(PlanStepExecution loopexe, Future<PlanStepExecution> ret,
+        PlanExecutionContext context, Exception ex)
     {
         loopexe.setState(IPlanStep.PlanStepState.FAILED);
         loopexe.setException(ex);
@@ -208,7 +172,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
     }
 
     @Override
-    public Map<String, String> getParameterMapping()
+    public Map<String, String> getInputMapping()
     {
         return null;
     }

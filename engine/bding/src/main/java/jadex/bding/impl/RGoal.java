@@ -45,6 +45,11 @@ public class RGoal extends RIdElement
 
     protected RPlan parentPlan;
 
+    // Bean constructor for cloner (PlanStepExecution)
+    public RGoal()
+    {
+    }
+
     public RGoal(Goal goal, Map<String, Object> parameters)
     {
         super("goal_"+goal.getName());
@@ -55,6 +60,11 @@ public class RGoal extends RIdElement
     public Goal getGoal() 
     {
         return goal;
+    }
+
+    public void setGoal(Goal goal) 
+    {
+        this.goal = goal;
     }
 
     public RGoal setIntention(RIntention intention) 
@@ -84,7 +94,7 @@ public class RGoal extends RIdElement
 
         try
         {
-            setState(GoalState.ACTIVE);
+            changeState(GoalState.ACTIVE);
 
             IComponent component = IComponentManager.get().getCurrentComponent();
             IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
@@ -109,9 +119,9 @@ public class RGoal extends RIdElement
                 if(possible.isEmpty())
                 {
                     if(evaluateGoalState().get()==GoalState.SUCCEEDED)
-                        setState(GoalState.SUCCEEDED);
+                        changeState(GoalState.SUCCEEDED);
                     else
-                        setState(GoalState.FAILED);
+                        changeState(GoalState.FAILED);
 
                     break;
                 }
@@ -140,7 +150,7 @@ public class RGoal extends RIdElement
 
                     if(evaluateGoalState().get()==GoalState.SUCCEEDED)
                     {
-                        setState(GoalState.SUCCEEDED);
+                        changeState(GoalState.SUCCEEDED);
                         break;
                     }
 
@@ -161,7 +171,7 @@ public class RGoal extends RIdElement
             this.exception = e;
             System.out.println("Goal failed: "+e.getMessage());
             ret.setExceptionIfUndone(e);
-            setState(GoalState.FAILED);
+            changeState(GoalState.FAILED);
         }
 
         return ret;
@@ -178,7 +188,7 @@ public class RGoal extends RIdElement
         return state;
     }
 
-    public void setState(GoalState newstate)
+    public void changeState(GoalState newstate)
     {
         if(state == newstate)
             throw new IllegalStateException("Goal is already in state " + state);

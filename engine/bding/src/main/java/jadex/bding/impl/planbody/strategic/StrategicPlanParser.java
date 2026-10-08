@@ -181,6 +181,7 @@ public class StrategicPlanParser
         String tool = null;
         String goal = null;
         String exp = null;
+        String problem = null;
         ReasoningType reasoningType = null;
 
         switch(type)
@@ -209,6 +210,7 @@ public class StrategicPlanParser
                 {
                     throw new IllegalArgumentException("REASONING step '" + name+ "' has invalid reasoningType: " + value,e);
                 }
+                problem = getString(json, "problem");
             }
             case FAIL ->
             {
@@ -216,9 +218,6 @@ public class StrategicPlanParser
             }
         }
 
-        /*
-         * Functional interface and dataflow.
-         */
         List<String> inputs = parseStrings(json, "inputs");
 
         String output = getString(json, "output");
@@ -227,22 +226,46 @@ public class StrategicPlanParser
 
         String resultmapping = getString(json, "resultmapping");
 
+        List<String> semanticOptions = parseStrings(json, "options");
+
         StrategicActionStep ret = new StrategicActionStep(name, description, type, tool, goal, inputs, output, inputmapping, resultmapping);
-
-        /*if(inputmapping != null)
-            ret.setInputMapping(inputmapping);
-
-        if(resultmapping != null)
-            ret.setResultMapping(resultmapping);*/
 
         if(exp != null)
             ret.setExp(exp);
 
-        if(reasoningType!=null)
+        if(problem != null)
+            ret.setProblem(problem);
+
+        if(reasoningType != null)
             ret.setReasoningType(reasoningType);
+
+        if(semanticOptions != null)
+        {
+            StringBuilder options = new StringBuilder("[");
+
+            for(int i = 0; i < semanticOptions.size(); i++)
+            {
+                if(i > 0)
+                    options.append(", ");
+
+                options.append("\"").append(semanticOptions.get(i)).append("\"");
+            }
+
+            options.append("]");
+
+            /*
+            * Phase 1 options are semantic values, not runtime Java expressions.
+            * Convert them temporarily into the representation expected by the
+            * phase-2 generator.
+            */
+
+            ret.setOptions(options.toString());
+        }
 
         return ret;
     }
+
+   
 
     protected static List<String> parseStrings(JsonObject json, String name)
     {

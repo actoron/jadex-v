@@ -74,7 +74,7 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
     }
 
     @Override
-    public Map<String, String> getParameterMapping() 
+    public Map<String, String> getInputMapping() 
     {
         return null;
     }

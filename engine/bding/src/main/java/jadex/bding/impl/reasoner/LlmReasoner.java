@@ -516,7 +516,7 @@ public class LlmReasoner implements IReasoner
         return ret;
     }
 
-    @Override
+    /*@Override
     public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type)
     {
         Future<Object> ret = new Future<>();
@@ -524,6 +524,62 @@ public class LlmReasoner implements IReasoner
         ReasoningPrompt<Object> prompt = ReasonPrompt.create(problem, model, context, type);
 
         Object res = reason("reason", prompt, null, null);
+
+        ret.setResult(res);
+
+        return ret;
+    }*/
+
+    @Override
+    public IFuture<Boolean> reasonDecision(String problem, AgentModel model, Map<String, Object> context)
+    {
+        Future<Boolean> ret = new Future<>();
+
+        ReasoningPrompt<Boolean> prompt = ReasonDecisionPrompt.create(problem, model, context);
+
+        Boolean res = reason("reason", prompt, null, null);
+
+        ret.setResult(res);
+
+        return ret;
+    }
+
+    @Override
+    public IFuture<String> reasonSelection(String problem, String[] options, AgentModel model, Map<String, Object> context)
+    {
+        Future<String> ret = new Future<>();
+
+        ReasoningPrompt<String> prompt = ReasonSelectionPrompt.create(problem, options, model, context);
+
+        String res = reason("reason", prompt, null, null);
+
+        ret.setResult(res);
+
+        return ret;
+    }
+
+    @Override
+    public IFuture<Double> reasonComputation(String problem, AgentModel model, Map<String, Object> context)
+    {
+        Future<Double> ret = new Future<>();
+
+        ReasoningPrompt<Double> prompt = ReasonComputationPrompt.create(problem, model, context);
+
+        Double res = reason("reason", prompt, null, null);
+
+        ret.setResult(res);
+
+        return ret;
+    }
+
+    @Override
+    public IFuture<String> reasonExplanation(String problem, AgentModel model, Map<String, Object> context)
+    {
+        Future<String> ret = new Future<>();
+
+        ReasoningPrompt<String> prompt = ReasonExplanationPrompt.create(problem, model, context);
+
+        String res = reason("reason", prompt, null, null);
 
         ret.setResult(res);
 

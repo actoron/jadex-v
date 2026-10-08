@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -98,6 +99,8 @@ public class Main2
     {
         protected JTextArea dialog;
         protected JTextField input;
+        protected JButton send;
+        protected JLabel inputStatus;
         protected Future<String> questionFuture;
 
         public UserAgent()
@@ -113,22 +116,26 @@ public class Main2
                 dialog.setLineWrap(true);
                 dialog.setWrapStyleWord(true);
 
+                inputStatus = new JLabel("Waiting for agent...");
+
                 input = new JTextField();
                 input.addActionListener(e -> submitQuestion());
 
-                JButton send = new JButton("Ask");
+                send = new JButton("Ask");
                 send.addActionListener(e -> submitQuestion());
 
                 JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+                inputPanel.add(inputStatus, BorderLayout.NORTH);
                 inputPanel.add(input, BorderLayout.CENTER);
                 inputPanel.add(send, BorderLayout.EAST);
 
                 frame.add(new JScrollPane(dialog), BorderLayout.CENTER);
                 frame.add(inputPanel, BorderLayout.SOUTH);
 
+                setInputState(false);
+
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
-                input.requestFocusInWindow();
             });
         }
 
@@ -141,9 +148,6 @@ public class Main2
             {
                 if(message != null && !message.isBlank())
                     dialog.append("Agent: " + message + "\n\n");
-
-                input.setEnabled(true);
-                input.requestFocusInWindow();
 
                 ret.setResult(null);
             });
@@ -159,7 +163,7 @@ public class Main2
 
             SwingUtilities.invokeLater(() ->
             {
-                input.setEnabled(true);
+                setInputState(true);
                 input.requestFocusInWindow();
             });
 
@@ -180,11 +184,18 @@ public class Main2
 
             questionFuture = null;
             input.setText("");
-            input.setEnabled(false);
+            setInputState(false);
 
             dialog.append("You: " + question + "\n\n");
 
             future.setResult(question);
+        }
+
+        protected void setInputState(boolean requested)
+        {
+            input.setEnabled(requested);
+            send.setEnabled(requested);
+            inputStatus.setText(requested ? "Your input is requested" : "Waiting for agent...");
         }
     }
 
@@ -192,11 +203,11 @@ public class Main2
     {
         ComponentManager.get().create(new UserAgent()).get();
 
-        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false,true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false, true);
 
-        //treamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
 
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
 
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 

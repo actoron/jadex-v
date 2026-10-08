@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jadex.bding.Belief;
 import jadex.core.IComponent;
 
 public class RIdElement 
@@ -12,6 +11,11 @@ public class RIdElement
     public static AtomicInteger cnt = new AtomicInteger(); 
 
     protected String id;
+
+    // Bean constructor for cloning
+    public RIdElement()
+    {
+    }
 
     public RIdElement(String prefix)
     {
@@ -26,6 +30,11 @@ public class RIdElement
     public String getId() 
     {
         return id;
+    }
+
+    public void setId(String id) 
+    {
+        this.id = id;
     }
 
     @Override

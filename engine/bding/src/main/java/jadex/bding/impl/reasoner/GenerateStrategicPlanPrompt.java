@@ -115,8 +115,9 @@ public class GenerateStrategicPlanPrompt
     their own planning become a SUBGOAL.
 
     You only describe semantic data flow (which information a step needs and
-    which it produces). Parameter mapping, message texts and expressions are
-    done in a later phase. Do not invent tools, goals, facts or values.
+    which it produces). Parameter mapping, concrete values and executable
+    expressions are done in a later phase. Do not invent tools, goals, facts
+    or values.
 
     STEP TYPES
 
@@ -128,25 +129,139 @@ public class GenerateStrategicPlanPrompt
     description says what the message tells the user.
 
     REASONING
-    Interpret, classify, calculate, formulate or decide. Exactly one "output"
-    and one "reasoningType", chosen by the type of the RESULT:
+    Interpret, classify, calculate, formulate or decide.
 
-    - BOOLEAN:
-      The reasoning result is a boolean value representing whether the required
-      statement or property holds.
+    Fields of a REASONING step, ALWAYS written in exactly this order:
+    "name", "description", "type", "reasoningType", "options" (only for
+    SELECTION), "problem", "inputs", "output".
 
-    - SELECTION:
-      The reasoning result is one selected value from multiple possible alternatives.
+    - "reasoningType": exactly one of BOOLEAN, COMPUTATION, SELECTION, EXPLANATION
+    - "problem": the explicit task (WHAT must be inferred, decided, calculated
+      or generated). It is separate from "inputs". Never use the first input as
+      implicit problem. Semantic wording only, no Java syntax or runtime mappings.
+    - "inputs": information needed to solve the task (may be empty)
+    - "output": exactly one semantic output name
 
-    - COMPUTATION:
-      The reasoning result is a calculated numeric value.
+    REASONING TYPE
+    Choose by the semantic type of the RESULT. Apply in this order:
 
-    - EXPLANATION:
-      The reasoning result is generated textual content.
-    
-    Choose BOOLEAN when the required decision has only two possible outcomes.
-    Choose SELECTION only when the result must distinguish between more than two
-    alternatives or select one value from a set of alternatives.
+    1. BOOLEAN      result is true/false (does a condition, property, match
+                    or criterion hold?). Two outcomes like yes/no or
+                    accepted/rejected are still BOOLEAN. No "options".
+    2. COMPUTATION  result is a number produced by calculation. No "options".
+    3. SELECTION    result is exactly ONE value from a finite, explicitly
+                    defined set of categorical alternatives.
+                    "options" is REQUIRED and MUST NOT be empty.
+    4. EXPLANATION  result is generated or inferred text (also short text).
+                    No "options".
+
+    BOOLEAN vs. SELECTION: "does X hold?" is BOOLEAN. "Which category does X
+    belong to?" is SELECTION, even with only two categories.
+    Do not use SELECTION merely because the reasoning involves choosing,
+    deciding or classifying.
+
+    SELECTION RULES (mandatory)
+    - A SELECTION without a non-empty "options" array is INVALID.
+    - Write "options" immediately after "reasoningType", before "problem".
+    - Fixed alternatives: list the values directly,
+      e.g. "options": ["LOW", "MEDIUM", "HIGH"].
+    - Alternatives produced by an earlier step: reference its output name,
+      e.g. "options": ["candidates"] ("candidates" is the output of an
+      earlier step).
+    - "options" describe the possible RESULT values; "inputs" describe the
+      information needed. Never put the alternatives only into "inputs".
+    - "options" are semantic values, not Java expressions or runtime paths.
+    - The selected result MUST be one of the values represented by "options".
+    - If you cannot name the options (literal values or an earlier output),
+      the step is NOT a SELECTION. Use EXPLANATION or BOOLEAN instead.
+    - Never provide "options" for BOOLEAN, COMPUTATION or EXPLANATION.
+
+    REASONING RESULT CONSISTENCY
+    "reasoningType", "options", "problem" and "output" must describe one
+    consistent operation:
+    - BOOLEAN: the problem asks for a true/false determination.
+    - COMPUTATION: the problem asks for a numeric calculation.
+    - SELECTION: the problem asks which one of the listed options applies.
+    - EXPLANATION: the problem asks for generated or inferred text.
+
+    WRONG (SELECTION without options, invalid):
+
+    {
+      "name": "determinePriority",
+      "description": "Determine the priority of the request.",
+      "type": "REASONING",
+      "reasoningType": "SELECTION",
+      "problem": "Determine the priority of the request.",
+      "inputs": ["request"],
+      "output": "priority"
+    }
+
+    RIGHT:
+
+    {
+      "name": "determinePriority",
+      "description": "Determine the priority of the request.",
+      "type": "REASONING",
+      "reasoningType": "SELECTION",
+      "options": ["LOW", "MEDIUM", "HIGH"],
+      "problem": "Determine which priority level best matches the request.",
+      "inputs": ["request"],
+      "output": "priority"
+    }
+
+    More examples:
+
+    {
+      "name": "classifyPackage",
+      "description": "Classify a package according to its delivery requirements.",
+      "type": "REASONING",
+      "reasoningType": "SELECTION",
+      "options": ["STANDARD", "EXPRESS", "SPECIAL_HANDLING"],
+      "problem": "Determine which delivery category best fits the package.",
+      "inputs": ["package", "deliveryRules"],
+      "output": "deliveryCategory"
+    }
+
+    {
+      "name": "selectCandidate",
+      "description": "Select the best candidate.",
+      "type": "REASONING",
+      "reasoningType": "SELECTION",
+      "options": ["candidates"],
+      "problem": "Select the candidate that best matches the requirements.",
+      "inputs": ["requirements", "candidates"],
+      "output": "selectedCandidate"
+    }
+
+    {
+      "name": "detectAnomaly",
+      "description": "Determine whether a sensor reading is anomalous.",
+      "type": "REASONING",
+      "reasoningType": "BOOLEAN",
+      "problem": "Determine whether the current sensor reading represents an abnormal condition.",
+      "inputs": ["sensorReading", "normalRange"],
+      "output": "anomalyDetected"
+    }
+
+    {
+      "name": "estimateDuration",
+      "description": "Estimate the remaining processing time.",
+      "type": "REASONING",
+      "reasoningType": "COMPUTATION",
+      "problem": "Calculate the estimated remaining processing time based on the current progress and processing rate.",
+      "inputs": ["completedItems", "remainingItems", "processingRate"],
+      "output": "estimatedDuration"
+    }
+
+    {
+      "name": "summarizeReport",
+      "description": "Create a concise summary of a report.",
+      "type": "REASONING",
+      "reasoningType": "EXPLANATION",
+      "problem": "Write a concise summary of the report highlighting its main findings.",
+      "inputs": ["report"],
+      "output": "summary"
+    }
 
     SUBGOAL
     Delegates a non-trivial subproblem to a goal from AVAILABLE GOALS ("goal"
@@ -164,13 +279,36 @@ public class GenerateStrategicPlanPrompt
     CONTROL FLOW
 
     SEQUENCE: only for a meaningful sub-process; never a one-child sequence.
+
     CONDITION: "then" and "else" are containers with name, description, steps
     (no "type"). A branch that needs nothing has an empty "steps" array.
-    LOOP: "steps" is the body. The body runs at least once; then "condition"
-    is checked and the loop repeats while it is true. "max" is an optional
-    FIXED limit as a numeric string; a limit from a goal or belief value goes
-    into the condition. The counter is implicit: loop.<loop-name>.counter is
-    the number of completed iterations (also loop.<loop-name>.max).
+
+    LOOP: "steps" is the loop body. The body runs at least once; then the
+    "condition" is checked and the loop repeats while it is true. A LOOP MUST
+    have at least one of "condition" or "max". If both are given, the loop
+    ends as soon as either one ends it.
+    - "condition": a semantic termination condition, e.g. "done is false".
+    - "max": an optional FIXED limit as a numeric string, e.g. "3". A limit
+      that comes from a goal, belief or other runtime value goes into the
+      condition instead.
+    - The counter is implicit: loop.<loop-name>.counter is the number of
+      completed iterations (also loop.<loop-name>.max).
+
+    {
+      "name": "processItems",
+      "description": "Process items until done.",
+      "type": "LOOP",
+      "condition": "done is false",
+      "steps": [...]
+    }
+
+    {
+      "name": "retryOperation",
+      "description": "Retry the operation at most three times.",
+      "type": "LOOP",
+      "max": "3",
+      "steps": [...]
+    }
 
     A condition is a sentence that mentions every value it depends on by exact
     name, e.g. "classification is GUESS", "done is false and
@@ -205,6 +343,9 @@ public class GenerateStrategicPlanPrompt
     Prefer the simplest deterministic expression whenever no reasoning is
     required.
 
+    The reasoning "problem" itself must describe the actual task. Do not make
+    the problem equal to an input value merely because that value is available.
+
     Rules:
     - Output names are unique, except that several STATE steps may set the
       same flag.
@@ -221,64 +362,96 @@ public class GenerateStrategicPlanPrompt
       SEQUENCE, CONDITION and LOOP do not count. Use a SUBGOAL for more.
     - No redundant containers, no unnecessary nesting.
     - Do not hide a multi-step procedure inside one TOOL or REASONING step.
+    - Every REASONING step has an explicit "problem". Never infer it from
+      inputs[0].
 
     EXAMPLE
-    The example comes from an unrelated domain. Copy its patterns, not its
-    content. Use only names from AVAILABLE TOOLS, AVAILABLE GOALS and
+
+    The example comes from an unrelated domain. Copy its structural patterns,
+    not its content. Use only names from AVAILABLE TOOLS, AVAILABLE GOALS and
     AVAILABLE CONTEXT.
 
     {
-      "name": "reviewDocuments",
-      "description": "Review incoming documents until one is approved or the attempt limit is reached.",
+      "name": "processShipment",
+      "description": "Process incoming shipments according to their handling requirements.",
       "steps": [
-        { "name": "reviewLoop",
-          "description": "Review one document per iteration.",
-          "type": "LOOP",
-          "condition": "approvalReached is false and loop.reviewLoop.counter is less than goal.maxAttempts",
-          "steps": [
-            { "name": "fetchDocument", "description": "Get the next submitted document.",
-              "type": "TOOL", "tool": "fetch_next_document", "inputs": [], "output": "document" },
-            { "name": "checkQuality",
-              "description": "Decide whether document meets goal.qualityCriteria.",
-              "type": "REASONING", "reasoningType": "BOOLEAN",
-              "inputs": ["document", "goal.qualityCriteria"], "output": "documentApproved" },
-            { "name": "onApproved",
-              "description": "Publish the document if it was approved, otherwise give feedback.",
-              "type": "CONDITION", "condition": "documentApproved is true",
-              "then": { "name": "approveBranch", "description": "Publish and end the loop.",
-                "steps": [
-                  { "name": "markApproval", "description": "Set approvalReached to true.",
-                    "type": "STATE", "inputs": [], "output": "approvalReached" },
-                  { "name": "publish", "description": "Publish document.",
-                    "type": "TOOL", "tool": "publish_document", "inputs": ["document"] }
-                ] },
-              "else": { "name": "rejectBranch", "description": "Explain the rejection to the author.",
-                "steps": [
-                  { "name": "writeFeedback",
-                    "description": "Formulate feedback for the author about why document was rejected.",
-                    "type": "REASONING", "reasoningType": "EXPLANATION",
-                    "inputs": ["document"], "output": "feedback" },
-                  { "name": "sendFeedback", "description": "Send the feedback to the author.",
-                    "type": "TOOL", "tool": "notify_author", "inputs": ["feedback"] }
-                ] } }
-          ] },
-        { "name": "finalReport",
-          "description": "Report the outcome once, after the loop.",
-          "type": "CONDITION", "condition": "approvalReached is true",
-          "then": { "name": "successBranch", "description": "Nothing more to report.",
-            "steps": [] },
-          "else": { "name": "limitBranch", "description": "Tell the editor that no document was approved.",
+        {
+          "name": "inspectShipment",
+          "description": "Determine the appropriate handling category for the shipment.",
+          "type": "REASONING",
+          "reasoningType": "SELECTION",
+          "options": ["NORMAL", "PRIORITY", "MANUAL_REVIEW"],
+          "problem": "Determine the appropriate handling category for the shipment.",
+          "inputs": ["shipment", "handlingRules"],
+          "output": "handlingCategory"
+        },
+
+        {
+          "name": "handleShipment",
+          "description": "Handle the shipment according to its classification.",
+          "type": "CONDITION",
+          "condition": "handlingCategory is PRIORITY",
+          "then": {
+            "name": "priorityBranch",
+            "description": "Process the shipment with priority handling.",
             "steps": [
-              { "name": "escalate",
-                "description": "Tell the editor that no document was approved within goal.maxAttempts attempts.",
-                "type": "TOOL", "tool": "escalate_to_editor", "inputs": ["goal.maxAttempts"] }
-            ] } }
+              {
+                "name": "markPriority",
+                "description": "Set priorityRequired to true.",
+                "type": "STATE",
+                "inputs": [],
+                "output": "priorityRequired"
+              },
+
+              {
+                "name": "processPriority",
+                "description": "Process the shipment using the priority procedure.",
+                "type": "TOOL",
+                "tool": "process_priority_shipment",
+                "inputs": ["shipment"]
+              }
+            ]
+          },
+          "else": {
+            "name": "normalBranch",
+            "description": "Process the shipment using normal handling.",
+            "steps": [
+              {
+                "name": "processNormal",
+                "description": "Process the shipment using the normal procedure.",
+                "type": "TOOL",
+                "tool": "process_standard_shipment",
+                "inputs": ["shipment"]
+              }
+            ]
+          }
+        },
+
+        {
+          "name": "generateSummary",
+          "description": "Create a concise summary of the processing result.",
+          "type": "REASONING",
+          "reasoningType": "EXPLANATION",
+          "problem": "Write a concise summary of the most important processing information.",
+          "inputs": ["handlingCategory"],
+          "output": "summary"
+        },
+
+        {
+          "name": "reportResult",
+          "description": "Report the processing result.",
+          "type": "TOOL",
+          "tool": "report_processing_result",
+          "inputs": ["summary"]
+        }
       ]
     }
 
-    Patterns shown: one flag (approvalReached) set by a STATE in the ending
-    branch and read by the loop condition and after the loop; the outcome is
-    announced once; display-only tools have no output.
+    Patterns shown: a SELECTION step has "options" directly after
+    "reasoningType"; a REASONING step has an explicit problem separate from
+    its inputs; a CONDITION contains explicit branches; STATE is used for a
+    control flag; a generated explanation can consume the result of an
+    earlier step.
 
     ================ TASK ================
 
@@ -301,6 +474,10 @@ public class GenerateStrategicPlanPrompt
     PREVIOUS PLANS
     {{HISTORY}}
 
+    Before answering, check every REASONING step: if reasoningType is
+    SELECTION, "options" is present and non-empty; otherwise "options" is
+    absent.
+
     Return exactly one JSON plan and nothing else.
     """;
 
@@ -322,35 +499,91 @@ public class GenerateStrategicPlanPrompt
           "properties": {
             "name": { "type": "string" },
             "description": { "type": "string" },
+
             "type": {
-              "enum": ["TOOL", "REASONING", "SUBGOAL", "STATE", "FAIL",
-                      "SEQUENCE", "CONDITION", "LOOP"]
+              "enum": [
+                "TOOL",
+                "REASONING",
+                "SUBGOAL",
+                "STATE",
+                "FAIL",
+                "SEQUENCE",
+                "CONDITION",
+                "LOOP"
+              ]
             },
+
             "tool": { "type": "string" },
+
             "goal": { "type": "string" },
+
             "reasoningType": {
-              "enum": ["BOOLEAN", "SELECTION", "COMPUTATION", "EXPLANATION"]
+              "enum": [
+                "BOOLEAN",
+                "SELECTION",
+                "COMPUTATION",
+                "EXPLANATION"
+              ]
             },
-            "values": { "type": "array", "items": { "type": "string" } },
-            "inputs": { "type": "array", "items": { "type": "string" } },
+
+            "options": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+
+            "problem": { "type": "string" },
+
+            "inputs": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+
             "output": { "type": "string" },
+
             "condition": { "type": "string" },
+
             "max": { "type": "string" },
+
             "then": { "$ref": "#/$defs/container" },
+
             "else": { "$ref": "#/$defs/container" },
-            "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } }
+
+            "steps": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/step" }
+            }
           },
+
+          "allOf": [
+            {
+              "if": {
+                "properties": { "reasoningType": { "const": "SELECTION" } },
+                "required": ["reasoningType"]
+              },
+              "then": {
+                "required": ["options"],
+                "properties": { "options": { "minItems": 1 } }
+              }
+            }
+          ],
+
           "additionalProperties": false
         },
 
         "container": {
           "type": "object",
           "required": ["name", "description", "steps"],
+
           "properties": {
             "name": { "type": "string" },
             "description": { "type": "string" },
-            "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } }
+
+            "steps": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/step" }
+            }
           },
+
           "additionalProperties": false
         }
       }

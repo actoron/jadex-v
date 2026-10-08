@@ -1,6 +1,7 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,50 +27,47 @@ import jadex.micro.llmcall2.LlmHelper;
 
 /**
  * Phase 2: operationalization.
- * The model returns a patch (inputs/exp per step id). The patch is validated
- * (syntax + scope), identifiers in expressions are qualified with the runtime
- * prefix (plan.&lt;name&gt;), and the result is merged into the phase-1 JSON,
- * so the structure cannot change. Step ids are the step names of phase 1
- * (made unique if necessary).
+ *
+ * The model returns a patch (inputs / problem / exp per step id). Input forms:
+ *   "${x}"      (whole entry)  -> reference, type preserved
+ *   "=java"                    -> Java expression
+ *   anything else              -> text, optional ${name} placeholders (escaping done here)
+ * The patch is repaired, validated (syntax, scope), identifiers are qualified with plan.,
+ * and merged into the phase-1 JSON, so the structure cannot change.
  */
 public class CreatePlanDataFlowPrompt
 {
-    /** Runtime prefix of step outputs inside expressions (outputs live under plan.<name>). */
     private static final String PLAN_PREFIX = "plan.";
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{([A-Z_]+)\\}\\}");
-
-    /** Dotted identifier path, e.g. result, goal.someValue, loop.myLoop.counter. */
     private static final Pattern REF = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*");
-
     private static final Pattern NUMBER = Pattern.compile("-?[0-9]+(\\.[0-9]+)?");
-
-    /** Java string literal (double quotes, with escapes). */
     private static final Pattern JAVA_STRING = Pattern.compile("\"(\\\\.|[^\"\\\\])*\"");
+    private static final Pattern TOKEN = Pattern.compile("\"(?:\\\\.|[^\"\\\\])*\"|(?<![\\w.])[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*");
 
-    /** Either a string literal (copied verbatim) or an identifier path (qualified/checked). */
-    private static final Pattern TOKEN = Pattern.compile(
-        "\"(?:\\\\.|[^\"\\\\])*\"|(?<![\\w.])[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*");
+    private static final Pattern TEXT_PLACEHOLDER = Pattern.compile("\\$\\{([^}]*)\\}");
+    private static final Pattern SINGLE_REF = Pattern.compile("^\\$\\{\\s*([^}]*?)\\s*\\}$");
 
-    private static final Set<String> KEYWORDS = Set.of("true", "false", "null");
+    private static final Pattern STR_EQ = Pattern.compile("([A-Za-z_][\\w.]*)\\s*(==|!=)\\s*(\"(?:\\\\.|[^\"\\\\])*\")");
+    private static final Pattern BOOL_EQ_FALSE = Pattern.compile("([A-Za-z_][\\w.]*)\\s*==\\s*false\\b");
+    private static final Pattern BOOL_EQ_TRUE = Pattern.compile("([A-Za-z_][\\w.]*)\\s*==\\s*true\\b");
+    private static final Pattern EQUALS_CALL = Pattern.compile("(\"(?:\\\\.|[^\"\\\\])*\")\\.equals\\(\\s*([A-Za-z_]\\w*)\\s*\\)");
 
-    private static final Set<String> STATIC_CLASSES =
-        Set.of("Math", "String", "Integer", "Double", "Long", "Boolean", "Objects");
+    private static final Set<String> KEYWORDS = Set.of("true", "false", "null", "new");
+    private static final Set<String> STATIC_CLASSES = Set.of("Math", "String", "Integer", "Double", "Long", "Boolean", "Objects");
 
     private CreatePlanDataFlowPrompt()
     {
     }
 
-    public static ReasoningPrompt<StrategicContainer> create(
-        RIntention in,
-        Map<String, Object> context,
-        StrategicContainer strategicPlan,
-        IComponent agent)
+    public static ReasoningPrompt<StrategicContainer> create(RIntention in, Map<String, Object> context,
+        StrategicContainer strategicPlan, IComponent agent)
     {
         Indexed indexed = annotate(strategicPlan.getJson());
 
         Map<String, String> values = Map.of(
             "PLAN", indexed.root.toString(WriterConfig.PRETTY_PRINT),
+            "REQUIRED", String.valueOf(requiredIds(indexed)),
             "GOAL", String.valueOf(PromptHelper.formatGoal(in.getGoal())),
             "CONTEXT", String.valueOf(PromptHelper.formatContext(in.getIntention().getModel(), context)),
             "TOOLS", String.valueOf(PromptHelper.formatTools(agent)),
@@ -81,12 +79,11 @@ public class CreatePlanDataFlowPrompt
             prompt,
             SCHEMA,
             response -> StrategicPlanParser.parse(merge(strategicPlan.getJson(), response)),
-            StrategicPlanValidator::validatePhase2);   // statt ::validate
+            StrategicPlanValidator::validatePhase2);
     }
 
-    // ---------------------------------------------------------------- merge
+    // ------------------------------------------------------------ indexing
 
-    /** Plan JSON with ids, plus an index id -> step object. */
     private static class Indexed
     {
         JsonObject root;
@@ -94,7 +91,6 @@ public class CreatePlanDataFlowPrompt
         int counter;
     }
 
-    /** Deterministic: same input JSON always yields the same ids. */
     private static Indexed annotate(String planJson)
     {
         Indexed indexed = new Indexed();
@@ -147,14 +143,35 @@ public class CreatePlanDataFlowPrompt
         }
     }
 
-    /**
-     * Applies the model's patch to the phase-1 plan and returns the merged
-     * plan as JSON. Throws IllegalArgumentException on an invalid patch
-     * (the message is meant to be fed back to the model).
-     */
+    private static List<String> requiredIds(Indexed indexed)
+    {
+        List<String> ids = new ArrayList<>();
+
+        for(Map.Entry<String, JsonObject> e : indexed.steps.entrySet())
+        {
+            String t = e.getValue().getString("type", "");
+
+            if(t.equals("TOOL") || t.equals("SUBGOAL") || t.equals("STATE"))
+                ids.add(e.getKey());
+        }
+
+        return ids;
+    }
+
+    // --------------------------------------------------------------- merge
+
     private static String merge(String planJson, String patchJson)
     {
         Indexed indexed = annotate(planJson);
+
+        // Phase-1 problems become constant expressions by default; the patch only overrides them.
+        for(JsonObject s : indexed.steps.values())
+        {
+            JsonValue pv = s.get("problem");
+
+            if("REASONING".equals(s.getString("type", "")) && pv != null && pv.isString())
+                s.set("problem", normalizeProblem(pv.asString()));
+        }
 
         JsonValue patchValue;
 
@@ -174,6 +191,7 @@ public class CreatePlanDataFlowPrompt
             throw new IllegalArgumentException("Patch needs a \"steps\" array.");
 
         Set<String> patched = new HashSet<>();
+        Set<String> inputsPatched = new HashSet<>();
 
         for(JsonValue entryValue : entries.asArray())
         {
@@ -181,27 +199,30 @@ public class CreatePlanDataFlowPrompt
                 throw new IllegalArgumentException("Every patch entry must be an object.");
 
             JsonObject entry = entryValue.asObject();
-            String id = entry.getString("id", null);
+            JsonValue idValue = entry.get("id");
+            String id = idValue != null && idValue.isString() ? idValue.asString() : null;
             JsonObject step = id == null ? null : indexed.steps.get(id);
 
             if(step == null)
-                throw new IllegalArgumentException("Unknown step id in patch: " + id
-                    + ". Valid ids: " + indexed.steps.keySet());
+                throw new IllegalArgumentException("Unknown step id in patch: " + id + ". Valid ids: " + indexed.steps.keySet());
 
             if(!patched.add(id))
                 throw new IllegalArgumentException("Duplicate patch entry for step id: " + id);
 
             String type = step.getString("type", "");
             String label = label(id, step);
-            boolean action = type.equals("TOOL") || type.equals("REASONING")
-                || type.equals("SUBGOAL") || type.equals("STATE");
+            boolean action = type.equals("TOOL") || type.equals("REASONING") || type.equals("SUBGOAL") || type.equals("STATE");
 
+            // inputs (raw strings; interpreted in walk(), where the scope is known)
             JsonValue inputs = entry.get("inputs");
 
             if(inputs != null)
             {
                 if(!action)
-                    throw new IllegalArgumentException("Step " + label + " cannot have inputs.");
+                    throw new IllegalArgumentException(
+                        "Step " + label + " contains unsupported field 'inputs'. "
+                        + "Remove this field from the step. Do not move it to another step. "
+                        + "Only TOOL, REASONING, SUBGOAL and STATE steps may contain 'inputs'.");
 
                 if(!inputs.isArray())
                     throw new IllegalArgumentException("Step " + label + ": inputs must be an array.");
@@ -213,69 +234,108 @@ public class CreatePlanDataFlowPrompt
                     if(!v.isString())
                         throw new IllegalArgumentException("Step " + label + ": every input must be a string.");
 
-                    String normalized = normalizeInput(v.asString());
+                    if(v.asString().isBlank())
+                        throw new IllegalArgumentException("Step " + label + ": empty input.");
 
-                    checkInputForm(label, normalized);
-                    array.add(normalized);
+                    array.add(v.asString());
                 }
 
                 step.set("inputs", array);
+                inputsPatched.add(id);
             }
 
+            // problem (REASONING only): text with ${name} or "=java"
+            JsonValue problemValue = entry.get("problem");
+
+            if(problemValue != null)
+            {
+                if(!type.equals("REASONING"))
+                    throw new IllegalArgumentException(
+                        "Step " + label + " contains unsupported field 'problem'. "
+                        + "Remove this field from the step. Do not move it to another step. "
+                        + "Only REASONING steps may contain 'problem'.");
+
+                if(!problemValue.isString() || problemValue.asString().isBlank())
+                    throw new IllegalArgumentException(
+                        "Step " + label + ": problem must be a non-empty string. "
+                        + "Keep 'problem' on this REASONING step.");
+
+                String normalized = normalizeProblem(problemValue.asString());
+                checkSyntax(label, normalized.substring(1));
+                step.set("problem", normalized);
+            }
+
+            // exp
             JsonValue expValue = entry.get("exp");
 
             if(expValue != null)
             {
-                if(!expValue.isString())
-                    throw new IllegalArgumentException("Step " + label + ": exp must be a string.");
+                if(!(type.equals("STATE") || type.equals("CONDITION") || type.equals("LOOP")))
+                    throw new IllegalArgumentException(
+                        "Step " + label + " contains unsupported field 'exp'. "
+                        + "Remove this field from the step. Do not move it to another step. "
+                        + "In phase 2, 'exp' is only allowed on STATE, CONDITION or LOOP.");
 
-                String exp = expValue.asString();
+                if(!expValue.isString())
+                    throw new IllegalArgumentException(
+                        "Step " + label + ": exp must be a string. "
+                        + "Keep 'exp' on this STATE, CONDITION or LOOP step.");
+
+                String exp = repairExpression(expValue.asString());
 
                 if(!exp.isBlank())
                 {
-                    if(!(type.equals("STATE") || type.equals("CONDITION") || type.equals("LOOP")))
-                        throw new IllegalArgumentException("Step " + label + " cannot have exp.");
-
                     if(type.equals("LOOP") && step.get("condition") == null)
-                        throw new IllegalArgumentException("Step " + label + ": exp only allowed on a LOOP with a condition.");
+                        throw new IllegalArgumentException(
+                            "Step " + label + ": exp is only allowed on a LOOP with a condition. "
+                            + "Do not move 'exp' to another step.");
 
                     checkSyntax(label, exp);
 
                     if((type.equals("CONDITION") || type.equals("LOOP")) && !referencesValue(exp))
-                        throw new IllegalArgumentException("Step " + label
-                            + ": a condition must reference at least one value; a constant is not allowed. "
-                            + "Express the complete sentence of the step's \"condition\", or omit \"exp\".");
+                        throw new IllegalArgumentException(
+                            "Step " + label + ": a condition must reference at least one value; a constant is not allowed. "
+                            + "Express the complete sentence of the condition, or omit \"exp\". "
+                            + "Do not move the expression to another step.");
 
                     step.set("exp", exp);
                 }
             }
         }
 
-        // Completeness: a TOOL/SUBGOAL without "inputs" would be called without arguments
-        // (runtime: "Missing argument: arg0"). Tools without parameters need an explicit [].
-        // A STATE without "exp" cannot compute anything.
+        // Completeness: collect everything that is missing, report once.
+        List<String> missing = new ArrayList<>();
+
         for(Map.Entry<String, JsonObject> e : indexed.steps.entrySet())
         {
             JsonObject step = e.getValue();
             String type = step.getString("type", "");
+            String label = label(e.getKey(), step);
 
-            if((type.equals("TOOL") || type.equals("SUBGOAL")) && step.get("inputs") == null)
-            {
-                throw new IllegalArgumentException("Missing patch entry with \"inputs\" for step "
-                    + label(e.getKey(), step)
-                    + ". Provide one input per parameter, or [] if it has none.");
-            }
+            if((type.equals("TOOL") || type.equals("SUBGOAL")) && !inputsPatched.contains(e.getKey()))
+                missing.add("Missing entry with \"inputs\" for step " + label
+                    + " (one input per parameter, or [] if it has none).");
 
             if(type.equals("STATE") && step.get("exp") == null)
-            {
-                throw new IllegalArgumentException("STATE step " + label(e.getKey(), step)
-                    + " needs an \"exp\" that computes its output from values in scope "
-                    + "(an entry {\"id\": \"" + e.getKey() + "\", \"exp\": \"...\"}).");
-            }
+                missing.add("STATE step " + label + " needs {\"id\": \"" + e.getKey()
+                    + "\", \"exp\": \"...\"} computing its value from its description.");
+
+            if(type.equals("CONDITION") && step.get("condition") != null && step.get("exp") == null)
+                missing.add("CONDITION step " + label + " is not operationalized. "
+                    + "Its phase-1 condition is: \"" + step.getString("condition", "") + "\". "
+                    + "Add an \"exp\" implementing the COMPLETE condition.");
+
+            if(type.equals("LOOP") && step.get("condition") != null && step.get("exp") == null)
+                missing.add("LOOP step " + label + " is not operationalized. "
+                    + "Its phase-1 condition is: \"" + step.getString("condition", "") + "\". "
+                    + "Add an \"exp\" implementing the COMPLETE condition.");
         }
 
-        // Scope check + qualification of the patched expressions/inputs.
-        //walk(indexed.root, new HashSet<>(), new ArrayList<>(), patched);
+        if(!missing.isEmpty())
+            throw new IllegalArgumentException("The patch is incomplete:\n- " + String.join("\n- ", missing));
+
+        checkSelectionLiterals(indexed);
+
         walk(indexed.root, defaultedOutputs(indexed), new ArrayList<>(), patched);
 
         for(JsonObject step : indexed.steps.values())
@@ -284,6 +344,7 @@ public class CreatePlanDataFlowPrompt
         return indexed.root.toString();
     }
 
+    /** Outputs of REASONING/STATE have a runtime default (compiler), so they are always readable. */
     private static Set<String> defaultedOutputs(Indexed indexed)
     {
         Set<String> names = new HashSet<>();
@@ -306,7 +367,6 @@ public class CreatePlanDataFlowPrompt
         return (id.equals(name) ? name : id + "/" + name) + " (" + step.getString("type", "") + ")";
     }
 
-    /** True if the expression references at least one identifier (i.e. is not a constant). */
     private static boolean referencesValue(String exp)
     {
         Matcher m = TOKEN.matcher(exp);
@@ -315,26 +375,135 @@ public class CreatePlanDataFlowPrompt
         {
             String t = m.group();
 
-            if(!t.startsWith("\"") && !KEYWORDS.contains(t))
+            if(!t.startsWith("\"") && !KEYWORDS.contains(t) && !STATIC_CLASSES.contains(t))
                 return true;
         }
 
         return false;
     }
 
-    /** A bare "text" (Java string literal) is accepted and turned into the expression ="text". */
-    private static String normalizeInput(String v)
+    // ------------------------------------------- text, repair, normalization
+
+    /** "Hello ${goal.name}!" -> "Hello " + (goal.name) + "!"  (valid Java, all escaping done here). */
+    private static String textToExpression(String text)
     {
-        String t = v.trim();
+        List<String> parts = new ArrayList<>();
+        Matcher m = TEXT_PLACEHOLDER.matcher(text);
+        int pos = 0;
 
-        if(JAVA_STRING.matcher(t).matches())
-            return "=" + t;
+        while(m.find())
+        {
+            if(m.start() > pos)
+                parts.add(quote(text.substring(pos, m.start())));
 
-        return v;
+            parts.add("(" + checkedName(m.group(1).trim()) + ")");
+            pos = m.end();
+        }
+
+        if(pos < text.length())
+            parts.add(quote(text.substring(pos)));
+
+        if(parts.isEmpty())
+            return "\"\"";
+
+        if(!parts.get(0).startsWith("\""))
+            parts.add(0, "\"\"");
+
+        return String.join(" + ", parts);
+    }
+
+    private static String checkedName(String n)
+    {
+        String ref = n.startsWith("plan.") ? n.substring(5) : n;
+
+        if(!REF.matcher(ref).matches())
+            throw new IllegalArgumentException("Inside ${...} only a single value name is allowed, found '" + n
+                + "'. For choices or calculations use an \"=...\" expression.");
+
+        return ref;
+    }
+
+    private static String quote(String s)
+    {
+        return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", "\\n") + "\"";
+    }
+
+    /** Fixes unambiguous model mistakes before they cost a retry. */
+    private static String repairExpression(String e)
+    {
+        e = STR_EQ.matcher(e).replaceAll(r -> Matcher.quoteReplacement(
+            (r.group(2).equals("!=") ? "!" : "") + r.group(3) + ".equals(" + r.group(1) + ")"));
+        e = BOOL_EQ_FALSE.matcher(e).replaceAll("!$1");
+        e = BOOL_EQ_TRUE.matcher(e).replaceAll("$1");
+        return e.replaceAll("[;\\s]+$", "").trim();
+    }
+
+    private static String normalizeProblem(String problem)
+    {
+        String t = problem.trim();
+        return t.startsWith("=") ? "=" + repairExpression(t.substring(1)) : "=" + textToExpression(t);
+    }
+
+    /** A literal compared with a SELECTION result must be one of its options. */
+    private static void checkSelectionLiterals(Indexed indexed)
+    {
+        Set<String> outputs = new HashSet<>();
+        Map<String, List<String>> opts = new HashMap<>();
+
+        for(JsonObject s : indexed.steps.values())
+        {
+            String o = s.getString("output", null);
+
+            if(o == null || o.isBlank())
+                continue;
+
+            outputs.add(o);
+            JsonValue ov = s.get("options");
+
+            if("SELECTION".equals(s.getString("reasoningType", "")) && ov != null && ov.isArray())
+            {
+                List<String> l = new ArrayList<>();
+
+                for(JsonValue v : ov.asArray())
+                    if(v.isString())
+                        l.add(v.asString());
+
+                opts.put(o, l);
+            }
+        }
+
+        for(Map.Entry<String, JsonObject> e : indexed.steps.entrySet())
+        {
+            String exp = e.getValue().getString("exp", null);
+
+            if(exp == null)
+                continue;
+
+            Matcher m = EQUALS_CALL.matcher(exp);
+
+            while(m.find())
+            {
+                List<String> l = opts.get(m.group(2));
+
+                if(l == null || l.isEmpty() || l.stream().anyMatch(outputs::contains))
+                    continue;
+
+                String lit = m.group(1).substring(1, m.group(1).length() - 1);
+
+                if(!l.contains(lit))
+                    throw new IllegalArgumentException("Step " + label(e.getKey(), e.getValue()) + ": \"" + lit
+                        + "\" is not one of the options of " + m.group(2) + " " + l
+                        + ". Use exactly one of them (same spelling and case).");
+            }
+        }
     }
 
     // ------------------------------------------------- phase-1 plan check
 
+    /**
+     * Phase-1 check: TOOL/SUBGOAL results read by a LOOP/CONDITION sentence that are not
+     * produced on every path. (REASONING/STATE outputs have runtime defaults.) Empty = ok.
+     */
     public static List<String> conditionScopeProblems(String planJson)
     {
         Indexed indexed = annotate(planJson);
@@ -345,7 +514,6 @@ public class CreatePlanDataFlowPrompt
             String type = s.getString("type", "");
             String o = s.getString("output", null);
 
-            // REASONING/STATE outputs have runtime defaults (compiler); only TOOL/SUBGOAL stay strict
             if(o != null && !o.isBlank() && (type.equals("TOOL") || type.equals("SUBGOAL")))
                 outputs.add(o);
         }
@@ -355,8 +523,7 @@ public class CreatePlanDataFlowPrompt
         return problems;
     }
 
-    private static Set<String> scopeProblems(JsonObject container, Set<String> scope,
-        Set<String> outputs, List<String> problems)
+    private static Set<String> scopeProblems(JsonObject container, Set<String> scope, Set<String> outputs, List<String> problems)
     {
         Set<String> cur = new HashSet<>(scope);
         JsonValue stepsValue = container.get("steps");
@@ -382,17 +549,14 @@ public class CreatePlanDataFlowPrompt
 
                     Set<String> t = tb == null ? cur : scopeProblems(tb, cur, outputs, problems);
                     Set<String> e = eb == null ? cur : scopeProblems(eb, cur, outputs, problems);
+
                     boolean tFail = endsWithFail(tb);
                     boolean eFail = endsWithFail(eb);
 
                     if(tFail && !eFail)
-                    {
                         cur = e;
-                    }
                     else if(eFail && !tFail)
-                    {
                         cur = t;
-                    }
                     else
                     {
                         Set<String> both = new HashSet<>(t);
@@ -406,7 +570,7 @@ public class CreatePlanDataFlowPrompt
                 case "LOOP":
                 {
                     Set<String> body = scopeProblems(step, cur, outputs, problems);
-                    checkSentence(step, body, outputs, problems); // evaluated after the body
+                    checkSentence(step, body, outputs, problems);
                     cur = body;
                     break;
                 }
@@ -444,21 +608,14 @@ public class CreatePlanDataFlowPrompt
             if(outputs.contains(t) && !scope.contains(t) && reported.add(t))
             {
                 problems.add("The condition of step '" + step.getString("name", "?") + "' reads '" + t
-                    + "', which is not set on every path before it. Add a STATE step BEFORE the loop that "
-                    + "initializes '" + t + "' (for example to false); the branch that changes it must use "
-                    + "a STATE step with the SAME output name '" + t + "'.");
+                    + "', a tool/subgoal result that is not produced on every path before it. "
+                    + "Produce it unconditionally before the condition, or base the condition on a flag set by a STATE step.");
             }
         }
     }
 
-    // ---------------------------------------------------------------- scope
+    // --------------------------------------------------------------- scope
 
-    /**
-     * Walks the plan in execution order. 'scope' holds the output names that are
-     * guaranteed to exist at this point. Patched expressions and "=" inputs are
-     * checked against the scope and rewritten with the runtime prefix.
-     * Returns the scope after the container.
-     */
     private static Set<String> walk(JsonObject container, Set<String> scope, List<String> loops, Set<String> patched)
     {
         Set<String> cur = new HashSet<>(scope);
@@ -494,13 +651,9 @@ public class CreatePlanDataFlowPrompt
                     boolean eFail = endsWithFail(elseBranch);
 
                     if(tFail && !eFail)
-                    {
                         cur = e;
-                    }
                     else if(eFail && !tFail)
-                    {
                         cur = t;
-                    }
                     else
                     {
                         Set<String> both = new HashSet<>(t);
@@ -517,7 +670,6 @@ public class CreatePlanDataFlowPrompt
 
                     Set<String> body = walk(step, cur, loops, patched);
 
-                    // LOOP exp is evaluated after the body.
                     if(isPatched && step.get("exp") != null)
                         step.set("exp", qualify(label, step.getString("exp", ""), body, loops));
 
@@ -542,9 +694,17 @@ public class CreatePlanDataFlowPrompt
                         JsonArray rewritten = new JsonArray();
 
                         for(JsonValue v : inputs.asArray())
-                            rewritten.add(processInput(label, v.asString(), cur, loops));
+                            rewritten.add(processInput(label, type, v.asString(), cur, loops));
 
                         step.set("inputs", rewritten);
+                    }
+
+                    if(type.equals("REASONING") && step.get("problem") != null)
+                    {
+                        String problem = step.getString("problem", "");
+
+                        if(problem.startsWith("="))
+                            step.set("problem", "=" + qualify(label, problem.substring(1), cur, loops));
                     }
 
                     if(isPatched && step.get("exp") != null)
@@ -577,25 +737,58 @@ public class CreatePlanDataFlowPrompt
         return "FAIL".equals(last.getString("type", ""));
     }
 
-    /** References are scope-checked and stay bare; "=" inputs are qualified; literals stay. */
-    private static String processInput(String label, String v, Set<String> scope, List<String> loops)
+    // --------------------------------------------------------------- inputs
+
+    /**
+     * Final form of one input:
+     *   "=java"      -> "=" + qualified expression
+     *   "${x}"       -> bare reference x (type preserved)
+     *   number/bool  -> "=" literal
+     *   other text   -> "=" + qualified string expression
+     */
+    private static String processInput(String label, String type, String v, Set<String> scope, List<String> loops)
     {
-        if(v.startsWith("="))
-            return "=" + qualify(label, v.substring(1), scope, loops);
+        String t = v.trim();
 
-        if(v.length() >= 2 && v.startsWith("'") && v.endsWith("'"))
-            return v;
+        if(t.startsWith("="))
+        {
+            String e = repairExpression(t.substring(1));
+            checkSyntax(label, e);
+            return "=" + qualify(label, e, scope, loops);
+        }
 
-        if(NUMBER.matcher(v).matches())
-            return v;
+        Matcher m = SINGLE_REF.matcher(t);
 
-        if(REF.matcher(v).matches())
-            qualifyPath(label, v, v, v.length(), scope, loops); // check only, input stays bare
+        if(m.matches())
+        {
+            String ref = checkedName(m.group(1));
+            qualifyPath(label, ref, ref, ref.length(), scope, loops);
+            return ref;
+        }
 
-        return v;
+        if(NUMBER.matcher(t).matches() || t.equals("true") || t.equals("false"))
+            return "=" + t;
+
+        boolean known = REF.matcher(t).matches()
+            && (scope.contains(t) || t.startsWith("goal.") || t.startsWith("belief.") || t.startsWith("loop."));
+
+        if(known)
+        {
+            if(type.equals("REASONING") || type.equals("STATE"))
+            {
+                qualifyPath(label, t, t, t.length(), scope, loops);
+                return t;
+            }
+
+            throw new IllegalArgumentException("Step " + label + ": \"" + t + "\" is plain text. "
+                + "To pass the value of " + t + " write \"${" + t + "}\"; otherwise write a sentence.");
+        }
+
+        String e = textToExpression(v);
+        checkSyntax(label, e);
+        return "=" + qualify(label, e, scope, loops);
     }
 
-    /** Checks all identifiers of the expression against the scope and adds the runtime prefix. */
     private static String qualify(String label, String expression, Set<String> scope, List<String> loops)
     {
         Matcher m = TOKEN.matcher(expression);
@@ -604,27 +797,25 @@ public class CreatePlanDataFlowPrompt
         while(m.find())
         {
             String token = m.group();
+
             String replacement = token.startsWith("\"")
-                ? token.replace("\r", "").replace("\n", "\\n") // raw line breaks are invalid in Java strings
+                ? token.replace("\r", "").replace("\n", "\\n")
                 : qualifyPath(label, token, expression, m.end(), scope, loops);
 
             m.appendReplacement(out, Matcher.quoteReplacement(replacement));
         }
 
         m.appendTail(out);
-
         return out.toString();
     }
 
-    private static String qualifyPath(String label, String path, String text, int end,
-        Set<String> scope, List<String> loops)
+    private static String qualifyPath(String label, String path, String text, int end, Set<String> scope, List<String> loops)
     {
         if(KEYWORDS.contains(path))
             return path;
 
         String[] p = path.split("\\.");
 
-        // plain function call such as foo(...)
         if(p.length == 1 && end < text.length() && text.charAt(end) == '(')
             return path;
 
@@ -635,34 +826,41 @@ public class CreatePlanDataFlowPrompt
         {
             case "goal":
             case "belief":
+            {
                 if(p.length < 2)
                     throw new IllegalArgumentException("Step " + label + ": incomplete reference '" + path + "'.");
 
                 return path;
+            }
 
             case "loop":
+            {
                 if(p.length != 3 || !loops.contains(p[1]) || !(p[2].equals("counter") || p[2].equals("max")))
                     throw new IllegalArgumentException("Step " + label + ": invalid loop reference '" + path
                         + "'. Only loop.<name>.counter / .max of an enclosing loop (here: " + loops + ") are allowed.");
 
                 return path;
+            }
 
             case "plan":
-                // already qualified: only check the scope
+            {
                 if(p.length < 2 || !scope.contains(p[1]))
                     throw new IllegalArgumentException(notInScope(label, p.length < 2 ? path : p[1], scope));
 
                 return path;
+            }
 
             case "context":
                 throw new IllegalArgumentException("Step " + label + ": '" + path
                     + "' is not a valid prefix. Write the bare output name; the compiler adds the prefix.");
 
             default:
+            {
                 if(!scope.contains(p[0]))
                     throw new IllegalArgumentException(notInScope(label, p[0], scope));
 
                 return PLAN_PREFIX + path;
+            }
         }
     }
 
@@ -676,71 +874,44 @@ public class CreatePlanDataFlowPrompt
 
     // --------------------------------------------------------------- syntax
 
-    /** Form of an input (scope is checked later, in walk()). */
-    private static void checkInputForm(String label, String v)
+    protected static void checkSyntax(String label, String expression)
     {
-        if(v.isBlank())
-            throw new IllegalArgumentException("Step " + label + ": empty input.");
-
-        if(v.startsWith("="))
-        {
-            checkSyntax(label, v.substring(1));
-            return;
-        }
-
-        if(v.length() >= 2 && v.startsWith("'") && v.endsWith("'"))
-            return;
-
-        if(NUMBER.matcher(v).matches() || v.equals("true") || v.equals("false"))
-            return;
-
-        if(REF.matcher(v).matches())
-        {
-            if(v.matches("arg[0-9]+") || v.startsWith("context.") || v.startsWith("plan."))
-                throw new IllegalArgumentException("Step " + label + ": input '" + v
-                    + "' is a runtime path. Use the bare semantic name of the producer.");
-
-            return;
-        }
-
-        throw new IllegalArgumentException("Step " + label + ": invalid input " + v
-            + ". Use a reference, 'literal', number, true/false, or =expression.");
-    }
-
-    private static void checkSyntax(String label, String expression)
-    {
-        String e = expression.trim();
-
-        if(e.isEmpty())
+        if(expression == null || expression.isBlank())
             throw new IllegalArgumentException("Step " + label + ": empty expression.");
 
-        // String contents are irrelevant for the structural checks.
-        String s = JAVA_STRING.matcher(e).replaceAll("S");
+        String e = expression.trim();
 
-        if(s.contains(";"))
-            throw new IllegalArgumentException("Step " + label + ": expression must be a single expression without ';'.");
+        String masked = JAVA_STRING.matcher(e).replaceAll("STRING");
 
-        if(s.contains("\""))
+        if(masked.contains("'"))
+            throw new IllegalArgumentException("Step " + label + ": use double quotes for strings in expressions, e.g. \"text\", not 'text'.");
+
+        if(masked.contains(";"))
+            throw new IllegalArgumentException("Step " + label + ": expressions must not contain ';'.");
+
+        if(masked.contains("\""))
             throw new IllegalArgumentException("Step " + label + ": unbalanced double quotes in expression.");
 
-        if(s.contains("'"))
-            throw new IllegalArgumentException("Step " + label + ": use double quotes for strings in expressions.");
+        if(masked.matches("(?s).*(^|[^=!<>])=([^=]|$).*"))
+            throw new IllegalArgumentException("Step " + label + ": assignments are not allowed in expressions.");
 
-        if(s.matches("(?s).*(^|[^=!<>])=([^=]|$).*"))
-            throw new IllegalArgumentException("Step " + label + ": assignment is not allowed in expressions.");
+        if(masked.matches("(?s).*(\\bnew\\b|->).*"))
+            throw new IllegalArgumentException("Step " + label + ": 'new' and lambdas are not allowed in expressions.");
 
         int depth = 0;
 
-        for(char c : s.toCharArray())
+        for(int i = 0; i < masked.length(); i++)
         {
+            char c = masked.charAt(i);
+
             if(c == '(')
                 depth++;
             else if(c == ')' && --depth < 0)
-                break;
+                throw new IllegalArgumentException("Step " + label + ": unbalanced parentheses.");
         }
 
         if(depth != 0)
-            throw new IllegalArgumentException("Step " + label + ": unbalanced parentheses in expression.");
+            throw new IllegalArgumentException("Step " + label + ": unbalanced parentheses.");
     }
 
     // --------------------------------------------------------------- prompt
@@ -761,126 +932,198 @@ public class CreatePlanDataFlowPrompt
         }
 
         m.appendTail(sb);
-
         return sb.toString();
     }
 
-    // NOTE: the examples below use an unrelated domain (file upload with retries)
-    // on purpose, so that the prompt is not tuned to a concrete application.
+    // The examples use an unrelated domain (file upload with retries) on purpose.
     private static final String PROMPT_TEMPLATE = """
     You are the operationalization stage of a two-phase planner.
 
     The strategic plan below is FINAL and cannot be changed. Every step has
-    an "id". Your job is to make the plan EXECUTABLE without changing its
-    structure: complete arguments for every tool call, literals and derived
-    expressions for values that do not exist yet, and precise Java
-    expressions for conditions, loops and state changes.
+    an "id" (equal to its name). Your job is to make the plan executable
+    without changing its structure: complete arguments for every tool call,
+    and precise Java expressions for conditions, loops and state changes.
 
-    Return a PATCH: a list of entries {"id", "inputs", "exp"}.
-    "id" is the "id" field of a step in the plan; it equals the step's name.
+    Return a PATCH: a list of entries {"id", "inputs", "problem", "exp"}.
     Do not return the plan itself.
 
-    FORMAT (illustration with an unrelated example)
-    {"steps": [ {"id": "announceStart", "inputs": ["=\\"Starting upload of \\" + goal.fileName + \\" (max. \\" + goal.maxRetries + \\" attempts).\\""]},
-                {"id": "retryLoop", "exp": "!uploadDone && loop.retryLoop.counter < goal.maxRetries"},
-                {"id": "markDone", "inputs": [], "exp": "true"} ]}
-    - "id" must be an id from the plan. Never invent ids, never repeat an id.
-    - Include an entry for EVERY TOOL, SUBGOAL and STATE (the compiler binds
-      inputs by position; a missing entry means the call has no arguments
-      and fails at runtime) and for every step where you set "exp".
-      Omit entries for all other steps.
-    - An entry may contain "inputs", "exp", or both. Nothing else.
-    - Strings must not contain line breaks; use \\n inside strings.
+    IMPORTANT REPAIR RULE
+    When correcting a validation error, preserve the existing strategic plan
+    exactly. Preserve all step ids, step order, nesting, step types and
+    responsibilities.
 
-    WORKFLOW (go through the plan in execution order)
-    For every TOOL / SUBGOAL:
-      1. Look up its parameters in AVAILABLE TOOLS / AVAILABLE GOALS.
-      2. For each parameter, in declared order, decide what value it needs
-         (read the step description: it says what is displayed/asked/done).
-      3. Pick the source of that value (see INPUT FORMS).
-      4. If the value is text for the user and no ready text exists, it
-         MUST be created as a literal or an expression, as a complete
-         sentence. A tool that expects a message is never called with a
-         bare number or with [].
-    For every STATE: "exp" is mandatory. It computes the value stored under
-    the step's "output" from the step description (e.g. "Set done to false"
-    becomes "false", a flag becomes a boolean expression). "inputs" lists
-    exactly the variables used in "exp" (often []).
-    For every CONDITION / LOOP: write "exp" if the sentence in "condition"
-    can be made precise with values in scope (see EXPRESSIONS).
+    Only change the field that is responsible for the reported error.
+    Never move a field from one step to another step.
+    Never move "problem" from a TOOL/STATE/CONDITION/etc. to a REASONING step.
+    Never move "exp" from one step to another.
+    Never create a new step to hold a field.
+    Never delete or reorder steps as a repair strategy.
 
-    INPUT FORMS (only on TOOL, REASONING, SUBGOAL, STATE)
-    "inputs" is a JSON array of strings. Every entry is exactly one of:
-    1. REFERENCE: the "output" name of an EARLIER step in scope, a goal or
-       belief value exactly as listed under AVAILABLE CONTEXT
-       (e.g. goal.fileName), or loop.<loop-name>.counter /
-       loop.<loop-name>.max of an enclosing loop.
-    2. LITERAL: 'text' in single quotes (e.g. "'Upload finished.'"), a
-       number, true or false. A text in double quotes is only allowed
-       inside an expression that starts with "=".
-    3. EXPRESSION: "=" followed by one Java expression, when the value must
-       be derived from existing values, e.g. a message that contains a
-       number or a name. Strings inside an expression use double quotes,
-       which must be escaped in JSON:
-         "=\\"Uploaded \\" + goal.fileName + \\" after \\" + loop.retryLoop.counter + \\" retries.\\""
-    Never write arg0, plan.x or context.x. A consumer uses exactly the name
-    of its producer.
-    - TOOL: one input per parameter, in declared order. [] only if the tool
-      has no parameters.
-    - SUBGOAL: one input per parameter of the goal, in declared order.
-    - REASONING: only the information needed for the described result.
-      Never give it a value it must not reveal.
-    Write literal and expression texts in the language of the plan's
-    descriptions and the goal.
-    Texts shown to the user must not reveal hidden information (for example
-    a reference solution or credential the user is supposed to find out)
-    unless the step description says the outcome is announced.
+    If a field is not allowed on a step, REMOVE that field from that step.
+    Do not try to preserve it by placing it somewhere else.
 
-    EXPRESSIONS ("exp" and "=" inputs)
-    A single Java expression evaluated at runtime instead of asking a model.
-    Allowed: + - * / && || ! == != < <= > >= .equals(...), the ternary
-    operator (cond ? a : b), and parentheses.
-    "exp" is allowed ONLY on:
-    - STATE: computes the value stored under its "output". Mandatory.
-    - CONDITION: boolean, true selects "then".
-    - LOOP: boolean, true repeats the loop; evaluated after the body, so
-      loop.<name>.counter is the number of completed iterations. Only if
-      the LOOP already has a "condition".
-    An "exp" on a CONDITION or LOOP must express the COMPLETE sentence of
-    its "condition", not a part of it, and must reference at least one
-    value (a constant such as true/false is rejected). Pay attention to the
-    direction: "x is false" means !x, "x is true" means x. If any part
-    cannot be expressed with values in scope, or if the sentence needs
-    interpretation, omit "exp" completely (the condition is then evaluated
-    by reasoning). Never shorten a condition. Do not invent a value to make
-    an expression possible.
-    Variables: outputs of earlier steps in scope, goal.<name>,
-    belief.<name>, loop.<loop-name>.counter / .max of enclosing loops.
-    Write outputs of earlier steps as bare names (uploadStatus); the
-    compiler adds the runtime prefix. Do not write plan.x or context.x.
-    Rules: exactly one expression, no assignment, no semicolon; strings in
-    double quotes compared with equals ("FAILED".equals(uploadStatus));
-    boolean for CONDITION and LOOP; string concatenation with +.
-    Example: "FAILED".equals(uploadStatus)
-    Example: !uploadDone && loop.retryLoop.counter < goal.maxRetries
+    FORMAT (unrelated example)
+    {"steps": [
+      {"id": "announceStart", "inputs": ["Starting upload of ${goal.fileName} (max. ${goal.maxRetries} attempts)."]},
+      {"id": "sendReport",    "inputs": ["${uploadStatus}"]},
+      {"id": "notifyResult",  "inputs": ["=uploadOk ? \\"Done.\\" : \\"Failed.\\""]},
+      {"id": "retryLoop",     "exp": "!uploadDone && loop.retryLoop.counter < goal.maxRetries"},
+      {"id": "checkStatus",   "exp": "\\"READY\\".equals(uploadStatus)"},
+      {"id": "markDone",      "inputs": [], "exp": "true"}
+    ]}
 
-    SCOPING (checked by the compiler, a violation is rejected)
-    - A value can only be used by steps after its producer.
-    - A value produced in only one branch of a CONDITION is not available
-      after it, unless both branches produce it under the same name, it was
-      produced before the CONDITION, or the other branch ends with FAIL.
-    - Values produced in a LOOP body are available later in the body, in the
-      loop condition and after the loop. Exception: a value produced in only
-      one branch of a CONDITION inside the body follows the rule above.
-    - Before using a name, check that a step before it in scope really has
-      it as "output". If it has not, omit "exp" instead of using the name.
-    - Outputs of REASONING and STATE steps may be used anywhere after the plan
-      starts (they default to false / 0 / empty text until produced). Outputs of
-      TOOL and SUBGOAL steps follow the branch rules above.
+    REQUIRED ENTRIES
+    The patch MUST contain exactly one entry for each of these ids: {{REQUIRED}}
 
-    If a required input has no legitimate source, derive it with a literal
-    or expression from existing values. Never reference a name that nobody
-    produces.
+    In addition, the following Phase-2 fields are mandatory:
+
+    - TOOL and SUBGOAL entries need "inputs" (one per parameter in declared
+      order; [] only if they have no parameters).
+    - STATE entries need "exp".
+    - EVERY CONDITION step that has a Phase-1 "condition" MUST have an "exp".
+    - EVERY LOOP step that has a Phase-1 "condition" MUST have an "exp".
+
+    For CONDITION and LOOP steps, "condition" and "exp" have different roles:
+    "condition" is the Phase-1 natural-language description; "exp" is its
+    executable Phase-2 implementation.
+
+    The existence of a Phase-1 "condition" therefore ALWAYS requires an
+    "exp" entry in Phase 2. Never omit such an entry.
+
+    The "exp" MUST implement the COMPLETE meaning of the Phase-1 "condition".
+    Do not weaken, shorten or replace the condition with only one of its parts.
+
+    Before returning the patch, inspect every CONDITION and LOOP in the
+    strategic plan and verify that every one with a "condition" has a
+    corresponding patch entry containing "exp".
+
+    A CONDITION or LOOP does NOT need to be included merely because it exists.
+    It MUST be included when it has a Phase-1 "condition".
+
+    REASONING steps already contain "problem" and their inputs from the plan;
+    add an entry for them only to change "inputs" or to replace "problem".
+
+    Never invent or repeat ids. No line breaks inside strings.
+
+    IMPORTANT FIELD OWNERSHIP
+    Fields belong to their original step. Keep them there.
+
+    - "problem" is ONLY for REASONING steps.
+    - "exp" is ONLY for STATE, CONDITION and LOOP steps.
+    - "inputs" is only for TOOL, REASONING, SUBGOAL and STATE steps.
+    If a validation error says that a field is not allowed, remove the field
+    from that step. Do not move the field to another step.
+
+    INPUT FORMS ("inputs" entries). Decide with this list, top to bottom:
+
+    1. A VALUE: the whole entry is one placeholder.
+       "${userInput}"   "${goal.fileName}"   "${loop.retryLoop.counter}"
+
+    2. A CALCULATION: the entry starts with "=" followed by ONE Java
+       expression (arithmetic, comparison, logic, choice between two texts,
+       numbers, booleans).
+       "=goal.maxRetries - loop.retryLoop.counter"
+       "=uploadOk ? \\"Done.\\" : \\"Failed.\\""
+
+    3. TEXT: every other entry is text. Write a natural, complete sentence
+       with no quotes and no "+". Insert values as ${name}.
+       "Upload finished."   "Failed after ${loop.retryLoop.counter} retries."
+
+    A name written without ${...} is plain text, not a value.
+    Inside ${...} write exactly one name: a bare output name (userInput),
+    goal.x, belief.x or loop.<name>.counter. No operators, no ?:, no calls.
+    Never plan.x, context.x, arg0.
+
+    Write texts in the language of the plan. A text shown to the user must
+    not reveal hidden information (a secret, solution or credential) unless
+    the step description says that the outcome is announced.
+
+    PROBLEM (only when replacing the plan's problem)
+
+    Plain text with values as ${name}:
+    "Determine whether ${sensorReading} is outside ${normalRange}."
+
+    Prefer to pass needed values via "inputs".
+
+    JAVA EXPRESSIONS ("exp" and "=" inputs)
+
+    A single Java expression, evaluated at runtime.
+
+    - Strings in double quotes, compared as CONSTANT.equals(value):
+      "FAILED".equals(uploadStatus)    never: uploadStatus == "FAILED"
+    - A SELECTION result is compared with an option exactly as listed in the
+      plan's "options" (same spelling and case).
+    - Booleans: x, !x    never: x == true, x == false
+    - Allowed: + - * / && || ! == != < <= > >= .equals(...) ?: parentheses.
+    - Not allowed: assignment, semicolon, new, lambda, cast.
+    - Values are bare names, goal.x, belief.x, loop.<name>.counter.
+    - "exp" is allowed ONLY on STATE, CONDITION and LOOP.
+    - STATE "exp" computes its output.
+    - CONDITION "exp" must evaluate to a boolean; true selects "then".
+    - LOOP "exp" must evaluate to a boolean; true repeats the loop.
+    - For a LOOP, loop.<name>.counter is the number of completed iterations
+      when the condition is evaluated after the loop body.
+
+    - An "exp" on CONDITION or LOOP MUST express the COMPLETE sentence of
+      the step's Phase-1 "condition".
+    - Translate natural-language conditions into valid Java expressions.
+    - "x is false" means !x.
+    - "x is true" means x.
+    - "x is equal to y" means x == y.
+    - For string constants use CONSTANT.equals(value).
+    - Preserve every logical part of the Phase-1 condition.
+    - Do not omit a condition part merely because another part is sufficient
+      in the current situation.
+    - Do not replace a condition with a weaker or more convenient condition.
+    - A constant condition is rejected.
+
+    If a condition cannot be expressed from the values in scope, do NOT omit
+    the "exp" and do NOT invent a value. The patch is incomplete and must not
+    be finalized.
+
+    - A STATE "exp" follows the step description ("Set done to true" -> true).
+      Its "inputs" list exactly the variables used in "exp" (often []).
+
+    WRONG -> RIGHT
+      "userInput"                       -> "${userInput}"     (when the value is meant)
+      "'You win, ' + goal.name"         -> "You win, ${goal.name}."
+      "=Game over"                      -> "Game over."
+      "42"                              -> "=42"
+      exp: "inputType == \\"GUESS\\""   -> "\\"GUESS\\".equals(inputType)"
+      exp: "done == false && ..."       -> "!done && ..."
+
+    SCOPING
+
+    - A value can only be used after its producer.
+    - Outputs of REASONING and STATE steps may be used anywhere (they default
+      to false / 0 / empty text until produced).
+    - Outputs of TOOL and SUBGOAL steps are not available after a CONDITION
+      branch or LOOP body that alone produced them, unless both branches
+      produce the same name or the other branch ends with FAIL.
+    - goal.*, belief.* and enclosing loop values may be referenced directly.
+    - Never reference a name that nobody produces.
+
+    FINAL COMPLETENESS CHECK
+
+    Before returning the JSON patch, perform this checklist internally:
+
+    1. Find every CONDITION step in the strategic plan.
+       If it has "condition", the patch contains its id and an "exp".
+
+    2. Find every LOOP step in the strategic plan.
+       If it has "condition", the patch contains its id and an "exp".
+
+    3. For every such "exp", verify that it implements the COMPLETE
+       Phase-1 condition.
+
+    4. Verify that no CONDITION or LOOP with a Phase-1 "condition" was
+       accidentally omitted merely because no "inputs" were needed.
+
+    5. Verify that every STATE has an "exp".
+
+    6. Verify that every TOOL and SUBGOAL has "inputs".
+
+    Do not return the patch until all six checks pass.
 
     ================ TASK ================
 
@@ -915,6 +1158,7 @@ public class CreatePlanDataFlowPrompt
             "properties": {
               "id": { "type": "string" },
               "inputs": { "type": "array", "items": { "type": "string" } },
+              "problem": { "type": "string" },
               "exp": { "type": "string" }
             },
             "additionalProperties": false

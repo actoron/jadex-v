@@ -22,14 +22,18 @@ public class StrategicActionStep extends StrategicStep
     protected String tool;
     protected String goal;
     protected String exp;
+    protected String problem;
 
     protected List<String> inputs;
     protected String output;
 
     protected ReasoningType reasoningType;
+    protected String options;
 
     protected Map<String, String> inputmapping;
     protected String resultmapping;
+
+    protected boolean compiled;
 
     public StrategicActionStep(String name, String description, StepType type, String tool,
         String goal, List<String> inputs, String output, Map<String, String> inputmapping, String resultmapping)
@@ -42,8 +46,7 @@ public class StrategicActionStep extends StrategicStep
         this.output = output;
         this.inputmapping = inputmapping;
         this.resultmapping = resultmapping;
-
-        System.out.println("created step: "+name+" "+inputmapping);
+        //System.out.println("created step: "+name+" "+inputmapping);
     }
 
     public StepType getType()
@@ -106,6 +109,16 @@ public class StrategicActionStep extends StrategicStep
         this.reasoningType = reasoningType;
     }
 
+    public String getOptions()
+    {
+        return options;
+    }
+
+    public void setOptions(String options)
+    {
+        this.options = options;
+    }
+
     public Map<String, String> getInputMapping()
     {
         return inputmapping;
@@ -135,6 +148,16 @@ public class StrategicActionStep extends StrategicStep
     public void setExp(String exp)
     {
         this.exp = exp;
+    }
+
+    public String getProblem()
+    {
+        return problem;
+    }
+
+    public void setProblem(String problem)
+    {
+        this.problem = problem;
     }
 
     @Override
@@ -168,7 +191,7 @@ public class StrategicActionStep extends StrategicStep
                 new SubgoalStep(goal, resultmapping);
 
             case REASONING ->
-                new ReasoningStep(getName(), reasoningType, resultmapping);
+                new ReasoningStep(reasoningType, problem, inputmapping, options, resultmapping);
 
             case STATE ->
                 new StateStep(getName(), getExp(), resultmapping);
@@ -177,4 +200,15 @@ public class StrategicActionStep extends StrategicStep
                 new FailStep(getName());
         };
     }
+
+    public boolean isCompiled() 
+    { 
+        return compiled; 
+    }
+    
+    public void setCompiled(boolean compiled) 
+    { 
+        this.compiled = compiled; 
+    }
+
 }

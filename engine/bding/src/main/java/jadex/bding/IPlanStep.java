@@ -18,7 +18,7 @@ public interface IPlanStep
 
     public IFuture<PlanStepExecution> execute(IComponent agent, PlanExecutionContext context);
 
-    public Map<String, String> getParameterMapping();
+    public Map<String, String> getInputMapping();
 
     public String getResultMapping();
 }

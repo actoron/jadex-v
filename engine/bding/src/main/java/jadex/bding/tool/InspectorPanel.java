@@ -549,13 +549,13 @@ public class InspectorPanel extends JPanel
 
         addSection("Parameter mapping");
 
-        if(step.getMapping() == null || step.getMapping().isEmpty())
+        if(step.getInputMapping() == null || step.getInputMapping().isEmpty())
         {
             addField("Mapping", "None");
         }
         else
         {
-            for(Map.Entry<String, String> entry : step.getMapping().entrySet())
+            for(Map.Entry<String, String> entry : step.getInputMapping().entrySet())
             {
                 addField(entry.getKey(), entry.getValue());
             }

@@ -7,16 +7,11 @@ import jadex.bding.IPlanStep;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.javaparser.SJavaParser;
 import jadex.micro.llmcall2.LlmHelper;
 
 public class ToolCallStep extends PlanStep
 {
     protected String toolname;
-
-    protected Map<String, String> mapping = new LinkedHashMap<>();
-
-    protected String resultmapping;
 
     public ToolCallStep(String toolname, Map<String, String> mapping, String resultmapping)
     {
@@ -24,10 +19,9 @@ public class ToolCallStep extends PlanStep
 
         this.toolname = toolname;
 
-        if(mapping != null)
-            this.mapping.putAll(mapping);
-
-        this.resultmapping = resultmapping;
+        //if(inputmapping != null)
+        //    this.mapping.putAll(mapping);
+        // this.resultmapping = resultmapping;
     }
 
     @Override
@@ -39,33 +33,7 @@ public class ToolCallStep extends PlanStep
 
         try
         {
-            Map<String, Object> args = new LinkedHashMap<>();
-
-            for(Map.Entry<String, String> entry : mapping.entrySet())
-            {
-                String source = entry.getKey();
-
-                String target = entry.getValue();
-
-                Object value;
-
-
-                if(source.startsWith("="))
-                {
-                    value = SJavaParser.evaluateExpression(source.substring(1), name -> context.get(name));
-                }
-                else if(context.has(source))
-                {
-                    value = context.get(source);
-                }
-                else
-                {
-                    System.out.println("Parameter not found: "+source);
-                    throw new RuntimeException("Parameter not found: "+source);
-                }
-
-                args.put(target, value);
-            }
+            Map<String, Object> args = resolveInputMapping(context);
 
             exe.setInputs(args);
 
@@ -123,13 +91,4 @@ public class ToolCallStep extends PlanStep
         return toolname;
     }
 
-    public Map<String, String> getMapping()
-    {
-        return mapping;
-    }
-
-    public String getResultMapping()
-    {
-        return resultmapping;
-    }
 }

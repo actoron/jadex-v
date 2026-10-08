@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jadex.bding.IReasoner.ReasoningType;
 import jadex.bding.impl.reasoner.ValidationResult;
 
 /**
@@ -235,13 +236,25 @@ public class StrategicPlanValidator
 
     protected static void validateReasoning(StrategicActionStep action, ValidationResult result)
     {
-        // The semantic operation itself is represented by the description.
         if(action.getDescription() == null || action.getDescription().isBlank())
             result.error(action.getName(), "REASONING without semantic operation.");
 
-        // A reasoning step exists to produce a value.
+        if(action.getProblem() == null || action.getProblem().isBlank())
+            result.error(action.getName(), "REASONING without problem.");
+
         if(action.getOutput() == null || action.getOutput().isBlank())
             result.error(action.getName(), "REASONING without output.");
+
+        ReasoningType type = action.getReasoningType();
+
+        if(type == null)
+        {
+            result.error(action.getName(), "REASONING without reasoningType.");
+            return;
+        }
+
+        if(type == ReasoningType.SELECTION && (action.getOptions() == null || action.getOptions().isEmpty()))
+            result.error(action.getName(), "SELECTION reasoning requires a non-empty options array.");
     }
 
 
