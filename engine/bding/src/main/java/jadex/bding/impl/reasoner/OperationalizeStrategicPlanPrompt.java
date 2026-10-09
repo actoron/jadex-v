@@ -6,7 +6,7 @@ import jadex.bding.impl.RIntention;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanFormatter;
 import jadex.bding.impl.planbody.strategic.StrategicPlanParser;
-import jadex.bding.impl.planbody.strategic.StrategicPlanPhase2Validator;
+import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
 import jadex.core.IComponent;
 
 public class OperationalizeStrategicPlanPrompt 
@@ -1074,7 +1074,7 @@ public class OperationalizeStrategicPlanPrompt
             prompt,
             SCHEMA,
             StrategicPlanParser::parse,
-            StrategicPlanPhase2Validator::validate);
+            StrategicPlanValidator::validatePhase2);
     }
 
 

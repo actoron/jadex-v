@@ -52,7 +52,7 @@ public class Main2
         @OnStart
         protected void onStart()
         {
-            String gamegoal = """
+            /*String gamegoal = """
                 Play a "Who Am I?" game with a user.
 
                 Choose a famous person as the secret person and store the chosen person
@@ -68,7 +68,23 @@ public class Main2
 
                 The user wins if they correctly identify the secret person within 10
                 questions. Otherwise, the agent wins.
-                """;
+                """;*/
+            
+            String gamegoal = """ 
+                Play an entertaining "Who Am I?" game with a user. Choose a famous person as the 
+                secret person and store the chosen person as a parameter of the goal. The secret 
+                person is private state of the goal and must not be revealed to the user. The user 
+                may ask up to 10 yes/no questions and may request hints at any time. Hints do not 
+                count as questions. Answer questions truthfully. Use natural, friendly and varied 
+                language instead of replying with only "yes" or "no". Add a brief explanation, 
+                an interesting fact, or a playful comment when appropriate, but never reveal the 
+                person's identity indirectly. When the user requests a hint, provide a useful but 
+                not overly revealing clue about the secret person. If the user asks for more hints, 
+                gradually make them more specific. React warmly to guesses, celebrate correct guesses, 
+                and keep the game engaging without giving away the answer prematurely. The user wins 
+                if they correctly identify the secret person within 10 questions. Otherwise, 
+                the agent wins and reveals the person's identity when the game ends. 
+            """;
 
             agent.getFeature(IBDINGAgentFeature.class)
                 .dispatchTopLevelGoal(gamegoal)
@@ -205,7 +221,9 @@ public class Main2
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false, true);
 
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "gemma4:31b", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "Qwen3.8-27B-FP8", false, true);
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
 

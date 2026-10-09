@@ -101,7 +101,7 @@ public class RGoal extends RIdElement
 
             while(true)
             {
-                Map<String, Object> context = RIdElement.createContext(this, component);
+                Map<String, Object> context = RIdElement.createContext(component, this);
 
                 Set<Intention> intentions = getGoal().getIntentions();
 
@@ -230,7 +230,7 @@ public class RGoal extends RIdElement
     public IFuture<GoalState> evaluateGoalState()
     {
         IComponent component = IComponentManager.get().getCurrentComponent();
-        Map<String, Object> context = RIdElement.createContext(this, component);
+        Map<String, Object> context = RIdElement.createContext(component, this);
         return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, context);
     }
 

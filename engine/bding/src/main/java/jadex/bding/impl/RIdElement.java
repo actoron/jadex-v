@@ -1,9 +1,9 @@
 package jadex.bding.impl;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import jadex.collection.PathMap;
 import jadex.core.IComponent;
 
 public class RIdElement 
@@ -64,17 +64,22 @@ public class RIdElement
         return true;
     }
 
-    // todo: put in parameters of all goals in hierachy (plans?!)
-    public static Map<String, Object> createContext(RGoal goal, IComponent agent)
+    public static Map<String, Object> createContext(IComponent agent, RGoal goal)
     {
-        Map<String, Object> context = new HashMap<>();
+        Map<String, Object> params = new PathMap();
+
+        for(String name: goal.getParameters().keySet())
+        {
+            params.put("goal."+name, goal.getParameters().get(name));
+        }
 
         Map<String, Object> bels = BeliefExtractor.extract(agent);
-        bels.keySet().forEach(name -> context.put("belief." + name, bels.get(name)));
+        for(String name: bels.keySet())
+        {
+            params.put("belief."+name, bels.get(name));
+        }
 
-        goal.getParameters().keySet().forEach(name -> context.put("goal." + name, goal.getParameters().get(name)));
-        
-        return context;
+        return params;
     }
-    
+ 
 }

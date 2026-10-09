@@ -17,6 +17,7 @@ import jadex.bding.impl.RIntention;
 import jadex.bding.impl.RPlan;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanCompiler;
+import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -250,8 +251,10 @@ public class LlmReasoner implements IReasoner
 
             String response = LlmChatAgent.getResponse(res);
 
+            System.out.println("========== LLM PROMPT ==========");
+            System.out.println(abbreviate(prompt, 400));
             System.out.println("========== LLM RESPONSE ==========");
-            System.out.println(response);
+            System.out.println(abbreviate(response, 400));
             System.out.println("========== END LLM RESPONSE ==========");
 
             return LlmHelper.cleanJsonResponse(response);
@@ -260,6 +263,20 @@ public class LlmReasoner implements IReasoner
         {
             throw new RuntimeException("No LLM chat service available", e);
         }
+    }
+
+    private static String abbreviate(String text, int maxLength)
+    {
+        if(text == null)
+            return "null";
+
+        text = text.replace("\n", "\\n")
+                .replace("\r", "");
+
+        if(text.length() <= maxLength)
+            return text;
+
+        return text.substring(0, maxLength) + "...";
     }
 
     public String ask(String method, String systemprompt, String prompt, String schema, RGoal goal, Intention intention)
@@ -625,7 +642,12 @@ public class LlmReasoner implements IReasoner
         System.out.println("Strategic plan phase 2: "+StrategicContainer.toTreeString(res));
 
         System.out.println("context is: "+context.keySet()+" "+context);
-        StrategicPlanCompiler.compile(res, context);
+        Map<String, Object> inits = StrategicPlanCompiler.compileWithDefaults(res, context);
+        res.setInits(inits);
+
+        ValidationResult val = StrategicPlanValidator.validatePhase3(res);
+        if(!val.isValid())
+            System.out.println("Plan not valid in phase 3: "+val);
 
         System.out.println("Strategic plan phase 3: "+StrategicContainer.toTreeString(res));
 

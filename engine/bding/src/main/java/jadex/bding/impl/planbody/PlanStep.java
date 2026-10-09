@@ -1,5 +1,6 @@
 package jadex.bding.impl.planbody;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -7,10 +8,13 @@ import jadex.bding.AgentModel;
 import jadex.bding.ICondition;
 import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
+import jadex.bding.impl.BeliefExtractor;
 import jadex.bding.impl.ExpressionCondition;
+import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RIdElement;
 import jadex.bding.impl.ReasonerCondition;
 import jadex.collection.PathMap;
+import jadex.core.IComponent;
 import jadex.javaparser.SJavaParser;
 
 public abstract class PlanStep extends RIdElement implements IPlanStep
@@ -54,13 +58,17 @@ public abstract class PlanStep extends RIdElement implements IPlanStep
             return new ReasonerCondition(reasoner, condition, model);
     }
 
-    public static boolean isExpression(String condition)
+    public static boolean isExpression(String exp)
     {
-        return SJavaParser.isExpressionString(condition);
+        return exp.startsWith("=");
     }
 
     public static Object evaluateExpression(String exp, Map<String, Object> context)
     {
+        if(isExpression(exp))
+            exp = exp.substring(1);
+        else
+            System.out.println("Warning: found expression without expression marker: "+exp);
         return SJavaParser.evaluateExpression(exp, name -> context.get(name));
     }
 
@@ -80,7 +88,7 @@ public abstract class PlanStep extends RIdElement implements IPlanStep
 
             if(source.startsWith("="))
             {
-                value = SJavaParser.evaluateExpression(source.substring(1), name -> context.get(name));
+                value = PlanStep.evaluateExpression(source, context.getParameters());
             }
             else if(context.has(source))
             {
@@ -96,5 +104,21 @@ public abstract class PlanStep extends RIdElement implements IPlanStep
 
         return args;
     }
+
+     // todo: put in parameters of all goals in hierachy (plans?!)
+    /*public static Map<String, Object> createContext(RGoal goal, IComponent agent)
+    {
+        Map<String, Object> context = new HashMap<>();
+
+        
+
+
+        Map<String, Object> bels = BeliefExtractor.extract(agent);
+        bels.keySet().forEach(name -> context.put("belief." + name, bels.get(name)));
+
+        goal.getParameters().keySet().forEach(name -> context.put("goal." + name, goal.getParameters().get(name)));
+        
+        return context;
+    }*/
     
 }

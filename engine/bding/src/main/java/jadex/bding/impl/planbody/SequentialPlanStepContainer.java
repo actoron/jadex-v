@@ -27,6 +27,22 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
     {
         Future<PlanStepExecution> ret = new Future<>();
 
+        // todo: change init names in compiler to: plan.
+        Map<String, Object> inits = container.getInits();
+        if(inits!=null)
+        {
+            for(String name: inits.keySet())
+            {
+                String iname = "plan."+name;
+                if(!context.getParameters().containsKey(iname))
+                {
+                    context.set(iname, inits.get(name));
+                }
+            }
+
+            System.out.println("context with inits is: "+context.getParameters());
+        }
+
         executeStep(component, context, 0, ret);
 
         return ret;

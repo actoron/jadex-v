@@ -13,7 +13,9 @@ import jadex.future.IFuture;
 public class StrategicContainer extends StrategicStep
 {
     protected List<StrategicStep> steps;
-    
+
+    protected Map<String, Object> inits;
+
     protected String json;
 
     public StrategicContainer(String name, String description, List<StrategicStep> steps)
@@ -30,6 +32,16 @@ public class StrategicContainer extends StrategicStep
     public void setSteps(List<StrategicStep> steps)
     {
         this.steps = steps;
+    }
+
+    public Map<String, Object> getInits() 
+    {
+        return inits;
+    }
+
+    public void setInits(Map<String, Object> inits) 
+    {
+        this.inits = inits;
     }
 
     public String getJson()
@@ -85,11 +97,7 @@ public class StrategicContainer extends StrategicStep
             .append(" [")
             .append(getType(step));
 
-        if(step instanceof StrategicActionStep action && action.getType() == StepType.REASONING && action.getReasoningType() != null)
-            sb.append(": ").append(action.getReasoningType().name());
-
-        if(step instanceof StrategicActionStep action && action.getType() == StepType.TOOL)
-            sb.append(": ").append(action.getTool());
+        appendStepDetails(sb, step);
 
         sb.append("]");
 
@@ -103,13 +111,71 @@ public class StrategicContainer extends StrategicStep
         }
         else if(step instanceof StrategicLoopContainer loop)
         {
-            appendLoopProperties(sb, loop, childPrefix);
             appendContainer(sb, loop, childPrefix);
         }
         else if(step instanceof StrategicContainer nested)
         {
             appendContainer(sb, nested, childPrefix);
         }
+    }
+
+    protected static void appendStepDetails(StringBuilder sb, StrategicStep step)
+    {
+        if(step instanceof StrategicConditionContainer condition)
+        {
+            String exp = condition.getCondition();
+
+            if(exp != null && !exp.isBlank())
+                sb.append(": ").append(formatExpression(exp));
+        }
+        else if(step instanceof StrategicLoopContainer loop)
+        {
+            String condition = loop.getCondition();
+            String max = loop.getMax();
+
+            if(condition != null && !condition.isBlank())
+                sb.append(": ").append(formatExpression(condition));
+
+            if(max != null && !max.isBlank())
+                sb.append("; max=").append(max);
+        }
+        else if(step instanceof StrategicActionStep action
+            && action.getType() == StepType.STATE)
+        {
+            String output = action.getOutput();
+            String exp = action.getExp();
+
+            if(output != null && !output.isBlank())
+            {
+                sb.append(": ").append(output);
+
+                if(exp != null && !exp.isBlank())
+                    sb.append(" = ").append(formatExpression(exp));
+            }
+            else if(exp != null && !exp.isBlank())
+            {
+                sb.append(": ").append(formatExpression(exp));
+            }
+        }
+        else if(step instanceof StrategicActionStep action
+            && action.getType() == StepType.TOOL)
+        {
+            sb.append(": ").append(action.getTool());
+        }
+    }
+
+    protected static String formatExpression(String exp)
+    {
+        if(exp == null)
+            return "";
+
+        exp = exp.trim();
+
+        // Phase 3 marks Java expressions with a leading '='.
+        if(exp.startsWith("="))
+            exp = exp.substring(1).trim();
+
+        return exp;
     }
 
     protected static void appendLoopProperties(StringBuilder sb, StrategicLoopContainer loop, String prefix)

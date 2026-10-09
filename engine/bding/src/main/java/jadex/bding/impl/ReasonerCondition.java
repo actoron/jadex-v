@@ -34,4 +34,10 @@ public class ReasonerCondition implements ICondition
 
         return ret;
     }
+
+    @Override
+    public String toString() 
+    {
+        return "ReasonerCondition [question=" + question + "]";
+    }
 }

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jadex.bding.IReasoner.ReasoningType;
 import jadex.bding.impl.reasoner.ValidationResult;
@@ -13,7 +14,8 @@ import jadex.bding.impl.reasoner.ValidationResult;
  * Validates strategic plans.
  *
  * Phase 1: structure, semantic inputs/outputs; no expressions or mappings yet.
- * Phase 2: additionally expressions (mandatory on STATE) and, after compilation, mappings.
+ * Phase 2: additionally expressions and semantic data-flow.
+ * Phase 3: compiled runtime expressions and mappings.
  */
 public class StrategicPlanValidator
 {
@@ -48,6 +50,169 @@ public class StrategicPlanValidator
     {
         return validate(plan, true);
     }
+
+    /**
+     * Validates the plan after compilation.
+     *
+     * In phase 3 all runtime values which are evaluated by the expression
+     * parser must already be concrete Java expressions. This additionally
+     * checks for semantic input names which accidentally survived compilation.
+     */
+    public static ValidationResult validatePhase3(StrategicContainer plan)
+    {
+        ValidationResult result = new ValidationResult();
+
+        if(plan == null)
+        {
+            result.error(null, "Strategic plan is null.");
+            return result;
+        }
+
+        // Keep all structural/semantic checks from phase 2.
+        validateSequence(plan, new Ctx(true), result);
+
+        // Additional checks for the compiled representation.
+        validateCompiledReferences(plan, result);
+
+        return result;
+    }
+
+
+    protected static void validateCompiledReferences(StrategicContainer container, ValidationResult result)
+    {
+        if(container == null || container.getSteps() == null)
+            return;
+
+        for(StrategicStep step : container.getSteps())
+        {
+            if(step instanceof StrategicActionStep action)
+            {
+                validateCompiledAction(action, result);
+            }
+            else if(step instanceof StrategicConditionContainer condition)
+            {
+                validateCompiledExpression(condition.getCondition(), condition.getName(),
+                    "condition", null, result);
+
+                if(condition.getTrueContainer() != null)
+                    validateCompiledReferences(condition.getTrueContainer(), result);
+
+                if(condition.getFalseContainer() != null)
+                    validateCompiledReferences(condition.getFalseContainer(), result);
+            }
+            else if(step instanceof StrategicLoopContainer loop)
+            {
+                validateCompiledExpression(loop.getCondition(), loop.getName(),
+                    "condition", null, result);
+
+                validateCompiledExpression(loop.getMax(), loop.getName(),
+                    "max", null, result);
+
+                // Validate the loop body, NOT the loop itself.
+                validateCompiledReferences(loop, result);
+            }
+            else if(step instanceof StrategicContainer sequence)
+            {
+                validateCompiledReferences(sequence, result);
+            }
+        }
+    }
+
+
+    protected static void validateCompiledAction(StrategicActionStep action, ValidationResult result)
+    {
+        if(action.getType() == StepType.STATE)
+            validateCompiledExpression(action.getExp(), action.getName(), "exp", null, result);
+    }
+
+    protected static void validateCompiledExpression(String value, String name, String field,
+        StrategicActionStep action, ValidationResult result)
+    {
+        if(value == null || value.isBlank())
+            return;
+
+        if(!isRuntimeExpression(value))
+        {
+            result.error(name,
+                "Phase 3 value in " + field
+                + " is not a compiled Java expression: '" + value + "'.");
+        }
+    }
+
+    /**
+     * Checks whether a value is a compiled runtime expression.
+     *
+     * Phase 3 uses Java expression strings, therefore '=' is the marker
+     * introduced by the strategic plan compiler.
+     */
+    protected static boolean isRuntimeExpression(String value)
+    {
+        return value != null && value.trim().startsWith("=");
+    }
+
+
+    /**
+     * Checks whether one of the semantic inputs of an action survived inside
+     * a non-compiled string.
+     *
+     * Only complete identifier tokens are considered. Thus "userInputValue"
+     * does not accidentally match the input "userInput".
+     */
+    protected static boolean containsSemanticInputReference(String value, StrategicActionStep action)
+    {
+        if(action.getInputs() == null)
+            return false;
+
+        for(String input : action.getInputs())
+        {
+            if(input == null || input.isBlank())
+                continue;
+
+            String semanticName = extractSemanticName(input);
+
+            if(semanticName != null && containsToken(value, semanticName))
+                return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Extracts the semantic name from an input declaration.
+     *
+     * Examples:
+     *   userInput       -> userInput
+     *   plan.userInput  -> userInput
+     *   goal.question   -> question
+     *
+     * Expressions are not semantic names and are ignored here.
+     */
+    protected static String extractSemanticName(String input)
+    {
+        String value = input.trim();
+
+        if(value.startsWith("="))
+            return null;
+
+        int dot = value.lastIndexOf('.');
+        if(dot >= 0)
+            value = value.substring(dot + 1);
+
+        if(!value.matches("[A-Za-z_][A-Za-z0-9_]*"))
+            return null;
+
+        return value;
+    }
+
+
+    protected static boolean containsToken(String text, String token)
+    {
+        return Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(token) + "(?![A-Za-z0-9_])")
+            .matcher(text)
+            .find();
+    }
+
 
     protected static ValidationResult validate(StrategicContainer plan, boolean phase2)
     {
@@ -330,7 +495,7 @@ public class StrategicPlanValidator
             result.error(name, "Semantic output must not be empty.");
 
         if(ctx.phase2)
-            return; // expressions and mappings are allowed (and produced) in phase 2/3
+            return;
 
         // The following fields belong to later phases.
         if(action.getInputMapping() != null && !action.getInputMapping().isEmpty())

@@ -46,7 +46,6 @@ public abstract class StrategicStep extends ModelElement
         return ret;
     }
 
-
     public IPlanStep getExecutableStep()
     {
         return executableStep;

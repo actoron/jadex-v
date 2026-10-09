@@ -265,8 +265,6 @@ public class StrategicPlanParser
         return ret;
     }
 
-   
-
     protected static List<String> parseStrings(JsonObject json, String name)
     {
         JsonValue value = json.get(name);
@@ -382,17 +380,106 @@ public class StrategicPlanParser
 
         String type = getString(json, "type");
 
-        /*
-         * A StrategicContainer represents SEQUENCE.
-         *
-         * For compatibility, accept an omitted type as SEQUENCE.
-         */
         if(type == null || type.isBlank() || "SEQUENCE".equals(type))
         {
-            return parseSequence(json);
+            StrategicContainer ret = parseSequence(json);
+
+            //Map<String, Object> inits = parseInits(json);
+
+            //if(inits != null)
+            //    ret.setInits(inits);
+
+            return ret;
         }
 
         throw new IllegalArgumentException("Expected strategic container, but got: " + type);
+    }
+
+   /**
+     * Parses "inits": [{"name": ..., "exp": ...}] into name -> Java value.
+     * Returns null if the member does not exist.
+     */
+    protected static Map<String, Object> parseInits(JsonObject json)
+    {
+        JsonValue value = json.get("inits");
+
+        if(value == null || value.isNull())
+            return null;
+
+        if(!value.isArray())
+            throw new IllegalArgumentException("'inits' must be an array.");
+
+        Map<String, Object> ret = new LinkedHashMap<>(); // allows null values
+
+        for(JsonValue element : value.asArray())
+        {
+            if(element == null || !element.isObject())
+                throw new IllegalArgumentException("Every init must be an object {\"name\", \"exp\"}.");
+
+            JsonObject init = element.asObject();
+            String name = getString(init, "name");
+            String exp = getString(init, "exp");
+
+            if(name == null || name.isBlank())
+                throw new IllegalArgumentException("Init without name.");
+
+            if(exp == null || exp.isBlank())
+                throw new IllegalArgumentException("Init '" + name + "' has no exp.");
+
+            if(ret.containsKey(name))
+                throw new IllegalArgumentException("Duplicate init for '" + name + "'.");
+
+            ret.put(name, parseConstant(name, exp.trim()));
+        }
+
+        return ret;
+    }
+
+    /**
+     * Converts a Java constant literal (true, false, null, number, "string") to its value.
+     */
+    protected static Object parseConstant(String name, String exp)
+    {
+        switch(exp)
+        {
+            case "true":
+                return Boolean.TRUE;
+            case "false":
+                return Boolean.FALSE;
+            case "null":
+                return null;
+            default:
+                break;
+        }
+
+        if(exp.length() >= 2 && exp.startsWith("\"") && exp.endsWith("\""))
+        {
+            try
+            {
+                return Json.parse(exp).asString();
+            }
+            catch(RuntimeException e)
+            {
+                throw new IllegalArgumentException("Init '" + name + "': invalid string literal " + exp, e);
+            }
+        }
+
+        try
+        {
+            if(exp.contains("."))
+                return Double.valueOf(exp);
+
+            long l = Long.parseLong(exp);
+
+            // The casts prevent the ternary from promoting Integer to long.
+            return l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE
+                ? (Object)Integer.valueOf((int)l)
+                : (Object)Long.valueOf(l);
+        }
+        catch(NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Init '" + name + "': '" + exp + "' is not a constant.", e);
+        }
     }
 
     /**

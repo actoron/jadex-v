@@ -42,13 +42,27 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
     {
         Future<PlanStepExecution> ret = new Future<>();
 
+        // todo: change init names in compiler to: plan.
+        Map<String, Object> inits = container.getInits();
+        if(inits!=null)
+        {
+            for(String name: inits.keySet())
+            {
+                String iname = "plan."+name;
+                if(!context.getParameters().containsKey(iname))
+                {
+                    context.set(iname, inits.get(name));
+                }
+            }
+        }
+
         PlanStepExecution loopexe = new PlanStepExecution(this, context.getParameters());
 
-        String conditionExp = container.getCondition();
+        String conexp = container.getCondition();
 
-        if(conditionExp != null && !conditionExp.isBlank())
+        if(conexp != null && !conexp.isBlank())
         {
-            this.condition = PlanStep.createCondition(conditionExp, component.getFeature(IBDINGAgentFeature.class).getModel(),
+            this.condition = PlanStep.createCondition(conexp, component.getFeature(IBDINGAgentFeature.class).getModel(),
                 component.getFeature(IBDINGAgentFeature.class).getReasoner());
         }
         else
@@ -77,6 +91,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         // Maximum number of iterations reached.
         if(max >= 0 && count >= max)
         {
+            System.out.println("Loop count exit: count="+count+", max="+max);
             finishLoop(loopexe, ret, context);
             return;
         }
@@ -93,6 +108,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         {
             if(!result.booleanValue())
             {
+                System.out.println("Loop condition exit: "+condition+" "+context.getParameters());
                 finishLoop(loopexe, ret, context);
                 return;
             }
@@ -101,6 +117,8 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         })
         .catchEx(ex ->
         {
+            System.out.println("Loop exception exit: "+ex.getMessage());
+            ex.printStackTrace();
             failLoop(loopexe, ret, context, ex);
         });
     }

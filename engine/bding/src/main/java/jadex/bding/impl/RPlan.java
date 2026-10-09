@@ -1,11 +1,9 @@
 package jadex.bding.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import jadex.bding.Belief;
@@ -13,7 +11,6 @@ import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.Plan;
 import jadex.bding.impl.planbody.PlanExecutionContext;
 import jadex.bding.impl.planbody.PlanStepExecution;
-import jadex.collection.PathMap;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
@@ -64,7 +61,6 @@ public class RPlan extends RIdElement
         }
         else if(getPlan().getStrategicPlan() != null)
         {
-
             getPlan().getStrategicPlan().getExecutableStep(agent.getFeature(IBDINGAgentFeature.class).getReasoner(), 
                 this, context.getParameters()).then(step ->
             {
@@ -156,24 +152,6 @@ public class RPlan extends RIdElement
     public void addExecutedStep(PlanStepExecution exe)
     {
         executedSteps.add(exe);
-    }
-
-    public static Map<String, Object> createContext(IComponent agent, RGoal goal)
-    {
-        Map<String, Object> params = new PathMap();
-
-        for(String name: goal.getParameters().keySet())
-        {
-            params.put("goal."+name, goal.getParameters().get(name));
-        }
-
-        Map<String, Object> bels = BeliefExtractor.extract(agent);
-        for(String name: bels.keySet())
-        {
-            params.put("belief."+name, bels.get(name));
-        }
-
-        return params;
     }
 
     public static void writeBackContext(PlanExecutionContext context, RGoal goal, IComponent agent)

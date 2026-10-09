@@ -47,7 +47,7 @@ public class RIntention extends RIdElement
         IComponent component = IComponentManager.get().getCurrentComponent();
         IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
-        Map<String, Object> context = RIdElement.createContext(getGoal(), component);
+        Map<String, Object> context = RIdElement.createContext(component, getGoal());
 
         reasoner.generateStrategicPlan(this, context).then(splan ->
         {
@@ -102,7 +102,7 @@ public class RIntention extends RIdElement
 
         this.plan.execute().then(Void ->
         {
-            Map<String, Object> context = RIdElement.createContext(getGoal(), component);
+            Map<String, Object> context = RIdElement.createContext(component, getGoal());
 
             reasoner.isIntentionAchieved(this, context).then(achieved ->
             {
