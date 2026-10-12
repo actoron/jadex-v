@@ -7,12 +7,10 @@ import jadex.bding.tool.BDIViewer;
 import jadex.core.IComponent;
 import jadex.core.IComponentHandle;
 import jadex.core.IComponentManager;
-import jadex.future.IFuture;
 import jadex.injection.annotation.Inject;
 import jadex.injection.annotation.OnStart;
 import jadex.micro.llmcall2.LlmChatAgent2;
 import jadex.micro.llmcall2.LlmHelper;
-import jadex.providedservice.annotation.Service;
 
 /**
  *  A bding-based blocksworld agent.
@@ -75,8 +73,7 @@ public class BdingBlocksworldAgent
     public static void main(String[] args)
     {
         // Create the blocksworld service (provides move + getWorldState tools)
-        IComponentHandle serviceHandle = IComponentManager.get().create(
-            new BdingBlocksworldService()).get();
+        IComponentManager.get().create(new LlmBlocksworldAgent()).get();
 
         // Create the LLM component used by the bding brain
         StreamingChatModel llm = LlmHelper.createChatModel(
@@ -91,39 +88,5 @@ public class BdingBlocksworldAgent
         viewer.setVisible(true);
 
         IComponentManager.get().waitForLastComponentTerminated();
-    }
-
-    /**
-     *  A service providing blocksworld tools for the bding agent.
-     *  Extends LlmBlocksworldAgent so it holds the world state
-     *  (blocks, relations, move operations) and the GUI.
-     *  The bding engine's tool discovery finds the @Tool methods
-     *  inherited from LlmBlocksworldAgent / IBlocksworldTextService.
-     */
-    @Service
-    public static class BdingBlocksworldService extends LlmBlocksworldAgent
-    {
-        public BdingBlocksworldService()
-        {
-            super();
-        }
-
-        /**
-         *  Expose move as a tool (inherited from IBlocksworldBaseService).
-         */
-        @Override
-        public IFuture<Void> move(String block1, String block2)
-        {
-            return super.move(block1, block2);
-        }
-
-        /**
-         *  Expose getWorldState as a tool (inherited from IBlocksworldTextService).
-         */
-        @Override
-        public IFuture<String> getWorldState()
-        {
-            return super.getWorldState();
-        }
     }
 }
