@@ -221,8 +221,8 @@ public class Main2
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false, true);
 
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "gemma4:31b", false, true);
-        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "gemma4:31b", false, true);
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "Qwen3.8-27B-FP8", false, true);
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
