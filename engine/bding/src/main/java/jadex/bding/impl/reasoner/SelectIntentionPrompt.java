@@ -1,7 +1,6 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -10,15 +9,9 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
 import jadex.bding.AgentModel;
-import jadex.bding.ElementType;
-import jadex.bding.Goal;
 import jadex.bding.Intention;
-import jadex.bding.Parameter;
-import jadex.bding.ReasoningEntry;
-import jadex.bding.impl.JsonHelper;
 import jadex.bding.impl.RGoal;
 import jadex.core.IComponent;
-import jadex.core.IComponentManager;
 
 public final class SelectIntentionPrompt
 {
@@ -57,6 +50,10 @@ public final class SelectIntentionPrompt
 
         Evaluate each candidate intention according to:
 
+        - Goal achievement: Prefer intentions that are capable of achieving
+        the complete goal from the current situation. If one candidate can
+        plausibly achieve the complete goal while another only accomplishes
+        an intermediate step, prefer the complete goal-achieving intention.
         - Feasibility: Can the intention potentially be achieved using the
         available capabilities, current beliefs, and possible subgoals?
         - Plausibility: Is it a sensible and realistic approach to the goal?
@@ -65,20 +62,29 @@ public final class SelectIntentionPrompt
         - Relevance: Does it directly contribute to achieving the goal?
         - Proportionality: Is the approach appropriate for the goal?
 
-        Prefer intentions that are practical, natural, and likely to succeed.
+        Prefer intentions that are practical, natural, likely to succeed,
+        and capable of achieving the complete goal.
+
+        In particular, prefer a complete strategy over an intention that only
+        performs an intermediate or preparatory activity, such as initialization,
+        announcing information, waiting for input, or performing a single step
+        that requires another intention to complete the goal.
 
         An intention does not need to be directly executable by a single
-        tool. It may require multiple tool calls and/or subgoals.
+        tool. It may require multiple tool calls, iterations, conditions,
+        and/or subgoals.
 
         However, do not select an intention if there is no plausible way
         to achieve it using the available capabilities and possible
         subgoals.
 
-        Do not choose an intention merely because it is technically
-        possible if another candidate is clearly more practical or
-        efficient.
+        If no candidate can obviously achieve the complete goal, select the
+        candidate that makes the strongest meaningful progress toward the goal
+        and is the most promising basis for eventual goal achievement.
 
-        Select exactly one candidate intention.
+        Do not choose an intention merely because it is technically
+        possible if another candidate is clearly more complete, practical,
+        relevant, or efficient.
 
         Select exactly one candidate intention.
 
@@ -98,8 +104,6 @@ public final class SelectIntentionPrompt
             PromptHelper.formatTools(agent),
             candidates);
 
-        //System.out.println("generateIntentions: "+prompt);
-
         Function<String, Intention> parser = new Function<>()
         {
             @Override
@@ -117,10 +121,10 @@ public final class SelectIntentionPrompt
         "type": "object",
         "properties": {
             "selection": {
-            "type": "integer"
+                "type": "integer"
             },
             "reason": {
-            "type": "string"
+                "type": "string"
             }
         },
         "required": [
@@ -139,10 +143,8 @@ public final class SelectIntentionPrompt
 
         if(selval == null || !selval.isNumber())
             throw new RuntimeException("LLM returned no valid intention selection.");
-        
-        int selected = selval.asInt();
 
-        //String reason = answer.getString("reason", "");
+        int selected = selval.asInt();
 
         Intention sel = null;
 
@@ -162,5 +164,3 @@ public final class SelectIntentionPrompt
         return sel;
     }
 }
- 
-            

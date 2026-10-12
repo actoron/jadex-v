@@ -104,7 +104,7 @@ public class ConditionalPlanStep implements IPlanStepContainer, IPlanStep
     }
 
     @Override
-    public Map<String, String> getParameterMapping()
+    public Map<String, String> getInputMapping()
     {
         return null;
     }

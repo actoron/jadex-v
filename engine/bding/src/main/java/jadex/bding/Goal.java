@@ -28,6 +28,11 @@ public class Goal extends ModelElement
 
     protected Set<Intention> intentions = new HashSet<>();
 
+    // Bean constructor
+    public Goal()
+    {
+    }
+
     public Goal(String name, String description, AgentModel model)
     {
         super(name, description, model);

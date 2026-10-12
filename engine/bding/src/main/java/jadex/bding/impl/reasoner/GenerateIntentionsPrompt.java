@@ -1,21 +1,14 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
 import jadex.bding.AgentModel;
-import jadex.bding.ElementType;
-import jadex.bding.Goal;
 import jadex.bding.Intention;
-import jadex.bding.Parameter;
-import jadex.bding.ReasoningEntry;
-import jadex.bding.impl.JsonHelper;
 import jadex.bding.impl.RGoal;
 import jadex.core.IComponent;
 
@@ -49,6 +42,33 @@ public final class GenerateIntentionsPrompt
         achieving the goal. It should not merely describe something that is
         theoretically possible.
 
+        An intention should represent a strategy for achieving the goal, not
+        merely an intermediate activity or preparation step.
+
+        Prefer intentions that are capable of achieving the complete goal on
+        their own.
+
+        When possible, formulate an intention as a complete course of action
+        from the current situation toward the desired goal state. The intention
+        may contain multiple intermediate activities, decisions, iterations,
+        subgoals, or other steps when these are necessary to achieve the goal.
+
+        Prefer a complete goal-achieving intention over an intention that only:
+        - initializes or prepares something,
+        - announces information,
+        - waits for input,
+        - performs a single intermediate action,
+        - or hands the task over to another strategy.
+
+        Do not artificially combine unrelated activities merely to make an
+        intention appear complete. If the goal naturally consists of distinct
+        phases, an intention may focus on one coherent phase when that phase is
+        itself a meaningful strategic objective.
+
+        When several plausible intentions exist, prefer the one that makes the
+        strongest progress toward the goal and has the greatest potential to
+        achieve the complete goal.
+
         Evaluate possible intentions according to:
 
         - Feasibility: Can the intention potentially be achieved using the
@@ -59,11 +79,14 @@ public final class GenerateIntentionsPrompt
         reasonable compared with other plausible approaches?
         - Relevance: Does the intention directly contribute to achieving the goal?
         - Proportionality: Is the approach appropriate for the goal?
+        - Completeness: Is the intention capable of achieving the complete goal,
+        rather than only accomplishing an intermediate step?
 
-        Prefer practical, natural, and likely successful approaches.
+        Prefer practical, natural, complete, and likely successful approaches.
 
         Do not generate intentions that are technically possible but obviously
-        impractical, inefficient, or unreasonable when better alternatives exist.
+        impractical, inefficient, incomplete, or unreasonable when better
+        alternatives exist.
 
         For example, if the goal is to travel from Hamburg to Bremen, walking
         should generally not be considered a promising intention if substantially
@@ -86,21 +109,10 @@ public final class GenerateIntentionsPrompt
         For each intention provide:
         - name: a short, concise name identifying the intention
         - description: a brief description of the intended course of action
-
-        For each intention provide:
-        - name: a short, concise name identifying the intention
-        - description: a brief description of the intended course of action.
-
-        Generate a small number of genuinely different and promising intentions.
-        Do not generate several intentions that are merely minor variations of
-        the same approach
-        ]
         """.formatted(
             PromptHelper.formatContext(goal.getGoal().getModel(), context),
             PromptHelper.formatGoal(goal),
             PromptHelper.formatTools(agent));
-
-        //System.out.println("generateIntentions: "+prompt);
 
         Function<String, Set<Intention>> parser = new Function<>()
         {
@@ -116,23 +128,23 @@ public final class GenerateIntentionsPrompt
 
     private static final String SCHEMA = """
     {
-    "type": "array",
-    "items": {
+      "type": "array",
+      "items": {
         "type": "object",
         "properties": {
-        "name": {
+          "name": {
             "type": "string"
-        },
-        "description": {
+          },
+          "description": {
             "type": "string"
-        }
+          }
         },
         "required": [
-        "name",
-        "description"
+          "name",
+          "description"
         ],
         "additionalProperties": false
-    }
+      }
     }
     """;
 
@@ -151,11 +163,11 @@ public final class GenerateIntentionsPrompt
 
             if(name == null || name.isBlank())
             {
-                System.out.println("LLM generated intention without name: " +name+" "+description);
+                System.out.println("LLM generated intention without name: " + name + " " + description);
             }
             else if(description == null || description.isBlank())
             {
-                System.out.println("LLM generated intention without description: "+name+" "+description);
+                System.out.println("LLM generated intention without description: " + name + " " + description);
             }
             else
             {
@@ -166,5 +178,3 @@ public final class GenerateIntentionsPrompt
         return intentions;
     }
 }
- 
-            

@@ -4,12 +4,14 @@ import java.awt.BorderLayout;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import jadex.bding.annotation.BDINGAgent;
@@ -30,9 +32,11 @@ public class Main2
     @Service
     public interface IAppTools
     {
-        @Tool("Get a user question regarding the secret person you have in mind. "
-            + "The info parameter contains information to show to the user first.")
-        IFuture<String> getUserQuestion(String info);
+        @Tool("Display a message to the user.")
+        IFuture<Void> displayMessageToUser(@P(name="message", description="The message to show the user.") String message);
+
+        @Tool("Wait for and return the user's next question or guess.")
+        IFuture<String> fetchUserQuestion();
     }
 
     @BDINGAgent
@@ -44,11 +48,11 @@ public class Main2
         public WhoAmIAgent()
         {
         }
-        
+
         @OnStart
         protected void onStart()
         {
-            String gamegoal = """
+            /*String gamegoal = """
                 Play a "Who Am I?" game with a user.
 
                 Choose a famous person as the secret person and store the chosen person
@@ -64,28 +68,45 @@ public class Main2
 
                 The user wins if they correctly identify the secret person within 10
                 questions. Otherwise, the agent wins.
-                """;
+                """;*/
+            
+            String gamegoal = """ 
+                Play an entertaining "Who Am I?" game with a user. Choose a famous person as the 
+                secret person and store the chosen person as a parameter of the goal. The secret 
+                person is private state of the goal and must not be revealed to the user. The user 
+                may ask up to 10 yes/no questions and may request hints at any time. Hints do not 
+                count as questions. Answer questions truthfully. Use natural, friendly and varied 
+                language instead of replying with only "yes" or "no". Add a brief explanation, 
+                an interesting fact, or a playful comment when appropriate, but never reveal the 
+                person's identity indirectly. When the user requests a hint, provide a useful but 
+                not overly revealing clue about the secret person. If the user asks for more hints, 
+                gradually make them more specific. React warmly to guesses, celebrate correct guesses, 
+                and keep the game engaging without giving away the answer prematurely. The user wins 
+                if they correctly identify the secret person within 10 questions. Otherwise, 
+                the agent wins and reveals the person's identity when the game ends. 
+            """;
 
-            agent.getFeature(IBDINGAgentFeature.class).dispatchTopLevelGoal(gamegoal)
-            .then(goal ->
-            {
-                goal.getFinished().then(Void ->
+            agent.getFeature(IBDINGAgentFeature.class)
+                .dispatchTopLevelGoal(gamegoal)
+                .then(goal ->
                 {
-                    System.out.println("goal finished: " + goal.getState());
-                    agent.terminate();
-                }).catchEx(ex ->
+                    goal.getFinished().then(Void ->
+                    {
+                        System.out.println("goal finished: " + goal.getState());
+                        agent.terminate();
+                    }).catchEx(ex ->
+                    {
+                        System.out.println("goal finished with ex: " + ex.getMessage());
+                        ex.printStackTrace();
+                        agent.terminate();
+                    });
+                })
+                .catchEx(ex ->
                 {
-                    System.out.println("goal finished with ex: " + ex.getMessage());
+                    System.out.println("dispatch failed: " + ex.getMessage());
                     ex.printStackTrace();
                     agent.terminate();
                 });
-            })
-            .catchEx(ex ->
-            {
-                System.out.println("dispatch failed: " + ex.getMessage());
-                ex.printStackTrace();
-                agent.terminate();
-            });
         }
     }
 
@@ -94,6 +115,8 @@ public class Main2
     {
         protected JTextArea dialog;
         protected JTextField input;
+        protected JButton send;
+        protected JLabel inputStatus;
         protected Future<String> questionFuture;
 
         public UserAgent()
@@ -109,35 +132,54 @@ public class Main2
                 dialog.setLineWrap(true);
                 dialog.setWrapStyleWord(true);
 
+                inputStatus = new JLabel("Waiting for agent...");
+
                 input = new JTextField();
                 input.addActionListener(e -> submitQuestion());
 
-                JButton send = new JButton("Ask");
+                send = new JButton("Ask");
                 send.addActionListener(e -> submitQuestion());
 
                 JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+                inputPanel.add(inputStatus, BorderLayout.NORTH);
                 inputPanel.add(input, BorderLayout.CENTER);
                 inputPanel.add(send, BorderLayout.EAST);
 
                 frame.add(new JScrollPane(dialog), BorderLayout.CENTER);
                 frame.add(inputPanel, BorderLayout.SOUTH);
 
+                setInputState(false);
+
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
-                input.requestFocusInWindow();
             });
         }
 
         @Override
-        public IFuture<String> getUserQuestion(String info)
+        public IFuture<Void> displayMessageToUser(String message)
+        {
+            Future<Void> ret = new Future<>();
+
+            SwingUtilities.invokeLater(() ->
+            {
+                if(message != null && !message.isBlank())
+                    dialog.append("Agent: " + message + "\n\n");
+
+                ret.setResult(null);
+            });
+
+            return ret;
+        }
+
+        @Override
+        public IFuture<String> fetchUserQuestion()
         {
             Future<String> ret = new Future<>();
             questionFuture = ret;
 
             SwingUtilities.invokeLater(() ->
             {
-                dialog.append("Agent: " + info + "\n\n");
-                input.setEnabled(true);
+                setInputState(true);
                 input.requestFocusInWindow();
             });
 
@@ -152,28 +194,39 @@ public class Main2
                 return;
 
             Future<String> future = questionFuture;
+
             if(future == null)
                 return;
 
             questionFuture = null;
             input.setText("");
-            input.setEnabled(false);
+            setInputState(false);
 
             dialog.append("You: " + question + "\n\n");
 
             future.setResult(question);
         }
+
+        protected void setInputState(boolean requested)
+        {
+            input.setEnabled(requested);
+            send.setEnabled(requested);
+            inputStatus.setText(requested ? "Your input is requested" : "Waiting for agent...");
+        }
     }
 
-
-    public static void main(String[] args) 
+    public static void main(String[] args)
     {
         ComponentManager.get().create(new UserAgent()).get();
 
         //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA_REMOTE, "gemma4:31b", false, true);
-        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OLLAMA, "gemma4:31b", false, true);
-        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
-        
+
+        StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "gemma4:31b", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "api-programming-preloaded-1", false, true);
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.OPENAI_HCI, "Qwen3.8-27B-FP8", false, true);
+
+        //StreamingChatModel llm = LlmHelper.createChatModel(LlmHelper.Provider.VLLM, "Qwen3.8-27B", false, true);
+
         ComponentManager.get().create(new LlmChatAgent2(llm)).get();
 
         IComponentHandle ua = ComponentManager.get().create(new WhoAmIAgent()).get();

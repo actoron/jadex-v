@@ -2,12 +2,10 @@ package jadex.bding.impl;
 
 import java.util.Map;
 
-import jadex.bding.AgentModel;
 import jadex.bding.ICondition;
-import jadex.common.IValueFetcher;
+import jadex.bding.impl.planbody.PlanStep;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.javaparser.SJavaParser;
 
 public class ExpressionCondition implements ICondition
 {
@@ -25,14 +23,7 @@ public class ExpressionCondition implements ICondition
 
         try
         {
-            Object result = SJavaParser.evaluateExpression(expression, new IValueFetcher() 
-            {
-                @Override
-                public Object fetchValue(String name) 
-                {
-                    return context.get(name);
-                }
-            });
+            Object result = PlanStep.evaluateExpression(expression, context);
 
             ret.setResult(((Boolean)result).booleanValue());
         }
@@ -42,5 +33,11 @@ public class ExpressionCondition implements ICondition
         }
 
         return ret;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "ExpressionCondition [expression=" + expression + "]";
     }
 }

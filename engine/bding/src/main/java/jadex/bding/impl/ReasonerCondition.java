@@ -27,11 +27,17 @@ public class ReasonerCondition implements ICondition
     {
         Future<Boolean> ret = new Future<>();
             
-        reasoner.reason(question, model, context, ReasoningType.BOOLEAN).then(result ->
+        reasoner.reasonDecision(question, model, context).then(result ->
         {
             ret.setResult(((Boolean)result).booleanValue());
         }).catchEx(ret);
 
         return ret;
+    }
+
+    @Override
+    public String toString() 
+    {
+        return "ReasonerCondition [question=" + question + "]";
     }
 }

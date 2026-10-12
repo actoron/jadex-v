@@ -3,7 +3,10 @@ package jadex.bding.impl;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.impl.PlanHistory.PlanHistoryEntry;
@@ -23,6 +26,11 @@ public class RIntention extends RIdElement
 
     protected PlanHistory history = new PlanHistory();
 
+    // Bean contructor
+    public RIntention()
+    {
+    }
+
     public RIntention(Intention intention, RGoal goal)
     {
         super("intention_"+intention.getName());
@@ -39,9 +47,9 @@ public class RIntention extends RIdElement
         IComponent component = IComponentManager.get().getCurrentComponent();
         IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
-        Map<String, Object> beliefs = BeliefExtractor.extract(component);
+        Map<String, Object> context = RIdElement.createContext(component, getGoal());
 
-        reasoner.generateStrategicPlan(this, beliefs).then(splan ->
+        reasoner.generateStrategicPlan(this, context).then(splan ->
         {
             if(splan == null)
             {
@@ -49,7 +57,21 @@ public class RIntention extends RIdElement
             }
             else
             {
-                reasoner.operationalizeStrategicPlan(this, beliefs, splan).then(operationalPlan ->
+                reasoner.createPlanDataFlow(this, context, splan).then(operationalPlan ->
+                {
+                    if(operationalPlan == null)
+                    {
+                        ret.setException(new RuntimeException("No operational plan could be generated for intention"));
+                    }
+                    else
+                    {
+                        Plan plan = new Plan(operationalPlan.getName(), operationalPlan.getDescription(), getIntention(), getIntention().getModel());
+                        plan.setStrategicPlan(operationalPlan);
+                        executePlan(plan).delegateTo(ret);
+                    }
+                }).catchEx(ret);
+
+                /*reasoner.operationalizeStrategicPlan(this, beliefs, splan).then(operationalPlan ->
                 {
                     if(operationalPlan == null)
                     {
@@ -61,7 +83,7 @@ public class RIntention extends RIdElement
                         plan.setStrategicPlan(splan);
                         executePlan(plan).delegateTo(ret);
                     }
-                }).catchEx(ret);
+                }).catchEx(ret);*/
             }
         }).catchEx(ret);
 
@@ -80,9 +102,9 @@ public class RIntention extends RIdElement
 
         this.plan.execute().then(Void ->
         {
-            Map<String, Object> beliefsafter = BeliefExtractor.extract(component);
+            Map<String, Object> context = RIdElement.createContext(component, getGoal());
 
-            reasoner.isIntentionAchieved(this, beliefsafter).then(achieved ->
+            reasoner.isIntentionAchieved(this, context).then(achieved ->
             {
                 if(achieved)
                 {
@@ -90,7 +112,7 @@ public class RIntention extends RIdElement
                 }
                 else
                 {
-                    reasoner.isRetryAllowed(this.plan, beliefsafter).then(retry ->
+                    reasoner.isRetryAllowed(this.plan, context).then(retry ->
                     {
                         if(retry)
                         {

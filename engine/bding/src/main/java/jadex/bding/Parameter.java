@@ -5,6 +5,11 @@ public class Parameter extends ModelElement
 {
     protected ElementType type;
 
+    // Bean constructor
+    public Parameter()
+    {
+    }
+
     public Parameter(String name, String description, ElementType type)
     {
         super(name, description, null);

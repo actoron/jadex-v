@@ -8,6 +8,11 @@ public class Belief extends ModelElement
 
     protected AgentModel model;
 
+    // Bean constructor
+    public Belief()
+    {
+    }
+
     public Belief(String name, String description, Field field, AgentModel model)
     {
         super(name, description, model);
@@ -34,6 +39,8 @@ public class Belief extends ModelElement
     {
         return ElementType.fromJavaClass(field.getType());
     }
+
+    
 
     public void setValue(Object pojo, Object val)
     {

@@ -45,6 +45,11 @@ public class RGoal extends RIdElement
 
     protected RPlan parentPlan;
 
+    // Bean constructor for cloner (PlanStepExecution)
+    public RGoal()
+    {
+    }
+
     public RGoal(Goal goal, Map<String, Object> parameters)
     {
         super("goal_"+goal.getName());
@@ -55,6 +60,11 @@ public class RGoal extends RIdElement
     public Goal getGoal() 
     {
         return goal;
+    }
+
+    public void setGoal(Goal goal) 
+    {
+        this.goal = goal;
     }
 
     public RGoal setIntention(RIntention intention) 
@@ -84,21 +94,21 @@ public class RGoal extends RIdElement
 
         try
         {
-            setState(GoalState.ACTIVE);
+            changeState(GoalState.ACTIVE);
 
             IComponent component = IComponentManager.get().getCurrentComponent();
             IReasoner reasoner = component.getFeature(IBDINGAgentFeature.class).getReasoner();
 
             while(true)
             {
-                Map<String, Object> beliefs = BeliefExtractor.extract(component);
+                Map<String, Object> context = RIdElement.createContext(component, this);
 
                 Set<Intention> intentions = getGoal().getIntentions();
 
                 if(!igen)
                 {
                     igen = true;
-                    intentions = reasoner.generateIntentions(this, beliefs).get();
+                    intentions = reasoner.generateIntentions(this, context).get();
                     getGoal().setIntentions(intentions);
                 }
 
@@ -109,9 +119,9 @@ public class RGoal extends RIdElement
                 if(possible.isEmpty())
                 {
                     if(evaluateGoalState().get()==GoalState.SUCCEEDED)
-                        setState(GoalState.SUCCEEDED);
+                        changeState(GoalState.SUCCEEDED);
                     else
-                        setState(GoalState.FAILED);
+                        changeState(GoalState.FAILED);
 
                     break;
                 }
@@ -122,7 +132,7 @@ public class RGoal extends RIdElement
 
                 Intention intention = possible.size() == 1
                     ? possible.iterator().next()
-                    : reasoner.selectIntention(this, possible, beliefs).get();
+                    : reasoner.selectIntention(this, possible, context).get();
 
                 RIntention rintention = new RIntention(intention, this);
                 setIntention(rintention);
@@ -140,7 +150,7 @@ public class RGoal extends RIdElement
 
                     if(evaluateGoalState().get()==GoalState.SUCCEEDED)
                     {
-                        setState(GoalState.SUCCEEDED);
+                        changeState(GoalState.SUCCEEDED);
                         break;
                     }
 
@@ -161,7 +171,7 @@ public class RGoal extends RIdElement
             this.exception = e;
             System.out.println("Goal failed: "+e.getMessage());
             ret.setExceptionIfUndone(e);
-            setState(GoalState.FAILED);
+            changeState(GoalState.FAILED);
         }
 
         return ret;
@@ -178,7 +188,7 @@ public class RGoal extends RIdElement
         return state;
     }
 
-    public void setState(GoalState newstate)
+    public void changeState(GoalState newstate)
     {
         if(state == newstate)
             throw new IllegalStateException("Goal is already in state " + state);
@@ -220,8 +230,8 @@ public class RGoal extends RIdElement
     public IFuture<GoalState> evaluateGoalState()
     {
         IComponent component = IComponentManager.get().getCurrentComponent();
-        Map<String, Object> beliefs = BeliefExtractor.extract(component);
-        return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, beliefs);
+        Map<String, Object> context = RIdElement.createContext(component, this);
+        return component.getFeature(IBDINGAgentFeature.class).getReasoner().evaluateGoalState(this, context);
     }
 
 	/**

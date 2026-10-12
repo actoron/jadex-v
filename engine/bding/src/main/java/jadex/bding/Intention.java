@@ -4,6 +4,11 @@ public class Intention extends ModelElement
 {
     //protected Goal goal; //applicable for goal
     
+    // Bean constructor
+    public Intention()
+    {
+    }
+
     public Intention(String name, String description, AgentModel model)
     {
         super(name, description, model);

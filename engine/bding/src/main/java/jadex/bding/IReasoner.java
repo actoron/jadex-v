@@ -40,7 +40,9 @@ public interface IReasoner
 
     public IFuture<StrategicContainer> generateStrategicPlan(RIntention intention, Map<String, Object> context);
 
-    public IFuture<StrategicContainer> operationalizeStrategicPlan(RIntention intention, Map<String, Object> context, StrategicContainer plan);
+    public IFuture<StrategicContainer> createPlanDataFlow(RIntention intention, Map<String, Object> context, StrategicContainer plan);
+    
+    //public IFuture<StrategicContainer> operationalizeStrategicPlan(RIntention intention, Map<String, Object> context, StrategicContainer plan);
     
     //public IFuture<IPlanStep> generateActionPlanStep(RPlan plan, StrategicActionStep step, Map<String, Object> context);
 
@@ -62,5 +64,15 @@ public interface IReasoner
 
     public IFuture<List<ReasoningEntry>> getReasoningHistory();
 
-    public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type);
+    //public IFuture<Object> reason(String problem, AgentModel model, Map<String, Object> context, ReasoningType type);
+
+
+    public IFuture<Boolean> reasonDecision(String problem, AgentModel model, Map<String, Object> context);
+   
+    public IFuture<String> reasonSelection(String problem, String[] options, AgentModel model, Map<String, Object> context);
+
+    public IFuture<Double> reasonComputation(String problem, AgentModel model, Map<String, Object> context);
+
+    public IFuture<String> reasonExplanation(String problem, AgentModel model, Map<String, Object> context);
 }
+

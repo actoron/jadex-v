@@ -1,11 +1,9 @@
 package jadex.bding.impl;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import jadex.bding.Belief;
@@ -29,6 +27,11 @@ public class RPlan extends RIdElement
 
     protected IComponent agent;
 
+    // Bean constructor
+    public RPlan()
+    {
+    }
+
     public RPlan(Plan plan, RIntention intention, IComponent agent) 
     {
         super("plan_"+plan.getName());
@@ -42,6 +45,7 @@ public class RPlan extends RIdElement
         Future<Void> ret = new Future<>();
 
         Map<String, Object> params = createContext(getAgent(), intention.getGoal());
+        
         PlanExecutionContext context = new PlanExecutionContext(this, params);
 
         if(getPlan().getBody() != null)
@@ -57,7 +61,6 @@ public class RPlan extends RIdElement
         }
         else if(getPlan().getStrategicPlan() != null)
         {
-
             getPlan().getStrategicPlan().getExecutableStep(agent.getFeature(IBDINGAgentFeature.class).getReasoner(), 
                 this, context.getParameters()).then(step ->
             {
@@ -85,6 +88,11 @@ public class RPlan extends RIdElement
         return plan;
     }
 
+    public void setPlan(Plan plan) 
+    {
+        this.plan = plan;
+    }
+
     public IComponent getAgent() 
     {
         return agent;
@@ -109,11 +117,6 @@ public class RPlan extends RIdElement
     public String toString() 
     {
         return "RPlan [id=" + id + ", plan=" + plan + "]";
-    }
-
-    public void setPlan(Plan plan) 
-    {
-        this.plan = plan;
     }
 
     public void setSubgoals(Set<RGoal> subgoals) 
@@ -149,25 +152,6 @@ public class RPlan extends RIdElement
     public void addExecutedStep(PlanStepExecution exe)
     {
         executedSteps.add(exe);
-    }
-
-    public static Map<String, Object> createContext(IComponent agent, RGoal goal)
-    {
-        Map<String, Object> params = new HashMap<>();
-        
-        Map<String, Object> bels = BeliefExtractor.extract(agent);
-        for(Entry<String, Object> b: bels.entrySet())
-        {
-            params.put("belief."+b.getKey(), b.getValue());
-        }
-        
-        Map<String, Object> goalparams = goal.getParameters();
-        for(Entry<String, Object> gp: goalparams.entrySet())
-        {
-            params.put("goal."+gp.getKey(), gp.getValue());
-        }
-
-        return params;
     }
 
     public static void writeBackContext(PlanExecutionContext context, RGoal goal, IComponent agent)
