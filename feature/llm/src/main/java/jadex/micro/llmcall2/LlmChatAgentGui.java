@@ -19,12 +19,12 @@ import java.util.concurrent.Executors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
@@ -70,6 +70,9 @@ public class LlmChatAgentGui extends JFrame
 	/** Model selection (editable, so custom model names can be typed). */
 	JComboBox<String>	model_combo;
 
+	/** Thinking toggle. */
+	JCheckBox	thinking;
+
 	/** The clear conversation button. */
 	JButton	clear;
 
@@ -78,6 +81,9 @@ public class LlmChatAgentGui extends JFrame
 
 	/** The view that displays the chat history. */
 	protected JEditorPane	chat;
+
+	/** The scroll pane wrapping the chat view. */
+	ChatScrollPane	chat_scroll;
 
 	/** The input field for new prompts. */
 	protected JTextField	input;
@@ -166,21 +172,25 @@ public class LlmChatAgentGui extends JFrame
 		super(title);
 		this.app	= app;
 
-		// The provider / model selection, with the default provider pre-selected.
+		// Provider / model / thinking selection, with the default provider
+		// pre-selected.
 		provider_combo	= new JComboBox<>(LlmHelper.Provider.values());
 		provider_combo.setSelectedItem(LlmHelper.DEFAULT_PROVIDER);
 		model_combo	= new JComboBox<>();
 		model_combo.setEditable(true);
+		thinking	= new JCheckBox("Thinking");
+		thinking.setToolTipText("Enable/disable the LLM's extended thinking mode");
+		thinking.setSelected(true);
 		clear	= new JButton("Clear conversation");
 		clear.setToolTipText("Reset the chat history so the model starts a fresh conversation");
 		clear.setEnabled(false);
 		status	= new JLabel("Not connected");
 
 		// Connection bar: labels and combos laid out in a grid so the
-		// combos are left-aligned below the labels, the clear button
-		// sits on the right, and everything stays in a single row.
+		// combos are left-aligned below the labels, the thinking checkbox
+		// sits on the right of the model row, and everything stays compact.
 		JLabel	provider_label	= new JLabel("Provider:");
-		JLabel	model_label	= new JLabel("Model:");
+		JLabel	model_label		= new JLabel("Model:");
 		provider_label.setLabelFor(provider_combo);
 		model_label.setLabelFor(model_combo);
 		provider_label.setAlignmentX(JLabel.RIGHT);
@@ -191,6 +201,11 @@ public class LlmChatAgentGui extends JFrame
 		gb.insets	= new Insets(5, 8, 5, 8);
 		gb.anchor	= GridBagConstraints.WEST;
 
+		// Model row: combo + thinking checkbox side by side.
+		JPanel	model_panel	= new JPanel(new BorderLayout(8, 0));
+		model_panel.add(model_combo, BorderLayout.CENTER);
+		model_panel.add(thinking, BorderLayout.EAST);
+
 		gb.gridx	= 0; gb.gridy	= 0;
 		select_panel.add(provider_label, gb);
 		gb.gridx	= 1; gb.fill	= GridBagConstraints.HORIZONTAL; gb.weightx	= 1.0;
@@ -198,7 +213,7 @@ public class LlmChatAgentGui extends JFrame
 		gb.gridx	= 0; gb.gridy	= 1; gb.fill	= GridBagConstraints.NONE; gb.weightx	= 0.0;
 		select_panel.add(model_label, gb);
 		gb.gridx	= 1; gb.fill	= GridBagConstraints.HORIZONTAL; gb.weightx	= 1.0;
-		select_panel.add(model_combo, gb);
+		select_panel.add(model_panel, gb);
 		select_panel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createLineBorder(new Color(0xd0, 0xd0, 0xd8)),
 			BorderFactory.createEmptyBorder(5, 5, 5, 5)));
@@ -219,7 +234,7 @@ public class LlmChatAgentGui extends JFrame
 			HTMLEditorKit	kit	= new HTMLEditorKit();
 			StyleSheet		sheet	= kit.getStyleSheet();
 			// Base sans-serif, light modern palette
-			sheet.addRule("body { font-family: sans-serif; color: #1a1a2e; }");
+			sheet.addRule("body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 11px; line-height: 1.5; letter-spacing: 0; color: #1a1a2e; }");
 			sheet.addRule("h1 { font-size: 1.5em; font-weight: bold; color: #111; margin: 1em 0 0.5em; }");
 			sheet.addRule("h2 { font-size: 1.3em; font-weight: bold; color: #222; margin: 1em 0 0.5em; }");
 			sheet.addRule("h3 { font-size: 1.15em; font-weight: bold; color: #333; margin: 1em 0 0.4em; }");
@@ -238,7 +253,7 @@ public class LlmChatAgentGui extends JFrame
 			chat.setEditorKit(kit);
 		}
 		chat.setBackground(Color.WHITE);
-		chat.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+		chat.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
 
 		// Open clicked links (rendered by the markdown renderer as
 		// standard <a> anchors) in the system's default browser.
@@ -278,7 +293,8 @@ public class LlmChatAgentGui extends JFrame
 		top_panel.add(status_panel, BorderLayout.CENTER);
 
 		getContentPane().add(top_panel, BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(chat), BorderLayout.CENTER);
+		chat_scroll = new ChatScrollPane(chat);
+		getContentPane().add(chat_scroll, BorderLayout.CENTER);
 		getContentPane().add(panel, BorderLayout.SOUTH);
 
 		// Provider changed: reset the model to the provider's default,
@@ -287,6 +303,12 @@ public class LlmChatAgentGui extends JFrame
 		{
 			setModelToDefault();
 			fetchModels();
+			connectAgent();
+		});
+
+		// Thinking changed: reconnect to apply the new thinking setting.
+		thinking.addActionListener(e ->
+		{
 			connectAgent();
 		});
 
@@ -437,18 +459,20 @@ public class LlmChatAgentGui extends JFrame
 		// Disable the selection controls while connecting.
 		provider_combo.setEnabled(false);
 		model_combo.setEnabled(false);
+		thinking.setEnabled(false);
 		status.setText("Connecting to "+provider+"/"+(model==null? "<default>": model)+"...");
 
 		// Capture the currently connected agent on the EDT so the background
 		// thread can terminate it *before* creating the new one.
 		IComponentHandle	old_handle	= agent_handle;
+		Boolean	think	= thinking.isSelected();
 
 		CompletableFuture.runAsync(() ->
 		{
 			StreamingChatModel	llm;
 			try
 			{
-				llm	= LlmHelper.createChatModel(provider, model, null, null);
+				llm	= LlmHelper.createChatModel(provider, model, think, null);
 
 				// Terminate the previous agent before creating the new one.
 				// Both share the fixed cid "Chat", so the application would
@@ -484,13 +508,14 @@ public class LlmChatAgentGui extends JFrame
 	}
 
 	/**
-	 *  Re-enable the provider / model selection controls.
+	 *  Re-enable the provider / model / thinking selection controls.
 	 *  Call on the EDT.
 	 */
 	protected void enableSelection()
 	{
 		provider_combo.setEnabled(true);
 		model_combo.setEnabled(true);
+		thinking.setEnabled(true);
 	}
 
 	/**
@@ -793,7 +818,7 @@ public class LlmChatAgentGui extends JFrame
 	{
 		last_view_update	= System.currentTimeMillis();
 		chat.setText("<html><body>" + history_html + rendered_pending + "</body></html>");
-		chat.setCaretPosition(chat.getDocument().getLength());
+		chat_scroll.scrollToBottomResetHorizontal();
 	}
 
 	/**
