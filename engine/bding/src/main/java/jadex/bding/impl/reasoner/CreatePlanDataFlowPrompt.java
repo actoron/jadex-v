@@ -75,10 +75,13 @@ public class CreatePlanDataFlowPrompt
 
         String prompt = fill(PROMPT_TEMPLATE, values);
 
+        // Valid entries of an incomplete patch survive retries, so the model only has to add what is missing.
+        Map<String, JsonObject> kept = new LinkedHashMap<>();
+
         return new ReasoningPrompt<StrategicContainer>(
             prompt,
             SCHEMA,
-            response -> StrategicPlanParser.parse(merge(strategicPlan.getJson(), response)),
+            response -> StrategicPlanParser.parse(merge(strategicPlan.getJson(), response, kept)),
             StrategicPlanValidator::validatePhase2);
     }
 
@@ -160,7 +163,7 @@ public class CreatePlanDataFlowPrompt
 
     // --------------------------------------------------------------- merge
 
-    private static String merge(String planJson, String patchJson)
+    private static String merge(String planJson, String patchJson, Map<String, JsonObject> kept)
     {
         Indexed indexed = annotate(planJson);
 
@@ -190,10 +193,30 @@ public class CreatePlanDataFlowPrompt
         if(entries == null || !entries.isArray())
             throw new IllegalArgumentException("Patch needs a \"steps\" array.");
 
+        // Entries kept from earlier incomplete attempts, overridden by new entries with the same id.
+        Set<String> newIds = new HashSet<>();
+
+        for(JsonValue v : entries.asArray())
+        {
+            JsonValue nid = v.isObject() ? v.asObject().get("id") : null;
+
+            if(nid != null && nid.isString())
+                newIds.add(nid.asString());
+        }
+
+        List<JsonValue> all = new ArrayList<>();
+
+        for(Map.Entry<String, JsonObject> k : kept.entrySet())
+            if(!newIds.contains(k.getKey()))
+                all.add(k.getValue());
+
+        for(JsonValue v : entries.asArray())
+            all.add(v);
+
         Set<String> patched = new HashSet<>();
         Set<String> inputsPatched = new HashSet<>();
 
-        for(JsonValue entryValue : entries.asArray())
+        for(JsonValue entryValue : all)
         {
             if(!entryValue.isObject())
                 throw new IllegalArgumentException("Every patch entry must be an object.");
@@ -214,16 +237,12 @@ public class CreatePlanDataFlowPrompt
             boolean action = type.equals("TOOL") || type.equals("REASONING") || type.equals("SUBGOAL") || type.equals("STATE");
 
             // inputs (raw strings; interpreted in walk(), where the scope is known)
+            // Fields that do not belong to the step type are ignored, not rejected: a retry rarely fixes them,
+            // and a missing field of the right step is still caught by the completeness check below.
             JsonValue inputs = entry.get("inputs");
 
-            if(inputs != null)
+            if(inputs != null && action)
             {
-                if(!action)
-                    throw new IllegalArgumentException(
-                        "Step " + label + " contains unsupported field 'inputs'. "
-                        + "Remove this field from the step. Do not move it to another step. "
-                        + "Only TOOL, REASONING, SUBGOAL and STATE steps may contain 'inputs'.");
-
                 if(!inputs.isArray())
                     throw new IllegalArgumentException("Step " + label + ": inputs must be an array.");
 
@@ -247,14 +266,8 @@ public class CreatePlanDataFlowPrompt
             // problem (REASONING only): text with ${name} or "=java"
             JsonValue problemValue = entry.get("problem");
 
-            if(problemValue != null)
+            if(problemValue != null && type.equals("REASONING"))
             {
-                if(!type.equals("REASONING"))
-                    throw new IllegalArgumentException(
-                        "Step " + label + " contains unsupported field 'problem'. "
-                        + "Remove this field from the step. Do not move it to another step. "
-                        + "Only REASONING steps may contain 'problem'.");
-
                 if(!problemValue.isString() || problemValue.asString().isBlank())
                     throw new IllegalArgumentException(
                         "Step " + label + ": problem must be a non-empty string. "
@@ -268,14 +281,8 @@ public class CreatePlanDataFlowPrompt
             // exp
             JsonValue expValue = entry.get("exp");
 
-            if(expValue != null)
+            if(expValue != null && (type.equals("STATE") || type.equals("CONDITION") || type.equals("LOOP")))
             {
-                if(!(type.equals("STATE") || type.equals("CONDITION") || type.equals("LOOP")))
-                    throw new IllegalArgumentException(
-                        "Step " + label + " contains unsupported field 'exp'. "
-                        + "Remove this field from the step. Do not move it to another step. "
-                        + "In phase 2, 'exp' is only allowed on STATE, CONDITION or LOOP.");
-
                 if(!expValue.isString())
                     throw new IllegalArgumentException(
                         "Step " + label + ": exp must be a string. "
@@ -283,13 +290,8 @@ public class CreatePlanDataFlowPrompt
 
                 String exp = repairExpression(expValue.asString());
 
-                if(!exp.isBlank())
+                if(!exp.isBlank() && !(type.equals("LOOP") && step.get("condition") == null))
                 {
-                    if(type.equals("LOOP") && step.get("condition") == null)
-                        throw new IllegalArgumentException(
-                            "Step " + label + ": exp is only allowed on a LOOP with a condition. "
-                            + "Do not move 'exp' to another step.");
-
                     checkSyntax(label, exp);
 
                     if((type.equals("CONDITION") || type.equals("LOOP")) && !referencesValue(exp))
@@ -314,7 +316,7 @@ public class CreatePlanDataFlowPrompt
 
             if((type.equals("TOOL") || type.equals("SUBGOAL")) && !inputsPatched.contains(e.getKey()))
                 missing.add("Missing entry with \"inputs\" for step " + label
-                    + " (one input per parameter, or [] if it has none).");
+                    + " [" + describeStep(step) + "]. One input per parameter, or [] if it has none.");
 
             if(type.equals("STATE") && step.get("exp") == null)
                 missing.add("STATE step " + label + " needs {\"id\": \"" + e.getKey()
@@ -332,7 +334,17 @@ public class CreatePlanDataFlowPrompt
         }
 
         if(!missing.isEmpty())
-            throw new IllegalArgumentException("The patch is incomplete:\n- " + String.join("\n- ", missing));
+        {
+            // The entries so far are valid: keep them, so the next attempt only has to add the missing ones.
+            kept.clear();
+
+            for(JsonValue v : all)
+                kept.put(v.asObject().getString("id", ""), v.asObject());
+
+            throw new IllegalArgumentException("The patch is incomplete. Your valid entries are kept. "
+                + "Return ONLY entries for the following steps (do not repeat the others):\n- "
+                + String.join("\n- ", missing));
+        }
 
         checkSelectionLiterals(indexed);
 
@@ -365,6 +377,15 @@ public class CreatePlanDataFlowPrompt
     {
         String name = step.getString("name", "?");
         return (id.equals(name) ? name : id + "/" + name) + " (" + step.getString("type", "") + ")";
+    }
+
+    /** Description and phase-1 inputs of a step, to make "missing entry" feedback self-contained. */
+    private static String describeStep(JsonObject step)
+    {
+        JsonValue inputs = step.get("inputs");
+
+        return "description: \"" + step.getString("description", "") + "\""
+            + (inputs != null && inputs.isArray() ? ", phase-1 inputs: " + inputs : "");
     }
 
     private static boolean referencesValue(String exp)
@@ -971,6 +992,21 @@ public class CreatePlanDataFlowPrompt
       {"id": "checkStatus",   "exp": "\\"READY\\".equals(uploadStatus)"},
       {"id": "markDone",      "inputs": [], "exp": "true"}
     ]}
+
+    ENTRY SHAPES
+    An entry contains ONLY the fields of its step type. Never add other
+    fields and never copy instructions or rules into a field.
+
+    - TOOL, SUBGOAL:    {"id", "inputs"}
+    - STATE:            {"id", "inputs", "exp"}
+    - REASONING:        {"id"}, optionally with "inputs" and/or "problem"
+    - CONDITION, LOOP:  {"id", "exp"}   (no "inputs", no "problem")
+    - SEQUENCE:         no entry
+
+    A step never lists its own output in "inputs".
+    Every TOOL and SUBGOAL step needs an entry, including the last steps of
+    the plan and steps whose inputs are texts you have to write yourself.
+    Do not stop early.
 
     REQUIRED ENTRIES
     The patch MUST contain exactly one entry for each of these ids: {{REQUIRED}}
