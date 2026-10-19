@@ -67,6 +67,17 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
 
             step.execute(component, context).then(exe ->
             {
+                if(exe == null)
+                {
+                    NullPointerException ex = new NullPointerException("Plan step returned null execution: " + sstep);
+
+                    context.getPlan().addExecutedStep(failexe.setOutputs(context.getParameters())
+                        .setState(PlanStepState.FAILED).setException(ex));
+
+                    ret.setException(ex);
+                    return;
+                }
+
                 context.getPlan().addExecutedStep(exe);
 
                 if(exe.getState() == IPlanStep.PlanStepState.FAILED)

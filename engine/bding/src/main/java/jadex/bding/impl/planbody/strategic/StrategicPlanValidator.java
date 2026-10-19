@@ -1,240 +1,225 @@
+
 package jadex.bding.impl.planbody.strategic;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.ToolProvider;
+
+import com.sun.source.util.JavacTask;
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonValue;
+
 import jadex.bding.IReasoner.ReasoningType;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.bding.impl.reasoner.ValidationResult;
 
-/**
- * Validates strategic plans.
- *
- * Phase 1: structure, semantic inputs/outputs; no expressions or mappings yet.
- * Phase 2: additionally expressions and semantic data-flow.
- * Phase 3: compiled runtime expressions and mappings.
- */
 public class StrategicPlanValidator
 {
-    /** Names that would collide with runtime prefixes of the expression language. */
-    protected static final Set<String> RESERVED_NAMES = Set.of("goal", "belief", "loop", "plan", "context");
+    protected static final Set<String> RESERVED_NAMES = Set.of(
+        "goal", "belief", "loop", "plan", "context");
 
-    /** Validation state shared by all steps of one plan. */
+    protected static final Pattern TARGET_MAPPING_PATTERN =
+        Pattern.compile("(plan|belief|goal)\\.[A-Za-z_][A-Za-z0-9_]*");
+
+    protected static final Pattern RUNTIME_PATH_PATTERN =
+        Pattern.compile(
+            "(plan|belief|goal|loop)\\.[A-Za-z_][A-Za-z0-9_]*"
+            + "(\\.[A-Za-z_][A-Za-z0-9_]*)*");
+
+    // ---------------------------------------------------------------------
+    // Validation context
+    // ---------------------------------------------------------------------
+
     protected static class Ctx
     {
-        final boolean phase2;
-        final Set<String> names = new HashSet<>();
-        final Map<String, StepType> outputs = new HashMap<>();
+        final PlanPhase phase;
+        final Set<String> names;
+        final Map<String, String> outputs;
 
-        Ctx(boolean phase2)
+        Ctx(PlanPhase phase)
         {
-            this.phase2 = phase2;
+            this(phase, new HashSet<>(), new HashMap<>());
+        }
+
+        Ctx(
+            PlanPhase phase,
+            Set<String> names,
+            Map<String, String> outputs)
+        {
+            this.phase = phase;
+            this.names = names;
+            this.outputs = outputs;
+        }
+
+        boolean isPhase1()
+        {
+            return phase == PlanPhase.PHASE1;
+        }
+
+        boolean isPhase2()
+        {
+            return phase == PlanPhase.PHASE2;
+        }
+
+        boolean isPhase3()
+        {
+            return phase == PlanPhase.PHASE3;
+        }
+
+        boolean isPhase2OrLater()
+        {
+            return isPhase2() || isPhase3();
+        }
+
+        Ctx fork()
+        {
+            /*
+             * Each branch has its own namespace and output state.
+             * A name in the true branch must not cause a duplicate-name
+             * error in the false branch.
+             */
+            return new Ctx(
+                phase,
+                new HashSet<>(names),
+                new HashMap<>(outputs));
+        }
+
+        void mergeBranchOutputs(Ctx first, Ctx second)
+        {
+            /*
+             * Only outputs defined in BOTH branches are guaranteed to
+             * exist after the condition.
+             *
+             * Outputs already defined before the condition remain intact.
+             */
+            Set<String> common = new HashSet<>(first.outputs.keySet());
+            common.retainAll(second.outputs.keySet());
+
+            for(String output : common)
+            {
+                if(outputs.containsKey(output))
+                    continue;
+
+                String firstType = first.outputs.get(output);
+                String secondType = second.outputs.get(output);
+
+                outputs.put(
+                    output,
+                    firstType != null && firstType.equals(secondType)
+                        ? firstType
+                        : "BRANCH");
+            }
         }
     }
 
-    /** Default: phase 1 (compatible with existing callers). */
-    public static ValidationResult validate(StrategicContainer plan)
+    // ---------------------------------------------------------------------
+    // Public API
+    // ---------------------------------------------------------------------
+
+    public static ValidationResult validate(
+        StrategicContainer plan,
+        PlanPhase phase)
     {
-        return validate(plan, false);
+        ValidationResult result = new ValidationResult();
+
+        if(plan == null)
+        {
+            result.error(null, "Strategic plan is null.");
+            return result;
+        }
+
+        if(phase == null)
+        {
+            result.error(null, "Validation phase is null.");
+            return result;
+        }
+
+        Ctx ctx = new Ctx(phase);
+        validateSequence(plan, ctx, result);
+
+        if(phase == PlanPhase.PHASE3)
+            validateCompiledReferences(plan, phase, result);
+
+        return result;
     }
 
     public static ValidationResult validatePhase1(StrategicContainer plan)
     {
-        return validate(plan, false);
+        return validate(plan, PlanPhase.PHASE1);
     }
 
     public static ValidationResult validatePhase2(StrategicContainer plan)
     {
-        return validate(plan, true);
+        return validate(plan, PlanPhase.PHASE2);
     }
 
-    /**
-     * Validates the plan after compilation.
-     *
-     * In phase 3 all runtime values which are evaluated by the expression
-     * parser must already be concrete Java expressions. This additionally
-     * checks for semantic input names which accidentally survived compilation.
-     */
     public static ValidationResult validatePhase3(StrategicContainer plan)
     {
-        ValidationResult result = new ValidationResult();
-
-        if(plan == null)
-        {
-            result.error(null, "Strategic plan is null.");
-            return result;
-        }
-
-        // Keep all structural/semantic checks from phase 2.
-        validateSequence(plan, new Ctx(true), result);
-
-        // Additional checks for the compiled representation.
-        validateCompiledReferences(plan, result);
-
-        return result;
+        return validate(plan, PlanPhase.PHASE3);
     }
 
+    // ---------------------------------------------------------------------
+    // Structure
+    // ---------------------------------------------------------------------
 
-    protected static void validateCompiledReferences(StrategicContainer container, ValidationResult result)
+    protected static void validateSequence(
+        StrategicContainer container,
+        Ctx ctx,
+        ValidationResult result)
     {
-        if(container == null || container.getSteps() == null)
+        if(container == null)
+        {
+            result.error(null, "Container is null.");
+            return;
+        }
+
+        List<StrategicStep> steps = container.getSteps();
+
+        if(steps == null || steps.isEmpty())
+        {
+            result.error(
+                container.getName(),
+                "Container must contain at least one step.");
+            return;
+        }
+
+        validateSteps(steps, ctx, result);
+    }
+
+    protected static void validateSteps(
+        List<StrategicStep> steps,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        if(steps == null)
             return;
 
-        for(StrategicStep step : container.getSteps())
-        {
-            if(step instanceof StrategicActionStep action)
-            {
-                validateCompiledAction(action, result);
-            }
-            else if(step instanceof StrategicConditionContainer condition)
-            {
-                validateCompiledExpression(condition.getCondition(), condition.getName(),
-                    "condition", null, result);
-
-                if(condition.getTrueContainer() != null)
-                    validateCompiledReferences(condition.getTrueContainer(), result);
-
-                if(condition.getFalseContainer() != null)
-                    validateCompiledReferences(condition.getFalseContainer(), result);
-            }
-            else if(step instanceof StrategicLoopContainer loop)
-            {
-                validateCompiledExpression(loop.getCondition(), loop.getName(),
-                    "condition", null, result);
-
-                validateCompiledExpression(loop.getMax(), loop.getName(),
-                    "max", null, result);
-
-                // Validate the loop body, NOT the loop itself.
-                validateCompiledReferences(loop, result);
-            }
-            else if(step instanceof StrategicContainer sequence)
-            {
-                validateCompiledReferences(sequence, result);
-            }
-        }
+        for(StrategicStep step : steps)
+            validateStep(step, ctx, result);
     }
 
-
-    protected static void validateCompiledAction(StrategicActionStep action, ValidationResult result)
-    {
-        if(action.getType() == StepType.STATE)
-            validateCompiledExpression(action.getExp(), action.getName(), "exp", null, result);
-    }
-
-    protected static void validateCompiledExpression(String value, String name, String field,
-        StrategicActionStep action, ValidationResult result)
-    {
-        if(value == null || value.isBlank())
-            return;
-
-        if(!isRuntimeExpression(value))
-        {
-            result.error(name,
-                "Phase 3 value in " + field
-                + " is not a compiled Java expression: '" + value + "'.");
-        }
-    }
-
-    /**
-     * Checks whether a value is a compiled runtime expression.
-     *
-     * Phase 3 uses Java expression strings, therefore '=' is the marker
-     * introduced by the strategic plan compiler.
-     */
-    protected static boolean isRuntimeExpression(String value)
-    {
-        return value != null && value.trim().startsWith("=");
-    }
-
-
-    /**
-     * Checks whether one of the semantic inputs of an action survived inside
-     * a non-compiled string.
-     *
-     * Only complete identifier tokens are considered. Thus "userInputValue"
-     * does not accidentally match the input "userInput".
-     */
-    protected static boolean containsSemanticInputReference(String value, StrategicActionStep action)
-    {
-        if(action.getInputs() == null)
-            return false;
-
-        for(String input : action.getInputs())
-        {
-            if(input == null || input.isBlank())
-                continue;
-
-            String semanticName = extractSemanticName(input);
-
-            if(semanticName != null && containsToken(value, semanticName))
-                return true;
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Extracts the semantic name from an input declaration.
-     *
-     * Examples:
-     *   userInput       -> userInput
-     *   plan.userInput  -> userInput
-     *   goal.question   -> question
-     *
-     * Expressions are not semantic names and are ignored here.
-     */
-    protected static String extractSemanticName(String input)
-    {
-        String value = input.trim();
-
-        if(value.startsWith("="))
-            return null;
-
-        int dot = value.lastIndexOf('.');
-        if(dot >= 0)
-            value = value.substring(dot + 1);
-
-        if(!value.matches("[A-Za-z_][A-Za-z0-9_]*"))
-            return null;
-
-        return value;
-    }
-
-
-    protected static boolean containsToken(String text, String token)
-    {
-        return Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(token) + "(?![A-Za-z0-9_])")
-            .matcher(text)
-            .find();
-    }
-
-
-    protected static ValidationResult validate(StrategicContainer plan, boolean phase2)
-    {
-        ValidationResult result = new ValidationResult();
-
-        if(plan == null)
-        {
-            result.error(null, "Strategic plan is null.");
-            return result;
-        }
-
-        validateSequence(plan, new Ctx(phase2), result);
-
-        return result;
-    }
-
-
-    protected static void validateStep(StrategicStep step, Ctx ctx, ValidationResult result)
+    protected static void validateStep(
+        StrategicStep step,
+        Ctx ctx,
+        ValidationResult result)
     {
         if(step == null)
         {
-            result.error(null, "Step is null.");
+            result.error(null, "Plan contains a null step.");
             return;
         }
 
@@ -248,275 +233,898 @@ public class StrategicPlanValidator
         {
             validateLoop(loop, ctx, result);
         }
+        else if(step instanceof StrategicToolStep tool)
+        {
+            validateTool(tool, ctx, result);
+        }
+        else if(step instanceof StrategicReasoningStep reasoning)
+        {
+            validateReasoning(reasoning, ctx, result);
+        }
+        else if(step instanceof StrategicSubgoalStep subgoal)
+        {
+            validateSubgoal(subgoal, ctx, result);
+        }
+        else if(step instanceof StrategicStateStep state)
+        {
+            validateState(state, ctx, result);
+        }
+        else if(step instanceof StrategicFailStep)
+        {
+            // Fail steps do not declare outputs or runtime mappings.
+        }
         else if(step instanceof StrategicContainer container)
         {
             validateSequence(container, ctx, result);
         }
-        else if(step instanceof StrategicActionStep action)
-        {
-            validateAction(action, ctx, result);
-        }
         else
         {
-            result.error(step.getName(), "Unknown strategic step class: " + step.getClass().getName());
+            result.error(
+                step.getName(),
+                "Unsupported strategic step type: "
+                    + step.getClass().getName());
         }
     }
 
-
-    protected static void validateCommon(StrategicStep step, Ctx ctx, ValidationResult result)
+    protected static void validateCommon(
+        StrategicStep step,
+        Ctx ctx,
+        ValidationResult result)
     {
         String name = step.getName();
 
         if(name == null || name.isBlank())
         {
-            result.error(null, "Strategic step without name.");
-        }
-        else if(!ctx.names.add(name))
-        {
-            result.error(name, "Strategic step name is not unique.");
-        }
-
-        if(step.getDescription() == null || step.getDescription().isBlank())
-        {
-            result.error(name, "Strategic step without description.");
-        }
-    }
-
-
-    /**
-     * StrategicContainer represents SEQUENCE (and the plan root): must not be empty.
-     */
-    protected static void validateSequence(StrategicContainer container, Ctx ctx, ValidationResult result)
-    {
-        List<StrategicStep> steps = container.getSteps();
-
-        if(steps == null || steps.isEmpty())
-        {
-            result.error(container.getName(), "SEQUENCE without steps.");
+            result.error(null, "Step name must not be empty.");
             return;
         }
 
-        for(StrategicStep step : steps)
-            validateStep(step, ctx, result);
+        if(!name.matches("[A-Za-z_][A-Za-z0-9_]*"))
+        {
+            result.error(
+                name,
+                "Invalid step name '" + name
+                    + "'. Expected a Java-style identifier.");
+        }
+
+        if(RESERVED_NAMES.contains(name.toLowerCase(Locale.ROOT)))
+        {
+            result.error(name, "Step name '" + name + "' is reserved.");
+        }
+
+        if(!ctx.names.add(name))
+        {
+            result.error(name, "Duplicate step name '" + name + "'.");
+        }
+
+        String description = step.getDescription();
+
+        if(description == null || description.isBlank())
+        {
+            result.error(name, "Step description must not be empty.");
+        }
     }
 
-
-    /**
-     * Branch of a CONDITION: may be empty (nothing to do in this case).
-     */
-    protected static void validateBranch(StrategicContainer branch, Ctx ctx, ValidationResult result)
+    protected static void validateBranch(
+        StrategicContainer branch,
+        Ctx ctx,
+        ValidationResult result,
+        String branchName)
     {
-        validateCommon(branch, ctx, result);
-
-        if(branch.getSteps() == null)
+        if(branch == null)
+        {
+            result.error(null, "Missing " + branchName + " branch.");
             return;
+        }
 
-        for(StrategicStep step : branch.getSteps())
-            validateStep(step, ctx, result);
+        /*
+         * The branch container is structural. Its children are validated
+         * in the branch context; the branch itself is not re-registered.
+         */
+        validateSequence(branch, ctx, result);
     }
 
+    // ---------------------------------------------------------------------
+    // Conditions
+    // ---------------------------------------------------------------------
 
-    protected static void validateCondition(StrategicConditionContainer condition, Ctx ctx, ValidationResult result)
+    protected static void validateCondition(
+        StrategicConditionContainer condition,
+        Ctx ctx,
+        ValidationResult result)
     {
-        String name = condition.getName();
+        String expression = condition.getCondition().get(ctx.phase);
 
-        if(condition.getCondition() == null || condition.getCondition().isBlank())
-            result.error(name, "CONDITION without condition.");
+        if(expression == null || expression.isBlank())
+        {
+            result.error(
+                condition.getName(),
+                "Condition expression must not be empty.");
+        }
+        else if(ctx.isPhase2())
+        {
+            validateSemanticExpression(
+                expression, condition.getName(), "condition", result);
+        }
+        else if(ctx.isPhase3())
+        {
+            // The compiled expression is checked by validateCompiledReferences.
+        }
 
-        StrategicContainer trueContainer = condition.getTrueContainer();
-        StrategicContainer falseContainer = condition.getFalseContainer();
+        Ctx trueCtx = ctx.fork();
+        Ctx falseCtx = ctx.fork();
 
-        if(trueContainer == null)
-            result.error(name, "CONDITION without true branch.");
-        else
-            validateBranch(trueContainer, ctx, result);
+        validateBranch(
+            condition.getTrueContainer(), trueCtx, result, "true");
 
-        if(falseContainer == null)
-            result.error(name, "CONDITION without false branch.");
-        else
-            validateBranch(falseContainer, ctx, result);
+        validateBranch(
+            condition.getFalseContainer(), falseCtx, result, "false");
+
+        /*
+         * Names introduced inside branches remain local to those branches.
+         * Only outputs guaranteed in both branches are merged.
+         */
+        ctx.mergeBranchOutputs(trueCtx, falseCtx);
     }
 
+    // ---------------------------------------------------------------------
+    // Loops
+    // ---------------------------------------------------------------------
 
-    protected static void validateLoop(StrategicLoopContainer loop, Ctx ctx, ValidationResult result)
+    protected static void validateLoop(
+        StrategicLoopContainer loop,
+        Ctx ctx,
+        ValidationResult result)
     {
-        String name = loop.getName();
+        String condition = loop.getCondition().get(ctx.phase);
+        String max = loop.getMax().get(ctx.phase);
 
-        boolean hasCondition = loop.getCondition() != null && !loop.getCondition().isBlank();
-        boolean hasMax = loop.getMax() != null && !loop.getMax().isBlank();
+        boolean hasCondition =
+            condition != null && !condition.isBlank();
+
+        boolean hasMax =
+            max != null && !max.isBlank();
 
         if(!hasCondition && !hasMax)
-            result.error(name, "LOOP must have a condition or max.");
+        {
+            result.error(
+                loop.getName(),
+                "Loop must define a condition, a maximum, or both.");
+        }
 
-        // An empty max is not a meaningful value; it should be omitted instead.
-        if(loop.getMax() != null && loop.getMax().isBlank())
-            result.error(name, "LOOP max must not be empty.");
+        if(ctx.isPhase2())
+        {
+            if(hasCondition)
+            {
+                validateSemanticExpression(
+                    condition, loop.getName(), "condition", result);
+            }
+
+            if(hasMax)
+            {
+                validateSemanticExpression(
+                    max, loop.getName(), "max", result);
+            }
+        }
 
         List<StrategicStep> steps = loop.getSteps();
 
         if(steps == null || steps.isEmpty())
         {
-            result.error(name, "LOOP without steps.");
+            result.error(
+                loop.getName(),
+                "Loop must contain at least one step.");
             return;
         }
 
-        for(StrategicStep step : steps)
-            validateStep(step, ctx, result);
+        /*
+         * Validate the body directly. Calling validateSequence(loop, ...)
+         * would validate the loop container as a step a second time.
+         * Loop-local outputs must not leak into the outer context.
+         */
+        Ctx loopCtx = ctx.fork();
+        validateSteps(steps, loopCtx, result);
     }
 
+    // ---------------------------------------------------------------------
+    // Action-specific validation
+    // ---------------------------------------------------------------------
 
-    protected static void validateAction(StrategicActionStep action, Ctx ctx, ValidationResult result)
+    protected static void validateTool(
+        StrategicToolStep tool,
+        Ctx ctx,
+        ValidationResult result)
     {
-        String name = action.getName();
-        StepType type = action.getType();
+        String toolName = tool.getTool();
 
-        if(type == null)
+        if(toolName == null || toolName.isBlank())
         {
-            result.error(name, "Action without type.");
-            return;
+            result.error(tool.getName(), "Tool name must not be empty.");
         }
 
-        switch(type)
+        validateActionFields(tool, ctx, result);
+    }
+
+    protected static void validateReasoning(
+        StrategicReasoningStep reasoning,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        String problem = reasoning.getProblem().get(ctx.phase);
+
+        if(problem == null || problem.isBlank())
         {
-            case TOOL -> validateTool(action, result);
-            case REASONING -> validateReasoning(action, result);
-            case SUBGOAL -> validateSubgoal(action, result);
-            case STATE -> validateState(action, ctx, result);
-            case FAIL -> validateFail(action, result);
+            result.error(
+                reasoning.getName(),
+                "Reasoning problem must not be empty.");
+        }
+        else if(ctx.isPhase2())
+        {
+            validateSemanticExpression(
+                problem, reasoning.getName(), "problem", result);
         }
 
-        if(type != StepType.FAIL)
-            validateSemanticDataContract(action, ctx, result);
-
-        validateOutputName(action, ctx, result);
-    }
-
-
-    protected static void validateTool(StrategicActionStep action, ValidationResult result)
-    {
-        if(action.getTool() == null || action.getTool().isBlank())
-            result.error(action.getName(), "TOOL without tool.");
-    }
-
-
-    protected static void validateReasoning(StrategicActionStep action, ValidationResult result)
-    {
-        if(action.getDescription() == null || action.getDescription().isBlank())
-            result.error(action.getName(), "REASONING without semantic operation.");
-
-        if(action.getProblem() == null || action.getProblem().isBlank())
-            result.error(action.getName(), "REASONING without problem.");
-
-        if(action.getOutput() == null || action.getOutput().isBlank())
-            result.error(action.getName(), "REASONING without output.");
-
-        ReasoningType type = action.getReasoningType();
-
-        if(type == null)
-        {
-            result.error(action.getName(), "REASONING without reasoningType.");
-            return;
-        }
-
-        if(type == ReasoningType.SELECTION && (action.getOptions() == null || action.getOptions().isEmpty()))
-            result.error(action.getName(), "SELECTION reasoning requires a non-empty options array.");
-    }
-
-
-    protected static void validateSubgoal(StrategicActionStep action, ValidationResult result)
-    {
-        if(action.getGoal() == null || action.getGoal().isBlank())
-            result.error(action.getName(), "SUBGOAL without goal.");
-    }
-
-
-    protected static void validateState(StrategicActionStep action, Ctx ctx, ValidationResult result)
-    {
-        String name = action.getName();
-
-        if(action.getDescription() == null || action.getDescription().isBlank())
-            result.error(name, "STATE without semantic state operation.");
-
-        if(action.getOutput() == null || action.getOutput().isBlank())
-            result.error(name, "STATE without output.");
-
-        // Phase 2 must say how the value is computed.
-        if(ctx.phase2 && (action.getExp() == null || action.getExp().isBlank()))
-            result.error(name, "STATE without expression.");
-    }
-
-
-    protected static void validateFail(StrategicActionStep action, ValidationResult result)
-    {
-        // FAIL needs no additional structural information.
-    }
-
-
-    /**
-     * Output names: unique in the plan (several STATE steps may set the same flag),
-     * and not colliding with the reserved runtime prefixes.
-     */
-    protected static void validateOutputName(StrategicActionStep action, Ctx ctx, ValidationResult result)
-    {
-        String output = action.getOutput();
+        String output = reasoning.getOutput().get(ctx.phase);
 
         if(output == null || output.isBlank())
+        {
+            result.error(
+                reasoning.getName(),
+                "Reasoning output must not be empty.");
+        }
+
+        ReasoningType type = reasoning.getReasoningType().get(ctx.phase);
+
+        if(type == null)
+        {
+            result.error(
+                reasoning.getName(),
+                "Reasoning type must not be empty.");
+        }
+
+        if(ctx.isPhase2() && type == ReasoningType.SELECTION)
+        {
+            checkSelectionOptions(
+                reasoning.getOptions().get(ctx.phase),
+                reasoning.getName(),
+                result);
+        }
+
+        validateActionFields(reasoning, ctx, result);
+    }
+
+    protected static void validateSubgoal(
+        StrategicSubgoalStep subgoal,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        String goal = subgoal.getGoal().get(ctx.phase);
+
+        if(goal == null || goal.isBlank())
+        {
+            result.error(subgoal.getName(), "Subgoal must not be empty.");
+        }
+
+        validateActionFields(subgoal, ctx, result);
+    }
+
+    protected static void validateState(
+        StrategicStateStep state,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        String output = state.getOutput().get(ctx.phase);
+
+        if(output == null || output.isBlank())
+        {
+            result.error(
+                state.getName(), "State output must not be empty.");
+        }
+
+        String expression = state.getExpression().get(ctx.phase);
+
+        if(ctx.isPhase1())
+        {
+            if(expression != null && !expression.isBlank())
+            {
+                result.error(
+                    state.getName(),
+                    "State expression must not be set in Phase 1.");
+            }
+        }
+        else if(ctx.isPhase2())
+        {
+            if(expression == null || expression.isBlank())
+            {
+                result.error(
+                    state.getName(), "State expression must not be empty.");
+            }
+            else
+            {
+                validateSemanticExpression(
+                    expression, state.getName(), "expression", result);
+            }
+
+            String resultMapping =
+                state.getResultMapping().get(ctx.phase);
+
+            if(resultMapping != null && !resultMapping.isBlank())
+            {
+                validateStateResultMapping(
+                    state, resultMapping, ctx, result);
+            }
+        }
+        // Phase 3 expression syntax is validated in validateCompiledReferences.
+
+        validateActionFields(state, ctx, result);
+    }
+
+    // ---------------------------------------------------------------------
+    // Common action fields
+    // ---------------------------------------------------------------------
+
+    protected static void validateActionFields(
+        StrategicActionStep action,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        List<String> inputs = action.getInputs().get(ctx.phase);
+        String output = action.getOutput().get(ctx.phase);
+        Map<String, String> inputMappings =
+            action.getInputMappings().get(ctx.phase);
+        String resultMapping = action.getResultMapping().get(ctx.phase);
+
+        if(inputs != null)
+        {
+            for(int i = 0; i < inputs.size(); i++)
+            {
+                String input = inputs.get(i);
+
+                if(input == null || input.isBlank())
+                {
+                    result.error(
+                        action.getName(),
+                        "Input at index " + i + " must not be empty.");
+                }
+                else if(ctx.isPhase2())
+                {
+                    validateSemanticExpression(
+                        input, action.getName(), "input[" + i + "]", result);
+                }
+            }
+        }
+
+        if(output != null && !output.isBlank())
+            validateOutputName(output, action, ctx, result);
+
+        if(ctx.isPhase1())
+        {
+            if(inputMappings != null && !inputMappings.isEmpty())
+            {
+                result.error(
+                    action.getName(),
+                    "Input mappings must not be set in Phase 1.");
+            }
+
+            if(resultMapping != null && !resultMapping.isBlank())
+            {
+                result.error(
+                    action.getName(),
+                    "Result mapping must not be set in Phase 1.");
+            }
+
+            return;
+        }
+
+        if(inputMappings != null)
+        {
+            for(Map.Entry<String, String> entry : inputMappings.entrySet())
+            {
+                String source = entry.getKey();
+                String target = entry.getValue();
+
+                if(source == null || source.isBlank())
+                {
+                    result.error(
+                        action.getName(),
+                        "Input mapping source must not be empty.");
+                }
+
+                if(target == null || target.isBlank())
+                {
+                    result.error(
+                        action.getName(),
+                        "Input mapping target must not be empty.");
+                }
+            }
+        }
+
+        if(ctx.isPhase2()
+            && resultMapping != null
+            && !resultMapping.isBlank())
+        {
+            validateTargetMapping(
+                resultMapping,
+                action.getName(),
+                "resultMapping",
+                result);
+        }
+
+        /*
+         * Phase 3 mapping sources and targets are checked in
+         * validateCompiledMappings. Do not apply Phase 2 semantic checks
+         * to compiled mappings here.
+         */
+    }
+
+    protected static void validateOutputName(
+        String output,
+        StrategicActionStep action,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        String name = output.trim();
+
+        if(!name.matches("[A-Za-z_][A-Za-z0-9_]*"))
+        {
+            result.error(
+                action.getName(), "Invalid output name '" + output + "'.");
+            return;
+        }
+
+        if(RESERVED_NAMES.contains(name.toLowerCase(Locale.ROOT)))
+        {
+            result.error(
+                action.getName(), "Output name '" + name + "' is reserved.");
+            return;
+        }
+
+        boolean repeatedState =
+            action instanceof StrategicStateStep
+                && ctx.outputs.containsKey(name);
+
+        if(ctx.outputs.containsKey(name) && !repeatedState)
+        {
+            result.error(
+                action.getName(), "Duplicate output name '" + name + "'.");
+        }
+
+        ctx.outputs.put(name, action.getClass().getSimpleName());
+    }
+
+    protected static void validateStateResultMapping(
+        StrategicStateStep state,
+        String resultMapping,
+        Ctx ctx,
+        ValidationResult result)
+    {
+        validateTargetMapping(
+            resultMapping, state.getName(), "resultMapping", result);
+
+        if(resultMapping.startsWith("plan."))
+        {
+            String mappedOutput = resultMapping.substring("plan.".length());
+            String output = state.getOutput().get(ctx.phase);
+
+            if(output != null && !output.isBlank()
+                && !mappedOutput.equals(output))
+            {
+                result.error(
+                    state.getName(),
+                    "State resultMapping targets '" + mappedOutput
+                        + "', but the declared output is '" + output + "'.");
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Phase 3 traversal
+    // ---------------------------------------------------------------------
+
+    protected static void validateCompiledReferences(
+        StrategicContainer container,
+        PlanPhase phase,
+        ValidationResult result)
+    {
+        if(container == null || container.getSteps() == null)
+            return;
+
+        for(StrategicStep step : container.getSteps())
+        {
+            if(step instanceof StrategicStateStep state)
+            {
+                validateCompiledExpression(
+                    state.getExpression().get(phase),
+                    state.getName(),
+                    "expression",
+                    result);
+
+                validateCompiledMappings(state, phase, result);
+            }
+            else if(step instanceof StrategicReasoningStep reasoning)
+            {
+                validateCompiledExpression(
+                    reasoning.getProblem().get(phase),
+                    reasoning.getName(),
+                    "problem",
+                    result);
+
+                validateCompiledOptions(
+                    reasoning.getOptions().get(phase),
+                    reasoning.getReasoningType().get(phase),
+                    reasoning.getName(),
+                    result);
+
+                validateCompiledMappings(reasoning, phase, result);
+            }
+            else if(step instanceof StrategicConditionContainer condition)
+            {
+                validateCompiledExpression(
+                    condition.getCondition().get(phase),
+                    condition.getName(),
+                    "condition",
+                    result);
+
+                validateCompiledReferences(
+                    condition.getTrueContainer(), phase, result);
+
+                validateCompiledReferences(
+                    condition.getFalseContainer(), phase, result);
+            }
+            else if(step instanceof StrategicLoopContainer loop)
+            {
+                String condition = loop.getCondition().get(phase);
+                String max = loop.getMax().get(phase);
+
+                if(condition != null && !condition.isBlank())
+                {
+                    validateCompiledExpression(
+                        condition, loop.getName(), "condition", result);
+                }
+
+                if(max != null && !max.isBlank())
+                {
+                    validateCompiledExpression(
+                        max, loop.getName(), "max", result);
+                }
+
+                validateCompiledReferences(loop, phase, result);
+            }
+            else if(step instanceof StrategicContainer sequence)
+            {
+                validateCompiledReferences(sequence, phase, result);
+            }
+            else if(step instanceof StrategicActionStep action)
+            {
+                validateCompiledMappings(action, phase, result);
+            }
+        }
+    }
+
+    protected static void validateCompiledMappings(
+        StrategicActionStep action,
+        PlanPhase phase,
+        ValidationResult result)
+    {
+        if(phase != PlanPhase.PHASE3)
             return;
 
         String name = action.getName();
+        Map<String, String> mappings =
+            action.getInputMappings().get(phase);
 
-        if(RESERVED_NAMES.contains(output))
+        if(mappings != null)
         {
-            result.error(name, "Output name '" + output + "' is reserved.");
+            for(Map.Entry<String, String> entry : mappings.entrySet())
+            {
+                String source = entry.getKey();
+                String target = entry.getValue();
+
+                validateCompiledMappingSource(
+                    source, name, "inputMapping source", result);
+
+                if(target == null || target.isBlank())
+                {
+                    result.error(
+                        name,
+                        "Empty input mapping target for source '"
+                            + source + "'.");
+                }
+            }
+        }
+
+        String resultMapping = action.getResultMapping().get(phase);
+
+        if(resultMapping != null && !resultMapping.isBlank())
+        {
+            validateTargetMapping(
+                resultMapping, name, "resultMapping", result);
+        }
+    }
+
+    protected static void validateCompiledMappingSource(
+        String value,
+        String name,
+        String field,
+        ValidationResult result)
+    {
+        if(value == null || value.isBlank())
+        {
+            result.error(
+                name, "Empty Phase 3 mapping source in " + field + ".");
             return;
         }
 
-        StepType previous = ctx.outputs.putIfAbsent(output, action.getType());
+        String source = value.trim();
 
-        if(previous != null && !(previous == StepType.STATE && action.getType() == StepType.STATE))
-            result.error(name, "Output name '" + output + "' is not unique (only STATE steps may share a name).");
-    }
-
-
-    protected static void validateSemanticDataContract(StrategicActionStep action, Ctx ctx, ValidationResult result)
-    {
-        String name = action.getName();
-
-        if(action.getInputs() == null)
+        if(source.startsWith("="))
         {
-            result.error(name, "Action without semantic inputs.");
-        }
-        else
-        {
-            validateSemanticStrings(action.getInputs(), name, "inputs", result);
+            validateJavaExpressionSyntax(source, name, field, result);
+            return;
         }
 
-        if(action.getOutput() != null && action.getOutput().isBlank())
-            result.error(name, "Semantic output must not be empty.");
-
-        if(ctx.phase2)
+        if(RUNTIME_PATH_PATTERN.matcher(source).matches())
             return;
 
-        // The following fields belong to later phases.
-        if(action.getInputMapping() != null && !action.getInputMapping().isEmpty())
-            result.error(name, "Input mappings are not allowed in Phase 1.");
-
-        if(action.getResultMapping() != null && !action.getResultMapping().isBlank())
-            result.error(name, "Result mapping is not allowed in Phase 1.");
-
-        if(action.getExp() != null && !action.getExp().isBlank())
-            result.error(name, "Expression is not allowed in Phase 1.");
+        result.error(
+            name,
+            "Invalid Phase 3 mapping source in " + field + ": '"
+                + source
+                + "'. Expected a runtime path such as 'goal.secretPerson' "
+                + "or 'plan.userInput', or a Java expression prefixed with '='.");
     }
 
-
-    protected static void validateSemanticStrings(List<String> values, String name, String field, ValidationResult result)
+    protected static void validateCompiledExpression(
+        String expression,
+        String name,
+        String field,
+        ValidationResult result)
     {
-        for(int i = 0; i < values.size(); i++)
+        if(expression == null || expression.isBlank())
         {
-            String value = values.get(i);
+            result.error(
+                name,
+                "Missing compiled Phase 3 expression in " + field + ".");
+            return;
+        }
 
-            if(value == null || value.isBlank())
-                result.error(name, "Semantic " + field + " contains an empty value at index " + i + ".");
+        String value = expression.trim();
+
+        if(!value.startsWith("="))
+        {
+            result.error(
+                name,
+                "Phase 3 " + field
+                    + " must be a compiled expression prefixed with '=': '"
+                    + value + "'.");
+            return;
+        }
+
+        validateJavaExpressionSyntax(value, name, field, result);
+    }
+
+    protected static void validateCompiledOptions(
+        String options,
+        ReasoningType type,
+        String name,
+        ValidationResult result)
+    {
+        if(type != ReasoningType.SELECTION)
+            return;
+
+        if(options == null || options.isBlank())
+        {
+            result.error(name, "Missing Phase 3 selection options.");
+            return;
+        }
+
+        String value = options.trim();
+
+        if(value.startsWith("="))
+        {
+            validateJavaExpressionSyntax(value, name, "options", result);
+            return;
+        }
+
+        try
+        {
+            JsonValue parsed = Json.parse(value);
+
+            if(!parsed.isArray())
+            {
+                result.error(
+                    name,
+                    "Selection options must be a JSON array or a compiled expression.");
+            }
+        }
+        catch(Exception e)
+        {
+            result.error(
+                name,
+                "Invalid Phase 3 selection options: " + e.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Semantic validation helpers
+    // ---------------------------------------------------------------------
+
+    protected static void validateSemanticExpression(
+        String expression,
+        String name,
+        String field,
+        ValidationResult result)
+    {
+        if(expression == null || expression.isBlank())
+        {
+            result.error(name, "Empty " + field + " expression.");
+        }
+    }
+
+    protected static void checkSelectionOptions(
+        String options,
+        String name,
+        ValidationResult result)
+    {
+        if(options == null || options.isBlank())
+        {
+            result.error(name, "Selection reasoning requires options.");
+            return;
+        }
+
+        String value = options.trim();
+
+        if(value.startsWith("=") || value.startsWith("${"))
+            return;
+
+        try
+        {
+            JsonValue parsed = Json.parse(value);
+
+            if(!parsed.isArray())
+            {
+                result.error(
+                    name,
+                    "Selection options must be a JSON array or a dynamic expression.");
+            }
+            else if(((JsonArray)parsed).isEmpty())
+            {
+                result.error(
+                    name, "Selection options must not be an empty array.");
+            }
+        }
+        catch(Exception e)
+        {
+            result.error(
+                name, "Invalid selection options: " + e.getMessage());
+        }
+    }
+
+    protected static void validateTargetMapping(
+        String mapping,
+        String name,
+        String field,
+        ValidationResult result)
+    {
+        if(mapping == null || mapping.isBlank())
+        {
+            result.error(name, "Empty " + field + ".");
+            return;
+        }
+
+        String value = mapping.trim();
+
+        if(!TARGET_MAPPING_PATTERN.matcher(value).matches())
+        {
+            result.error(
+                name,
+                "Invalid " + field + " target '" + value
+                    + "'. Expected a path such as 'plan.result', "
+                    + "'belief.result' or 'goal.result'.");
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Java expression syntax validation
+    // ---------------------------------------------------------------------
+
+    protected static void validateJavaExpressionSyntax(
+        String expression,
+        String name,
+        String field,
+        ValidationResult result)
+    {
+        if(expression == null || expression.isBlank())
+        {
+            result.error(name, "Empty Java expression in " + field + ".");
+            return;
+        }
+
+        String value = expression.trim();
+
+        if(!value.startsWith("="))
+        {
+            result.error(
+                name,
+                "Java expression in " + field + " must start with '='.");
+            return;
+        }
+
+        String javaExpression = value.substring(1).trim();
+
+        if(javaExpression.isEmpty())
+        {
+            result.error(
+                name, "Empty Java expression body in " + field + ".");
+            return;
+        }
+
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+
+        if(compiler == null)
+        {
+            result.error(
+                name,
+                "Cannot validate Java expression in " + field
+                    + ": system Java compiler is unavailable.");
+            return;
+        }
+
+        String source =
+            "final class StrategicPlanExpressionCheck { "
+                + "Object check() { return ("
+                + javaExpression
+                + "); } }";
+
+        DiagnosticCollector<JavaFileObject> diagnostics =
+            new DiagnosticCollector<>();
+
+        JavaFileObject file = new SimpleJavaFileObject(
+            URI.create("string:///StrategicPlanExpressionCheck.java"),
+            JavaFileObject.Kind.SOURCE)
+        {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors)
+            {
+                return source;
+            }
+        };
+
+        try
+        {
+            JavacTask task = (JavacTask)compiler.getTask(
+                null,
+                null,
+                diagnostics,
+                List.of("-proc:none"),
+                null,
+                List.of(file));
+
+            /*
+             * Parse syntax only. Runtime names such as plan.foo do not need
+             * to be declared in the temporary class.
+             */
+            task.parse();
+
+            for(Diagnostic<? extends JavaFileObject> diagnostic
+                : diagnostics.getDiagnostics())
+            {
+                if(diagnostic.getKind() == Diagnostic.Kind.ERROR)
+                {
+                    result.error(
+                        name,
+                        "Invalid Java syntax in " + field + ": "
+                            + diagnostic.getMessage(Locale.ROOT));
+                    return;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            result.error(
+                name,
+                "Could not validate Java expression in " + field + ": "
+                    + e.getMessage());
         }
     }
 }

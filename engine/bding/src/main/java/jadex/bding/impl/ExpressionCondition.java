@@ -14,6 +14,8 @@ public class ExpressionCondition implements ICondition
     public ExpressionCondition(String expression)
     {
         this.expression = expression;
+
+        System.out.println("created expression cond: "+expression);
     }
 
     @Override

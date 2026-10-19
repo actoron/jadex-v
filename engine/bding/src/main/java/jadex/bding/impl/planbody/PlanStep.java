@@ -65,6 +65,9 @@ public abstract class PlanStep extends RIdElement implements IPlanStep
 
     public static Object evaluateExpression(String exp, Map<String, Object> context)
     {
+        if(exp==null)
+            throw new NullPointerException("exp must not null");
+
         if(isExpression(exp))
             exp = exp.substring(1);
         else

@@ -4,9 +4,8 @@ import java.util.Map;
 
 import com.eclipsesource.json.JsonObject;
 
-import jadex.bding.impl.RGoal;
-import jadex.bding.impl.RGoal.GoalState;
-import jadex.bding.impl.RIntention;
+import jadex.bding.impl.planbody.strategic.StrategicPlanFormatter;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.bding.impl.RPlan;
 
 public final class IsRetryAllowedPrompt
@@ -59,7 +58,9 @@ public final class IsRetryAllowedPrompt
             PromptHelper.formatGoal(plan.getIntention().getGoal()),
             plan.getIntention().getIntention().getDescription(),
             PromptHelper.formatContext(plan.getIntention().getGoal().getGoal().getModel(), context),
-            PromptHelper.formatPlan(plan.getPlan()));
+            StrategicPlanFormatter.format(plan.getPlan().getStrategicPlan(), PlanPhase.PHASE1)
+            //PromptHelper.formatPlan(plan.getPlan())
+        );
 
         return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
     }

@@ -23,6 +23,9 @@ public class ReasoningStep extends PlanStep
         this.reasoningtype = reasoningtype;
         this.problem = problem;
         this.options = options;
+
+        if(ReasoningType.SELECTION.equals(reasoningtype) && options==null)
+            throw new RuntimeException("selection reasoning without options: "+problem);
     }
 
     @Override

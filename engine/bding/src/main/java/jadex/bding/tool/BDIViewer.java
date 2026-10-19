@@ -46,7 +46,10 @@ import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
 import jadex.bding.impl.planbody.strategic.StrategicActionStep;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
+import jadex.bding.impl.planbody.strategic.StrategicReasoningStep;
 import jadex.bding.impl.planbody.strategic.StrategicStep;
+import jadex.bding.impl.planbody.strategic.StrategicSubgoalStep;
+import jadex.bding.impl.planbody.strategic.StrategicToolStep;
 import jadex.common.SEmoji;
 import jadex.core.IComponentHandle;
 
@@ -816,13 +819,14 @@ public class BDIViewer extends JFrame
         {
             if(step instanceof StrategicActionStep action)
             {
-                return switch(action.getType())
-                {
-                    case TOOL -> "🔧";
-                    case REASONING -> "🧠";
-                    case SUBGOAL -> "🎯";
-                    default -> "•";
-                };
+                String ret = "•";
+                if(action instanceof StrategicToolStep)
+                    ret = "🔧";
+                else if(action instanceof StrategicReasoningStep)
+                    ret = "🧠";
+                else if(action instanceof StrategicSubgoalStep)
+                    ret = "🎯";
+                return ret;
             }
 
             return "•";
@@ -832,13 +836,14 @@ public class BDIViewer extends JFrame
         {
             if(step instanceof StrategicActionStep action)
             {
-                return switch(action.getType())
-                {
-                    case TOOL -> "Tool: " + step.getName();
-                    case REASONING -> "Reasoning: " + step.getName();
-                    case SUBGOAL -> "Subgoal: " + step.getName();
-                    default -> step.getName();
-                };
+                String ret = step.getName();
+                if(action instanceof StrategicToolStep)
+                    ret = "Tool: "+ret;
+                else if(action instanceof StrategicReasoningStep)
+                    ret = "Reasoning: "+ret;
+                else if(action instanceof StrategicSubgoalStep)
+                    ret = "Subgoal: "+ret;
+                return ret;
             }
 
             return step.getName();

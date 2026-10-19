@@ -32,7 +32,10 @@ import jadex.bding.impl.planbody.SubgoalStep;
 import jadex.bding.impl.planbody.ToolCallStep;
 import jadex.bding.impl.planbody.strategic.StrategicActionStep;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
+import jadex.bding.impl.planbody.strategic.StrategicReasoningStep;
 import jadex.bding.impl.planbody.strategic.StrategicStep;
+import jadex.bding.impl.planbody.strategic.StrategicSubgoalStep;
+import jadex.bding.impl.planbody.strategic.StrategicToolStep;
 import jadex.common.SEmoji;
 
 public class InspectorPanel extends JPanel
@@ -334,16 +337,16 @@ public class InspectorPanel extends JPanel
 
         if(step instanceof StrategicActionStep action)
         {
-            addField("Type", action.getType() != null ? action.getType().toString(): "Unknown");
+            addField("Type", action.getClass().getName());
 
             addField("Name", action.getName());
             addField("Description", action.getDescription());
 
             addSection("Inputs");
-            addStringList(action.getInputs());
+            addStringList(action.getInputs().get());
 
             addSection("Output");
-            addField("Output", action.getOutput());
+            addField("Output", action.getOutput().get());
         }
         else
         {
@@ -389,20 +392,14 @@ public class InspectorPanel extends JPanel
     {
         if(step instanceof StrategicActionStep action)
         {
-            switch(action.getType())
-            {
-                case TOOL:
-                    return "🔧";
-
-                case REASONING:
-                    return "🧠";
-
-                case SUBGOAL:
-                    return "🎯";
-
-                default:
-                    return "•";
-            }
+            String ret = "•";
+            if(action instanceof StrategicToolStep)
+                ret = "🔧";
+            else if(action instanceof StrategicReasoningStep)
+                ret = "🧠";
+            else if(action instanceof StrategicSubgoalStep)
+                ret = "🎯";
+            return ret;
         }
 
         return "•";
@@ -412,20 +409,14 @@ public class InspectorPanel extends JPanel
     {
         if(step instanceof StrategicActionStep action)
         {
-            switch(action.getType())
-            {
-                case TOOL:
-                    return "Tool: " + action.getName();
-
-                case SUBGOAL:
-                    return "Subgoal: " + action.getName();
-
-                case REASONING:
-                    return "Reasoning: " + action.getName();
-
-                default:
-                    return action.getName();
-            }
+            String ret = step.getName();
+            if(action instanceof StrategicToolStep)
+                ret = "Tool: "+ret;
+            else if(action instanceof StrategicReasoningStep)
+                ret = "Reasoning: "+ret;
+            else if(action instanceof StrategicSubgoalStep)
+                ret = "Subgoal: "+ret;
+            return ret;
         }
 
         return step.getName();
