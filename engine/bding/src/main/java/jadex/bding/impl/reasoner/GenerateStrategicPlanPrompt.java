@@ -408,7 +408,11 @@ public class GenerateStrategicPlanPrompt
     - Do not hide a multi-step procedure inside one TOOL or REASONING step.
     - Every REASONING step has an explicit "problem". Never infer it from
       inputs[0].
-
+      
+    For every step, if type is STATE, include a non-empty output. If
+    reasoningType is SELECTION, include an options array with at least one
+    item. Apply these rules to nested steps too.
+    
     EXAMPLE
 
     The example comes from an unrelated domain. Copy its structural patterns,
@@ -601,29 +605,6 @@ public class GenerateStrategicPlanPrompt
               "items": { "$ref": "#/$defs/step" }
             }
           },
-
-          "allOf": [
-            {
-              "if": {
-                "properties": { "reasoningType": { "const": "SELECTION" } },
-                "required": ["reasoningType"]
-              },
-              "then": {
-                "required": ["options"],
-                "properties": { "options": { "minItems": 1 } }
-              }
-            },
-            {
-              "if": {
-                "properties": { "type": { "const": "STATE" } },
-                "required": ["type"]
-              },
-              "then": {
-                "required": ["output"],
-                "properties": { "output": { "minLength": 1 } }
-              }
-            }
-          ],
 
           "additionalProperties": false
         },
