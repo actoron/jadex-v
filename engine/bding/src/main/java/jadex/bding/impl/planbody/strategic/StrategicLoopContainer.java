@@ -12,32 +12,32 @@ import jadex.future.IFuture;
 
 public class StrategicLoopContainer extends StrategicContainer
 {
-    protected String condition;
+    protected PhaseValue<String> condition = new PhaseValue<>();
 
-    protected String max;
+    protected PhaseValue<String> max = new PhaseValue<>();
 
     public StrategicLoopContainer(String name, String description, List<StrategicStep> steps)
     {
         super(name, description, steps);
     }
 
-    public String getCondition() 
+    public PhaseValue<String> getCondition() 
     {
         return condition;
     }
 
-    public StrategicLoopContainer setCondition(String condition) 
+    public StrategicLoopContainer setCondition(PhaseValue<String> condition) 
     {
         this.condition = condition;
         return this;
     }
 
-    public String getMax() 
+    public PhaseValue<String> getMax() 
     {
         return max;
     }
 
-    public StrategicLoopContainer setMax(String max) 
+    public StrategicLoopContainer setMax(PhaseValue<String> max) 
     {
         this.max = max;
         return this;

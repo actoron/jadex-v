@@ -7,6 +7,7 @@ import jadex.bding.IPlanStep;
 import jadex.bding.IReasoner;
 import jadex.bding.impl.RPlan;
 import jadex.bding.impl.planbody.SequentialPlanStepContainer;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.future.Future;
 import jadex.future.IFuture;
 
@@ -16,7 +17,7 @@ public class StrategicContainer extends StrategicStep
 
     protected Map<String, Object> inits;
 
-    protected String json;
+    protected PhaseValue<String> json = new PhaseValue<>();
 
     public StrategicContainer(String name, String description, List<StrategicStep> steps)
     {
@@ -44,14 +45,14 @@ public class StrategicContainer extends StrategicStep
         this.inits = inits;
     }
 
-    public String getJson()
+    public PhaseValue<String> getJson()
     {
         return json;
     }
 
-    public void setJson(String myjson)
+    public void setJson(PhaseValue<String> json)
     {
-        this.json = myjson;
+        this.json = json;
     }
 
     @Override
@@ -64,15 +65,15 @@ public class StrategicContainer extends StrategicStep
         return new Future<>(executableStep);
     }
 
-    public static String toTreeString(StrategicContainer plan)
+    public static String toTreeString(StrategicContainer plan, PlanPhase phase)
     {
         StringBuilder sb = new StringBuilder();
         sb.append(plan.getName());
-        appendContainer(sb, plan, "");
+        appendContainer(sb, plan, "", phase);
         return sb.toString();
     }
 
-    protected static void appendContainer(StringBuilder sb, StrategicContainer container, String prefix)
+    protected static void appendContainer(StringBuilder sb, StrategicContainer container, String prefix, PlanPhase phase)
     {
         if(container == null || container.getSteps() == null)
             return;
@@ -81,11 +82,11 @@ public class StrategicContainer extends StrategicStep
         {
             StrategicStep step = container.getSteps().get(i);
             boolean last = i == container.getSteps().size() - 1;
-            appendStep(sb, step, prefix, last);
+            appendStep(sb, step, prefix, last, phase);
         }
     }
 
-    protected static void appendStep(StringBuilder sb, StrategicStep step, String prefix, boolean last)
+    protected static void appendStep(StringBuilder sb, StrategicStep step, String prefix, boolean last, PlanPhase phase)
     {
         String branch = last ? "└─ " : "├─ ";
         String childPrefix = prefix + (last ? "   " : "│  ");
@@ -97,41 +98,41 @@ public class StrategicContainer extends StrategicStep
             .append(" [")
             .append(getType(step));
 
-        appendStepDetails(sb, step);
+        appendStepDetails(sb, step, phase);
 
         sb.append("]");
 
         if(step instanceof StrategicActionStep action)
         {
-            appendInterface(sb, action, childPrefix);
+            appendInterface(sb, action, childPrefix, phase);
         }
         else if(step instanceof StrategicConditionContainer condition)
         {
-            appendConditionBranches(sb, condition, childPrefix);
+            appendConditionBranches(sb, condition, childPrefix, phase);
         }
         else if(step instanceof StrategicLoopContainer loop)
         {
-            appendContainer(sb, loop, childPrefix);
+            appendContainer(sb, loop, childPrefix, phase);
         }
         else if(step instanceof StrategicContainer nested)
         {
-            appendContainer(sb, nested, childPrefix);
+            appendContainer(sb, nested, childPrefix, phase);
         }
     }
 
-    protected static void appendStepDetails(StringBuilder sb, StrategicStep step)
+    protected static void appendStepDetails(StringBuilder sb, StrategicStep step, PlanPhase phase)
     {
         if(step instanceof StrategicConditionContainer condition)
         {
-            String exp = condition.getCondition();
+            String exp = condition.getCondition().get(phase);
 
             if(exp != null && !exp.isBlank())
                 sb.append(": ").append(formatExpression(exp));
         }
         else if(step instanceof StrategicLoopContainer loop)
         {
-            String condition = loop.getCondition();
-            String max = loop.getMax();
+            String condition = loop.getCondition().get(phase);
+            String max = loop.getMax().get(phase);
 
             if(condition != null && !condition.isBlank())
                 sb.append(": ").append(formatExpression(condition));
@@ -139,11 +140,10 @@ public class StrategicContainer extends StrategicStep
             if(max != null && !max.isBlank())
                 sb.append("; max=").append(max);
         }
-        else if(step instanceof StrategicActionStep action
-            && action.getType() == StepType.STATE)
+        else if(step instanceof StrategicStateStep action)
         {
-            String output = action.getOutput();
-            String exp = action.getExp();
+            String output = action.getOutput().get(phase);
+            String exp = action.getExpression().get(phase);
 
             if(output != null && !output.isBlank())
             {
@@ -157,8 +157,7 @@ public class StrategicContainer extends StrategicStep
                 sb.append(": ").append(formatExpression(exp));
             }
         }
-        else if(step instanceof StrategicActionStep action
-            && action.getType() == StepType.TOOL)
+        else if(step instanceof StrategicToolStep action)
         {
             sb.append(": ").append(action.getTool());
         }
@@ -178,10 +177,10 @@ public class StrategicContainer extends StrategicStep
         return exp;
     }
 
-    protected static void appendLoopProperties(StringBuilder sb, StrategicLoopContainer loop, String prefix)
+    protected static void appendLoopProperties(StringBuilder sb, StrategicLoopContainer loop, String prefix, PlanPhase phase)
     {
-        String max = loop.getMax();
-        String condition = loop.getCondition();
+        String max = loop.getMax().get(phase);
+        String condition = loop.getCondition().get(phase);
 
         if(max != null && !max.isBlank())
         {
@@ -200,7 +199,7 @@ public class StrategicContainer extends StrategicStep
         }
     }
 
-    protected static void appendConditionBranches(StringBuilder sb, StrategicConditionContainer condition, String prefix)
+    protected static void appendConditionBranches(StringBuilder sb, StrategicConditionContainer condition, String prefix, PlanPhase phase)
     {
         StrategicContainer trueContainer = condition.getTrueContainer();
         StrategicContainer falseContainer = condition.getFalseContainer();
@@ -209,13 +208,13 @@ public class StrategicContainer extends StrategicStep
         boolean hasFalse = falseContainer != null && falseContainer.getSteps() != null && !falseContainer.getSteps().isEmpty();
 
         if(hasTrue)
-            appendBranch(sb, "THEN", trueContainer, prefix, !hasFalse);
+            appendBranch(sb, "THEN", trueContainer, prefix, !hasFalse, phase);
 
         if(hasFalse)
-            appendBranch(sb, "ELSE", falseContainer, prefix, true);
+            appendBranch(sb, "ELSE", falseContainer, prefix, true, phase);
     }
 
-    protected static void appendBranch(StringBuilder sb, String name, StrategicContainer container, String prefix, boolean last)
+    protected static void appendBranch(StringBuilder sb, String name, StrategicContainer container, String prefix, boolean last, PlanPhase phase)
     {
         String branch = last ? "└─ " : "├─ ";
         String childPrefix = prefix + (last ? "   " : "│  ");
@@ -225,7 +224,7 @@ public class StrategicContainer extends StrategicStep
             .append(branch)
             .append(name);
 
-        appendContainer(sb, container, childPrefix);
+        appendContainer(sb, container, childPrefix, phase);
     }
 
     /**
@@ -248,16 +247,16 @@ public class StrategicContainer extends StrategicStep
      *         input: context.userInput → arg0
      *         output: answer → context.answer
      */
-    protected static void appendInterface(StringBuilder sb, StrategicActionStep action, String prefix)
+    protected static void appendInterface(StringBuilder sb, StrategicActionStep action, String prefix, PlanPhase phase)
     {
-        List<String> inputs = action.getInputs();
-        String output = action.getOutput();
+        List<String> inputs = action.getInputs().get(phase);
+        String output = action.getOutput().get(phase);
 
         boolean hasInputs = inputs != null && !inputs.isEmpty();
         boolean hasOutput = output != null && !output.isBlank();
 
-        Map<String, String> inputMapping = action.getInputMapping();
-        String resultMapping = action.getResultMapping();
+        Map<String, String> inputMapping = action.getInputMappings().get(phase);
+        String resultMapping = action.getResultMapping().get(phase);
 
         boolean hasInputMapping = inputMapping != null && !inputMapping.isEmpty();
         boolean hasResultMapping = resultMapping != null && !resultMapping.isBlank();
@@ -307,8 +306,20 @@ public class StrategicContainer extends StrategicStep
 
     protected static String getType(StrategicStep step)
     {
-        if(step instanceof StrategicActionStep action)
-            return action.getType().name();
+        if(step instanceof StrategicStateStep)
+            return "STATE";
+
+        if(step instanceof StrategicFailStep)
+            return "FAIL";
+
+        if(step instanceof StrategicToolStep)
+            return "TOOL";
+
+        if(step instanceof StrategicSubgoalStep)
+            return "SUBGOAL";
+
+        if(step instanceof StrategicReasoningStep)
+            return "REASONING";
 
         if(step instanceof StrategicConditionContainer)
             return "CONDITION";

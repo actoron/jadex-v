@@ -18,6 +18,7 @@ import jadex.bding.impl.RPlan;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanCompiler;
 import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -252,9 +253,9 @@ public class LlmReasoner implements IReasoner
             String response = LlmChatAgent.getResponse(res);
 
             System.out.println("========== LLM PROMPT ==========");
-            System.out.println(abbreviate(prompt, 400));
+            System.out.println(abbreviate(prompt, 1000));
             System.out.println("========== LLM RESPONSE ==========");
-            System.out.println(abbreviate(response, 400));
+            System.out.println(abbreviate(response, 1000));
             System.out.println("========== END LLM RESPONSE ==========");
 
             return LlmHelper.cleanJsonResponse(response);
@@ -520,6 +521,20 @@ public class LlmReasoner implements IReasoner
     }
 
     @Override
+    public IFuture<Boolean> hasMadeProgress(RIntention intention, Map<String, Object> lastcontext, Map<String, Object> context) 
+    {
+        Future<Boolean> ret = new Future<>();
+
+        ReasoningPrompt<Boolean> prompt = HasMadeProgressPrompt.create(intention, lastcontext, context);
+
+        Boolean state = reason("hasMadeProgress", prompt, intention.getGoal(), intention.getIntention());
+
+        ret.setResult(state);
+
+        return ret;
+    }
+
+    @Override
     public IFuture<Boolean> isRetryAllowed(RPlan plan, Map<String, Object> context)
     {
         Future<Boolean> ret = new Future<>();
@@ -611,7 +626,7 @@ public class LlmReasoner implements IReasoner
 
         StrategicContainer res = reason("generateStrategicPlan", prompt, intention.getGoal(), null);
 
-        System.out.println("Strategic plan phase 1: "+StrategicContainer.toTreeString(res));
+        System.out.println("Strategic plan phase 1: "+StrategicContainer.toTreeString(res, PlanPhase.PHASE1));
 
         ret.setResult(res);
 
@@ -633,28 +648,25 @@ public class LlmReasoner implements IReasoner
 
     public IFuture<StrategicContainer> createPlanDataFlow(RIntention intention, Map<String, Object> context, StrategicContainer plan)
     {
-        Future<StrategicContainer> ret = new Future<>();
-
         ReasoningPrompt<StrategicContainer> prompt = CreatePlanDataFlowPrompt.create(intention, context, plan, IComponentManager.get().getCurrentComponent());
-
         StrategicContainer res = reason("operationalizeStrategicPlan", prompt, intention.getGoal(), null);
 
-        System.out.println("Strategic plan phase 2: "+StrategicContainer.toTreeString(res));
+        System.out.println("Strategic plan phase 2: " + StrategicContainer.toTreeString(res, PlanPhase.PHASE2));
+        System.out.println("context is: " + context.keySet() + " " + context);
 
-        System.out.println("context is: "+context.keySet()+" "+context);
         Map<String, Object> inits = StrategicPlanCompiler.compileWithDefaults(res, context);
         res.setInits(inits);
 
         ValidationResult val = StrategicPlanValidator.validatePhase3(res);
+
+        System.out.println("Strategic plan phase 3: " + StrategicContainer.toTreeString(res, PlanPhase.PHASE3));
+
         if(!val.isValid())
-            System.out.println("Plan not valid in phase 3: "+val);
+            return new Future<>(new RuntimeException("Invalid strategic plan in phase 3: " + val));
 
-        System.out.println("Strategic plan phase 3: "+StrategicContainer.toTreeString(res));
-
-        ret.setResult(res);
-
-        return ret;
+        return new Future<>(res);
     }
+
 
     protected AgentModel getModel()
     {

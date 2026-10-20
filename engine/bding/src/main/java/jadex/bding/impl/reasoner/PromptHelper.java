@@ -240,7 +240,7 @@ public class PromptHelper
         return descs.toString();
     }
 
-    public static String formatPlan(Plan plan)
+    /*public static String formatPlan(Plan plan)
     {
         StringBuilder sb = new StringBuilder();
 
@@ -289,7 +289,7 @@ public class PromptHelper
         }
 
         return sb.toString();
-    }
+    }*/
     
     public static JsonValue parseJson(String text)
     {

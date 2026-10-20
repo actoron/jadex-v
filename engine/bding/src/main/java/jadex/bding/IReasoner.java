@@ -58,6 +58,8 @@ public interface IReasoner
 
     public IFuture<Boolean> isSameIntention(Intention in1, Intention in2);
 
+    public IFuture<Boolean> hasMadeProgress(RIntention intention, Map<String, Object> lastcontext, Map<String, Object> context);
+
     public IFuture<GoalState> evaluateGoalState(RGoal goal, Map<String, Object> context);
 
     public IFuture<Set<ReasoningEntry>> getCurrentReasoning();

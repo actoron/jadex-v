@@ -11,6 +11,7 @@ import jadex.bding.impl.RIntention;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanParser;
 import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.core.IComponent;
 import jadex.micro.llmcall2.LlmHelper;
 
@@ -73,9 +74,9 @@ public class GenerateStrategicPlanPrompt
      */
     private static StrategicContainer parseAndCheck(String response)
     {
-        StrategicContainer plan = StrategicPlanParser.parse(LlmHelper.sanitizeJson(response));
+        StrategicContainer plan = StrategicPlanParser.parse(LlmHelper.sanitizeJson(response), PlanPhase.PHASE1);
 
-        List<String> problems = CreatePlanDataFlowPrompt.conditionScopeProblems(plan.getJson());
+        List<String> problems = CreatePlanDataFlowPrompt.conditionScopeProblems(plan.getJson().get(PlanPhase.PHASE1));
 
         if(!problems.isEmpty())
             throw new IllegalArgumentException(String.join("\n", problems));
@@ -163,17 +164,20 @@ public class GenerateStrategicPlanPrompt
     SELECTION RULES (mandatory)
     - A SELECTION without a non-empty "options" array is INVALID.
     - Write "options" immediately after "reasoningType", before "problem".
-    - Fixed alternatives: list the values directly,
-      e.g. "options": ["LOW", "MEDIUM", "HIGH"].
-    - Alternatives produced by an earlier step: reference its output name,
-      e.g. "options": ["candidates"] ("candidates" is the output of an
-      earlier step).
+    - Fixed alternatives: list at least TWO values directly,
+      e.g. "options": ["LOW", "MEDIUM", "HIGH"]. A single fixed value is not
+      a choice and is INVALID.
+    - Alternatives produced by an earlier step: give exactly ONE entry, the
+      output name of that step, e.g. "options": ["candidates"] ("candidates"
+      is the output of an earlier step). A single entry is only valid if it is
+      such an output name.
     - "options" describe the possible RESULT values; "inputs" describe the
       information needed. Never put the alternatives only into "inputs".
     - "options" are semantic values, not Java expressions or runtime paths.
     - The selected result MUST be one of the values represented by "options".
-    - If you cannot name the options (literal values or an earlier output),
-      the step is NOT a SELECTION. Use EXPLANATION or BOOLEAN instead.
+    - If you cannot name the options (at least two literal values or one
+      earlier output), the step is NOT a SELECTION. Use EXPLANATION or
+      BOOLEAN instead.
     - Never provide "options" for BOOLEAN, COMPUTATION or EXPLANATION.
 
     REASONING RESULT CONSISTENCY
@@ -268,10 +272,39 @@ public class GenerateStrategicPlanPrompt
     must be its exact name). Do not describe its internal steps.
 
     STATE
-    Sets a control value that later conditions read, typically a flag that ends
-    a loop. The description MUST say the stored value ("Set done to true").
-    Name it after what it does (markDone). Never use STATE for counters (the
-    loop counter is implicit) or bookkeeping.
+    Assigns a named state value. "output" is REQUIRED and identifies the
+    semantic state variable being assigned. The description MUST explain the
+    intended update or value, for example "Set gameOver to true" or
+    "Update the user's preferred language using the identified preference."
+
+    STATE is not restricted to control flags. It can represent any explicit
+    state update needed by the plan, including:
+    - setting a flag used by a later CONDITION or LOOP,
+    - recording or updating information,
+    - updating a value that subsequent steps need.
+
+    "inputs" lists the information needed to determine the assigned value.
+    If the value is constant, "inputs" may be empty. The description explains
+    the intended update; the concrete value or expression is determined in a
+    later planning phase.
+
+    Use a concise, meaningful output name, such as "gameOver" or
+    "userPreference". In Phase 1, "output" is a semantic identifier, not a
+    runtime path or executable expression.
+
+    At runtime, values assigned to belief.* and goal.* are written back to the
+    corresponding beliefs and goal parameters after each plan step. Values
+    assigned to plan.* remain local to the current plan. The later planning
+    and compilation phases determine the concrete target and mapping.
+
+    For loop termination, a STATE step may set a control flag that the LOOP
+    condition reads. If several branches can terminate the loop, they must
+    set the same flag consistently. Do not use STATE to implement loop
+    counters; the loop counter is implicit.
+
+    A STATE step without "output" is INVALID. Do not use STATE as a
+    replacement for REASONING, TOOL or SUBGOAL when the value requires
+    reasoning, external information or delegated work.
 
     FAIL
     Terminates the plan with failure. No output.
@@ -315,8 +348,11 @@ public class GenerateStrategicPlanPrompt
     loop.round.counter is less than goal.maxQuestions".
 
     If a loop can end for several reasons, use ONE flag that every ending
-    branch sets with a STATE step of the same output name. Until a STATE
-    step has run, its flag counts as false, so no initialization is needed.
+    branch sets with a STATE step with the SAME "output" name (e.g. both
+    markWon and markLost have "output": "gameOver"). Do not invent a second
+    flag like gameOver2. Until a STATE step has run, its flag counts as
+    false, so no initialization is needed.
+
     Announce every outcome exactly once: a CONDITION after the loop must only
     cover cases that were not announced inside the loop.
 
@@ -329,6 +365,13 @@ public class GenerateStrategicPlanPrompt
 
     "output" is a concise semantic identifier (userInput, guessIsCorrect),
     never a path or a generic name like result.
+
+    MISSING VALUES
+    If the intention needs a value that AVAILABLE CONTEXT does not provide as a
+    concrete value (e.g. a parameter described only as "chosen by the agent"),
+    the plan must produce it first with a REASONING step (usually EXPLANATION
+    or SELECTION) and use that output afterwards. Never read such a value from
+    goal.* or belief.*.
 
     EXPRESSIONS VS. REASONING
 
@@ -348,10 +391,11 @@ public class GenerateStrategicPlanPrompt
 
     Rules:
     - Output names are unique, except that several STATE steps may set the
-      same flag.
+      same state variable when they intentionally update that state.
     - A value can only be used by steps after its producer.
     - Outputs of REASONING and STATE may be read after a CONDITION or LOOP
-      even if only one branch or the loop body produced them.
+      even if only one branch or the loop body produced them, because these
+      outputs have runtime defaults.
     - Outputs of TOOL and SUBGOAL may be read later only if they are produced
       on every path (not inside only one branch, not only in the loop body).
 
@@ -449,9 +493,10 @@ public class GenerateStrategicPlanPrompt
 
     Patterns shown: a SELECTION step has "options" directly after
     "reasoningType"; a REASONING step has an explicit problem separate from
-    its inputs; a CONDITION contains explicit branches; STATE is used for a
-    control flag; a generated explanation can consume the result of an
-    earlier step.
+    its inputs; a CONDITION contains explicit branches; STATE assigns a
+    named state value and always has an "output"; a control flag is one
+    possible use of STATE; a generated explanation can consume the result
+    of an earlier step.
 
     ================ TASK ================
 
@@ -475,8 +520,11 @@ public class GenerateStrategicPlanPrompt
     {{HISTORY}}
 
     Before answering, check every REASONING step: if reasoningType is
-    SELECTION, "options" is present and non-empty; otherwise "options" is
-    absent.
+    SELECTION, "options" is present and holds either at least two fixed values
+    or exactly one earlier output name; otherwise "options" is absent.
+    Check every STATE step: "output" is present and identifies the state
+    variable being assigned. If the STATE controls a LOOP or CONDITION, its
+    output name must match the flag read by that control condition.
 
     Return exactly one JSON plan and nothing else.
     """;
@@ -563,6 +611,16 @@ public class GenerateStrategicPlanPrompt
               "then": {
                 "required": ["options"],
                 "properties": { "options": { "minItems": 1 } }
+              }
+            },
+            {
+              "if": {
+                "properties": { "type": { "const": "STATE" } },
+                "required": ["type"]
+              },
+              "then": {
+                "required": ["output"],
+                "properties": { "output": { "minLength": 1 } }
               }
             }
           ],

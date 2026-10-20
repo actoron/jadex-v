@@ -8,6 +8,7 @@ import jadex.bding.ICondition;
 import jadex.bding.IPlanStep;
 import jadex.bding.IPlanStepContainer;
 import jadex.bding.impl.RPlan;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.bding.impl.planbody.strategic.StrategicLoopContainer;
 import jadex.bding.impl.planbody.strategic.StrategicStep;
 import jadex.future.Future;
@@ -58,7 +59,7 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
 
         PlanStepExecution loopexe = new PlanStepExecution(this, context.getParameters());
 
-        String conexp = container.getCondition();
+        String conexp = container.getCondition().get(PlanPhase.PHASE3);
 
         if(conexp != null && !conexp.isBlank())
         {
@@ -73,9 +74,9 @@ public class LoopPlanStepContainer implements IPlanStepContainer, IPlanStep
         int count = 0;
         int max = -1;
 
-        if(container.getMax() != null)
+        if(container.getMax().get(PlanPhase.PHASE3) != null)
         {
-            max = (Integer)PlanStep.evaluateExpression(container.getMax(), context.getParameters());
+            max = (Integer)PlanStep.evaluateExpression(container.getMax().get(PlanPhase.PHASE3), context.getParameters());
         }
 
         executeLoop(component, context, loopexe, ret, count, max);

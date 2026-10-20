@@ -2,20 +2,16 @@ package jadex.bding.impl.planbody;
 
 import java.util.Map;
 
-import jadex.bding.AgentModel;
 import jadex.bding.IBDINGAgentFeature;
 import jadex.bding.ICondition;
 import jadex.bding.IPlanStep;
 import jadex.bding.IPlanStepContainer;
-import jadex.bding.IReasoner;
-import jadex.bding.impl.ExpressionCondition;
-import jadex.bding.impl.ReasonerCondition;
+import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
 import jadex.bding.impl.planbody.strategic.StrategicConditionContainer;
 import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.core.IComponent;
 import jadex.future.Future;
 import jadex.future.IFuture;
-import jadex.javaparser.SJavaParser;
 
 public class ConditionalPlanStep implements IPlanStepContainer, IPlanStep
 {
@@ -35,7 +31,7 @@ public class ConditionalPlanStep implements IPlanStepContainer, IPlanStep
 
         PlanStepExecution condexe = new PlanStepExecution(this, context.getParameters());
 
-        this.condition = PlanStep.createCondition(container.getCondition(), component.getFeature(IBDINGAgentFeature.class).getModel(), 
+        this.condition = PlanStep.createCondition(container.getCondition().get(PlanPhase.PHASE3), component.getFeature(IBDINGAgentFeature.class).getModel(), 
             component.getFeature(IBDINGAgentFeature.class).getReasoner());
 
         executeCondition(component, context, condexe, ret);
