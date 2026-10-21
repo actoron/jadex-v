@@ -113,7 +113,7 @@ def clean_workspace(workspace):
         # Never descend into Bazel/VCS trees.
         dirnames[:] = [
             d for d in dirnames
-            if d not in (".git", "bazel-out", "bazel-bin", "bazel-testlogs")
+            if d not in (".git", ".bazel", "bazel-out", "bazel-bin", "bazel-testlogs")
             and not d.startswith("bazel-")
         ]
 
