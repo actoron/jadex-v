@@ -116,9 +116,13 @@ public class LlmHelper
 			() -> fetchOpenAiModels("http://localhost:8033/v1", "nix", false),
 			(model) -> fetchOpenAiContextSize("http://localhost:8033/v1", "", model)),
 		UNSLOTH("Unsloth",
-			(model, think, json) -> createOpenAiResponsesChatModel("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model, think),
-			() -> fetchOpenAiModels("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), false),
-			(model) -> fetchOpenAiContextSize("http://localhost:8888/v1", System.getenv("UNSLOTH_API_KEY"), model));
+			(model, think, json) -> createOpenAiResponsesChatModel("http://192.168.0.138:8001/v1", null, model, think),
+			() -> fetchOpenAiModels("http://192.168.0.138:8001/v1", null, false),
+			(model) -> fetchOpenAiContextSize("http://192.168.0.138:8001/v1", null, model)),
+		STRATA("Strata",
+			(model, think, json) -> createOpenAiResponsesChatModel("http://192.168.0.138:8080/v1", System.getenv("VLLM_API_KEY"), model, think),
+			() -> fetchOpenAiModels("http://192.168.0.138:8080/v1", System.getenv("VLLM_API_KEY"), false),
+			(model) -> fetchOpenAiContextSize("http://192.168.0.138:8080/v1", System.getenv("VLLM_API_KEY"), model));
 		
 		private final String name;
 		private final ITriFunction<String, Boolean, Boolean, StreamingChatModel> creator;
@@ -160,12 +164,15 @@ public class LlmHelper
 		}
 	}
 	
+	public static final Provider	DEFAULT_PROVIDER = Provider.VLLM;
+
 	public static final Map<Provider, String>	DEFAULT_MODELS = Collections.unmodifiableMap(
 		Map.of(
 			Provider.OLLAMA_REMOTE, "gemma4:31b",
 //			Provider.UNSLOTH, "unsloth/gemma-4-12B-it-qat-GGUF"
 			Provider.UNSLOTH, "unsloth/Ministral-3-3B-Instruct-2512-GGUF:UD-Q4_K_XL",
-			Provider.SGLANG, "Qwen3.8-27B"
+			Provider.SGLANG, "Qwen3.8-27B",
+			Provider.VLLM, "Qwen3.8-27B"
 		));
 	
 	public static StreamingChatModel createChatModel()
@@ -247,7 +254,7 @@ public class LlmHelper
 	public static StreamingChatModel createChatModel(Provider provider, String model, Boolean think, Boolean json)
 	{
 		if(provider==null)
-			provider = Provider.values()[0];
+			provider = DEFAULT_PROVIDER;
 		
 		return provider.createChatModel(model, think, json);
 	}

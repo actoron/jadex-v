@@ -20,7 +20,7 @@ public class LlmBlocksworldImageAgent	extends LlmBlocksworldBaseAgent	implements
 		{
 			// Generate base64 encoded image of current world state
 			Container	worlds	= (Container)gui.getContentPane().getComponent(0);
-			Component	world	= 	((Container) ((Container) ((Container) worlds.getComponent(1)).getComponent(0)).getComponent(0)).getComponent(0);
+			Component	world	=	((Container) ((Container) ((Container) worlds.getComponent(worlds.getComponentCount()-1)).getComponent(0)).getComponent(0)).getComponent(0);
 			return LlmHelper.createImageFromComponent(world);
 		});
 	}

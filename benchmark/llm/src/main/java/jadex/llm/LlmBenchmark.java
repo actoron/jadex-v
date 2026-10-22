@@ -464,7 +464,7 @@ public class LlmBenchmark
 //			"unsloth/Qwen3.8-Flash-Next-GGUF",
 //			"unsloth/gemma-4-12B-it-qat-GGUF",
 //			"unsloth/gemma-4-26B-A4B-it-GGUF"
-//			"unsloth/gemma-4-31B-it-GGUF",
+			"unsloth/gemma-4-31B-it-GGUF"
 //			"unsloth/gemma-4-E2B-it-qat-GGUF",
 //			"unsloth/gemma-4-E4B-it-qat-GGUF",
 //			"unsloth/gpt-oss-20b-GGUF"
@@ -497,6 +497,12 @@ public class LlmBenchmark
 			"Qwen3.8-27B"
 		);
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.SGLANG, true);
+		
+		// Run benchmarks for available Strata models
+		include_models	= Arrays.asList(
+			"qwen3.8-flash-next-q2_0"
+		);
+//		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, include_models, Provider.STRATA, true);
 		
 		// Run benchmarks for available Llama server models
 //		runProviderBenchmarks(benchmark_name, prompt, setup, success, csvStats, out, null, Provider.LLAMA_SERVER, false);
@@ -697,6 +703,10 @@ public class LlmBenchmark
 					
 					System.out.println((successes[fi] ? "Success" : "Failure")+" ("+(end-start)/1000+" s"
 							+ ", "+chat.getTotalTokenCount().get()+" tokens)");
+//					if(successes[fi])
+//					{
+//						System.exit(0);
+//					}
 				}
 				catch(Exception e)
 				{
@@ -815,7 +825,7 @@ public class LlmBenchmark
 //			}
 //		}
 		
-		Provider provider = Provider.OLLAMA_REMOTE;
+		Provider provider = Provider.STRATA;
 		for(String model_name: provider.getModels())
 		{
 			System.out.println("\""+model_name+"\",");

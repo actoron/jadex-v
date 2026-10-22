@@ -17,6 +17,9 @@ MAVEN_DEPS = [
     'dev.langchain4j:langchain4j-mistral-ai:1.18.1',
     'dev.langchain4j:langchain4j-open-ai:1.18.1',
     'dev.langchain4j:langchain4j-anthropic:1.18.1',
+    'org.scilab.forge:jlatexmath:1.0.7',
+    'org.scilab.forge:jlatexmath-font-greek:1.0.7',
+    'org.scilab.forge:jlatexmath-font-cyrillic:1.0.7',
     'org.slf4j:slf4j-simple:2.0.18',
     'org.testcontainers:testcontainers:2.0.3',
     'org.testcontainers:testcontainers-ollama:2.0.3',
@@ -24,6 +27,7 @@ MAVEN_DEPS = [
     'com.eclipsesource.minimal-json:minimal-json:0.9.5',
     'com.cronutils:cron-utils:9.2.1',
     'com.vladsch.flexmark:flexmark-all:0.64.8',
+    'com.fifesoft:rsyntaxtextarea:4.0.1',
     'io.github.raghul-tech:swing-markdown-preview:1.0.0',
 ]
 

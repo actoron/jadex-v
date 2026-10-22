@@ -724,7 +724,7 @@ public class LlmChatAgent	implements Callable<ITerminableIntermediateFuture<Chat
 						addToHistory(UserMessage.from(contents));
 					}
 				}
-				else if((llm instanceof MistralAiStreamingChatModel || llm.getClass().getName().contains("GoogleGenAiStreamingChatModel")) && !msg.hasSingleText())
+				else if((llm instanceof MistralAiStreamingChatModel || llm.getClass().getName().contains("GoogleGenAiStreamingChatModel") || llm.getClass().getName().contains("OpenAi")) && !msg.hasSingleText())
 				{
 					int i	= messages.size();
 					while(i>0 && (messages.get(i-1) instanceof UserMessage))
