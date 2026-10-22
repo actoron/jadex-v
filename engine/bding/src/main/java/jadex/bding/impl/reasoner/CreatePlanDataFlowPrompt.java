@@ -161,21 +161,6 @@ public class CreatePlanDataFlowPrompt
         }
     }
 
-    private static List<String> requiredIds(Indexed indexed)
-    {
-        List<String> ids = new ArrayList<>();
-
-        for(Map.Entry<String, JsonObject> e : indexed.steps.entrySet())
-        {
-            String t = e.getValue().getString("type", "");
-
-            if(t.equals("TOOL") || t.equals("SUBGOAL") || t.equals("STATE"))
-                ids.add(e.getKey());
-        }
-
-        return ids;
-    }
-
     // --------------------------------------------------------------- merge
 
     private static String merge(String planJson, String patchJson, Map<String, JsonObject> kept)
@@ -1219,268 +1204,139 @@ public class CreatePlanDataFlowPrompt
         return sb.toString();
     }
 
-    // The examples use an unrelated domain (file upload with retries) on purpose.
+    // ---------------------------------------------------------------------------
+    // 1) requiredIds(): CONDITION/LOOP with a phase-1 "condition" are now required too
+    // ---------------------------------------------------------------------------
+    private static List<String> requiredIds(Indexed indexed)
+    {
+        List<String> ids = new ArrayList<>();
+
+        for(Map.Entry<String, JsonObject> e : indexed.steps.entrySet())
+        {
+            JsonObject s = e.getValue();
+            String t = s.getString("type", "");
+            boolean control = (t.equals("CONDITION") || t.equals("LOOP")) && s.get("condition") != null;
+
+            if(t.equals("TOOL") || t.equals("SUBGOAL") || t.equals("STATE") || control)
+                ids.add(e.getKey());
+        }
+
+        return ids;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 2) New prompt template (placeholders unchanged)
+    // ---------------------------------------------------------------------------
     private static final String PROMPT_TEMPLATE = """
-    You are the operationalization stage of a two-phase planner.
+    You are phase 2 (operationalization) of a two-phase planner.
+    Phase 1 produced a strategic plan. It is FINAL: you never change its
+    structure (ids, order, nesting, step types). You only make it executable
+    by returning a PATCH with the missing details.
 
-    The strategic plan below is FINAL and cannot be changed. Every step has
-    an "id" (equal to its name). Your job is to make the plan executable
-    without changing its structure: complete arguments for every tool call,
-    and precise Java expressions for conditions, loops and state changes.
-
-    Return a PATCH: a list of entries containing "id" and only the fields
-    allowed for that step type, optionally including "resultmapping" for a
-    result-producing step.
-    Do not return the plan itself.
-
-    IMPORTANT REPAIR RULE
-    When correcting a validation error, preserve the existing strategic plan
-    exactly. Preserve all step ids, step order, nesting, step types and
-    responsibilities.
-
-    Only change the field that is responsible for the reported error.
-    Never move a field from one step to another step.
-    Never move "problem" from a TOOL/STATE/CONDITION/etc. to a REASONING step.
-    Never move "exp" from one step to another.
-    Never create a new step to hold a field.
-    Never delete or reorder steps as a repair strategy.
-
-    If a field is not allowed on a step, REMOVE that field from that step.
-    Do not try to preserve it by placing it somewhere else.
-
-    Valid entries from earlier attempts are kept. When you get an error,
-    return ONLY entries for the steps named in the error.
-
-    FORMAT (unrelated example)
-    {"steps": [
-      {"id": "announceStart", "inputs": ["Starting upload of ${goal.fileName} (max. ${goal.maxRetries} attempts)."]},
-      {"id": "sendReport",    "inputs": ["${uploadStatus}"]},
-      {"id": "notifyResult",  "inputs": ["=uploadOk ? \\"Done.\\" : \\"Failed.\\""]},
-      {"id": "retryLoop",     "exp": "!uploadDone && loop.retryLoop.counter < goal.maxRetries"},
-      {"id": "checkStatus",   "exp": "\\"READY\\".equals(uploadStatus)"},
-      {"id": "markDone",      "inputs": [], "exp": "true"},
-      {"id": "countFailure",  "inputs": [], "exp": "failureCount + 1"}
-    ]}
-
-    In this example announceStart, sendReport and notifyResult are TOOL steps
-    (only "inputs"). retryLoop is a LOOP and checkStatus a CONDITION (only
-    "exp"). markDone and countFailure are STATE steps (the only ones whose
-    "exp" is a value such as true or a calculation). A TOOL entry never has
-    "exp"; a TOOL input is never just "=true" - it is the text or value the
-    tool shows or sends.
-
-    ENTRY SHAPES
-    An entry contains ONLY the fields of its step type. Never add other
-    fields and never copy instructions or rules into a field.
-
-    - TOOL, SUBGOAL:    {"id", "inputs", "resultmapping"}
-    - STATE:            {"id", "inputs", "exp", "resultmapping"}
-    - REASONING:        {"id", "inputs", "problem", "resultmapping"}
-    - CONDITION, LOOP:  {"id", "exp"}   (no "inputs", no "problem", no resultmapping)
-    - SEQUENCE:         no entry
-
-    "resultmapping" is OPTIONAL for every result-producing step type:
-    TOOL, REASONING, SUBGOAL and STATE. It is not valid for control-only
-    steps such as CONDITION, LOOP and SEQUENCE. A step that has no result
-    must not have a resultmapping.
-
-    A step never lists its own output in "inputs".
-    Every TOOL and SUBGOAL step needs an entry, including the last steps of
-    the plan and steps whose inputs are texts you have to write yourself.
-    Do not stop early.
+    WHAT YOU DELIVER
+    Exactly one JSON object {"steps": [ ... ]} and nothing else.
+    - one entry per step id, never a duplicate, never an invented id
+    - no line breaks inside strings (use \\n)
+    - the patch never contains the plan itself
 
     REQUIRED ENTRIES
-    The patch MUST contain exactly one entry for each of these ids: {{REQUIRED}}
+    You MUST return exactly one entry for each of these ids: {{REQUIRED}}
+    These are all TOOL, SUBGOAL and STATE steps and all CONDITION/LOOP steps
+    that have a Phase-1 "condition". All other steps get no entry, except a
+    REASONING step whose "inputs" or "problem" you want to change.
 
-    In addition, the following Phase-2 fields are mandatory:
+    ENTRY SHAPES (only these fields, nothing else)
+    | step type         | fields                                    |
+    | TOOL, SUBGOAL     | id, inputs, [resultmapping]               |
+    | STATE             | id, inputs, exp, [resultmapping]          |
+    | REASONING         | id, inputs, problem, [resultmapping]      |
+    | CONDITION, LOOP   | id, exp                                   |
+    | SEQUENCE          | no entry                                  |
 
-    - TOOL and SUBGOAL entries need "inputs" (one per parameter in declared
-      order; [] only if they have no parameters).
-    - STATE entries need "exp".
-    - EVERY CONDITION step that has a Phase-1 "condition" MUST have an "exp".
-    - EVERY LOOP step that has a Phase-1 "condition" MUST have an "exp".
-    - "resultmapping" is the destination where a result-producing step stores
-    its result. It is optional: when omitted, the planner defaults it to
-    plan.<output> if Phase 1 declares an output.
-    - Use belief.<name> or goal.<name> only when the plan explicitly
-    requires updating a belief or goal parameter.
-    - Never provide "resultmapping" for a step with no result.
+    A field that is not allowed on a step is REMOVED, never moved to another
+    step. "resultmapping" is optional: without it the result goes to
+    plan.<output>. Use it only for steps with a result, as plan.<name>,
+    belief.<name> or goal.<name>.
 
-    For CONDITION and LOOP steps, "condition" and "exp" have different roles:
-    "condition" is the Phase-1 natural-language description; "exp" is its
-    executable Phase-2 implementation.
+    EXAMPLE (unrelated domain: file upload)
+    {"steps": [
+    {"id": "announceStart", "inputs": ["Starting upload of ${goal.fileName} (max. ${goal.maxRetries} attempts)."]},
+    {"id": "sendReport",    "inputs": ["${uploadStatus}"]},
+    {"id": "notifyResult",  "inputs": ["=uploadOk ? \\"Done.\\" : \\"Failed.\\""]},
+    {"id": "retryLoop",     "exp": "!uploadDone && loop.retryLoop.counter < goal.maxRetries"},
+    {"id": "checkStatus",   "exp": "\\"READY\\".equals(uploadStatus)"},
+    {"id": "markDone",      "inputs": [], "exp": "true"},
+    {"id": "countFailure",  "inputs": [], "exp": "failureCount + 1"}
+    ]}
+    announceStart, sendReport, notifyResult = TOOL (inputs only). retryLoop =
+    LOOP, checkStatus = CONDITION (exp only). markDone, countFailure = STATE
+    (the only steps whose exp is a value or a calculation).
 
-    The existence of a Phase-1 "condition" therefore ALWAYS requires an
-    "exp" entry in Phase 2. Never omit such an entry.
+    INPUTS (TOOL, SUBGOAL, STATE, REASONING)
+    One input per parameter, in declared order; [] if there are none.
+    Every input has exactly one of three forms:
 
-    The "exp" MUST implement the COMPLETE meaning of the Phase-1 "condition".
-    Do not weaken, shorten or replace the condition with only one of its parts.
+    1. REFERENCE: the whole input is ${name}. Passes one value, type preserved.
+    Only a single name or path inside, no operators or calls.
+    Examples: ${userInput}, ${goal.userName}, ${loop.retryLoop.counter}
+    2. JAVA: the input starts with "=". Use it for calculations or a choice
+    between texts. Inside it names are bare, never ${...}.
+    Examples: =goal.max - counter    =ok ? "Done." : "Failed."
+    3. TEXT: anything else. May contain ${name} placeholders (single names
+    only). A message with values is ONE input, never split it.
+    Example: You have ${goal.maxQuestions} questions left.
 
-    Before returning the patch, inspect every CONDITION and LOOP in the
-    strategic plan and verify that every one with a "condition" has a
-    corresponding patch entry containing "exp".
+    Rules for inputs:
+    - Every value that the Phase-1 plan passes to a TOOL/SUBGOAL (its phase-1
+    "inputs") MUST appear in the patched inputs. Never drop one.
+    - A step never lists its own output as input. A STATE may read its own
+    output in "exp" (starts as false / 0 / empty text).
+    - Numbers and booleans as input are written "=42", "=true". A TOOL input
+    is never just "=true": it is the text or value the tool shows or sends.
+    - Write texts in the language of the plan. A text shown to the user must
+    not reveal hidden information (secret, solution, credential) unless the
+    step description says the outcome is announced.
 
-    A CONDITION or LOOP does NOT need to be included merely because it exists.
-    It MUST be included when it has a Phase-1 "condition".
+    EXP (STATE, CONDITION, LOOP)
+    - STATE: computes its output as described ("set to true" -> true,
+    "increase by 1" -> counter + 1).
+    - CONDITION / LOOP: a boolean Java expression that implements the COMPLETE
+    Phase-1 "condition" (every part, nothing weaker, no constant).
+    CONDITION: true selects "then". LOOP: true repeats; loop.<name>.counter =
+    number of completed iterations.
+    - Translation: "x is true" -> x; "x is false" -> !x; "x equals y" -> x == y;
+    "x at least y" -> x >= y; "x is KIND" for text values -> "KIND".equals(x).
+    - Compare text with CONSTANT.equals(value), never with ==. For a SELECTION
+    result use exactly one of the plan's "options" (same spelling and case).
+    - Allowed: + - * / && || ! == != < <= > >= .equals(...) ?: ( ).
+    Not allowed: assignment, ;, new, lambda, cast, ${...}, single quotes.
+    - Names: bare plan values, goal.x, belief.x, loop.<name>.counter.
 
-    REASONING steps already contain "problem" and their inputs from the plan;
-    add an entry for them only to change "inputs" or to replace "problem".
+    If a Phase-1 condition names a value that is not in scope (e.g. a limit
+    that nobody produces), look for the matching goal.* or belief.* value in
+    GOAL/CONTEXT and use that. If nothing matches, do not invent a name.
 
-    Never invent or repeat ids. No line breaks inside strings.
-
-    IMPORTANT FIELD OWNERSHIP
-    Fields belong to their original step. Keep them there.
-
-    - "problem" is ONLY for REASONING steps.
-    - "exp" is ONLY for STATE, CONDITION and LOOP steps.
-    - "inputs" is only for TOOL, REASONING, SUBGOAL and STATE steps.
-    - "resultmapping" is only for result-producing TOOL, REASONING,
-      SUBGOAL and STATE steps; it is optional for all of them.
-    If a validation error says that a field is not allowed, remove the field
-    from that step. Do not move the field to another step.
-
-    INPUT FORMS (`inputs` entries)
-
-    Every input is interpreted using exactly one of these three forms:
-
-    1. VALUE REFERENCE: the entire input is `${name}`.
-    It references exactly one existing value and preserves its type.
-    Examples: `${userInput}`, `${goal.userName}`, `${loop.retryLoop.counter}`.
-
-    Inside `${...}`, only a single supported value name or path is allowed.
-    No operators, calculations, method calls, string concatenation or conditional expressions are allowed.
-
-    2. JAVA EXPRESSION: the input starts with `=`.
-    The entire remainder must be one valid Java expression.
-    Use this form for calculations, comparisons, logical expressions, string concatenation and conditional expressions.
-    Examples:
-    `=goal.max - counter`
-    `="You have " + (goal.max - counter) + " items remaining."`
-    `=uploadOk ? "Done." : "Failed."`
-
-    Inside a Java expression, references are bare names or supported paths, never `${...}`.
-    Invalid: `=${count} + 1`.
-    Valid: `=count + 1`.
-
-    3. TEXT: every other input is a text. It may contain `${name}`
-    placeholders (single value names or paths only); each placeholder is
-    replaced by the value at runtime.
-    Example: `You have ${goal.maxQuestions} questions left.`
-    Use the "=" form only for calculations or for a choice between texts.
-    Never split one message into several inputs: one input per tool
-    parameter, and a message with values in it is ONE input with
-    placeholders.
-
-    The three forms are mutually exclusive. Never mix their syntax. Do not put calculations 
-    inside `${...}` and do not treat arbitrary text as Java code.
-
-    Every value that the plan passes to a TOOL or SUBGOAL (see the step's
-    phase-1 "inputs") MUST be used by one of its inputs, as a placeholder
-    inside a text or as a separate input. Never drop such a value.
-
-    Write texts in the language of the plan. A text shown to the user must
-    not reveal hidden information (a secret, solution or credential) unless
-    the step description says that the outcome is announced.
-
-    PROBLEM (only when replacing the plan's problem)
-
-    Plain text with values as ${name}:
-    "Determine whether ${sensorReading} is outside ${normalRange}."
-
-    Prefer to pass needed values via "inputs".
-
-    JAVA EXPRESSIONS ("exp" and "=" inputs)
-
-    A single Java expression, evaluated at runtime.
-
-    - Strings in double quotes, compared as CONSTANT.equals(value):
-      "FAILED".equals(uploadStatus)    never: uploadStatus == "FAILED"
-    - A SELECTION result is compared with an option exactly as listed in the
-      plan's "options" (same spelling and case).
-    - Booleans: x, !x    never: x == true, x == false
-    - Allowed: + - * / && || ! == != < <= > >= .equals(...) ?: parentheses.
-    - Not allowed: assignment, semicolon, new, lambda, cast, ${...}.
-    - Values are bare names, goal.x, belief.x, loop.<name>.counter.
-    - "exp" is allowed ONLY on STATE, CONDITION and LOOP.
-    - STATE "exp" computes its output.
-    - CONDITION "exp" must evaluate to a boolean; true selects "then".
-    - LOOP "exp" must evaluate to a boolean; true repeats the loop.
-    - For a LOOP, loop.<name>.counter is the number of completed iterations
-      when the condition is evaluated after the loop body.
-
-    - An "exp" on CONDITION or LOOP MUST express the COMPLETE sentence of
-      the step's Phase-1 "condition".
-    - Translate natural-language conditions into valid Java expressions.
-    - "x is false" means !x.
-    - "x is true" means x.
-    - "x is equal to y" means x == y.
-    - "x is greater than or equal to y" means x >= y.
-    - For string constants use CONSTANT.equals(value).
-    - Preserve every logical part of the Phase-1 condition.
-    - Do not omit a condition part merely because another part is sufficient
-      in the current situation.
-    - Do not replace a condition with a weaker or more convenient condition.
-    - A constant condition is rejected.
-
-    If a condition cannot be expressed from the values in scope, do NOT omit
-    the "exp" and do NOT invent a value. The patch is incomplete and must not
-    be finalized.
-
-    STATE
-    - A STATE "exp" follows the step description ("Set done to true" -> true,
-      "Increase attemptCount by 1" -> attemptCount + 1).
-    - A STATE "exp" MAY read its own output (it starts as false / 0 / empty
-      text until the step has run). Do NOT list its own output in "inputs".
-    - "inputs" of a STATE list only OTHER variables used in "exp" (often []).
-
-    WRONG -> RIGHT
-      "userInput"                       -> "${userInput}"     (when the value is meant)
-      "'You win, ' + goal.name"         -> "You win, ${goal.name}."
-      "=Game over"                      -> "Game over."
-      "42"                              -> "=42"
-      "=${count} + 1"                   -> "=count + 1"
-      "${goal.hints ? \\"a\\" : \\"b\\"}" -> "=goal.hints ? \\"a\\" : \\"b\\""
-      exp: "inputType == \\"GUESS\\""   -> "\\"GUESS\\".equals(inputType)"
-      exp: "done == false && ..."       -> "!done && ..."
-      TOOL inputs: ["You have ", "=goal.max", " left"]
-                                        -> ["You have ${goal.max} left."]
-
-    SCOPING
-
+    SCOPE
     - A value can only be used after its producer.
-    - Outputs of REASONING and STATE steps may be used anywhere (they default
-      to false / 0 / empty text until produced).
-    - Outputs of TOOL and SUBGOAL steps are not available after a CONDITION
-      branch or LOOP body that alone produced them, unless both branches
-      produce the same name or the other branch ends with FAIL.
-    - goal.*, belief.* and enclosing loop values may be referenced directly.
-    - Never reference a name that nobody produces.
+    - Outputs of REASONING and STATE may be used anywhere (default false / 0 /
+    empty text).
+    - Outputs of TOOL and SUBGOAL are unavailable after a branch or loop body
+    that alone produced them (unless both branches produce it or the other
+    ends with FAIL).
+    - goal.*, belief.* and enclosing loop values are always available.
 
-    FINAL COMPLETENESS CHECK
+    REPAIR
+    On a validation error, return ONLY entries for the steps named in the
+    error; earlier valid entries are kept. Change only the field that is
+    reported. Never create, delete, reorder or merge steps.
 
-    Before returning the JSON patch, perform this checklist internally:
-
-    1. Find every CONDITION step in the strategic plan.
-       If it has "condition", the patch contains its id and an "exp".
-
-    2. Find every LOOP step in the strategic plan.
-       If it has "condition", the patch contains its id and an "exp".
-
-    3. For every such "exp", verify that it implements the COMPLETE
-       Phase-1 condition.
-
-    4. Verify that no CONDITION or LOOP with a Phase-1 "condition" was
-       accidentally omitted merely because no "inputs" were needed.
-
-    5. Verify that every STATE has an "exp".
-
-    6. Verify that every TOOL and SUBGOAL has "inputs", and that every value
-       the plan passes to it is used by those inputs.
-
-    7. If you supply "resultmapping", verify it is on a result-producing
-       step and points to plan.<name>, belief.<name> or goal.<name>.
-
-    Do not return the patch until all seven checks pass.
+    CHECK BEFORE ANSWERING
+    1. Every id from REQUIRED has exactly one entry.
+    2. Every CONDITION/LOOP entry has "exp" covering its complete condition.
+    3. Every STATE has "exp"; every TOOL/SUBGOAL has "inputs" that use all
+    values from its phase-1 inputs.
+    4. Every name used exists in scope, goal.*, belief.* or loop.*.
+    5. Fields appear only on step types that allow them.
 
     ================ TASK ================
 

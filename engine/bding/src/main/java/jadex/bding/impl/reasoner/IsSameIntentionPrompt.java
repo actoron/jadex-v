@@ -1,5 +1,7 @@
 package jadex.bding.impl.reasoner;
 
+import java.util.function.Function;
+
 import com.eclipsesource.json.JsonObject;
 
 import jadex.bding.Intention;
@@ -35,7 +37,7 @@ public class IsSameIntentionPrompt
             in1.getDescription(),
             in2.getDescription());
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), (Function<Boolean, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

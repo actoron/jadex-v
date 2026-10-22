@@ -1,9 +1,11 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import com.eclipsesource.json.JsonObject;
 
+import jadex.bding.Intention;
 import jadex.bding.impl.RIntention;
 
 public final class HasMadeProgressPrompt
@@ -62,7 +64,7 @@ public final class HasMadeProgressPrompt
             PromptHelper.formatContext(in.getIntention().getModel(), previousContext),
             PromptHelper.formatContext(in.getIntention().getModel(), currentContext));
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), (Function<Boolean, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

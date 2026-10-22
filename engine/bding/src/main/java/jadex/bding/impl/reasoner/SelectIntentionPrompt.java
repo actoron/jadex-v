@@ -113,7 +113,7 @@ public final class SelectIntentionPrompt
             }
         };
 
-        return new ReasoningPrompt<Intention>(prompt, SCHEMA, parser, null);
+        return new ReasoningPrompt<Intention>(prompt, SCHEMA, parser, (Function<Intention, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

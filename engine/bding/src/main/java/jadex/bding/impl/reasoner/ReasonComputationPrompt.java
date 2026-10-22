@@ -6,6 +6,7 @@ import java.util.function.Function;
 import com.eclipsesource.json.JsonObject;
 
 import jadex.bding.AgentModel;
+import jadex.bding.Intention;
 
 public class ReasonComputationPrompt
 {
@@ -55,7 +56,7 @@ public class ReasonComputationPrompt
 
         Function<String, Double> parser = json -> parse(json);
 
-        return new ReasoningPrompt<Double>( prompt, schema, parser, null);
+        return new ReasoningPrompt<Double>( prompt, schema, parser, (Function<Double, ValidationResult>)null);
     }
 
     public static Double parse(String json)

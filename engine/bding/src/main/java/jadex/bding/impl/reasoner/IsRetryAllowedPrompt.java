@@ -1,11 +1,13 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import com.eclipsesource.json.JsonObject;
 
 import jadex.bding.impl.planbody.strategic.StrategicPlanFormatter;
 import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
+import jadex.bding.Intention;
 import jadex.bding.impl.RPlan;
 
 public final class IsRetryAllowedPrompt
@@ -62,7 +64,7 @@ public final class IsRetryAllowedPrompt
             //PromptHelper.formatPlan(plan.getPlan())
         );
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), (Function<Boolean, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

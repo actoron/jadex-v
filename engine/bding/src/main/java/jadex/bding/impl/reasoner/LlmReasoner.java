@@ -19,6 +19,7 @@ import jadex.bding.impl.planbody.strategic.StrategicContainer;
 import jadex.bding.impl.planbody.strategic.StrategicPlanCompiler;
 import jadex.bding.impl.planbody.strategic.StrategicPlanValidator;
 import jadex.bding.impl.planbody.strategic.PhaseValue.PlanPhase;
+import jadex.bding.impl.reasoner.ReasoningPrompt.RetryContext;
 import jadex.core.IComponent;
 import jadex.core.IComponentManager;
 import jadex.future.Future;
@@ -348,7 +349,6 @@ public class LlmReasoner implements IReasoner
     protected <T> T reason(String method, ReasoningPrompt<T> prompt, RGoal goal, Intention intention)
     {
         ReasoningEntry entry = startReasoning(method, prompt, goal, intention);
-
        
         String feedback = "";
 
@@ -359,7 +359,7 @@ public class LlmReasoner implements IReasoner
             {
                 T result = prompt.parse(response);
 
-                ValidationResult valres = prompt.validate(result);
+                ValidationResult valres = prompt.validate(result, new RetryContext(attempt, MAX_ATTEMPTS));
 
                 if(valres==null || valres.isValid())
                 {

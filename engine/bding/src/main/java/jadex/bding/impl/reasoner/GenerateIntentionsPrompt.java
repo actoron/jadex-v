@@ -123,7 +123,7 @@ public final class GenerateIntentionsPrompt
             }
         };
 
-        return new ReasoningPrompt<Set<Intention>>(prompt, SCHEMA, parser, null);
+        return new ReasoningPrompt<Set<Intention>>(prompt, SCHEMA, parser, (Function<Set<Intention>, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

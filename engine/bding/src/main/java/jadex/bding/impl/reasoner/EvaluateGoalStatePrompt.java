@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import com.eclipsesource.json.JsonObject;
 
+import jadex.bding.Intention;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RGoal.GoalState;
 
@@ -44,7 +45,7 @@ public final class EvaluateGoalStatePrompt
             PromptHelper.formatContext(goal.getGoal().getModel(), context),
             PromptHelper.formatGoal(goal));
 
-        return new ReasoningPrompt<GoalState>(prompt, SCHEMA, (json) -> parse(json), null);
+        return new ReasoningPrompt<GoalState>(prompt, SCHEMA, (json) -> parse(json), (Function<GoalState, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

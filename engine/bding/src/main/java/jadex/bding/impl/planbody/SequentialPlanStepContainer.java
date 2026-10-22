@@ -23,24 +23,40 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
     }
 
     @Override
-    public IFuture<PlanStepExecution> execute(IComponent component, PlanExecutionContext context)
+    public IFuture<PlanStepExecution> execute(
+        IComponent component, PlanExecutionContext context)
     {
         Future<PlanStepExecution> ret = new Future<>();
 
-        // todo: change init names in compiler to: plan.
-        Map<String, Object> inits = container.getInits();
-        if(inits!=null)
+        // An absent container represents an empty sequence.
+        if(container == null)
         {
-            for(String name: inits.keySet())
+            ret.setResult(null);
+            return ret;
+        }
+
+        // Initialize plan variables before executing any steps.
+        Map<String, Object> inits = container.getInits();
+        if(inits != null && !inits.isEmpty())
+        {
+            for(Map.Entry<String, Object> entry : inits.entrySet())
             {
-                String iname = "plan."+name;
+                String name = entry.getKey();
+
+                // Ignore invalid initialization entries defensively.
+                if(name == null || name.isBlank())
+                    continue;
+
+                String iname = name.startsWith("plan.")
+                    ? name
+                    : "plan." + name;
+
                 if(!context.getParameters().containsKey(iname))
-                {
-                    context.set(iname, inits.get(name));
-                }
+                    context.set(iname, entry.getValue());
             }
 
-            System.out.println("context with inits is: "+context.getParameters());
+            System.out.println("context with inits is: "
+                + context.getParameters());
         }
 
         executeStep(component, context, 0, ret);
@@ -48,11 +64,22 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
         return ret;
     }
 
-    protected void executeStep(IComponent component, PlanExecutionContext context, int index, Future<PlanStepExecution> ret)
+    protected void executeStep(
+        IComponent component,
+        PlanExecutionContext context,
+        int index,
+        Future<PlanStepExecution> ret)
     {
+        // A missing container or empty sequence is a no-op.
+        if(container == null)
+        {
+            ret.setResult(null);
+            return;
+        }
+
         List<StrategicStep> steps = container.getSteps();
 
-        if(index >= steps.size())
+        if(steps == null || index >= steps.size())
         {
             ret.setResult(null);
             return;
@@ -60,19 +87,51 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
 
         StrategicStep sstep = steps.get(index);
 
-        sstep.getExecutableStep(component.getFeature(IBDINGAgentFeature.class).getReasoner(), context.getPlan(), 
-            context.getParameters()).then(step ->
+        // A null step is treated as an empty entry and skipped.
+        if(sstep == null)
         {
-            PlanStepExecution failexe = new PlanStepExecution(this, context.getParameters());
+            executeStep(component, context, index + 1, ret);
+            return;
+        }
 
-            step.execute(component, context).then(exe ->
+        sstep.getExecutableStep(
+            component.getFeature(IBDINGAgentFeature.class).getReasoner(),
+            context.getPlan(),
+            context.getParameters())
+        .then(step ->
+        {
+            if(step == null)
+            {
+                NullPointerException ex = new NullPointerException(
+                    "Strategic step returned null executable step: " + sstep);
+
+                PlanStepExecution failexe =
+                    new PlanStepExecution(this, context.getParameters());
+
+                context.getPlan().addExecutedStep(
+                    failexe.setOutputs(context.getParameters())
+                        .setState(PlanStepState.FAILED)
+                        .setException(ex));
+
+                ret.setException(ex);
+                return;
+            }
+
+            PlanStepExecution failexe =
+                new PlanStepExecution(this, context.getParameters());
+
+            step.execute(component, context)
+            .then(exe ->
             {
                 if(exe == null)
                 {
-                    NullPointerException ex = new NullPointerException("Plan step returned null execution: " + sstep);
+                    NullPointerException ex = new NullPointerException(
+                        "Plan step returned null execution: " + sstep);
 
-                    context.getPlan().addExecutedStep(failexe.setOutputs(context.getParameters())
-                        .setState(PlanStepState.FAILED).setException(ex));
+                    context.getPlan().addExecutedStep(
+                        failexe.setOutputs(context.getParameters())
+                            .setState(PlanStepState.FAILED)
+                            .setException(ex));
 
                     ret.setException(ex);
                     return;
@@ -86,13 +145,18 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
                     return;
                 }
 
-                RPlan.writeBackContext(context, context.getPlan().getIntention().getGoal(), component);
+                RPlan.writeBackContext(
+                    context, context.getPlan().getIntention().getGoal(),
+                    component);
 
                 executeStep(component, context, index + 1, ret);
             })
             .catchEx(ex ->
             {
-                context.getPlan().addExecutedStep(failexe.setOutputs(context.getParameters()).setState(PlanStepState.FAILED).setException(ex));
+                context.getPlan().addExecutedStep(
+                    failexe.setOutputs(context.getParameters())
+                        .setState(PlanStepState.FAILED)
+                        .setException(ex));
 
                 ret.setException(ex);
             });
@@ -101,14 +165,15 @@ public class SequentialPlanStepContainer implements IPlanStepContainer, IPlanSte
     }
 
     @Override
-    public Map<String, String> getInputMapping() 
+    public Map<String, String> getInputMapping()
     {
         return null;
     }
 
     @Override
-    public String getResultMapping() 
+    public String getResultMapping()
     {
         return null;
     }
 }
+

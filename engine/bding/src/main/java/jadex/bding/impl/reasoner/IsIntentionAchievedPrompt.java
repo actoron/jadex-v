@@ -1,9 +1,11 @@
 package jadex.bding.impl.reasoner;
 
 import java.util.Map;
+import java.util.function.Function;
 
 import com.eclipsesource.json.JsonObject;
 
+import jadex.bding.Intention;
 import jadex.bding.impl.RGoal;
 import jadex.bding.impl.RGoal.GoalState;
 import jadex.bding.impl.RIntention;
@@ -54,7 +56,7 @@ public final class IsIntentionAchievedPrompt
             in.getPlan().getPlan().getName(),
             in.getPlan().getPlan().getDescription());
 
-        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), null);
+        return new ReasoningPrompt<Boolean>(prompt, SCHEMA, (json) -> parse(json), (Function<Boolean, ValidationResult>)null);
     }
 
     private static final String SCHEMA = """

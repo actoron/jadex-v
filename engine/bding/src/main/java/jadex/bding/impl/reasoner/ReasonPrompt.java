@@ -136,7 +136,7 @@ public class ReasonPrompt
             }
         };
 
-        return new ReasoningPrompt<Object>(prompt, schema, parser, null);
+        return new ReasoningPrompt<Object>(prompt, schema, parser, (Function<Object, ValidationResult>)null);
     }
 
     public static Object parse(String json, ReasoningType type)

@@ -6,6 +6,7 @@ import java.util.function.Function;
 import com.eclipsesource.json.JsonObject;
 
 import jadex.bding.AgentModel;
+import jadex.bding.Intention;
 
 public class ReasonDecisionPrompt
 {
@@ -52,7 +53,7 @@ public class ReasonDecisionPrompt
 
         Function<String, Boolean> parser = json -> parse(json);
 
-        return new ReasoningPrompt<Boolean>(prompt, schema, parser, null);
+        return new ReasoningPrompt<Boolean>(prompt, schema, parser, (Function<Boolean, ValidationResult>)null);
     }
 
     public static Boolean parse(String json)

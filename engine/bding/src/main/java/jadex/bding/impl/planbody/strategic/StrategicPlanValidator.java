@@ -305,23 +305,31 @@ public class StrategicPlanValidator
         }
     }
 
+    
     protected static void validateBranch(
         StrategicContainer branch,
         Ctx ctx,
         ValidationResult result,
         String branchName)
     {
+        // Missing branch means: do nothing.
         if(branch == null)
-        {
-            result.error(null, "Missing " + branchName + " branch.");
             return;
-        }
 
         /*
-         * The branch container is structural. Its children are validated
-         * in the branch context; the branch itself is not re-registered.
-         */
-        validateSequence(branch, ctx, result);
+        * An empty branch also means: do nothing.
+        * This matches ConditionalPlanStep's runtime semantics.
+        */
+        List<StrategicStep> steps = branch.getSteps();
+
+        if(steps == null || steps.isEmpty())
+            return;
+
+        /*
+        * The branch container is structural. Its children are validated
+        * in the branch context; the branch itself is not re-registered.
+        */
+        validateSteps(steps, ctx, result);
     }
 
     // ---------------------------------------------------------------------
@@ -1111,20 +1119,24 @@ public class StrategicPlanValidator
             {
                 if(diagnostic.getKind() == Diagnostic.Kind.ERROR)
                 {
-                    result.error(
-                        name,
-                        "Invalid Java syntax in " + field + ": "
-                            + diagnostic.getMessage(Locale.ROOT));
+                    result.error(name, "Invalid Java syntax in " + field + ": " + diagnostic.getMessage(Locale.ROOT));
+                    return;
+                }
+            }
+
+            for(Diagnostic<? extends JavaFileObject> diagnostic: diagnostics.getDiagnostics())
+            {
+                if(diagnostic.getKind() == Diagnostic.Kind.ERROR)
+                {
+                    result.error(name, "Invalid Java syntax in " + field + ": " + diagnostic.getMessage(Locale.ROOT)
+                        + "\nExpression: " + javaExpression + "\nError position: " + diagnostic.getPosition());
                     return;
                 }
             }
         }
         catch(Exception e)
         {
-            result.error(
-                name,
-                "Could not validate Java expression in " + field + ": "
-                    + e.getMessage());
+            result.error(name, "Could not validate Java expression in " + field + ": " + e.getMessage());
         }
     }
 }
